@@ -1,0 +1,122 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\ITI\\FinalArena\\Arena\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\finalarena\\arena\\arenainfrastructure\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\finalarena\\arena\\arenadomain\\interfacees\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\interfacees\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\finalarena\\arena\\arenainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\finalarena\\arena\\arenainfrastructure\\arenainfrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\arenainfrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\finalarena\\arena\\arenadomain\\shared\\result.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\shared\\result.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\finalarena\\arena\\arenadomain\\shared\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\shared\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "GenericRepository.cs",
+              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Repositories\\GenericRepository.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Repositories\\GenericRepository.cs",
+              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Repositories\\GenericRepository.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Repositories\\GenericRepository.cs",
+              "ViewState": "AgIAABwAAAAAAAAAAAA5wAkAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T12:49:55.539Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T12:47:53.845Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ArenaInfrastructure",
+              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\ArenaInfrastructure.csproj",
+              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
+              "RelativeToolTip": "ArenaInfrastructure\\ArenaInfrastructure.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-05-22T12:47:01.955Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Result.cs",
+              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\Result.cs",
+              "RelativeDocumentMoniker": "ArenaDomain\\Shared\\Result.cs",
+              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\Result.cs",
+              "RelativeToolTip": "ArenaDomain\\Shared\\Result.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T12:46:03.373Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "BaseEntity.cs",
+              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\BaseEntity.cs",
+              "RelativeDocumentMoniker": "ArenaDomain\\Shared\\BaseEntity.cs",
+              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\BaseEntity.cs",
+              "RelativeToolTip": "ArenaDomain\\Shared\\BaseEntity.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T12:45:33.665Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "IGenericRepository.cs",
+              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Interfacees\\IGenericRepository.cs",
+              "RelativeDocumentMoniker": "ArenaDomain\\Interfacees\\IGenericRepository.cs",
+              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Interfacees\\IGenericRepository.cs",
+              "RelativeToolTip": "ArenaDomain\\Interfacees\\IGenericRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAABJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T12:44:27.465Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
