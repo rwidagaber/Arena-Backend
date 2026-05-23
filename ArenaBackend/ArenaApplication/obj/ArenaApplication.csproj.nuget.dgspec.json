@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {}
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {}
   },
   "projects": {
-    "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
+        "projectUniqueName": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
         "projectName": "ArenaApplication",
-        "projectPath": "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
+        "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
         "packagesPath": "C:\\Users\\Rwida\\.nuget\\packages\\",
-        "outputPath": "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaApplication\\obj\\",
+        "outputPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,8 +32,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
-                "projectPath": "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
+              "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
+                "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
               }
             }
           }
@@ -347,14 +347,14 @@
         }
       }
     },
-    "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
+        "projectUniqueName": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
         "projectName": "ArenaDomain",
-        "projectPath": "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
+        "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
         "packagesPath": "C:\\Users\\Rwida\\.nuget\\packages\\",
-        "outputPath": "D:\\ITI\\FinalArena\\ArenaBackend\\ArenaDomain\\obj\\",
+        "outputPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -392,6 +392,12 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[10.0.8, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

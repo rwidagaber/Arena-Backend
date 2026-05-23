@@ -1,30 +1,54 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\ITI\\FinalArena\\Arena\\",
+  "WorkspaceRootPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\finalarena\\arena\\arenainfrastructure\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|solutionrelative:arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\finalarena\\arena\\arenadomain\\interfacees\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\interfacees\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\finalarena\\arena\\arenainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\finalarena\\arena\\arenainfrastructure\\arenainfrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\arenainfrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{60F6511C-7780-46C5-BD98-651234AC4703}|Solution Items{60F6511C-7780-46C5-BD98-651234AC4703}|D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\.gitignore||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{60F6511C-7780-46C5-BD98-651234AC4703}|Solution Items{60F6511C-7780-46C5-BD98-651234AC4703}|solutionrelative:.gitignore||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\finalarena\\arena\\arenadomain\\shared\\result.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\shared\\result.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenaapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|solutionrelative:arenaapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\finalarena\\arena\\arenadomain\\shared\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\shared\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenainfrastructure\\data\\configurations\\workoutexerciseconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\data\\configurations\\workoutexerciseconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenainfrastructure\\data\\configurations\\workoutdayconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\data\\configurations\\workoutdayconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenainfrastructure\\data\\configurations\\usersubscriptionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\data\\configurations\\usersubscriptionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenainfrastructure\\data\\configurations\\nutritionplanconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\data\\configurations\\nutritionplanconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenainfrastructure\\data\\configurations\\notificationconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\data\\configurations\\notificationconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenadomain\\entities\\workout\\workoutlog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\entities\\workout\\workoutlog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenadomain\\entities\\workout\\workoutexercise.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\entities\\workout\\workoutexercise.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|d:\\iti\\arenarepo\\arena\\arenabackend\\arenadomain\\entities\\workout\\workoutday.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\entities\\workout\\workoutday.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -34,84 +58,162 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "GenericRepository.cs",
-              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Repositories\\GenericRepository.cs",
-              "RelativeDocumentMoniker": "ArenaInfrastructure\\Repositories\\GenericRepository.cs",
-              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Repositories\\GenericRepository.cs",
-              "RelativeToolTip": "ArenaInfrastructure\\Repositories\\GenericRepository.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAA5wAkAAAAdAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Data\\AppDbContext.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAAAswA4AAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-22T12:49:55.539Z",
+              "WhenOpened": "2026-05-23T10:27:29.243Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "AppDbContext.cs",
-              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Data\\AppDbContext.cs",
-              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\AppDbContext.cs",
-              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\Data\\AppDbContext.cs",
-              "RelativeToolTip": "ArenaInfrastructure\\Data\\AppDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-22T12:47:53.845Z",
+              "DocumentIndex": 0,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaAPI\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "ArenaAPI\\appsettings.Development.json",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaAPI\\appsettings.Development.json",
+              "RelativeToolTip": "ArenaAPI\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-23T10:20:05.112Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "ArenaInfrastructure",
-              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
-              "RelativeDocumentMoniker": "ArenaInfrastructure\\ArenaInfrastructure.csproj",
-              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
-              "RelativeToolTip": "ArenaInfrastructure\\ArenaInfrastructure.csproj",
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaAPI\\appsettings.json",
+              "RelativeDocumentMoniker": "ArenaAPI\\appsettings.json",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaAPI\\appsettings.json",
+              "RelativeToolTip": "ArenaAPI\\appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-05-22T12:47:01.955Z",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-23T10:06:31.336Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": ".gitignore",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\.gitignore",
+              "RelativeDocumentMoniker": ".gitignore",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\.gitignore",
+              "RelativeToolTip": ".gitignore",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHgSURBVEhLtZVdTsJAFIWroTyDK3ELJuCbsA1ZhQRFRETkV6yV8AAsgAI\u002BugW3wAr0RUop7Tj3dmagtLXFhJOc3mEynXu\u002BSWmlg4oQcsSGqOFwSKcIzAcY7rFZdeZkWf42DOMsl7v8ZNsEazAYEMuyXF5zr7nXWG3bJqPRiMznc6Kqb1\u002BtdueUbePSMasoSASiN0sW2AJbwrSRMKwBJZNJKZVOJeJx\u002BaPRbHma\u002BDbAqzOMpBPa5DydxiZsSijGKoo30MZjrH8pm81iVRQFKygmxxNs6K9\u002Bv4/nvlqZ1CticBuOl8IGWS4NogsviWmuSe2p7uH2EMAKTQsn2FUmkxUnEKher4dPjH9ymjogva47BNXHWhgBXCRpomnOxB6KRKCqKhJsznoneUD6BSOoPFSjEUwnByJQlFf8l7rTO6ndyalZcm7TNEn5vhJG4CD8h\u002BAikwkn6HZf8F3jSSu8OfNt/yx0sqIEpbtyOAGsmE4nzsQeikTQ7jwTkxKItCyxX2qenBsIirelcAJAmB2KoNlq4/Psl1Z4K/UuQeGmGIGA6n02xbqPgIBuwH4FqN5o4vMMKYOSBhkI8oVrTwfPBwdWxOQYWt7D/P5duT768D7HJhFtU9MBVj5XyF\u002B59jywJOkX7ucXnGOxDX8AAAAASUVORK5CYII=",
+              "WhenOpened": "2026-05-23T10:02:15.232Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "Result.cs",
-              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\Result.cs",
-              "RelativeDocumentMoniker": "ArenaDomain\\Shared\\Result.cs",
-              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\Result.cs",
-              "RelativeToolTip": "ArenaDomain\\Shared\\Result.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAAFAAAAAAAAAA==",
+              "Title": "WorkoutExerciseConfiguration.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\WorkoutExerciseConfiguration.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\WorkoutExerciseConfiguration.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\WorkoutExerciseConfiguration.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Data\\Configurations\\WorkoutExerciseConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-22T12:46:03.373Z",
+              "WhenOpened": "2026-05-23T09:32:44.374Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 5,
-              "Title": "BaseEntity.cs",
-              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\BaseEntity.cs",
-              "RelativeDocumentMoniker": "ArenaDomain\\Shared\\BaseEntity.cs",
-              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Shared\\BaseEntity.cs",
-              "RelativeToolTip": "ArenaDomain\\Shared\\BaseEntity.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAFAAAAAAAAAA==",
+              "Title": "WorkoutDayConfiguration.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\WorkoutDayConfiguration.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\WorkoutDayConfiguration.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\WorkoutDayConfiguration.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Data\\Configurations\\WorkoutDayConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-22T12:45:33.665Z",
+              "WhenOpened": "2026-05-23T09:32:38.688Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "IGenericRepository.cs",
-              "DocumentMoniker": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Interfacees\\IGenericRepository.cs",
-              "RelativeDocumentMoniker": "ArenaDomain\\Interfacees\\IGenericRepository.cs",
-              "ToolTip": "D:\\ITI\\FinalArena\\Arena\\ArenaDomain\\Interfacees\\IGenericRepository.cs",
-              "RelativeToolTip": "ArenaDomain\\Interfacees\\IGenericRepository.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAABJAAAAAAAAAA==",
+              "DocumentIndex": 6,
+              "Title": "UserSubscriptionConfiguration.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\UserSubscriptionConfiguration.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\UserSubscriptionConfiguration.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\UserSubscriptionConfiguration.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Data\\Configurations\\UserSubscriptionConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-22T12:44:27.465Z",
+              "WhenOpened": "2026-05-23T09:32:22.296Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "NutritionPlanConfiguration.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\NutritionPlanConfiguration.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\NutritionPlanConfiguration.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\NutritionPlanConfiguration.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Data\\Configurations\\NutritionPlanConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T09:26:50.888Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "NotificationConfiguration.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\NotificationConfiguration.cs",
+              "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\NotificationConfiguration.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\NotificationConfiguration.cs",
+              "RelativeToolTip": "ArenaInfrastructure\\Data\\Configurations\\NotificationConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T09:26:29.874Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "WorkoutLog.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutLog.cs",
+              "RelativeDocumentMoniker": "ArenaDomain\\Entities\\Workout\\WorkoutLog.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutLog.cs",
+              "RelativeToolTip": "ArenaDomain\\Entities\\Workout\\WorkoutLog.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAAAswBYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T06:54:18.647Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "WorkoutExercise.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutExercise.cs",
+              "RelativeDocumentMoniker": "ArenaDomain\\Entities\\Workout\\WorkoutExercise.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutExercise.cs",
+              "RelativeToolTip": "ArenaDomain\\Entities\\Workout\\WorkoutExercise.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAswB4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T06:54:09.181Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "WorkoutDay.cs",
+              "DocumentMoniker": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutDay.cs",
+              "RelativeDocumentMoniker": "ArenaDomain\\Entities\\Workout\\WorkoutDay.cs",
+              "ToolTip": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutDay.cs",
+              "RelativeToolTip": "ArenaDomain\\Entities\\Workout\\WorkoutDay.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAIwBQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T06:53:36.626Z",
               "EditorCaption": ""
             }
           ]
