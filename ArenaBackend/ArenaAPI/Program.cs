@@ -1,4 +1,4 @@
-
+using ArenaInfrastructure;
 namespace ArenaAPI
 {
     public class Program
@@ -13,6 +13,8 @@ namespace ArenaAPI
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+
+            builder.Services.ConfigureDbContext(builder.Configuration);
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

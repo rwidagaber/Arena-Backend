@@ -1,0 +1,17 @@
+.vs/
+
+bin/
+obj/
+
+*.user
+*.suo
+
+
+.idea/
+
+.vscode/
+
+
+*.log
+
+.env
