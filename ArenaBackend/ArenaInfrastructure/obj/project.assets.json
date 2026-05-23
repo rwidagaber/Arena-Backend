@@ -4139,23 +4139,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Rwida\\.nuget\\packages\\": {},
+    "C:\\Users\\dell\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
+      "projectUniqueName": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
       "projectName": "ArenaInfrastructure",
-      "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
-      "packagesPath": "C:\\Users\\Rwida\\.nuget\\packages\\",
-      "outputPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\obj\\",
+      "projectPath": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
+      "packagesPath": "C:\\Users\\dell\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Rwida\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -4164,17 +4164,18 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
-              "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj"
+            "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
+              "projectPath": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj"
             },
-            "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
-              "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
+            "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
+              "projectPath": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
             }
           }
         }
@@ -4236,7 +4237,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.107/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

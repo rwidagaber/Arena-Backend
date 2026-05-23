@@ -5,7 +5,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Dtos\" />
     <Folder Include="IServices\" />
     <Folder Include="Mappers\" />
     <Folder Include="Services\" />
