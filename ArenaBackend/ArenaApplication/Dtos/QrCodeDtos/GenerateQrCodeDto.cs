@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ArenaApplication.Dtos.QrCode
+namespace ArenaApplication.Dtos.QrCodeDtos
 {
     public class GenerateQrCodeDto
     {

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ArenaApplication.Dtos.Notification
+namespace ArenaApplication.Dtos.NotificationDtos
 {
     internal class NotificationDto
     {
