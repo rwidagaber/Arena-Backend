@@ -19,4 +19,5 @@ namespace ArenaApplication.Dtos.Booking
 
         public BookingStatus Status { get; set; }
     }
+
 }
