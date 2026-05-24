@@ -12,4 +12,5 @@ namespace ArenaApplication.Dtos.AttendanceDtos
 
         public Guid? ScannedById { get; set; }
     }
+
 }
