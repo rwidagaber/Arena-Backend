@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ArenaApplication.Dtos.RegisterDto
 {
-    public class RegisterDto
+    public class UserRegisterDto
     {
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
