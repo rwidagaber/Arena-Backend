@@ -1,6 +1,10 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\ArenaApplication\\Dtos",
+    "\\ArenaApplication\\Dtos\\NutrionDtos",
+    "\\ArenaDomain\\Entities"
   ],
+  "SelectedNode": "\\ArenaApplication",
   "PreviewInSolutionExplorer": false
 }

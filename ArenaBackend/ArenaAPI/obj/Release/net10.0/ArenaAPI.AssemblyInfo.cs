@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArenaAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22803f0f6835c6c2a019e988296ed46b2cc2ed53")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArenaAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArenaAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
