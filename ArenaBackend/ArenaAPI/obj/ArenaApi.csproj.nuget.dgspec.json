@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj": {}
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj": {}
   },
   "projects": {
-    "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj": {
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj",
+        "projectUniqueName": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj",
         "projectName": "ArenaApi",
-        "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApi\\obj\\",
+        "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj",
+        "packagesPath": "C:\\Users\\Rwida\\.nuget\\packages\\",
+        "outputPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApi\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Rwida\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,15 +26,14 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj": {
-                "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj"
+              "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj": {
+                "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj"
               }
             }
           }
@@ -49,7 +48,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -89,7 +88,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.107/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
@@ -507,20 +506,20 @@
         }
       }
     },
-    "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
+        "projectUniqueName": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
         "projectName": "ArenaApplication",
-        "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApplication\\obj\\",
+        "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
+        "packagesPath": "C:\\Users\\Rwida\\.nuget\\packages\\",
+        "outputPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Rwida\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -529,15 +528,14 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
-                "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
+              "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
+                "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
               }
             }
           }
@@ -552,7 +550,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -573,7 +571,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.107/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -851,20 +849,20 @@
         }
       }
     },
-    "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
+        "projectUniqueName": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
         "projectName": "ArenaDomain",
-        "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\obj\\",
+        "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj",
+        "packagesPath": "C:\\Users\\Rwida\\.nuget\\packages\\",
+        "outputPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Rwida\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -873,7 +871,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -892,7 +889,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -919,7 +916,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.107/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1197,20 +1194,20 @@
         }
       }
     },
-    "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj": {
+    "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
+        "projectUniqueName": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
         "projectName": "ArenaInfrastructure",
-        "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaInfrastructure\\obj\\",
+        "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\ArenaInfrastructure.csproj",
+        "packagesPath": "C:\\Users\\Rwida\\.nuget\\packages\\",
+        "outputPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaInfrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Rwida\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -1219,18 +1216,17 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
-                "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj"
+              "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj": {
+                "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj"
               },
-              "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
-                "projectPath": "C:\\My.Project\\Graduation project\\GradProj\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
+              "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj": {
+                "projectPath": "D:\\ITI\\ArenaRepo\\Arena\\ArenaBackend\\ArenaDomain\\ArenaDomain.csproj"
               }
             }
           }
@@ -1245,7 +1241,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -1292,7 +1288,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.107/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
