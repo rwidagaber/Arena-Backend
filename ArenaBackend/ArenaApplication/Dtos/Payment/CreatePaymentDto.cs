@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ArenaAPI.DTOs.Payment
+namespace ArenaApplication.Dtos.Payment
 {
     public class CreatePaymentDto
     {
         [Required]
-        public int UserSubscriptionId { get; set; }
+        public Guid UserSubscriptionId { get; set; }
 
         [Required]
         public decimal Amount { get; set; }
