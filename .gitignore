@@ -47,3 +47,4 @@ TestResults/
 /ArenaBackend/ArenaAPI/appsettings.Development.json
 /ArenaBackend/ArenaMVC/appsettings.Development.json
 >>>>>>> ce021da606a27a82d07bd90305fe7bb878a6baf2
+/ArenaBackend/ArenaApplication/ArenaApplication.csproj
