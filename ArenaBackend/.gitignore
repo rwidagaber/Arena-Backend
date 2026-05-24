@@ -1,17 +1,40 @@
-.vs/
-
+# ========================
+# Build Output
+# ========================
 bin/
 obj/
+out/
+publish/
 
+# ========================
+# IDE & Editor
+# ========================
+.vs/
+.vscode/
+.idea/
 *.user
 *.suo
+*.sln.docstates
+*.VC.db
+*.VC.opendb
 
-
-.idea/
-
-.vscode/
-
-
-*.log
-
+# ========================
+# Secrets & Environment
+# ========================
 .env
+.env.*
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+*.pfx
+*.p12
+secrets.json
+
+# ========================
+# Logs & Temp Files
+# ========================
+*.log
+*.tmp
+*.cache
+Logs/
+TestResults/
