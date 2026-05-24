@@ -14,7 +14,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArenaDomain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+<<<<<<< HEAD
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8ee8136d472ac1baccc0bbd849c71311c2b4206d")]
+=======
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22803f0f6835c6c2a019e988296ed46b2cc2ed53")]
+>>>>>>> ce021da606a27a82d07bd90305fe7bb878a6baf2
 [assembly: System.Reflection.AssemblyProductAttribute("ArenaDomain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArenaDomain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
