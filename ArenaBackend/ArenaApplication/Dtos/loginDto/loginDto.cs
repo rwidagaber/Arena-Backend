@@ -8,6 +8,8 @@ namespace ArenaApplication.Dtos.loginDto
     {
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
-        //public bool RememberMe { get; set; } = false;
+
+        //Session Cookie
+        public bool RememberMe { get; set; } = false;
     }
 }
