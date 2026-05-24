@@ -12,6 +12,9 @@ namespace ArenaApplication.Dtos.RegisterDto
         public string Password { get; set; } = null!;
         public string ConfirmPassword { get; set; } = null!;
 
-         
+        public int PhoneNumber { get; set; } = 0!;
+        public DateOnly Birthday { get; set; }
+
+
     }
 }
