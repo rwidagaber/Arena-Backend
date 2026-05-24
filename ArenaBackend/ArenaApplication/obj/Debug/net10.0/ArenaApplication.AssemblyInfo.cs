@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArenaApplication")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+78cf21878646b0d3a473ccb6b7b5e4a907efa6e2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5eb36c1c195b9e126bdcbb09ecc3447cae2b36ae")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArenaApplication")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArenaApplication")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
