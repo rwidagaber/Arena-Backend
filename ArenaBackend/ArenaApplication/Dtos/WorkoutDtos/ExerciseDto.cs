@@ -6,9 +6,20 @@ namespace ArenaApplication.Dtos.WorkoutDtos
 {
     public class ExerciseDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
+
         public string Name { get; set; } = string.Empty;
+
         public string Description { get; set; } = string.Empty;
-        public string TargetMuscleGroup { get; set; } = string.Empty; // e.g., Chest, Quads
+
+        public string MuscleGroup { get; set; } = string.Empty;
+
+        public string Equipment { get; set; } = string.Empty;
+
+        public string? VideoUrl { get; set; }
+
+        public string? ImageUrl { get; set; }
+
+        public Guid MemberProfileId { get; set; }
     }
 }
