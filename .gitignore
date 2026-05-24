@@ -24,8 +24,7 @@ publish/
 .env
 .env.*
 appsettings.Development.json
-appsettings.Local.json
-appsettings.*.local.json
+
 *.pfx
 *.p12
 secrets.json
@@ -38,10 +37,5 @@ secrets.json
 *.cache
 Logs/
 TestResults/
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
 
-/ArenaBackend/ArenaAPI/appsettings.Development.json
-/ArenaBackend/ArenaMVC/appsettings.Development.json
-/ArenaBackend/ArenaApplication/ArenaApplication.csproj
+
