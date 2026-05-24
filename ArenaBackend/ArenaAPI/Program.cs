@@ -1,3 +1,4 @@
+using ArenaApi.ValidatorConfig;
 using ArenaInfrastructure;
 namespace ArenaAPI
 {
@@ -22,6 +23,8 @@ namespace ArenaAPI
             {
                 app.MapOpenApi();
             }
+
+            builder.Services.AddValidators();
 
             app.UseHttpsRedirection();
 
