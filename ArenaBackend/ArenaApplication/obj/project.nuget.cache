@@ -1,6 +1,10 @@
 {
   "version": 2,
+<<<<<<< HEAD
   "dgSpecHash": "SdLrlaQ7+9Q=",
+=======
+  "dgSpecHash": "8jtb5XSVd74=",
+>>>>>>> 6d32884cfec5e12b1d151b501d8beaf403ef27c8
   "success": true,
   "projectFilePath": "D:\\ITI_Graduation_Project\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
   "expectedPackageFiles": [
