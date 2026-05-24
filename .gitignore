@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ========================
 # Build Output
 # ========================
@@ -38,3 +39,11 @@ secrets.json
 *.cache
 Logs/
 TestResults/
+=======
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/ArenaBackend/ArenaAPI/appsettings.Development.json
+/ArenaBackend/ArenaMVC/appsettings.Development.json
+>>>>>>> ce021da606a27a82d07bd90305fe7bb878a6baf2
