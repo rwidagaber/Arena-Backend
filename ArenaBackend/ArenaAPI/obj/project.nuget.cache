@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "RDAek0f5gg4=",
+  "dgSpecHash": "nZuDVshshLQ=",
   "success": true,
   "projectFilePath": "D:\\ITI_Graduation_Project\\Arena\\ArenaBackend\\ArenaApi\\ArenaApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Hager\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\azure.identity\\1.14.2\\azure.identity.1.14.2.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
+    "C:\\Users\\Hager\\.nuget\\packages\\mapster\\10.0.7\\mapster.10.0.7.nupkg.sha512",
+    "C:\\Users\\Hager\\.nuget\\packages\\mapster.core\\10.0.7\\mapster.core.10.0.7.nupkg.sha512",
+    "C:\\Users\\Hager\\.nuget\\packages\\mapster.dependencyinjection\\10.0.7\\mapster.dependencyinjection.10.0.7.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\microsoft.aspnetcore.identity.entityframeworkcore\\10.0.8\\microsoft.aspnetcore.identity.entityframeworkcore.10.0.8.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.7\\microsoft.aspnetcore.openapi.10.0.7.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\8.0.0\\microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",

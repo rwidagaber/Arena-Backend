@@ -1,9 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "5k7xhGJbn5k=",
+  "dgSpecHash": "SdLrlaQ7+9Q=",
   "success": true,
   "projectFilePath": "D:\\ITI_Graduation_Project\\Arena\\ArenaBackend\\ArenaApplication\\ArenaApplication.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Hager\\.nuget\\packages\\mapster\\10.0.7\\mapster.10.0.7.nupkg.sha512",
+    "C:\\Users\\Hager\\.nuget\\packages\\mapster.core\\10.0.7\\mapster.core.10.0.7.nupkg.sha512",
+    "C:\\Users\\Hager\\.nuget\\packages\\mapster.dependencyinjection\\10.0.7\\mapster.dependencyinjection.10.0.7.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\microsoft.aspnetcore.cryptography.internal\\10.0.8\\microsoft.aspnetcore.cryptography.internal.10.0.8.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\microsoft.aspnetcore.cryptography.keyderivation\\10.0.8\\microsoft.aspnetcore.cryptography.keyderivation.10.0.8.nupkg.sha512",
     "C:\\Users\\Hager\\.nuget\\packages\\microsoft.aspnetcore.identity.entityframeworkcore\\10.0.8\\microsoft.aspnetcore.identity.entityframeworkcore.10.0.8.nupkg.sha512",

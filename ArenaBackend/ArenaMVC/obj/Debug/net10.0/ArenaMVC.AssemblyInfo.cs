@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArenaMVC")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22803f0f6835c6c2a019e988296ed46b2cc2ed53")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+78cf21878646b0d3a473ccb6b7b5e4a907efa6e2")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArenaMVC")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArenaMVC")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

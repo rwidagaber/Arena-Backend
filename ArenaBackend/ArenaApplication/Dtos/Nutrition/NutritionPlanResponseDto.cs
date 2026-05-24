@@ -12,8 +12,6 @@ namespace ArenaApplication.Dtos.Nutrition
         public decimal CarbsGrams { get; set; }
         public decimal FatGrams { get; set; }
         public bool IsActive { get; set; }
-        public string AIResponseSummary { get; set; } = string.Empty;
-        public DateTime GeneratedAt { get; set; }
         public List<MealResponseDto> Meals { get; set; } = [];
     }
 }
