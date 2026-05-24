@@ -28,7 +28,6 @@ publish/
 
 appsettings.Development.json
 
-
 *.pfx
 *.p12
 secrets.json
@@ -43,4 +42,3 @@ secrets.json
 
 Logs/
 TestResults/
-
