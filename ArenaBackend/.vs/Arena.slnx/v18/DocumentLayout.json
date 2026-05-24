@@ -3,6 +3,26 @@
   "WorkspaceRootPath": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapplication\\dtos\\workoutplan\\workoutplandto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|solutionrelative:arenaapplication\\dtos\\workoutplan\\workoutplandto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenadomain\\entities\\workout\\workoutplan.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEE93BE1-6EEF-7218-9E17-F45072F9ACCD}|ArenaDomain\\ArenaDomain.csproj|solutionrelative:arenadomain\\entities\\workout\\workoutplan.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapplication\\dtos\\booking\\updatebookingdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|solutionrelative:arenaapplication\\dtos\\booking\\updatebookingdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapplication\\dtos\\booking\\createbookingdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|solutionrelative:arenaapplication\\dtos\\booking\\createbookingdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapplication\\dtos\\booking\\bookingdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C430F9A4-D574-7BF1-6337-DA3DE75BF7AB}|ArenaApplication\\ArenaApplication.csproj|solutionrelative:arenaapplication\\dtos\\booking\\bookingdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|solutionrelative:arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
@@ -66,8 +86,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 13,
+          "SelectedChildIndex": 11,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "WorkoutPlan.cs",
+              "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutPlan.cs",
+              "RelativeDocumentMoniker": "ArenaDomain\\Entities\\Workout\\WorkoutPlan.cs",
+              "ToolTip": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutPlan.cs",
+              "RelativeToolTip": "ArenaDomain\\Entities\\Workout\\WorkoutPlan.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAAAcwB0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T23:41:29.675Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
@@ -110,7 +143,59 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "WorkoutPlanDto.cs",
+              "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\WorkoutPlan\\WorkoutPlanDto.cs",
+              "RelativeDocumentMoniker": "ArenaApplication\\Dtos\\WorkoutPlan\\WorkoutPlanDto.cs",
+              "ToolTip": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\WorkoutPlan\\WorkoutPlanDto.cs",
+              "RelativeToolTip": "ArenaApplication\\Dtos\\WorkoutPlan\\WorkoutPlanDto.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAA0wBQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T23:17:03.423Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "BookingDto.cs",
+              "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\Booking\\BookingDto.cs",
+              "RelativeDocumentMoniker": "ArenaApplication\\Dtos\\Booking\\BookingDto.cs",
+              "ToolTip": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\Booking\\BookingDto.cs",
+              "RelativeToolTip": "ArenaApplication\\Dtos\\Booking\\BookingDto.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAA0wBYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T23:15:30.838Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 2,
+              "Title": "UpdateBookingDto.cs",
+              "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\Booking\\UpdateBookingDto.cs",
+              "RelativeDocumentMoniker": "ArenaApplication\\Dtos\\Booking\\UpdateBookingDto.cs",
+              "ToolTip": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\Booking\\UpdateBookingDto.cs",
+              "RelativeToolTip": "ArenaApplication\\Dtos\\Booking\\UpdateBookingDto.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAUwBAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T22:57:01.698Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CreateBookingDto.cs",
+              "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\Booking\\CreateBookingDto.cs",
+              "RelativeDocumentMoniker": "ArenaApplication\\Dtos\\Booking\\CreateBookingDto.cs",
+              "ToolTip": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaApplication\\Dtos\\Booking\\CreateBookingDto.cs",
+              "RelativeToolTip": "ArenaApplication\\Dtos\\Booking\\CreateBookingDto.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAcwBkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-23T19:38:57.015Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "DbContextExtension.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\DbContextExtension.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\DbContextExtension.cs",
@@ -123,7 +208,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 9,
               "Title": "20260523110543_InitialEntities.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Migrations\\20260523110543_InitialEntities.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Migrations\\20260523110543_InitialEntities.cs",
@@ -135,7 +220,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 10,
               "Title": "AppDbContext.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Data\\AppDbContext.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\AppDbContext.cs",
@@ -147,7 +232,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 5,
               "Title": "appsettings.Development.json",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaAPI\\appsettings.Development.json",
               "RelativeDocumentMoniker": "ArenaAPI\\appsettings.Development.json",
@@ -160,7 +245,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 6,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaAPI\\appsettings.json",
               "RelativeDocumentMoniker": "ArenaAPI\\appsettings.json",
@@ -173,7 +258,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 8,
               "Title": ".gitignore",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\.gitignore",
               "RelativeDocumentMoniker": ".gitignore",
@@ -185,7 +270,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 11,
               "Title": "WorkoutExerciseConfiguration.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\WorkoutExerciseConfiguration.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\WorkoutExerciseConfiguration.cs",
@@ -197,7 +282,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 12,
               "Title": "WorkoutDayConfiguration.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\WorkoutDayConfiguration.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\WorkoutDayConfiguration.cs",
@@ -209,7 +294,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 13,
               "Title": "UserSubscriptionConfiguration.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\UserSubscriptionConfiguration.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\UserSubscriptionConfiguration.cs",
@@ -221,7 +306,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 14,
               "Title": "NutritionPlanConfiguration.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\NutritionPlanConfiguration.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\NutritionPlanConfiguration.cs",
@@ -233,7 +318,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 15,
               "Title": "NotificationConfiguration.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Data\\Configurations\\NotificationConfiguration.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Data\\Configurations\\NotificationConfiguration.cs",
@@ -245,7 +330,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 16,
               "Title": "WorkoutLog.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutLog.cs",
               "RelativeDocumentMoniker": "ArenaDomain\\Entities\\Workout\\WorkoutLog.cs",
@@ -257,7 +342,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 17,
               "Title": "WorkoutExercise.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutExercise.cs",
               "RelativeDocumentMoniker": "ArenaDomain\\Entities\\Workout\\WorkoutExercise.cs",
@@ -269,7 +354,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 18,
               "Title": "WorkoutDay.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaDomain\\Entities\\Workout\\WorkoutDay.cs",
               "RelativeDocumentMoniker": "ArenaDomain\\Entities\\Workout\\WorkoutDay.cs",

@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|solutionrelative:arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|solutionrelative:arenaapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenainfrastructure\\dbcontextextension.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\dbcontextextension.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -11,16 +19,8 @@
       "RelativeMoniker": "D:0:0:{089100B1-113F-4E66-888A-E83F3999EAFD}|Solution Items{089100B1-113F-4E66-888A-E83F3999EAFD}|solutionrelative:.gitignore||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|solutionrelative:arenaapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenainfrastructure\\migrations\\20260523110543_initialentities.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|solutionrelative:arenainfrastructure\\migrations\\20260523110543_initialentities.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{38C6532D-DDC4-49B5-B100-93C7813F10BF}|ArenaApi\\ArenaApi.csproj|solutionrelative:arenaapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{840221C5-24AD-9D7F-F0FE-602D3EAA54E0}|ArenaInfrastructure\\ArenaInfrastructure.csproj|c:\\users\\dell\\desktop\\.net iti sohag\\final_project\\arina\\arenabackend\\arenainfrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -66,7 +66,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 10,
+          "SelectedChildIndex": 13,
           "Children": [
             {
               "$type": "Bookmark",
@@ -110,7 +110,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "DbContextExtension.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\DbContextExtension.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\DbContextExtension.cs",
@@ -123,7 +123,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "20260523110543_InitialEntities.cs",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaInfrastructure\\Migrations\\20260523110543_InitialEntities.cs",
               "RelativeDocumentMoniker": "ArenaInfrastructure\\Migrations\\20260523110543_InitialEntities.cs",
@@ -131,8 +131,7 @@
               "RelativeToolTip": "ArenaInfrastructure\\Migrations\\20260523110543_InitialEntities.cs",
               "ViewState": "AgIAAFsAAAAAAAAAAAAQwHgAAABcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-23T11:05:44.295Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-23T11:05:44.295Z"
             },
             {
               "$type": "Document",
@@ -148,19 +147,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 0,
               "Title": "appsettings.Development.json",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaAPI\\appsettings.Development.json",
               "RelativeDocumentMoniker": "ArenaAPI\\appsettings.Development.json",
               "ToolTip": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaAPI\\appsettings.Development.json",
               "RelativeToolTip": "ArenaAPI\\appsettings.Development.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAAAAgAAAAzAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-05-23T10:20:05.112Z"
+              "WhenOpened": "2026-05-23T10:20:05.112Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\ArenaAPI\\appsettings.json",
               "RelativeDocumentMoniker": "ArenaAPI\\appsettings.json",
@@ -173,7 +173,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": ".gitignore",
               "DocumentMoniker": "C:\\Users\\dell\\Desktop\\.NET ITI SOHAG\\final_project\\Arina\\ArenaBackend\\.gitignore",
               "RelativeDocumentMoniker": ".gitignore",
@@ -181,8 +181,7 @@
               "RelativeToolTip": ".gitignore",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-05-23T10:02:15.232Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-23T10:02:15.232Z"
             },
             {
               "$type": "Document",
