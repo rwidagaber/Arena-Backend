@@ -1,8 +1,8 @@
-﻿namespace ArenaAPI.DTOs.Payment
+﻿namespace ArenaApplication.Dtos.Payment
 {
     public class PaymentDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string MemberName { get; set; }
         public string PlanName { get; set; }
         public decimal Amount { get; set; }

@@ -1,5 +1,6 @@
-﻿
-namespace ArenaAPI.DTOs.SubscriptionPlan
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ArenaApplication.Dtos.SubscriptionPlan
 {
     public class CreateSubscriptionPlanDto
     {

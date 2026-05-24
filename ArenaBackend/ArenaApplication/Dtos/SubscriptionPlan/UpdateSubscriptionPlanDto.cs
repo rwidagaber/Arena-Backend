@@ -1,4 +1,4 @@
-﻿namespace ArenaAPI.DTOs.SubscriptionPlan
+﻿namespace ArenaApplication.Dtos.SubscriptionPlan
 {
 
     public class UpdateSubscriptionPlanDto
