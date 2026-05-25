@@ -1,4 +1,4 @@
-using ArenaApi.ValidatorConfig;
+using ArenaApi.Configurations.ValidatorConfig;
 using ArenaInfrastructure;
 using Scalar.AspNetCore;
 namespace ArenaAPI
