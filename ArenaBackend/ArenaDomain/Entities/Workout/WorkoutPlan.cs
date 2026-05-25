@@ -24,5 +24,6 @@ namespace ArenaDomain.Entities.Workout
 
         // Navigation
         public virtual ICollection<WorkoutDay> WorkoutDays { get; set; } = [];
+
     }
 }
