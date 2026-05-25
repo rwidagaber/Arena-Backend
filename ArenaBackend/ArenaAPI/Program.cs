@@ -1,5 +1,6 @@
 using ArenaApi.ValidatorConfig;
 using ArenaInfrastructure;
+using Scalar.AspNetCore;
 namespace ArenaAPI
 {
     public class Program
@@ -14,6 +15,8 @@ namespace ArenaAPI
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            builder.Services.AddValidators();
+
 
             builder.Services.ConfigureDbContext(builder.Configuration);
             var app = builder.Build();
@@ -22,9 +25,10 @@ namespace ArenaAPI
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
+
             }
 
-            builder.Services.AddValidators();
 
             app.UseHttpsRedirection();
 
