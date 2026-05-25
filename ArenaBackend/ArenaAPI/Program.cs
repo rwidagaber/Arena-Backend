@@ -1,4 +1,5 @@
 using ArenaInfrastructure;
+using ArenaApplication.Mappers;
 namespace ArenaAPI
 {
     public class Program
@@ -13,6 +14,8 @@ namespace ArenaAPI
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            // Register AutoMapper
+            builder.Services.AddAutoMapper(typeof(WorkoutMappingProfile));
 
             builder.Services.ConfigureDbContext(builder.Configuration);
             var app = builder.Build();
