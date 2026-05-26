@@ -1,5 +1,7 @@
 using ArenaApi.ValidatorConfig;
+using ArenaApplication.Mappers;
 using ArenaInfrastructure;
+using Mapster;
 namespace ArenaAPI
 {
     public class Program
@@ -16,6 +18,10 @@ namespace ArenaAPI
 
 
             builder.Services.ConfigureDbContext(builder.Configuration);
+
+            var mapsterConfig = TypeAdapterConfig.GlobalSettings;
+            mapsterConfig.Scan(typeof(PaymentMappingConfig).Assembly);
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

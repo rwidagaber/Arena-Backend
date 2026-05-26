@@ -15,7 +15,7 @@ namespace ArenaApplication.IServices.Payment
         Task<Result<PaymentDto>> GetByIdAsync(Guid PaymentId);
 
         //Admin View
-        Task<Result<IEnumerable<PaymentDto>>> GetAllAsyc(PaymentFilterDto? filter = null);
+        Task<Result<IEnumerable<PaymentDto>>> GetAllAsync(PaymentFilterDto? filter = null);
 
         //inCash Status
         Task<Result<PaymentDto>> UpdateStatusAsync(Guid PaymentId, UpdatePaymentStatusDto dto);
