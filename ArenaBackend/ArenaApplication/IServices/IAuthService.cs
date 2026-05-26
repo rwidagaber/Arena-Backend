@@ -21,5 +21,6 @@ namespace ArenaApplication.IServices
         Task<Result> ChangePasswordAsync(Guid userId, ChangePasswordDto dto);
         Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<Result> ResetPasswordAsync(ResetPasswordDto dto);
+
     }
 }

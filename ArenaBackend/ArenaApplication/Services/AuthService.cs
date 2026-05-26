@@ -63,10 +63,10 @@ namespace ArenaApplication.Services
             var memberProfile = new MemberProfile
             {
                 UserId = user.Id,
-                DateOfBirth = dto.Birthday.HasValue
-              ? dto.Birthday.Value.ToDateTime(TimeOnly.MinValue)
-              : DateTime.UtcNow
+                DateOfBirth = dto.Birthday.ToDateTime(TimeOnly.MinValue)
             };
+
+            await _authRepository.CreateMemberProfileAsync(memberProfile);
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
@@ -176,10 +176,9 @@ namespace ArenaApplication.Services
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
             if (user is null)
-                return Result.Success(); // silent — don't reveal if email exists
+                return Result.Success();
 
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            // TODO: send resetToken via email service
 
             return Result.Success();
         }

@@ -1,4 +1,5 @@
-﻿using ArenaDomain.Entities.Subscription;
+﻿using ArenaApplication.Dtos.UserSupscriptionDto;
+using ArenaDomain.Entities.Subscription;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,6 +23,6 @@ namespace ArenaApplication.Dtos.ProfileDtos
         public string? ProfileImage { get; set; }
         public DateOnly? Birthday { get; set; }
 
-        public UserSubscription? ActiveSubscription { get; set; }
+        public UserSubscriptionDto? ActiveSubscription { get; set; }
     }
 }

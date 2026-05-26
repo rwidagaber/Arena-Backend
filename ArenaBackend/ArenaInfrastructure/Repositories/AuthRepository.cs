@@ -1,4 +1,5 @@
-﻿using ArenaDomain.Entities.User;
+﻿using ArenaDomain.Entities;
+using ArenaDomain.Entities.User;
 using ArenaDomain.Interfacees;
 using ArenaDomain.Shared;
 using ArenaInfrastructure.Data;
@@ -65,6 +66,12 @@ namespace ArenaInfrastructure.Repositories
             foreach (var token in tokens)
                 token.IsRevoked = true;
 
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task CreateMemberProfileAsync(MemberProfile memberProfile)
+        {
+            await _context.MemberProfiles.AddAsync(memberProfile);
             await _context.SaveChangesAsync();
         }
     }
