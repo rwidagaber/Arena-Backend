@@ -2,6 +2,7 @@
 using ArenaApplication.Dtos.loginDto;
 using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.RegisterDto;
+using ArenaApplication.Dtos.UserSupscriptionDto;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
@@ -62,7 +63,9 @@ namespace ArenaApplication.Services
             var memberProfile = new MemberProfile
             {
                 UserId = user.Id,
-                DateOfBirth = dto.Birthday ?? DateOnly.MaxValue
+                DateOfBirth = dto.Birthday.HasValue
+              ? dto.Birthday.Value.ToDateTime(TimeOnly.MinValue)
+              : DateTime.UtcNow
             };
 
             var response = await GenerateAuthResponseAsync(user);
@@ -140,11 +143,14 @@ namespace ArenaApplication.Services
                                     : null,
                 ActiveSubscription = activeSubscription == null ? null : new UserSubscriptionDto
                 {
-                    PlanName = activeSubscription.Plan.Name,
+                    Id = activeSubscription.Id,
+                    PlanNameEn = activeSubscription.Plan.NameEn,
+                    PlanNameAr = activeSubscription.Plan.NameAr,
                     StartDate = activeSubscription.StartDate,
                     EndDate = activeSubscription.EndDate,
-                    Status = activeSubscription.Status.ToString(),
-                    RemainingSessions = activeSubscription.RemainingSessions
+                    Status = activeSubscription.Status,
+                    RemainingSessions = activeSubscription.RemainingSessions,
+                    ReminderSent = activeSubscription.ReminderSent
                 }
             };
 
