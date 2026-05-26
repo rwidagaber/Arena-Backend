@@ -2,7 +2,7 @@
 using ArenaApplication.IServices.Payment;
 using ArenaDomain.Entities.Payments;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -17,15 +17,18 @@ namespace ArenaApplication.Services.Payment
     {
         private readonly IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> _paymentRepo;
         private readonly IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> _subscriptionRepo;
+        private readonly IUnitOfWork _unitOfWork;
       
         
         public PaymentService(
             IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> paymentRepo,
-            IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepo
+            IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepo,
+            IUnitOfWork unitOfWork
             )
         {
             _paymentRepo = paymentRepo;
             _subscriptionRepo = subscriptionRepo;
+            _unitOfWork = unitOfWork;
         } 
 
         public async Task<Result<PaymentDto>> CreateAsync(CreatePaymentDto dto, Guid userId)
@@ -34,10 +37,24 @@ namespace ArenaApplication.Services.Payment
             .Include(s=>s.Plan)
             .Include(s=>s.MemberProfile)
             .FirstOrDefaultAsync(s => s.Id == dto.UserSubscriptionId && s.MemberProfile.UserId == userId);
-        if (subscription == null)
+
+            if (subscription == null)
             {
                 return Result<PaymentDto>.Failure("Subscription NotFound");
             }
+
+            var existingPayment = await _paymentRepo.GetAll()
+            .FirstOrDefaultAsync(p =>
+                p.UserSubscriptionId == dto.UserSubscriptionId &&
+                p.Status == PaymentStatus.Paid);
+
+            if (existingPayment != null)
+            {
+                return Result<PaymentDto>
+                    .Failure("Subscription already paid.");
+            }
+
+
 
             decimal secureAmount = subscription.Plan.Price;
 
@@ -55,7 +72,7 @@ namespace ArenaApplication.Services.Payment
             };
                 await _paymentRepo.AddAsync(payment);
 
-                //await _paymentRepo.saveChanges??
+            await _unitOfWork.SaveChangesAsync();
 
 
             var paymentDto = payment.Adapt<PaymentDto>();
@@ -67,9 +84,13 @@ namespace ArenaApplication.Services.Payment
         }
 
         //(Admin)
-        public async Task<Result<IEnumerable<PaymentDto>>> GetAllAsyc(PaymentFilterDto? filter = null)
+        public async Task<Result<IEnumerable<PaymentDto>>> GetAllAsync(PaymentFilterDto? filter = null)
         {
-            var query = _paymentRepo.GetAll();
+            var query = _paymentRepo.GetAll()
+               .Include(p => p.User)
+               .Include(p => p.UserSubscription).ThenInclude(s => s.Plan)
+               .Cast<ArenaDomain.Entities.Payments.Payment>();
+
 
             if (filter is not null)
             {
@@ -105,13 +126,16 @@ namespace ArenaApplication.Services.Payment
 
         public async Task<Result<PaymentDto>> GetByIdAsync(Guid PaymentId)
         {
-            var payment = await _paymentRepo.GetAll().FirstOrDefaultAsync(p => p.Id == PaymentId);
-            if(payment is null)
+            var payment = await _paymentRepo.GetAll()
+            .Include(p => p.User)
+            .Include(p => p.UserSubscription).ThenInclude(s => s.Plan)
+            .FirstOrDefaultAsync(p => p.Id == PaymentId);
+            if (payment is null)
             {
                 return Result<PaymentDto>.Failure("Payment not found.");
             }
-            var paymentDro = payment.Adapt<PaymentDto>();
-            return Result<PaymentDto>.Success(paymentDro);
+            var paymentDto = payment.Adapt<PaymentDto>();
+            return Result<PaymentDto>.Success(paymentDto);
         }
 
         public async Task<Result<IEnumerable<PaymentDto>>> GetMyPaymentsAsync(Guid userId)
@@ -150,6 +174,7 @@ namespace ArenaApplication.Services.Payment
             payment.PaymentDate = DateTime.UtcNow;
 
             await _paymentRepo.UpdateAsync(payment);
+            await _unitOfWork.SaveChangesAsync();
             return Result.Success();
 
         }
@@ -172,6 +197,7 @@ namespace ArenaApplication.Services.Payment
             payment.FailureReason = reason;
 
             await _paymentRepo.UpdateAsync(payment);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Success();
 
@@ -187,9 +213,13 @@ namespace ArenaApplication.Services.Payment
             {
                 return Result<PaymentDto>.Failure("Payment not found.");
             }
-
-            payment.Status = dto.Status;
             payment.FailureReason = dto.FailureReason;
+
+            if (payment.Status == PaymentStatus.Paid)
+            {
+                return Result<PaymentDto>
+                    .Failure("Paid payment cannot be modified.");
+            }
 
             if (dto.Status == ArenaDomain.Enums.PaymentStatus.Paid)
             {
@@ -198,7 +228,7 @@ namespace ArenaApplication.Services.Payment
 
             await _paymentRepo.UpdateAsync(payment);
 
-            // وزي ما اتفقنا، هتسأل الليدر لو الـ Repo بيعمل Save لوحده أو هيرجع الـ context بعدين.
+            await _unitOfWork.SaveChangesAsync();
 
             var paymentDto = payment.Adapt<PaymentDto>();
 

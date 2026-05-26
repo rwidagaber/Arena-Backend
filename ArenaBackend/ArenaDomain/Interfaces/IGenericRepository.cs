@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ArenaDomain.Interfacees
+namespace ArenaDomain.Interfaces
 {
     public interface IGenericRepository<TEntity, TId> where TEntity : BaseEntity<TId>
     {
