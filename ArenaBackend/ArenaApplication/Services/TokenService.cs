@@ -24,7 +24,7 @@ namespace ArenaApplication.Services
         public string GenerateAccessToken(ApplicationUser user)
         {
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+                Encoding.UTF8.GetBytes(_jwtSettings.Key));
 
             var claims = new Claim[]
             {
@@ -56,7 +56,7 @@ namespace ArenaApplication.Services
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+                Encoding.UTF8.GetBytes(_jwtSettings.Key));
 
             var validation = new TokenValidationParameters
             {

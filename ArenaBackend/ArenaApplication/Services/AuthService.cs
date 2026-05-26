@@ -18,7 +18,7 @@ using System.Text;
 
 namespace ArenaApplication.Services
 {
-    public class AuthService
+    public class AuthService :IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IAuthRepository _authRepository;
