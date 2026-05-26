@@ -5,12 +5,14 @@ using ArenaApplication.Dtos.RegisterDto;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
+using ArenaDomain.Enums;
 using ArenaDomain.Interfacees;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text;
 
 namespace ArenaApplication.Services
@@ -34,11 +36,11 @@ namespace ArenaApplication.Services
             _jwtSettings = jwtSettings.Value;
         }
 
-        public async Task<AuthResponseDto> RegisterAsync(UserRegisterDto dto)
+        public async Task<Result<AuthResponseDto>> RegisterAsync(UserRegisterDto dto)
         {
             var existingUser = await _authRepository.GetByEmailAsync(dto.Email);
             if (existingUser is not null)
-                throw new Exception("Email is already registered");
+                return Result<AuthResponseDto>.Failure("Email is already registered");
 
             var user = new ApplicationUser
             {
@@ -52,63 +54,74 @@ namespace ArenaApplication.Services
 
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-                throw new Exception(result.Errors.First().Description);
+                return Result<AuthResponseDto>.Failure(
+                    result.Errors.Select(e => e.Description).ToArray());
 
             await _userManager.AddToRoleAsync(user, "GymMember");
 
             var memberProfile = new MemberProfile
             {
-                ApplicationUserId = user.Id
+                UserId = user.Id,
+                DateOfBirth = dto.Birthday ?? DateOnly.MaxValue
             };
 
-            return await GenerateAuthResponseAsync(user);
+            var response = await GenerateAuthResponseAsync(user);
+            return Result<AuthResponseDto>.Success(response);
         }
 
-        public async Task<AuthResponseDto> LoginAsync(UserloginDto dto)
+        public async Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto)
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
             if (user is null || !await _userManager.CheckPasswordAsync(user, dto.Password))
-                throw new Exception("Invalid email or password");
+                return Result<AuthResponseDto>.Failure("Invalid email or password");
 
             if (!user.IsActive)
-                throw new Exception("Account is deactivated");
+                return Result<AuthResponseDto>.Failure("Account is deactivated");
 
-            return await GenerateAuthResponseAsync(user);
+            var response = await GenerateAuthResponseAsync(user);
+            return Result<AuthResponseDto>.Success(response);
         }
 
-        public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenDto dto)
+        public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
-            var userId = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdStr = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId is null)
-                throw new Exception("Invalid token");
+            if (userIdStr is null)
+                return Result<AuthResponseDto>.Failure("Invalid token");
+
+            var userId = Guid.Parse(userIdStr);
 
             var storedToken = await _authRepository.GetRefreshTokenAsync(dto.RefreshToken, userId);
             if (storedToken is null)
-                throw new Exception("Invalid or expired refresh token");
+                return Result<AuthResponseDto>.Failure("Invalid or expired refresh token");
 
             await _authRepository.RevokeRefreshTokenAsync(storedToken);
 
-            var user = await _userManager.FindByIdAsync(userId);
-            return await GenerateAuthResponseAsync(user!);
+            var user = await _userManager.FindByIdAsync(userIdStr);
+            if (user is null)
+                return Result<AuthResponseDto>.Failure("User not found");
+
+            var response = await GenerateAuthResponseAsync(user);
+            return Result<AuthResponseDto>.Success(response);
         }
 
-        public async Task LogoutAsync(string userId)
+        public async Task<Result> LogoutAsync(Guid userId)
         {
             await _authRepository.RevokeAllRefreshTokensAsync(userId);
+            return Result.Success();
         }
 
-        public async Task<GetProfileDto> GetProfileAsync(string userId)
+        public async Task<Result<GetProfileDto>> GetProfileAsync(Guid userId)
         {
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
-                throw new Exception("User not found");
+                return Result<GetProfileDto>.Failure("User not found");
 
-            var activeSubscription = user.MemberProfile?.UserSubscriptions
-                .FirstOrDefault(s => s.Status == "Active");
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
 
-            return new UserProfileDto
+            var profile = new GetProfileDto
             {
                 Id = user.Id,
                 FirstName = user.FirstName,
@@ -116,57 +129,68 @@ namespace ArenaApplication.Services
                 Email = user.Email!,
                 PhoneNumber = user.PhoneNumber,
                 PreferredLanguage = user.PreferredLanguage,
-                Country = user.Country,
                 IsActive = user.IsActive,
-                Weight = user.MemberProfile?.Weight,
-                Height = user.MemberProfile?.Height,
-                BMI = user.MemberProfile?.BMI,
-                Gender = user.MemberProfile?.Gender,
-                ProfileImage = user.MemberProfile?.ProfileImage,
+                Weight = (double?)user.MemberProfile?.Weight,
+                Height = (double?)user.MemberProfile?.Height,
+                BMI = (double?)user.MemberProfile?.BMI,
+                Gender = user.MemberProfile?.Gender.ToString(),
+                ProfileImage = user.MemberProfile?.ProfileImageUrl,
+                Birthday = user.MemberProfile?.DateOfBirth != null
+                                    ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
+                                    : null,
                 ActiveSubscription = activeSubscription == null ? null : new UserSubscriptionDto
                 {
-                    PlanName = activeSubscription.SubscriptionPlan.Name,
+                    PlanName = activeSubscription.Plan.Name,
                     StartDate = activeSubscription.StartDate,
                     EndDate = activeSubscription.EndDate,
-                    Status = activeSubscription.Status,
+                    Status = activeSubscription.Status.ToString(),
                     RemainingSessions = activeSubscription.RemainingSessions
                 }
             };
+
+            return Result<GetProfileDto>.Success(profile);
         }
 
-        public async Task ChangePasswordAsync(string userId, ChangePasswordDto dto)
+        public async Task<Result> ChangePasswordAsync(Guid userId, ChangePasswordDto dto)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user is null)
-                throw new Exception("User not found");
+                return Result.Failure("User not found");
 
             var result = await _userManager.ChangePasswordAsync(
                 user, dto.OldPassword, dto.NewPassword);
 
             if (!result.Succeeded)
-                throw new Exception(result.Errors.First().Description);
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+            return Result.Success();
         }
 
-        public async Task ForgotPasswordAsync(ForgotPasswordDto dto)
-        {
-            var user = await _authRepository.GetByEmailAsync(dto.Email);
-            if (user is null) return;
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            // TODO: send token via email service
-        }
-
-        public async Task ResetPasswordAsync(ResetPasswordDto dto)
+        public async Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
             if (user is null)
-                throw new Exception("User not found");
+                return Result.Success(); // silent — don't reveal if email exists
+
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            // TODO: send resetToken via email service
+
+            return Result.Success();
+        }
+
+        public async Task<Result> ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            var user = await _authRepository.GetByEmailAsync(dto.Email);
+            if (user is null)
+                return Result.Failure("User not found");
 
             var result = await _userManager.ResetPasswordAsync(
                 user, dto.Token, dto.NewPassword);
 
             if (!result.Succeeded)
-                throw new Exception(result.Errors.First().Description);
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+            return Result.Success();
         }
 
         private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)

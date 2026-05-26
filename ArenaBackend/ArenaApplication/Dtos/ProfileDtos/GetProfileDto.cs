@@ -13,7 +13,6 @@ namespace ArenaApplication.Dtos.ProfileDtos
         public string Email { get; set; } = null!;
         public string? PhoneNumber { get; set; }
         public string PreferredLanguage { get; set; } = null!;
-        public string Country { get; set; } = null!;
         public bool IsActive { get; set; }
 
         public double? Weight { get; set; }

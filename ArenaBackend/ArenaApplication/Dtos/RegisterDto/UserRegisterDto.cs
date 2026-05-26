@@ -16,6 +16,5 @@ namespace ArenaApplication.Dtos.RegisterDto
         public DateOnly Birthday { get; set; }
  
 
-
     }
 }
