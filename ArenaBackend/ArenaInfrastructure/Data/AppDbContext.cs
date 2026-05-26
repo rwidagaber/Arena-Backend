@@ -6,7 +6,10 @@ using ArenaDomain.Entities.Notifications;
 using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Entities.Payments;
 using ArenaDomain.Entities.Subscription;
+using ArenaDomain.Entities.User;
 using ArenaDomain.Entities.Workout;
+using ArenaDomain.Shared;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -14,7 +17,7 @@ using System.Text;
 
 namespace ArenaInfrastructure.Data
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext(options)
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
     {
         // ── Bookings ──────────────────────────────────────────────────────────────
         public DbSet<Booking> Bookings { get; set; }
@@ -46,7 +49,13 @@ namespace ArenaInfrastructure.Data
         // ── User ──────────────────────────────────────────────────────────────────
         public DbSet<MemberProfile> MemberProfiles { get; set; }
 
+        // ── RefreshToken ───────────────────────────────────────────────────────────────
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+
         // ── Workout ───────────────────────────────────────────────────────────────
+
+
         public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
         public DbSet<WorkoutDay> WorkoutDays { get; set; }
         public DbSet<WorkoutExercise> WorkoutExercises { get; set; }
