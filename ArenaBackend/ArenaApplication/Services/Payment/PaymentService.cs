@@ -73,15 +73,18 @@ namespace ArenaApplication.Services.Payment
             };
                 await _paymentRepo.AddAsync(payment);
 
-            var iframeUrl = await _paymentGateway.GetIframeUrlAsync(
+            var gatewayResponse = await _paymentGateway.GetIframeUrlAsync(
                 payment.Amount,
                 "test@test.com",
                 "Khaled");
+
+            payment.PaymentIntentId = gatewayResponse.OrderId;
 
             await _unitOfWork.SaveChangesAsync();
 
 
             var paymentDto = payment.Adapt<PaymentDto>();
+            paymentDto.IframeUrl = gatewayResponse.IframeUrl;
 
             return Result<PaymentDto>.Success(paymentDto);
 
@@ -178,6 +181,22 @@ namespace ArenaApplication.Services.Payment
             payment.TransactionId = transactionId;
             payment.Status= ArenaDomain.Enums.PaymentStatus.Paid;
             payment.PaymentDate = DateTime.UtcNow;
+
+            var subscription = await _subscriptionRepo.GetAll()
+            .Include(s => s.Plan)
+            .FirstOrDefaultAsync(s => s.Id == payment.UserSubscriptionId);
+
+            if (subscription is not null)
+            {
+                subscription.Status = SubscriptionStatus.Active;
+
+                subscription.StartDate = DateTime.UtcNow;
+
+                subscription.EndDate = DateTime.UtcNow.AddMonths(
+                    subscription.Plan.DurationMonths);
+
+                await _subscriptionRepo.UpdateAsync(subscription);
+            }
 
             await _paymentRepo.UpdateAsync(payment);
             await _unitOfWork.SaveChangesAsync();
