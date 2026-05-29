@@ -1,5 +1,12 @@
 using ArenaApi.ValidatorConfig;
+using ArenaApplication.IServices;
+using ArenaApplication.Services;
+using ArenaDomain.Entities.Bookings;
+using ArenaDomain.Interfacees;
 using ArenaInfrastructure;
+using ArenaInfrastructure.Repositories;
+
+
 namespace ArenaAPI
 {
     public class Program
@@ -8,28 +15,32 @@ namespace ArenaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
 
+            builder.Services.AddEndpointsApiExplorer();
 
-            builder.Services.ConfigureDbContext(builder.Configuration);
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
+            builder.Services.AddSwaggerGen();
 
             builder.Services.AddValidators();
+
+            builder.Services.ConfigureDbContext(builder.Configuration);
+
+            builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();
+
+            builder.Services.AddScoped<IBookingService, BookingService>();
+
+            var app = builder.Build();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+
+                app.UseSwaggerUI();
+            }
 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

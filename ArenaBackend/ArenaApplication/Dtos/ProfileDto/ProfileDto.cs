@@ -1,5 +1,4 @@
-﻿using ArenaDomain.Entities.Subscription;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -20,7 +19,6 @@ namespace ArenaApplication.Dtos.ProfileDto
         public string? Gender { get; set; }
         public string? ProfileImage { get; set; }
 
-
-        public SubscriptionPlan? SubscriptionPlan { get; set; }
+        public ArenaDomain.Entities.Subscription.SubscriptionPlan? SubscriptionPlan { get; set; }
     }
 }
