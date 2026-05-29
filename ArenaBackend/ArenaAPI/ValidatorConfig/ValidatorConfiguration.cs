@@ -1,4 +1,4 @@
-﻿using ArenaApplication.Dtos.Validators;
+﻿using ArenaApplication.Dtos.ValidatorDto;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;

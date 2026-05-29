@@ -1,11 +1,12 @@
-﻿using ArenaDomain.Entities.Subscription;
+﻿using ArenaApplication.Dtos.SubscriptionPlan;
+using ArenaDomain.Entities.Subscription;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace ArenaApplication.Dtos.ProfileDto
 {
-    public class ProfileDto
+    public class subscriptionPlanDto
     {
         public Guid Id { get; set; }
         public string FirstName { get; set; } = null!;
@@ -21,6 +22,7 @@ namespace ArenaApplication.Dtos.ProfileDto
         public string? ProfileImage { get; set; }
 
 
-        public SubscriptionPlan? SubscriptionPlan { get; set; }
+
+        public SubscriptionPlanDto? SubscriptionPlan { get; set; }
     }
 }

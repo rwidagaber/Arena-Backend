@@ -18,35 +18,36 @@ namespace ArenaApplication.Services.Payment
         private readonly IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> _paymentRepo;
         private readonly IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> _subscriptionRepo;
         private readonly IUnitOfWork _unitOfWork;
-      
-        
+        private readonly IPaymentGatewayService _paymentGateway;
+
+
         public PaymentService(
             IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> paymentRepo,
             IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepo,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+             IPaymentGatewayService paymentGateway
             )
         {
             _paymentRepo = paymentRepo;
             _subscriptionRepo = subscriptionRepo;
             _unitOfWork = unitOfWork;
+            _paymentGateway = paymentGateway;
         } 
 
         public async Task<Result<PaymentDto>> CreateAsync(CreatePaymentDto dto, Guid userId)
         {
-            var subscription = await _subscriptionRepo.GetAll()
-            .Include(s=>s.Plan)
-            .Include(s=>s.MemberProfile)
-            .FirstOrDefaultAsync(s => s.Id == dto.UserSubscriptionId && s.MemberProfile.UserId == userId);
+            
+            var subscription = _subscriptionRepo.GetAll()
+                    .Include(s => s.Plan)
+                .FirstOrDefault(s => s.Id == dto.UserSubscriptionId);
 
             if (subscription == null)
             {
                 return Result<PaymentDto>.Failure("Subscription NotFound");
             }
 
-            var existingPayment = await _paymentRepo.GetAll()
-            .FirstOrDefaultAsync(p =>
-                p.UserSubscriptionId == dto.UserSubscriptionId &&
-                p.Status == PaymentStatus.Paid);
+            var existingPayment = _paymentRepo.GetAll()
+                .FirstOrDefault(p => p.UserSubscriptionId == dto.UserSubscriptionId && p.Status == PaymentStatus.Paid);
 
             if (existingPayment != null)
             {
@@ -71,6 +72,11 @@ namespace ArenaApplication.Services.Payment
                 PaymentIntentId = null
             };
                 await _paymentRepo.AddAsync(payment);
+
+            var iframeUrl = await _paymentGateway.GetIframeUrlAsync(
+                payment.Amount,
+                "test@test.com",
+                "Khaled");
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -157,10 +163,10 @@ namespace ArenaApplication.Services.Payment
 
         public async Task<Result> MarkAsCompletedAsync(string transactionId, string paymentIntentId)
         {
-            var payment = await _paymentRepo.GetAll()
-                .FirstOrDefaultAsync(p => p.PaymentIntentId == paymentIntentId);
+            var payment = _paymentRepo.GetAll()
+                .FirstOrDefault(p => p.PaymentIntentId == paymentIntentId);
 
-            if(payment is null)
+            if (payment is null)
             {
                 return Result.Failure("Payment not found with the provided Intent ID.");
             }
@@ -181,8 +187,8 @@ namespace ArenaApplication.Services.Payment
 
         public async Task<Result> MarkAsFailedAsync(string paymentIntentId, string reason)
         {
-            var payment = await _paymentRepo.GetAll()
-                 .FirstOrDefaultAsync(p => p.PaymentIntentId == paymentIntentId);
+            var payment = _paymentRepo.GetAll()
+         .FirstOrDefault(p => p.PaymentIntentId == paymentIntentId);
 
             if (payment is null)
             {
@@ -213,13 +219,15 @@ namespace ArenaApplication.Services.Payment
             {
                 return Result<PaymentDto>.Failure("Payment not found.");
             }
-            payment.FailureReason = dto.FailureReason;
 
             if (payment.Status == PaymentStatus.Paid)
             {
                 return Result<PaymentDto>
                     .Failure("Paid payment cannot be modified.");
             }
+            payment.FailureReason = dto.FailureReason;
+
+            payment.Status = dto.Status;
 
             if (dto.Status == ArenaDomain.Enums.PaymentStatus.Paid)
             {
