@@ -72,7 +72,7 @@ namespace ArenaApi.Controllers
         }
         //Getway payment Success
         [HttpPost("webhook/completed")]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public async Task<IActionResult> WebhookCompleted([FromBody] WebhookDto dto)
         {
             var result = await _paymentService.MarkAsCompletedAsync(

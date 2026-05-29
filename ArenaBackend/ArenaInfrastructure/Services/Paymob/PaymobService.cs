@@ -1,4 +1,5 @@
-﻿using ArenaApplication.IServices.Payment;
+﻿using ArenaApplication.Dtos.Payment;
+using ArenaApplication.IServices.Payment;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -109,7 +110,7 @@ namespace ArenaInfrastructure.Services
         }
 
         // ── Main Method: كل الـ Steps في واحدة ──────────────────
-        public async Task<string> GetIframeUrlAsync(
+        public async Task<PaymentGatewayResponse> GetIframeUrlAsync(
             decimal amount,
             string userEmail,
             string userName)
@@ -119,7 +120,13 @@ namespace ArenaInfrastructure.Services
             var paymentKey = await GetPaymentKeyAsync(
                                  authToken, orderId, amount, userEmail, userName);
 
-            return $"https://accept.paymob.com/api/acceptance/iframes/{_iframeId}?payment_token={paymentKey}";
+            return new PaymentGatewayResponse
+            {
+                IframeUrl =
+        $"https://accept.paymob.com/api/acceptance/iframes/{_iframeId}?payment_token={paymentKey}",
+
+                OrderId = orderId.ToString()
+            };
         }
 
         // ── HMAC Verification ────────────────────────────────────
