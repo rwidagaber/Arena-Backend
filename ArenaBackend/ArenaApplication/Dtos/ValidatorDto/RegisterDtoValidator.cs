@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 
 
-namespace ArenaApplication.Dtos.Validators
+namespace ArenaApplication.Dtos.ValidatorDto
 {
     public class RegisterDtoValidator : AbstractValidator<UserRegisterDto>
     {
