@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ArenaApplication.Dtos.Payment;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,7 +7,7 @@ namespace ArenaApplication.IServices.Payment
 {
     public interface IPaymentGatewayService
     {
-        Task<string> GetIframeUrlAsync(
+        Task<PaymentGatewayResponse> GetIframeUrlAsync(
             decimal amount,
             string userEmail,
             string userName);
