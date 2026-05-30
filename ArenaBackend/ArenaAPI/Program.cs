@@ -51,6 +51,8 @@ namespace ArenaAPI
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IProfileService, ProfileService>();
+
 
             var app = builder.Build();
 
@@ -79,6 +81,7 @@ namespace ArenaAPI
             }
 
 
+            
             app.MapControllers();
 
             app.Run();

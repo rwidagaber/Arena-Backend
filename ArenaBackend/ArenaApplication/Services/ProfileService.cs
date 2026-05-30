@@ -1,5 +1,6 @@
 ﻿using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.UserSupscriptionDto;
+using ArenaApplication.IServices;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfacees;
@@ -11,7 +12,7 @@ using System.Text;
 
 namespace ArenaApplication.Services
 {
-    public class ProfileService
+    public class ProfileService :IProfileService
     {
         private readonly IAuthRepository _authRepository;
         private readonly UserManager<ApplicationUser> _userManager;
