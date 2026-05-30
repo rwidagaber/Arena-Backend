@@ -9,9 +9,7 @@ namespace ArenaApi.ValidatorConfig
        
        public static IServiceCollection AddValidators(this IServiceCollection service)
        {
-           service.AddFluentValidationAutoValidation();
            service.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
-           service.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
 
            return service;
        }
