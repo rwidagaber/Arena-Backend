@@ -8,8 +8,9 @@ namespace ArenaApplication.IServices
 {
     public interface ITokenService
     {
-        string GenerateAccessToken(ApplicationUser user);
+        Task<string> GenerateAccessToken(ApplicationUser user);
         string GenerateRefreshToken();
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
+
     }
 }

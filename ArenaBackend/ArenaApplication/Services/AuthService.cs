@@ -18,7 +18,7 @@ using System.Text;
 
 namespace ArenaApplication.Services
 {
-    public class AuthService :IAuthService
+    public class AuthService : IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IAuthRepository _authRepository;
@@ -200,7 +200,7 @@ namespace ArenaApplication.Services
 
         private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)
         {
-            var accessToken = _tokenService.GenerateAccessToken(user);
+            var accessToken = await _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             var token = new RefreshToken
@@ -213,13 +213,17 @@ namespace ArenaApplication.Services
 
             await _authRepository.SaveRefreshTokenAsync(token);
 
+            var role = (await _userManager.GetRolesAsync(user))
+                .FirstOrDefault() ?? "GymMember";
+
             return new AuthResponseDto
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiryMinutes),
-                Role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? "GymMember"
+                Role = role
             };
         }
+    
     }
 }
