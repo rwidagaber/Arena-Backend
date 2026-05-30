@@ -3,7 +3,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ArenaApi.ValidatorConfig
+namespace ArenaApi.Configurations.ValidatorConfig
 {
     public static class ValidatorConfiguration
     {
