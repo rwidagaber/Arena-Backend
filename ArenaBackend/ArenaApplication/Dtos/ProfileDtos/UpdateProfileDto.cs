@@ -11,8 +11,8 @@ namespace ArenaApplication.Dtos.ProfileDtos
         public string? PhoneNumber { get; set; }
         public string? PreferredLanguage { get; set; }
 
-        public double? Weight { get; set; }
-        public double? Height { get; set; }
+        public decimal? Weight { get; set; }
+        public decimal? Height { get; set; }
         public string? Gender { get; set; }
         public string? ProfileImage { get; set; }
         public DateOnly? Birthday { get; set; }
