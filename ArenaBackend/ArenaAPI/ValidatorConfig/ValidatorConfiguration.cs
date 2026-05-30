@@ -1,6 +1,5 @@
 ﻿using ArenaApplication.Dtos.Validators;
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ArenaApi.ValidatorConfig
