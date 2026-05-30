@@ -42,9 +42,9 @@ namespace ArenaApplication.Services
                 PhoneNumber = user.PhoneNumber,
                 PreferredLanguage = user.PreferredLanguage,
                 IsActive = user.IsActive,
-                Weight = (double?)user.MemberProfile?.Weight,
-                Height = (double?)user.MemberProfile?.Height,
-                BMI = (double?)user.MemberProfile?.BMI,
+                Weight = (decimal?)user.MemberProfile?.Weight,
+                Height = (decimal?)user.MemberProfile?.Height,
+                BMI = (decimal?)user.MemberProfile?.BMI,
                 Gender = user.MemberProfile?.Gender.ToString(),
                 ProfileImage = user.MemberProfile?.ProfileImageUrl,
                 Birthday = user.MemberProfile?.DateOfBirth != null
@@ -72,7 +72,6 @@ namespace ArenaApplication.Services
             if (user is null)
                 return Result.Failure("User not found");
 
-            // Update ApplicationUser fields
             if (dto.FirstName is not null)
                 user.FirstName = dto.FirstName;
 
@@ -89,7 +88,6 @@ namespace ArenaApplication.Services
             if (!updateResult.Succeeded)
                 return Result.Failure(updateResult.Errors.Select(e => e.Description).ToArray());
 
-            // Update MemberProfile fields
             if (user.MemberProfile is not null)
             {
                 if (dto.Weight is not null)
@@ -107,7 +105,7 @@ namespace ArenaApplication.Services
                 if (dto.Birthday is not null)
                     user.MemberProfile.DateOfBirth = dto.Birthday.Value.ToDateTime(TimeOnly.MinValue);
 
-                // Recalculate BMI if weight or height updated
+
                 if (dto.Weight is not null || dto.Height is not null)
                 {
                     var weight = user.MemberProfile.Weight;

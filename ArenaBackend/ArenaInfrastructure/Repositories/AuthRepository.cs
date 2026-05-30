@@ -74,6 +74,13 @@ namespace ArenaInfrastructure.Repositories
             await _context.MemberProfiles.AddAsync(memberProfile);
             await _context.SaveChangesAsync();
         }
+
+
+        public async Task UpdateMemberProfileAsync(MemberProfile memberProfile)
+        {
+            _context.MemberProfiles.Update(memberProfile);
+            await _context.SaveChangesAsync();
+        }
     }
 }
 

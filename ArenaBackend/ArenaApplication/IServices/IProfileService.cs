@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ArenaApplication.Dtos.ProfileDtos;
+using ArenaDomain.Shared;
+using System;
 using System.Collections.Generic;
 using System.Text;
 

@@ -17,6 +17,8 @@ namespace ArenaDomain.Interfacees
         Task RevokeRefreshTokenAsync(RefreshToken token);
         Task RevokeAllRefreshTokensAsync(Guid userId);
         Task CreateMemberProfileAsync(MemberProfile memberProfile);
+        Task UpdateMemberProfileAsync(MemberProfile memberProfile);
+
 
     }
 }
