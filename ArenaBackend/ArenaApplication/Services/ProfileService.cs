@@ -25,6 +25,7 @@ namespace ArenaApplication.Services
             _userManager = userManager;
         }
 
+
         public async Task<Result<GetProfileDto>> GetProfileAsync(Guid userId)
         {
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
