@@ -25,6 +25,8 @@ namespace ArenaApplication.Services
             _userManager = userManager;
         }
 
+           
+
 
         public async Task<Result<GetProfileDto>> GetProfileAsync(Guid userId)
         {
