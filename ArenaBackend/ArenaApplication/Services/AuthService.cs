@@ -133,9 +133,9 @@ namespace ArenaApplication.Services
                 PhoneNumber = user.PhoneNumber,
                 PreferredLanguage = user.PreferredLanguage,
                 IsActive = user.IsActive,
-                Weight = (double?)user.MemberProfile?.Weight,
-                Height = (double?)user.MemberProfile?.Height,
-                BMI = (double?)user.MemberProfile?.BMI,
+                Weight = (decimal?)user.MemberProfile?.Weight,
+                Height = (decimal?)user.MemberProfile?.Height,
+                BMI = (decimal?)user.MemberProfile?.BMI,
                 Gender = user.MemberProfile?.Gender.ToString(),
                 ProfileImage = user.MemberProfile?.ProfileImageUrl,
                 Birthday = user.MemberProfile?.DateOfBirth != null

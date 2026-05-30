@@ -62,6 +62,8 @@ namespace ArenaAPI
                 app.MapOpenApi();
                 app.MapScalarApiReference();
 
+                app.MapGet("/", () => Results.Redirect("/scalar"));
+
             }
 
 
