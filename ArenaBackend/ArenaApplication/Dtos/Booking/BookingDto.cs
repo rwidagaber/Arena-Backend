@@ -11,10 +11,6 @@ namespace ArenaApplication.Dtos.Booking
 
         public Guid MemberProfileId { get; set; }
 
-        public Guid GymId { get; set; }
-
-        public Guid? TrainerId { get; set; }
-
         public DateTime BookingDate { get; set; }
 
         public TimeSpan StartTime { get; set; }

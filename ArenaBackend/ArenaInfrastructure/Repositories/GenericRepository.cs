@@ -2,7 +2,6 @@
 using ArenaDomain.Shared;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ArenaInfrastructure.Repositories
 {
@@ -46,21 +45,6 @@ namespace ArenaInfrastructure.Repositories
         public async Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet.ToListAsync();
-        }
-
-
-        public async Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
-        {
-            return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
-        }
-
-        public async Task<List<TEntity>> FindAsync(
-            Expression<Func<TEntity, bool>> predicate,
-            CancellationToken cancellationToken = default)
-        {
-            return await _dbSet
-                .Where(predicate)
-                .ToListAsync(cancellationToken);
         }
     }
 }

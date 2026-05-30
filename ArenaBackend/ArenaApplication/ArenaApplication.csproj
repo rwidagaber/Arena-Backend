@@ -5,14 +5,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="IServices\" />
     <Folder Include="Mappers\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageReference Include="Mapster" Version="10.0.7" />
-    <PackageReference Include="Mapster.Core" Version="10.0.7" />
-    <PackageReference Include="Mapster.DependencyInjection" Version="10.0.7" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
   <PropertyGroup>

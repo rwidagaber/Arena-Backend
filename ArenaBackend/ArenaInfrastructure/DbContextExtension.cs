@@ -1,9 +1,7 @@
-﻿using ArenaDomain.Interfacees;
-using ArenaInfrastructure.Data;
-using ArenaInfrastructure.Repositories;
-using Microsoft.EntityFrameworkCore;
+﻿using ArenaInfrastructure.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 namespace ArenaInfrastructure
 {
@@ -15,8 +13,6 @@ namespace ArenaInfrastructure
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(connectionString));
-
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
     }
 }
