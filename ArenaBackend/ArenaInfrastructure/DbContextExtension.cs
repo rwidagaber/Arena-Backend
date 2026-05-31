@@ -19,6 +19,8 @@ namespace ArenaInfrastructure
             // Register repositories
             services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
             services.AddScoped<INotificationRepository, NotificationRepository>();
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
     }
 }
