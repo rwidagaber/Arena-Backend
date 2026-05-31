@@ -1,5 +1,7 @@
 using ArenaApi.ValidatorConfig;
+using ArenaApplication;
 using ArenaInfrastructure;
+using ArenaInfrastructure.Data;
 namespace ArenaAPI
 {
     public class Program
@@ -16,7 +18,20 @@ namespace ArenaAPI
 
 
             builder.Services.ConfigureDbContext(builder.Configuration);
+            builder.Services.AddRepositories();
+            builder.Services.AddApplicationServices();
+            builder.Services.AddValidators();
             var app = builder.Build();
+
+            // Seed database with initial data
+            if (app.Environment.IsDevelopment())
+            {
+                using (var scope = app.Services.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    dbContext.Database.EnsureCreated();
+                }
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -24,7 +39,6 @@ namespace ArenaAPI
                 app.MapOpenApi();
             }
 
-            builder.Services.AddValidators();
 
             app.UseHttpsRedirection();
 
