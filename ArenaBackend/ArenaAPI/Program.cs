@@ -1,9 +1,10 @@
-using ArenaApi.Hubs;
 using ArenaApi.Configurations.BrearerConfig;
 using ArenaApi.Configurations.JWTConfig;
 using ArenaApi.Configurations.ValidatorConfig;
+using ArenaApi.Hubs;
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
+using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfacees;
 using ArenaInfrastructure;
@@ -60,6 +61,9 @@ namespace ArenaAPI
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IProfileService, ProfileService>();
+            builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();
+
+            builder.Services.AddScoped<IBookingService, BookingService>();
 
 
             var app = builder.Build();
