@@ -19,7 +19,7 @@ namespace ArenaAPI
 
             builder.Services.AddEndpointsApiExplorer();
 
-            builder.Services.AddSwaggerGen();
+                  builder.Services.AddSwaggerGen();
 
             builder.Services.AddValidators();
 
@@ -45,6 +45,10 @@ namespace ArenaAPI
             app.MapControllers();
 
             app.Run();
+
+
+            //any thing for pr
+
         }
     }
 }

@@ -124,7 +124,9 @@ namespace ArenaApplication.Services
             var today = DateTime.UtcNow.Date;
             var todayBookings = await _bookingRepo.FindAsync(b => b.BookingDate.Date == today);
 
-            return Result<List<BookingDto>>.Success(todayBookings.Adapt<List<BookingDto>>());
+            return  Result<List<BookingDto>>.Success(todayBookings.Adapt<List<BookingDto>>());
         }
+
+        //anything for pr
     }
 }
