@@ -1,3 +1,4 @@
+using ArenaApi.Hubs;
 using ArenaApi.Configurations.BrearerConfig;
 using ArenaApi.Configurations.JWTConfig;
 using ArenaApi.Configurations.ValidatorConfig;
@@ -12,7 +13,6 @@ using ArenaInfrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 
-
 namespace ArenaAPI
 {
     public class Program
@@ -24,13 +24,21 @@ namespace ArenaAPI
             // Add services to the container.
 
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+         
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<INotificationHub, NotificationHubService>();
+            builder.Services.ConfigureDbContext(builder.Configuration);
+            builder.Services.AddValidators();
+            builder.Services.AddSignalR();
             builder.Services.AddOpenApi(options =>
             {
                 options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
             });
-
-            builder.Services.ConfigureDbContext(builder.Configuration);
 
             builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
             {
@@ -45,7 +53,7 @@ namespace ArenaAPI
             builder.Services.AddJwtAuthentication(builder.Configuration);
 
 
-            builder.Services.AddValidators();
+            
 
 
             builder.Services.AddScoped<ITokenService, TokenService>();
@@ -66,6 +74,7 @@ namespace ArenaAPI
 
             }
 
+//             app.UseCors("AllowAll");
 
             app.UseHttpsRedirection();
 
@@ -85,6 +94,8 @@ namespace ArenaAPI
 
             
             app.MapControllers();
+            app.MapHub<NotificationHub>("/hubs/notifications");
+
 
             app.Run();
         }
