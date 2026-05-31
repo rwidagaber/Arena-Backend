@@ -1,6 +1,8 @@
+using ArenaApi.Hubs;
 using ArenaApi.ValidatorConfig;
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
+using ArenaDomain.Interfacees;
 using ArenaInfrastructure;
 using ArenaInfrastructure.Repositories;
 namespace ArenaAPI
@@ -19,12 +21,15 @@ namespace ArenaAPI
            
 
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<INotificationHub, NotificationHubService>();
             builder.Services.ConfigureDbContext(builder.Configuration);
             builder.Services.AddValidators();
+            builder.Services.AddSignalR();
 
             var app = builder.Build();
 
@@ -34,6 +39,7 @@ namespace ArenaAPI
                 app.MapOpenApi();
             }
 
+            app.UseCors("AllowAll");
 
             app.UseHttpsRedirection();
 
@@ -41,6 +47,8 @@ namespace ArenaAPI
 
 
             app.MapControllers();
+            app.MapHub<NotificationHub>("/hubs/notifications");
+
 
             app.Run();
         }

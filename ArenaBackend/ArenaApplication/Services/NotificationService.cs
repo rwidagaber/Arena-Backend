@@ -5,11 +5,11 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfacees;
 using ArenaInfrastructure.Repositories;
 using Mapster;
+using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
 namespace ArenaApplication.Services
 {
     public class NotificationService : INotificationService
@@ -17,22 +17,26 @@ namespace ArenaApplication.Services
         private readonly INotificationRepository _repository;
         private readonly IEmailService _emailService;
         private readonly IUserRepository _userRepository;
+        private readonly INotificationHub _notificationHub;
 
         public NotificationService(
             INotificationRepository repository,
             IEmailService emailService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            INotificationHub notificationHub)
         {
             _repository = repository;
             _emailService = emailService;
             _userRepository = userRepository;
+            _notificationHub = notificationHub;
+
         }
 
         // ── Core (private) ────────────────────────────────────────────────────
 
         private async Task CreateAsync(
-            Guid userId, string title, string message, NotificationType type,
-            CancellationToken cancellationToken = default)
+     Guid userId, string title, string message, NotificationType type,
+     CancellationToken cancellationToken = default)
         {
             var entity = new Notification
             {
@@ -45,6 +49,11 @@ namespace ArenaApplication.Services
             };
 
             await _repository.AddAsync(entity, cancellationToken);
+
+            await _notificationHub.SendToUserAsync(
+                userId,
+                entity.Adapt<NotificationDto>(),
+                cancellationToken);
         }
 
         // ── Write ─────────────────────────────────────────────────────────────
