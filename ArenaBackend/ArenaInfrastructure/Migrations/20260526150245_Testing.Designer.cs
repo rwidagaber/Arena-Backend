@@ -4,6 +4,7 @@ using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArenaInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260526150245_Testing")]
+    partial class Testing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -736,49 +739,6 @@ namespace ArenaInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SubscriptionPlans", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
-                            DescriptionAr = "مثالي للمبتدئين للبدء في اللياقة البدنية",
-                            DescriptionEn = "Perfect for beginners to get started with fitness",
-                            DurationMonths = 1,
-                            IsActive = true,
-                            IsDeleted = false,
-                            NameAr = "أساسي",
-                            NameEn = "Basic",
-                            Price = 9.99m,
-                            SessionLimit = 4
-                        },
-                        new
-                        {
-                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
-                            DescriptionAr = "الوصول الكامل إلى جميع المرافق والفئات المتميزة",
-                            DescriptionEn = "Full access to all facilities and premium classes",
-                            DurationMonths = 3,
-                            IsActive = true,
-                            IsDeleted = false,
-                            NameAr = "بريميوم",
-                            NameEn = "Premium",
-                            Price = 24.99m,
-                            SessionLimit = 12
-                        },
-                        new
-                        {
-                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
-                            DescriptionAr = "وصول غير محدود مع جلسات المدرب الشخصي",
-                            DescriptionEn = "Unlimited access with personal trainer sessions",
-                            DurationMonths = 12,
-                            IsActive = true,
-                            IsDeleted = false,
-                            NameAr = "نخبة",
-                            NameEn = "Elite",
-                            Price = 79.99m
-                        });
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Subscription.UserSubscription", b =>

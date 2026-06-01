@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ArenaApplication.Dtos.NotificationDtos
 {
-    internal class NotificationDto
+    public class NotificationDto
     {
         public Guid Id { get; set; }
 
@@ -14,5 +14,9 @@ namespace ArenaApplication.Dtos.NotificationDtos
         public string Message { get; set; } = string.Empty;
 
         public NotificationType Type { get; set; }
+
+        public bool IsRead { get; set; }
+
+        public DateTime CreatedAt { get; set; }
     }
 }
