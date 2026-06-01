@@ -14,20 +14,22 @@ namespace ArenaApplication.Services.AI
         private readonly IOpenAIService _openAI;
         private readonly IWorkoutAIService _workoutAI;
         private readonly INutritionAIService _nutritionAI;
+        private readonly IBookingAIService _bookingAI;
         private readonly AppDbContext _context;
 
         public ChatService(
             IOpenAIService openAI,
             IWorkoutAIService workoutAI,
             INutritionAIService nutritionAI,
+            IBookingAIService bookingAI, 
             AppDbContext context)
         {
             _openAI = openAI;
             _workoutAI = workoutAI;
             _nutritionAI = nutritionAI;
+            _bookingAI = bookingAI; 
             _context = context;
         }
-
         public async Task<string> SendMessageAsync(Guid memberProfileId, string userMessage)
         {
             var profile = await _context.MemberProfiles
@@ -163,19 +165,24 @@ namespace ArenaApplication.Services.AI
                         return nb.ToString();
                     }
 
-                case "booking":
-                    {
-                        if (intent.Date == null || intent.Time == null)
-                        {
-                            return isArabic
-                                ? "أحتاج التاريخ والوقت للحجز. مثال: احجز غداً الساعة 6"
-                                : "Please provide date and time. Example: book tomorrow at 6 PM";
-                        }
+                //case "booking":
+                //    {
+                //        if (intent.Date == null || intent.Time == null)
+                //        {
+                //            return isArabic
+                //                ? "أحتاج التاريخ والوقت للحجز. مثال: احجز غداً الساعة 6"
+                //                : "Please provide date and time. Example: book tomorrow at 6 PM";
+                //        }
 
-                        return isArabic
-                            ? $"✅ تم تأكيد الحجز يوم {intent.Date} الساعة {intent.Time}"
-                            : $"✅ Booking confirmed for {intent.Date} at {intent.Time}";
-                    }
+                //        return isArabic
+                //            ? $"✅ تم تأكيد الحجز يوم {intent.Date} الساعة {intent.Time}"
+                //            : $"✅ Booking confirmed for {intent.Date} at {intent.Time}";
+                //    }
+
+                case "booking":
+                    var bookingReply = await _bookingAI
+                        .HandleBookingRequestAsync(profile.Id, intent, userMessage);
+                    return bookingReply;
 
                 default:
                     {
