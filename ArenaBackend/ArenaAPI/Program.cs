@@ -54,6 +54,8 @@ namespace ArenaAPI
             builder.Services.AddScoped<IProfileService, ProfileService>();
 
 
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
