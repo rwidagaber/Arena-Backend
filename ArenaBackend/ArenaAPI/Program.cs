@@ -22,6 +22,10 @@ namespace ArenaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+
+            //Add Mapster
+            builder.Services.AddMapster();
+
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -85,7 +89,6 @@ namespace ArenaAPI
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
             }
 
-            builder.Services.AddMapster();
 
             app.MapControllers();
 
