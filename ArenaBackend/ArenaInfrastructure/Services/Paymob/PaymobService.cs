@@ -130,9 +130,14 @@ namespace ArenaInfrastructure.Services
         }
 
         // ── HMAC Verification ────────────────────────────────────
-        public bool VerifyHmac(string data, string receivedHmac)
+        private bool VerifyHmac(string data, string? receivedHmac)
         {
             var hmacSecret = _config["PaymobSettings:HmacSecret"]!;
+
+            if (string.IsNullOrWhiteSpace(hmacSecret) || string.IsNullOrWhiteSpace(receivedHmac))
+            {
+                return false;
+            }
 
             using var hmac = new System.Security.Cryptography.HMACSHA512(
                 System.Text.Encoding.UTF8.GetBytes(hmacSecret));
@@ -144,7 +149,41 @@ namespace ArenaInfrastructure.Services
                 .Replace("-", "")
                 .ToLower();
 
-            return computed == receivedHmac.ToLower();
+            return string.Equals(
+            computed,
+            receivedHmac,
+            StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool VerifyWebhookHmac(PaymobWebhookDto webhook, string receivedHmac)
+        {
+            var obj = webhook.Obj;
+
+            // Paymob بيعمل concatenate للـ fields دي بالترتيب ده بالظبط
+            var data = string.Concat(
+                obj.AmountCents,
+                obj.CreatedAt,
+                obj.Currency,
+                obj.ErrorOccured.ToString().ToLower(),
+                obj.HasParentTransaction.ToString().ToLower(),
+                obj.Id,
+                obj.IntegrationId,
+                obj.Is3dSecure.ToString().ToLower(),
+                obj.IsAuth.ToString().ToLower(),
+                obj.IsCapture.ToString().ToLower(),
+                obj.IsRefunded.ToString().ToLower(),
+                obj.IsStandalonePayment.ToString().ToLower(),
+                obj.IsVoided.ToString().ToLower(),
+                obj.Order.Id,
+                obj.Owner,
+                obj.Pending.ToString().ToLower(),
+                obj.SourceData.Pan,
+                obj.SourceData.SubType,
+                obj.SourceData.Type,
+                obj.Success.ToString().ToLower()
+            );
+
+            return VerifyHmac(data, receivedHmac);
         }
     }
 }
