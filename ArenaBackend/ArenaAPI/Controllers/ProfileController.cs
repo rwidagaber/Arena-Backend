@@ -38,7 +38,7 @@ namespace ArenaApi.Controllers
             var result = await _profileService.UpdateProfileAsync(userId, dto);
             if (!result.IsSuccess)
                 return BadRequest(result.Errors);
-            return Ok("Profile Updated successfully");
+            return Ok(result.Value);
         }
     }
 }
