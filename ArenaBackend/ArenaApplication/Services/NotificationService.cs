@@ -5,7 +5,7 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfacees;
 using ArenaInfrastructure.Repositories;
 using Mapster;
-using Microsoft.AspNetCore.SignalR;
+//using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Threading;

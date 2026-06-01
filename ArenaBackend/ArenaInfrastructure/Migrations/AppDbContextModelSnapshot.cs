@@ -332,6 +332,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Gender")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1048,6 +1051,10 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Property<int?>("DurationMinutes")
                         .HasColumnType("int");
+
+                    b.Property<string>("ExName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("ExerciseId")
                         .HasColumnType("uniqueidentifier");

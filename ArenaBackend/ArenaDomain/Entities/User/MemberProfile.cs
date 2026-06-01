@@ -22,7 +22,7 @@ namespace ArenaDomain.Entities
         public DateTime DateOfBirth { get; set; }
 
         public decimal? Weight { get; set; }
-
+        public string? FirstName { get; set; }
         public decimal? Height { get; set; }
 
         public decimal? BMI { get; set; }

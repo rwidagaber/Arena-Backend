@@ -5,10 +5,13 @@ using ArenaApi.Hubs;
 using ArenaApplication;
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
+using ArenaApplication.Services.AI;
+using ArenaApplication.Settings;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfacees;
 using ArenaInfrastructure;
+using ArenaInfrastructure.AI;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Repositories;
@@ -30,7 +33,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddHttpContextAccessor();
-            builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+            //builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
 
@@ -78,6 +81,19 @@ namespace ArenaAPI
             builder.Services.AddScoped<IGenericRepository<Booking, Guid>,
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
+
+
+            builder.Services.Configure<OpenAISettings>(
+               builder.Configuration.GetSection("OpenAISettings"));
+
+            builder.Services.AddHttpClient();
+
+            // AI Services
+            builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+            builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
+            builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
+
 
             var app = builder.Build();
 
