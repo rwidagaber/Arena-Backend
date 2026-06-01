@@ -1,5 +1,6 @@
 using ArenaApi.Configurations.BrearerConfig;
 using ArenaApi.Configurations.JWTConfig;
+using ArenaApi.Configurations.MapsterConfig;
 using ArenaApi.Configurations.ValidatorConfig;
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
@@ -84,8 +85,8 @@ namespace ArenaAPI
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
             }
 
+            builder.Services.AddMapster();
 
-            
             app.MapControllers();
 
             app.Run();
