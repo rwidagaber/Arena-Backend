@@ -11,5 +11,8 @@ namespace ArenaApplication.IServices.Payment
             decimal amount,
             string userEmail,
             string userName);
+
+        bool VerifyWebhookHmac(PaymobWebhookDto webhook, string receivedHmac);
+
     }
 }
