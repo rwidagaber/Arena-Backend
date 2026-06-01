@@ -1,10 +1,13 @@
 ﻿using ArenaApplication.Dtos.Payment;
 using ArenaApplication.IServices.Payment;
+using ArenaApplication.IServices.User;
 using ArenaDomain.Entities.Payments;
+using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -17,6 +20,10 @@ namespace ArenaApplication.Services.Payment
     {
         private readonly IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> _paymentRepo;
         private readonly IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> _subscriptionRepo;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUserQueryService _userQuery;
+
+
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentGatewayService _paymentGateway;
 
@@ -24,12 +31,14 @@ namespace ArenaApplication.Services.Payment
         public PaymentService(
             IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> paymentRepo,
             IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepo,
+            IUserQueryService userQuery,
             IUnitOfWork unitOfWork,
              IPaymentGatewayService paymentGateway
             )
         {
             _paymentRepo = paymentRepo;
             _subscriptionRepo = subscriptionRepo;
+            _userQuery = userQuery;
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
         } 
@@ -39,12 +48,15 @@ namespace ArenaApplication.Services.Payment
             
             var subscription = _subscriptionRepo.GetAll()
                     .Include(s => s.Plan)
+                    .Include(s=>s.MemberProfile)
                 .FirstOrDefault(s => s.Id == dto.UserSubscriptionId);
 
-            if (subscription == null)
-            {
-                return Result<PaymentDto>.Failure("Subscription NotFound");
-            }
+            if (subscription is null)
+                return Result<PaymentDto>.Failure("Subscription NotFound.");
+
+
+            if (subscription.MemberProfile.UserId != userId)
+                return Result<PaymentDto>.Failure("Unauthorized.");
 
             var existingPayment = _paymentRepo.GetAll()
                 .FirstOrDefault(p => p.UserSubscriptionId == dto.UserSubscriptionId && p.Status == PaymentStatus.Paid);
@@ -73,10 +85,15 @@ namespace ArenaApplication.Services.Payment
             };
                 await _paymentRepo.AddAsync(payment);
 
+            var user = await _userQuery.GetByIdAsync(userId);
+            if (user is null)
+                return Result<PaymentDto>.Failure("User not found.");
+
             var gatewayResponse = await _paymentGateway.GetIframeUrlAsync(
-                payment.Amount,
-                "test@test.com",
-                "Khaled");
+            payment.Amount,
+            user.Email!,
+            $"{user.FirstName} {user.LastName}");
+
 
             payment.PaymentIntentId = gatewayResponse.OrderId;
 
@@ -87,7 +104,6 @@ namespace ArenaApplication.Services.Payment
             paymentDto.IframeUrl = gatewayResponse.IframeUrl;
 
             return Result<PaymentDto>.Success(paymentDto);
-
 
 
         }

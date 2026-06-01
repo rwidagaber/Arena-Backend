@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace ArenaApi.Controllers
 {
@@ -12,15 +13,22 @@ namespace ArenaApi.Controllers
     public class PaymentsController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
-        public PaymentsController(IPaymentService paymentService)
+        private readonly IPaymentGatewayService _gatewayService;
+
+        public PaymentsController(IPaymentService paymentService,
+                IPaymentGatewayService gatewayService)
         {
             _paymentService = paymentService;
+            _gatewayService = gatewayService;
+
         }
 
         //private Guid GetCurrentUserId()
         //   => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         //POST api/payments
+
+        // TODO: Replace [FromQuery] userId with GetCurrentUserId() after JWT integration
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto, [FromQuery] Guid userId)
         {
@@ -31,7 +39,9 @@ namespace ArenaApi.Controllers
 
             return Ok(result.Value);
         }
-        //get my payments
+
+
+        // TODO: Replace [FromQuery] userId with GetCurrentUserId() after JWT integration  
         [HttpGet("my-payments")]
         public async Task<IActionResult> GetMyPayments([FromQuery] Guid userId)
         {
@@ -51,6 +61,8 @@ namespace ArenaApi.Controllers
             return Ok(result.Value);
         }
         //Admin
+        // TODO: Add [Authorize(Roles = "Admin")] after JWT integration
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] PaymentFilterDto dto)
         {
@@ -59,6 +71,7 @@ namespace ArenaApi.Controllers
         }
 
         //Admin change status
+        // TODO: Add [Authorize(Roles = "Admin")] after JWT integration
         [HttpPatch("{id:guid}/status")]
         public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdatePaymentStatusDto dto)
         {
@@ -73,8 +86,13 @@ namespace ArenaApi.Controllers
         //Getway payment Success
         [HttpPost("webhook/completed")]
         [AllowAnonymous]
-        public async Task<IActionResult> WebhookCompleted([FromBody] PaymobWebhookDto dto)
+        public async Task<IActionResult> WebhookCompleted([FromBody] PaymobWebhookDto dto,
+                                                          [FromQuery] string hmac)
         {
+            if (!_gatewayService.VerifyWebhookHmac(dto, hmac))
+                return Unauthorized(new { message = "Invalid webhook signature." });
+
+
             var transactionId = dto.Obj.Id.ToString();
             var paymentIntentId = dto.Obj.Order.Id.ToString();
 

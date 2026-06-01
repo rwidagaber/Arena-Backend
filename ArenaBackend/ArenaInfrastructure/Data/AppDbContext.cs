@@ -6,7 +6,9 @@ using ArenaDomain.Entities.Notifications;
 using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Entities.Payments;
 using ArenaDomain.Entities.Subscription;
+using ArenaDomain.Entities.User;
 using ArenaDomain.Entities.Workout;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -14,7 +16,8 @@ using System.Text;
 
 namespace ArenaInfrastructure.Data
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext(options)
+    public class AppDbContext(DbContextOptions<AppDbContext> options)
+        : IdentityDbContext(options)
     {
         // ── Bookings ──────────────────────────────────────────────────────────────
         public DbSet<Booking> Bookings { get; set; }
@@ -52,6 +55,10 @@ namespace ArenaInfrastructure.Data
         public DbSet<WorkoutExercise> WorkoutExercises { get; set; }
         public DbSet<WorkoutLog> WorkoutLogs { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
+
+
+       public DbSet<ArenaDomain.Entities.User.ApplicationUser> ApplicationUsers { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

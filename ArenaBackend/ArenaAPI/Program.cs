@@ -1,12 +1,16 @@
 using ArenaApi.ValidatorConfig;
 using ArenaApplication.IServices.Payment;
+using ArenaApplication.IServices.User;
 using ArenaApplication.Mappers;
 using ArenaApplication.Services.Payment;
+using ArenaDomain.Entities.User;         
 using ArenaDomain.Interfaces;
 using ArenaInfrastructure;
+using ArenaInfrastructure.Data;           
 using ArenaInfrastructure.Repositories;
 using ArenaInfrastructure.Services;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
 
 namespace ArenaAPI
 {
@@ -19,11 +23,14 @@ namespace ArenaAPI
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
+
             builder.Services.ConfigureDbContext(builder.Configuration);
 
             builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IUserQueryService, UserQueryService>();
+
 
             builder.Services.AddHttpClient<IPaymentGatewayService, PaymobService>();
 
