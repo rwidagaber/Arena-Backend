@@ -73,28 +73,27 @@ namespace ArenaApi.Controllers
         //Getway payment Success
         [HttpPost("webhook/completed")]
         [AllowAnonymous]
-        public async Task<IActionResult> WebhookCompleted([FromBody] WebhookDto dto)
+        public async Task<IActionResult> WebhookCompleted([FromBody] PaymobWebhookDto dto)
         {
-            var result = await _paymentService.MarkAsCompletedAsync(
-                dto.TransactionId,
-                dto.PaymentIntentId);
+            var transactionId = dto.Obj.Id.ToString();
+            var paymentIntentId = dto.Obj.Order.Id.ToString();
 
-            if (!result.IsSuccess)
-                return BadRequest(new { message = result.Errors });
+            if (dto.Obj.Success)
+            {
+                var result = await _paymentService.MarkAsCompletedAsync(
+                    transactionId, paymentIntentId);
 
-            return Ok();
-        }
-        //Payment Faild
-        [HttpPost("webhook/failed")]
-        [AllowAnonymous]
-        public async Task<IActionResult> WebhookFailed([FromBody] WebhookFailedDto dto)
-        {
-            var result = await _paymentService.MarkAsFailedAsync(
-                dto.PaymentIntentId,
-                dto.Reason);
+                if (!result.IsSuccess)
+                    return BadRequest(new { message = result.Errors });
+            }
+            else
+            {
+                var result = await _paymentService.MarkAsFailedAsync(
+                    paymentIntentId, dto.Obj.Data.Message);
 
-            if (!result.IsSuccess)
-                return BadRequest(new { message = result.Errors });
+                if (!result.IsSuccess)
+                    return BadRequest(new { message = result.Errors });
+            }
 
             return Ok();
         }
