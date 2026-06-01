@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ArenaApplication.Dtos.WorkoutDtos;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -17,5 +18,6 @@ namespace ArenaApplication.Dtos.WorkoutPlan
         public int DurationWeeks { get; set; }
 
         public bool IsActive { get; set; }
+        public List<WorkoutDayDto> Days { get; set; } = [];
     }
 }

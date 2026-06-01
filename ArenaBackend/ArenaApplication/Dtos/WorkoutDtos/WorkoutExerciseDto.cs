@@ -18,6 +18,7 @@ namespace ArenaApplication.Dtos.WorkoutDtos
         public int Sets { get; set; }
 
         public int Reps { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         public decimal? Weight { get; set; }
 
