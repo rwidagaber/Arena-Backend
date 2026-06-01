@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Interfacees;
+﻿using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;

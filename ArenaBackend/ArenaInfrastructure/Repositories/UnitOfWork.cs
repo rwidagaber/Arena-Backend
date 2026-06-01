@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Interfacees;
+﻿using ArenaDomain.Interfaces;
 using ArenaInfrastructure.Data;
 using System;
 using System.Threading;

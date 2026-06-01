@@ -7,7 +7,7 @@ using ArenaApplication.IServices;
 using ArenaApplication.Services;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaInfrastructure;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;

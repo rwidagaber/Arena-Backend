@@ -7,7 +7,7 @@ using ArenaApplication.IServices;
 using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;

@@ -1,6 +1,6 @@
 using ArenaApplication.Dtos.SubscriptionPlanDtos;
 using ArenaDomain.Entities.Subscription;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 
 namespace ArenaApplication.Services.SubscriptionPlan
 {

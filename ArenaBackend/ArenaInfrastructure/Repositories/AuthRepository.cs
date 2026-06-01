@@ -1,6 +1,6 @@
 ﻿using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure.Data;
 using Microsoft.AspNetCore.Identity;

@@ -1,5 +1,5 @@
 ﻿using ArenaDomain.Entities.Notifications;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
