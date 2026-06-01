@@ -34,6 +34,7 @@ namespace ArenaApplication.Services
             var profile = new GetProfileDto
             {
                 Id = user.Id,
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email!,
