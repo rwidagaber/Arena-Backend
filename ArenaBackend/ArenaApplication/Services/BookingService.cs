@@ -31,7 +31,7 @@ namespace ArenaApplication.Services
             }
 
             var booking = dto.Adapt<Booking>();
-            booking.Status = BookingStatus.Pending;
+            booking.Status = BookingStatus.Confirmed;
 
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();

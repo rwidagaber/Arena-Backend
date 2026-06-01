@@ -34,8 +34,9 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUserBookings(Guid memberProfileId)
+        public async Task<IActionResult> GetUserBookings([FromQuery] Guid memberProfileId)
         {
+            
             var result = await _bookingService.GetUserBookings(memberProfileId);
 
             if (!result.IsSuccess)

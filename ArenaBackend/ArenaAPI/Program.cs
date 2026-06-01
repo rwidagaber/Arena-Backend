@@ -66,6 +66,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IBookingService, BookingService>();
 
 
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
