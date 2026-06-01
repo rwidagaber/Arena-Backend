@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ArenaDomain.Interfacees
+namespace ArenaDomain.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
