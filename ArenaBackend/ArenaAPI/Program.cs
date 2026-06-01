@@ -31,7 +31,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
 
             builder.Services.ConfigureDbContext(builder.Configuration);
@@ -62,7 +62,7 @@ namespace ArenaAPI
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
-
+            builder.Configuration.GetConnectionString("DefaultConnection");
             // JWT
             builder.Services.AddJwtAuthentication(builder.Configuration);
 

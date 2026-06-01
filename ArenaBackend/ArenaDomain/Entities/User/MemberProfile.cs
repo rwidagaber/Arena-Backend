@@ -1,6 +1,7 @@
 ﻿using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
 using ArenaDomain.Entities.Health;
+using ArenaDomain.Entities.Notifications;
 using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Entities.User;
@@ -32,22 +33,25 @@ namespace ArenaDomain.Entities
         public string? ProfileImageUrl { get; set; }
 
         // Navigation Properties
-        public virtual ICollection<UserSubscription> Subscriptions { get; set; } 
+        public virtual ICollection<UserSubscription> Subscriptions { get; set; } = [];
+        public virtual ICollection<Notification> Notifications { get; set; } = [];
 
-        public virtual ICollection<Booking> Bookings { get; set; } 
+        public virtual ICollection<Booking> Bookings { get; set; } = [];
 
-        public virtual ICollection<Attendance> Attendances { get; set; } 
+        public virtual ICollection<Attendance> Attendances { get; set; } = [];
 
-        public virtual ICollection<WorkoutPlan> WorkoutPlans { get; set; } 
+        public virtual ICollection<WorkoutPlan> WorkoutPlans { get; set; } = [];
 
-        public virtual ICollection<NutritionPlan> NutritionPlans { get; set; } 
+        public virtual ICollection<NutritionPlan> NutritionPlans { get; set; } = [];
 
-        public virtual ICollection<MealLog> MealLogs { get; set; } 
+        public virtual ICollection<MealLog> MealLogs { get; set; } = [];
 
-        public virtual ICollection<ProgressLog> ProgressLogs { get; set; } 
+        public virtual ICollection<ProgressLog> ProgressLogs { get; set; } = [];
 
-        public virtual ICollection<ChatConversation> ChatConversations { get; set; } 
+        public virtual ICollection<ChatConversation> ChatConversations { get; set; } = [];
 
-      
+
+
+
     }
 }

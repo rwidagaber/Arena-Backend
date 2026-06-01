@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
 		<ProjectReference Include="..\ArenaDomain\ArenaDomain.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
+		
 		<PackageReference Include="FluentValidation" Version="12.1.1" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
 
@@ -14,7 +15,6 @@
 		<PackageReference Include="Mapster.DependencyInjection" Version="10.0.7" />
 
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
-		<PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.10" />
 
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
 
