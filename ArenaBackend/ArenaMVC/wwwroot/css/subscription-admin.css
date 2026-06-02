@@ -1,0 +1,375 @@
+/* Subscription Plans Admin - Design Palette */
+
+:root {
+    --hep-green: #C4B045;
+    --hammock: #6F8786;
+    --autonomous: #C5C7C5;
+    --sooty: #141414;
+    --whiteout: #FBFBFB;
+    --november-storms: #414039;
+    --primary-teal: #17a2b8;
+}
+
+/* Admin Dashboard Styling */
+.subscription-admin-container {
+    background: linear-gradient(135deg, var(--sooty) 0%, var(--november-storms) 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+    color: var(--whiteout);
+}
+
+.subscription-admin-header {
+    background-color: var(--sooty);
+    padding: 2rem;
+    border-bottom: 3px solid var(--hep-green);
+    margin-bottom: 2rem;
+    border-radius: 8px 8px 0 0;
+}
+
+.subscription-admin-header h1 {
+    color: var(--hep-green);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+}
+
+.subscription-admin-header p {
+    color: var(--autonomous);
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Cards */
+.subscription-card {
+    background: linear-gradient(135deg, var(--november-storms) 0%, var(--sooty) 100%);
+    border: 1px solid var(--hammock);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    color: var(--whiteout);
+}
+
+.subscription-card:hover {
+    border-color: var(--hep-green);
+    box-shadow: 0 8px 24px rgba(196, 176, 69, 0.2);
+    transform: translateY(-2px);
+}
+
+.subscription-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--hammock);
+    padding-bottom: 1rem;
+}
+
+.subscription-card-title {
+    color: var(--hep-green);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.subscription-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: var(--hep-green);
+    color: var(--sooty);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.subscription-badge.featured {
+    background-color: var(--primary-teal);
+    color: var(--whiteout);
+}
+
+/* Forms */
+.subscription-form {
+    background: linear-gradient(135deg, var(--november-storms) 0%, var(--sooty) 100%);
+    border: 1px solid var(--hammock);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.subscription-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.subscription-form-group label {
+    color: var(--hep-green);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.subscription-form-group input,
+.subscription-form-group textarea,
+.subscription-form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--hammock);
+    border-radius: 6px;
+    color: var(--whiteout);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.subscription-form-group input::placeholder,
+.subscription-form-group textarea::placeholder {
+    color: var(--autonomous);
+}
+
+.subscription-form-group input:focus,
+.subscription-form-group textarea:focus,
+.subscription-form-group select:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--hep-green);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.1);
+}
+
+.subscription-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Buttons */
+.btn-subscription-primary {
+    background-color: var(--hep-green);
+    color: var(--sooty);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-subscription-primary:hover {
+    background-color: #d4c055;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(196, 176, 69, 0.3);
+}
+
+.btn-subscription-secondary {
+    background-color: var(--hammock);
+    color: var(--whiteout);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-subscription-secondary:hover {
+    background-color: #7a9393;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(111, 135, 134, 0.3);
+}
+
+.btn-subscription-danger {
+    background-color: #dc3545;
+    color: var(--whiteout);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-subscription-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}
+
+.btn-subscription-edit {
+    background-color: var(--primary-teal);
+    color: var(--whiteout);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-right: 0.5rem;
+}
+
+.btn-subscription-edit:hover {
+    background-color: #138496;
+    transform: translateY(-2px);
+}
+
+/* Action Buttons Container */
+.subscription-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.subscription-actions .btn-subscription-edit,
+.subscription-actions .btn-subscription-danger {
+    flex: 1;
+    margin-right: 0;
+}
+
+/* Plan Details */
+.subscription-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.subscription-detail-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--hep-green);
+}
+
+.subscription-detail-label {
+    color: var(--autonomous);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.subscription-detail-value {
+    color: var(--hep-green);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Table Styling */
+.subscription-table {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 1.5rem;
+}
+
+.subscription-table thead {
+    background-color: var(--sooty);
+    border-bottom: 2px solid var(--hep-green);
+}
+
+.subscription-table th {
+    color: var(--hep-green);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.subscription-table tbody tr {
+    border-bottom: 1px solid var(--hammock);
+    transition: background-color 0.3s ease;
+}
+
+.subscription-table tbody tr:hover {
+    background-color: rgba(196, 176, 69, 0.1);
+}
+
+.subscription-table td {
+    color: var(--whiteout);
+    padding: 1rem;
+}
+
+/* Empty State */
+.subscription-empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, var(--november-storms) 0%, var(--sooty) 100%);
+    border: 2px dashed var(--hammock);
+    border-radius: 12px;
+    margin-top: 2rem;
+}
+
+.subscription-empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.subscription-empty-state h3 {
+    color: var(--hep-green);
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.subscription-empty-state p {
+    color: var(--autonomous);
+    margin-bottom: 1.5rem;
+}
+
+/* Alerts */
+.subscription-alert {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid;
+}
+
+.subscription-alert.success {
+    background-color: rgba(23, 162, 184, 0.1);
+    border-color: var(--primary-teal);
+    color: var(--primary-teal);
+}
+
+.subscription-alert.error {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: #ffc6d6;
+}
+
+.subscription-alert.warning {
+    background-color: rgba(196, 176, 69, 0.1);
+    border-color: var(--hep-green);
+    color: var(--hep-green);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .subscription-admin-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .subscription-details {
+        grid-template-columns: 1fr;
+    }
+
+    .subscription-actions {
+        flex-direction: column;
+    }
+
+    .subscription-actions .btn-subscription-edit,
+    .subscription-actions .btn-subscription-danger {
+        width: 100%;
+    }
+}
+
+/* Loading Spinner */
+.subscription-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--autonomous);
+    border-top-color: var(--hep-green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
