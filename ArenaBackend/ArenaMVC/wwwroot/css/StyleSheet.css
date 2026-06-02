@@ -2,6 +2,7 @@
 
 /* Color Palette */
 :root {
+    color-scheme: dark;
     --yellow: #C4B045;       /* Hep Green / Gym Athletic Yellow Accent */
     --teal: #6F8786;         /* Hammock / Muted Blue-Gray Accent */
     --dark-gray: #414039;    /* November Storms / Warm Charcoal */
@@ -265,6 +266,11 @@ a:hover {
     border: 1px solid var(--border-color) !important;
     color: var(--whiteout) !important;
     border-radius: 8px !important;
+}
+
+.form-select option {
+    background-color: var(--card-bg) !important;
+    color: var(--whiteout) !important;
 }
 
 .form-control:focus, .form-select:focus {

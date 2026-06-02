@@ -19,15 +19,25 @@
             <a asp-area="" asp-controller="Home" asp-action="Index">Arena</a>
         </div>
         <nav class="sidebar-nav">
+            @{
+                var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+            }
             <ul class="nav-list">
                 <li class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">Subscription Plans</a>
+                    <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">Subscription Plans</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">Bookings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Today" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Today">Today's Bookings</a>
                 </li>
             </ul>
         </nav>
