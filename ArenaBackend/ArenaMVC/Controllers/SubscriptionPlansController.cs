@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArenaMVC.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class SubscriptionPlansController : Controller
     {
         private readonly ISubscriptionPlanService _subscriptionPlanService;
