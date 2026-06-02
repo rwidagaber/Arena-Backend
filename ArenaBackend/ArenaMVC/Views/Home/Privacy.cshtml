@@ -1,6 +1,28 @@
-﻿@{
+@{
     ViewData["Title"] = "Privacy Policy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="dashboard-card" style="max-width: 800px; margin: 0 auto; line-height: 1.6;">
+    <h1 style="color: var(--yellow); font-weight: 800; margin-bottom: 1.5rem; font-size: 2.2rem;">🛡️ Privacy Policy</h1>
+    
+    <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
+        At Arena Fitness, we prioritize the protection and confidentiality of our gym members' and administrators' data. 
+        This privacy policy details how we collect, store, and process physical fitness records, subscription details, and login information.
+    </p>
+
+    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">1. Data Collection</h3>
+    <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
+        We collect account credentials, payment records, gym check-in timestamps, and membership subscription details to provide seamless operations inside the gym facility.
+    </p>
+
+    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">2. Security Compliance</h3>
+    <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
+        All subscription transactions and membership status databases are encrypted and protected under strict security guidelines. We do not sell or share fitness tracking metrics with third-party providers.
+    </p>
+
+    <hr style="border-color: var(--border-color); margin: 2rem 0;" />
+    
+    <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
+        ⬅ Back to Dashboard
+    </a>
+</div>
