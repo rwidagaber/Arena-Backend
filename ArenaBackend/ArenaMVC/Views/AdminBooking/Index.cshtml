@@ -2,98 +2,117 @@
 @model List<ArenaApplication.Dtos.Booking.BookingDto>
 
 @{
-    ViewData["Title"] = "Bookings";
+    ViewData["Title"] = "Admin Bookings";
     BookingStatus? selectedStatus = ViewBag.SelectedStatus as BookingStatus?;
     DateTime? selectedDate = ViewBag.SelectedDate as DateTime?;
 }
 
-<div class="container py-4">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/booking-admin.css" asp-append-version="true" />
+
+<div class="booking-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div>
-            <h2 class="mb-1">Bookings</h2>
-            <div class="text-muted">Filter and review all bookings.</div>
+            <h1>📅 Admin Bookings</h1>
+            <p>Filter and review all bookings.</p>
         </div>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-primary" asp-controller="AdminBooking" asp-action="Today">Today's schedule</a>
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" name="status">
-                        <option value="">All</option>
-                        @foreach (var s in Enum.GetValues<BookingStatus>())
-                        {
-                            var isSelected = selectedStatus.HasValue && selectedStatus.Value == s;
-                            <option value="@s" selected="@(isSelected ? "selected" : null)">@s</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label class="form-label">Booking date</label>
-                    <input class="form-control" type="date" name="bookingDate" value="@(selectedDate.HasValue ? selectedDate.Value.ToString("yyyy-MM-dd") : "")" />
-                </div>
-                <div class="col-12 col-md-4 d-flex gap-2">
-                    <button class="btn btn-primary" type="submit">Apply filters</button>
-                    <a class="btn btn-outline-secondary" asp-controller="AdminBooking" asp-action="Index">Reset</a>
-                </div>
-            </form>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Today">Today's Bookings</a>
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+    <div class="booking-filters-card">
+        <form method="get" id="bookingFiltersForm" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="statusSelect">Status</label>
+                <select class="form-select" id="statusSelect" name="status">
+                    <option value="" selected="@(selectedStatus is null ? "selected" : null)">All</option>
+                    <option value="Confirmed" selected="@(selectedStatus == BookingStatus.Confirmed ? "selected" : null)">Confirmed</option>
+                    <option value="Cancelled" selected="@(selectedStatus == BookingStatus.Cancelled ? "selected" : null)">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="bookingDateInput">Booking date</label>
+                <input class="form-control" id="bookingDateInput" type="date" name="bookingDate"
+                       value="@(selectedDate.HasValue ? selectedDate.Value.ToString("yyyy-MM-dd") : "")" />
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2 justify-content-md-end">
+                <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">Reset</a>
+            </div>
+        </form>
+        <p class="booking-filters-hint">Status filter applies automatically when changed.</p>
+    </div>
+
+    <div class="booking-table-wrap">
+        <div class="booking-loading-overlay" id="bookingLoadingOverlay" aria-hidden="true">
+            <div class="booking-spinner" role="status" aria-label="Loading"></div>
+        </div>
+        <div class="table-responsive">
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th style="width: 16%;">Date</th>
+                        <th style="width: 12%;">Start</th>
+                        <th style="width: 12%;">End</th>
+                        <th style="width: 22%;">Member profile</th>
+                        <th style="width: 14%;">Status</th>
+                        <th style="width: 24%;">Booking ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model is null || Model.Count == 0)
+                    {
                         <tr>
-                            <th style="width: 18%;">Date</th>
-                            <th style="width: 14%;">Start</th>
-                            <th style="width: 14%;">End</th>
-                            <th style="width: 22%;">Member profile</th>
-                            <th style="width: 16%;">Status</th>
-                            <th style="width: 16%;">Booking ID</th>
+                            <td colspan="6" class="text-empty">
+                                No bookings found for the selected filters.
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model is null || Model.Count == 0)
+                    }
+                    else
+                    {
+                        foreach (var b in Model.OrderByDescending(x => x.BookingDate).ThenBy(x => x.StartTime))
                         {
+                            var badgeClass = b.Status == BookingStatus.Confirmed
+                                ? "booking-badge booking-badge-confirmed"
+                                : b.Status == BookingStatus.Cancelled
+                                    ? "booking-badge booking-badge-cancelled"
+                                    : "booking-badge booking-badge-other";
+
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">
-                                    No bookings found for the selected filters.
-                                </td>
+                                <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
+                                <td>@b.StartTime.ToString(@"hh\:mm")</td>
+                                <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
+                                <td><span class="mono-id">@b.MemberProfileId</span></td>
+                                <td><span class="@badgeClass">@b.Status</span></td>
+                                <td><span class="mono-id">@b.Id</span></td>
                             </tr>
                         }
-                        else
-                        {
-                            foreach (var b in Model.OrderByDescending(x => x.BookingDate).ThenBy(x => x.StartTime))
-                            {
-                                var badgeClass = b.Status switch
-                                {
-                                    BookingStatus.Confirmed => "bg-success",
-                                    BookingStatus.Pending => "bg-warning text-dark",
-                                    BookingStatus.Cancelled => "bg-danger",
-                                    BookingStatus.Completed => "bg-secondary",
-                                    _ => "bg-light text-dark"
-                                };
-
-                                <tr>
-                                    <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
-                                    <td>@b.StartTime.ToString(@"hh\:mm")</td>
-                                    <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
-                                    <td><span class="font-monospace">@b.MemberProfileId</span></td>
-                                    <td><span class="badge @badgeClass">@b.Status</span></td>
-                                    <td><span class="font-monospace">@b.Id</span></td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('bookingFiltersForm');
+            const status = document.getElementById('statusSelect');
+            const date = document.getElementById('bookingDateInput');
+            const overlay = document.getElementById('bookingLoadingOverlay');
+            if (!form || !status) return;
+
+            const submitFilters = function () {
+                if (overlay) overlay.classList.add('show');
+                form.submit();
+            };
+
+            status.addEventListener('change', submitFilters);
+
+            if (date) {
+                date.addEventListener('change', submitFilters);
+            }
+        })();
+    </script>
+}

@@ -1,0 +1,166 @@
+/* Admin Booking — matches Subscription Plans theme (subscription-admin.css) */
+
+.booking-admin-container {
+    background: transparent;
+    color: var(--whiteout);
+}
+
+.booking-filters-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.booking-filters-card .form-label {
+    color: var(--yellow);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.booking-filters-hint {
+    color: #A0A0AB;
+    font-size: 0.85rem;
+    margin: 0.75rem 0 0;
+}
+
+.booking-table-wrap {
+    position: relative;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.booking-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+}
+
+.booking-table thead {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.booking-table th {
+    color: var(--yellow);
+    padding: 1.1rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.booking-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s ease;
+}
+
+.booking-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.booking-table td {
+    color: var(--whiteout);
+    padding: 1.1rem 1rem;
+    vertical-align: middle;
+}
+
+.booking-table .text-empty {
+    color: #A0A0AB;
+    padding: 2.5rem 1rem;
+    text-align: center;
+}
+
+.booking-table .mono-id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem;
+    color: #A0A0AB;
+}
+
+.booking-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.booking-badge-confirmed {
+    background-color: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #10B981;
+}
+
+.booking-badge-cancelled {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #EF4444;
+}
+
+.booking-badge-other {
+    background-color: rgba(160, 160, 171, 0.12);
+    border: 1px solid var(--border-color);
+    color: #A0A0AB;
+}
+
+.booking-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 15, 17, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 12px;
+}
+
+.booking-loading-overlay.show {
+    display: flex;
+}
+
+.booking-spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--yellow);
+    border-radius: 50%;
+    animation: booking-spin 0.8s linear infinite;
+}
+
+@keyframes booking-spin {
+    to { transform: rotate(360deg); }
+}
+
+.booking-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .booking-header-actions {
+        width: 100%;
+    }
+
+    .booking-header-actions .btn-subscription-secondary {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/* Status Filter Dropdown & Option Styling */
+.booking-filters-card select.form-select {
+    background-color: var(--card-bg) !important;
+    color: var(--whiteout) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.booking-filters-card select.form-select option {
+    background-color: var(--card-bg) !important;
+    color: var(--whiteout) !important;
+}
