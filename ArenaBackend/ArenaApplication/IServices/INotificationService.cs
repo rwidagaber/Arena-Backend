@@ -1,6 +1,6 @@
 using ArenaApplication.Dtos.NotificationDtos;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading;

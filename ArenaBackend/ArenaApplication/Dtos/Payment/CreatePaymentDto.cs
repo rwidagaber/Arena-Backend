@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using ArenaDomain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace ArenaApplication.Dtos.Payment
 {
@@ -7,14 +8,10 @@ namespace ArenaApplication.Dtos.Payment
         [Required]
         public Guid UserSubscriptionId { get; set; }
 
+
         [Required]
-        public decimal Amount { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
 
         public string Currency { get; set; } = "EGP";
-
-        [Required]
-        public string PaymentMethod { get; set; }
-
-        public string? TransactionId { get; set; }
     }
 }
