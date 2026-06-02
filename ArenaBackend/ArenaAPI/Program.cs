@@ -27,13 +27,13 @@ namespace ArenaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-
-            //Add Mapster
+            // Mapster
             builder.Services.AddMapster();
 
-            // Add services to the container.
+            // Controllers
             builder.Services.AddControllers();
 
+            // Services
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -43,8 +43,6 @@ namespace ArenaAPI
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
 
             builder.Services.ConfigureDbContext(builder.Configuration);
-
-            // From HEAD
             builder.Services.AddRepositories();
             builder.Services.AddApplicationServices();
 
@@ -54,7 +52,7 @@ namespace ArenaAPI
             // SignalR
             builder.Services.AddSignalR();
 
-            // OpenAPI + Bearer Auth
+            // OpenAPI + Bearer
             builder.Services.AddOpenApi(options =>
             {
                 options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
@@ -70,30 +68,29 @@ namespace ArenaAPI
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
-            builder.Configuration.GetConnectionString("DefaultConnection");
+
             // JWT
             builder.Services.AddJwtAuthentication(builder.Configuration);
 
-            // Auth Services
+            // Auth
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
-            // Profile Services
+            // Profile
             builder.Services.AddScoped<IProfileService, ProfileService>();
 
-            // Booking Services
+            // Booking
             builder.Services.AddScoped<IGenericRepository<Booking, Guid>,
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
-            // Payment Services
+            // Payment
             builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
 
-
-            // Add authorization policies
+            // Authorization
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("GymMemberOrAdmin", policy =>
@@ -102,17 +99,15 @@ namespace ArenaAPI
 
             var app = builder.Build();
 
-            // Seed database with initial data
-            if (app.Environment.IsDevelopment())
+            using (var scope = app.Services.CreateScope())
             {
-                using (var scope = app.Services.CreateScope())
-                {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    dbContext.Database.EnsureCreated();
-                }
+                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+                await DataSeeder.SeedAsync(context, userManager, roleManager);
             }
 
-            // Configure the HTTP request pipeline.
+            // Middleware
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -120,24 +115,13 @@ namespace ArenaAPI
                 app.MapGet("/", () => Results.Redirect("/scalar"));
             }
 
-            // app.UseCors("AllowAll");
-
             if (!app.Environment.IsDevelopment())
             {
                 app.UseHttpsRedirection();
             }
+
             app.UseAuthentication();
             app.UseAuthorization();
-
-            using (var scope = app.Services.CreateScope())
-            {
-                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-
-                await DataSeeder.SeedAsync(context, userManager, roleManager);
-            }
-
             app.MapControllers();
             app.MapHub<NotificationHub>("/hubs/notifications");
 
