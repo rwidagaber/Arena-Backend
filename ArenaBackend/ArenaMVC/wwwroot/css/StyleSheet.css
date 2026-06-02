@@ -1,0 +1,274 @@
+/* Arena Dashboard - Global Design System */
+
+/* Color Palette */
+:root {
+    --yellow: #C4B045;       /* Hep Green / Gym Athletic Yellow Accent */
+    --teal: #6F8786;         /* Hammock / Muted Blue-Gray Accent */
+    --dark-gray: #414039;    /* November Storms / Warm Charcoal */
+    --whiteout: #FBFBFB;     /* Light Text & Highlights */
+    --black: #0F0F11;        /* Sooty / Deep Charcoal Background */
+    --card-bg: #16161A;      /* Premium Dark Card Background */
+    --border-color: #252529; /* Clean Component Borders */
+    --sidebar-bg: #121214;   /* Sidebar Background */
+    --sidebar-width: 260px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex !important;
+    background-color: var(--black) !important;
+    color: var(--whiteout) !important;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif !important;
+    min-height: 100vh;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: var(--sidebar-width) !important;
+    height: 100vh !important;
+    background-color: var(--sidebar-bg) !important;
+    border-right: 1px solid var(--border-color) !important;
+    padding: 0 !important;
+    z-index: 1000 !important;
+    overflow-y: auto !important;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.sidebar-brand {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-brand a {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--yellow);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-brand a:hover {
+    color: var(--whiteout);
+    text-shadow: 0 0 10px rgba(196, 176, 69, 0.4);
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    margin: 4px 12px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: #A0A0AB;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background-color: rgba(196, 176, 69, 0.08);
+    color: var(--yellow);
+}
+
+.nav-link.active {
+    background-color: rgba(196, 176, 69, 0.15);
+    color: var(--yellow);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(196, 176, 69, 0.2);
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: var(--sidebar-width) !important;
+    width: calc(100% - var(--sidebar-width)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100vh !important;
+    background-color: var(--black) !important;
+}
+
+main {
+    flex: 1 !important;
+    padding: 40px 30px !important;
+    max-width: 1200px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+}
+
+/* Footer */
+.footer {
+    position: relative !important;
+    bottom: auto !important;
+    width: 100% !important;
+    background-color: var(--sidebar-bg) !important;
+    color: #71717A !important;
+    border-top: 1px solid var(--border-color) !important;
+    padding: 20px 30px !important;
+    text-align: center !important;
+    margin-top: auto !important;
+    font-size: 13px !important;
+}
+
+.footer.text-muted {
+    color: #71717A !important;
+}
+
+.footer a {
+    color: var(--teal) !important;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer a:hover {
+    color: var(--yellow) !important;
+    text-decoration: underline;
+}
+
+/* Border and Shadow utilities */
+.border-top {
+    border-top: 1px solid var(--border-color) !important;
+}
+
+.border-bottom {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.box-shadow {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Links */
+a {
+    color: var(--yellow);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #ebd45b;
+}
+
+/* Button Styling */
+.btn-primary {
+    color: var(--black);
+    background-color: var(--yellow);
+    border-color: var(--yellow);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 8px 16px;
+}
+
+.btn-primary:hover {
+    background-color: #ebd45b;
+    border-color: #ebd45b;
+    color: var(--black);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(196, 176, 69, 0.25);
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    color: var(--black);
+    background-color: var(--yellow);
+    border-color: var(--yellow);
+}
+
+/* Dashboard Cards (Common UI) */
+.dashboard-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(196, 176, 69, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+        --sidebar-width: 200px;
+    }
+
+    .main-content {
+        margin-left: 200px;
+        width: calc(100% - 200px);
+    }
+
+    main {
+        padding: 20px 15px;
+    }
+
+    .footer {
+        padding: 15px 15px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 0;
+        --sidebar-width: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    main {
+        padding: 15px 10px;
+    }
+}
+
+/* Form inputs & controls global styling */
+.form-control, .form-select {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--whiteout) !important;
+    border-radius: 8px !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: var(--yellow) !important;
+    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15) !important;
+}

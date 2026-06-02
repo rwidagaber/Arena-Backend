@@ -1,36 +1,35 @@
-/* Subscription Plans Admin - Design Palette */
+/* Subscription Plans Admin - Design System Integration */
 
 :root {
-    --hep-green: #C4B045;
-    --hammock: #6F8786;
-    --autonomous: #C5C7C5;
-    --sooty: #141414;
-    --whiteout: #FBFBFB;
-    --november-storms: #414039;
-    --primary-teal: #17a2b8;
+    --hep-green: var(--yellow);
+    --hammock: var(--border-color);
+    --autonomous: #A0A0AB;
+    --sooty: var(--black);
+    --november-storms: var(--card-bg);
+    --primary-teal: var(--teal);
 }
 
 /* Admin Dashboard Styling */
 .subscription-admin-container {
-    background: linear-gradient(135deg, var(--sooty) 0%, var(--november-storms) 100%);
-    min-height: 100vh;
-    padding: 2rem 0;
+    background: transparent;
     color: var(--whiteout);
 }
 
 .subscription-admin-header {
-    background-color: var(--sooty);
-    padding: 2rem;
-    border-bottom: 3px solid var(--hep-green);
+    background-color: var(--card-bg);
+    padding: 2.5rem 2rem;
+    border: 1px solid var(--border-color);
+    border-bottom: 3px solid var(--yellow);
     margin-bottom: 2rem;
-    border-radius: 8px 8px 0 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .subscription-admin-header h1 {
-    color: var(--hep-green);
-    font-weight: 700;
+    color: var(--yellow);
+    font-weight: 800;
     margin-bottom: 0.5rem;
-    font-size: 2.5rem;
+    font-size: 2.2rem;
 }
 
 .subscription-admin-header p {
@@ -41,59 +40,62 @@
 
 /* Cards */
 .subscription-card {
-    background: linear-gradient(135deg, var(--november-storms) 0%, var(--sooty) 100%);
-    border: 1px solid var(--hammock);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1.75rem;
     margin-bottom: 1.5rem;
     transition: all 0.3s ease;
     color: var(--whiteout);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .subscription-card:hover {
-    border-color: var(--hep-green);
-    box-shadow: 0 8px 24px rgba(196, 176, 69, 0.2);
-    transform: translateY(-2px);
+    border-color: rgba(196, 176, 69, 0.4);
+    box-shadow: 0 8px 24px rgba(196, 176, 69, 0.15);
+    transform: translateY(-3px);
 }
 
 .subscription-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid var(--hammock);
+    align-items: center;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
 }
 
 .subscription-card-title {
-    color: var(--hep-green);
-    font-size: 1.5rem;
-    font-weight: 600;
+    color: var(--yellow);
+    font-size: 1.4rem;
+    font-weight: 700;
     margin: 0;
 }
 
 .subscription-badge {
     display: inline-block;
-    padding: 0.5rem 1rem;
-    background-color: var(--hep-green);
-    color: var(--sooty);
+    padding: 0.4rem 0.8rem;
+    background-color: rgba(196, 176, 69, 0.1);
+    border: 1px solid rgba(196, 176, 69, 0.3);
+    color: var(--yellow);
     border-radius: 20px;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
 }
 
 .subscription-badge.featured {
-    background-color: var(--primary-teal);
-    color: var(--whiteout);
+    background-color: rgba(111, 135, 134, 0.15);
+    border-color: rgba(111, 135, 134, 0.3);
+    color: var(--teal);
 }
 
 /* Forms */
 .subscription-form {
-    background: linear-gradient(135deg, var(--november-storms) 0%, var(--sooty) 100%);
-    border: 1px solid var(--hammock);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 2rem;
-    margin-top: 2rem;
+    padding: 2.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .subscription-form-group {
@@ -101,10 +103,11 @@
 }
 
 .subscription-form-group label {
-    color: var(--hep-green);
+    color: var(--yellow);
     font-weight: 600;
     margin-bottom: 0.5rem;
     display: block;
+    font-size: 0.95rem;
 }
 
 .subscription-form-group input,
@@ -112,9 +115,9 @@
 .subscription-form-group select {
     width: 100%;
     padding: 0.75rem;
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--hammock);
-    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     color: var(--whiteout);
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -122,30 +125,30 @@
 
 .subscription-form-group input::placeholder,
 .subscription-form-group textarea::placeholder {
-    color: var(--autonomous);
+    color: #52525B;
 }
 
 .subscription-form-group input:focus,
 .subscription-form-group textarea:focus,
 .subscription-form-group select:focus {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--hep-green);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--yellow);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.1);
+    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15);
 }
 
 .subscription-form-group textarea {
     resize: vertical;
-    min-height: 100px;
+    min-height: 120px;
 }
 
 /* Buttons */
 .btn-subscription-primary {
-    background-color: var(--hep-green);
-    color: var(--sooty);
+    background-color: var(--yellow);
+    color: var(--black);
     border: none;
     padding: 0.75rem 1.5rem;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -153,17 +156,17 @@
 }
 
 .btn-subscription-primary:hover {
-    background-color: #d4c055;
+    background-color: #ebd45b;
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(196, 176, 69, 0.3);
+    box-shadow: 0 6px 16px rgba(196, 176, 69, 0.25);
 }
 
 .btn-subscription-secondary {
-    background-color: var(--hammock);
-    color: var(--whiteout);
-    border: none;
+    background-color: transparent;
+    color: var(--autonomous);
+    border: 1px solid var(--border-color);
     padding: 0.75rem 1.5rem;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -171,172 +174,189 @@
 }
 
 .btn-subscription-secondary:hover {
-    background-color: #7a9393;
+    background-color: rgba(255, 255, 255, 0.03);
+    color: var(--whiteout);
+    border-color: #71717A;
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(111, 135, 134, 0.3);
 }
 
 .btn-subscription-danger {
-    background-color: #dc3545;
-    color: var(--whiteout);
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #EF4444;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 .btn-subscription-danger:hover {
-    background-color: #c82333;
+    background-color: #EF4444;
+    color: var(--whiteout);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .btn-subscription-edit {
-    background-color: var(--primary-teal);
-    color: var(--whiteout);
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    background-color: rgba(111, 135, 134, 0.1);
+    border: 1px solid rgba(111, 135, 134, 0.3);
+    color: var(--teal);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
     cursor: pointer;
-    margin-right: 0.5rem;
 }
 
 .btn-subscription-edit:hover {
-    background-color: #138496;
+    background-color: var(--teal);
+    color: var(--whiteout);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(111, 135, 134, 0.25);
 }
 
 /* Action Buttons Container */
 .subscription-actions {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
 }
 
 .subscription-actions .btn-subscription-edit,
 .subscription-actions .btn-subscription-danger {
     flex: 1;
-    margin-right: 0;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Plan Details */
 .subscription-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
-    margin-top: 1rem;
+    margin-top: 1.25rem;
 }
 
 .subscription-detail-item {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
     padding: 1rem;
-    border-radius: 6px;
-    border-left: 3px solid var(--hep-green);
+    border-radius: 8px;
+    border-left: 3px solid var(--yellow);
 }
 
 .subscription-detail-label {
     color: var(--autonomous);
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 500;
     margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .subscription-detail-value {
-    color: var(--hep-green);
-    font-size: 1.25rem;
-    font-weight: 600;
+    color: var(--whiteout);
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 
 /* Table Styling */
 .subscription-table {
     width: 100%;
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
     margin-top: 1.5rem;
+    border-collapse: collapse;
 }
 
 .subscription-table thead {
-    background-color: var(--sooty);
-    border-bottom: 2px solid var(--hep-green);
+    background-color: rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .subscription-table th {
-    color: var(--hep-green);
-    padding: 1rem;
+    color: var(--yellow);
+    padding: 1.1rem 1rem;
     text-align: left;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.95rem;
 }
 
 .subscription-table tbody tr {
-    border-bottom: 1px solid var(--hammock);
+    border-bottom: 1px solid var(--border-color);
     transition: background-color 0.3s ease;
 }
 
 .subscription-table tbody tr:hover {
-    background-color: rgba(196, 176, 69, 0.1);
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
 .subscription-table td {
     color: var(--whiteout);
-    padding: 1rem;
+    padding: 1.1rem 1rem;
 }
 
 /* Empty State */
 .subscription-empty-state {
     text-align: center;
-    padding: 3rem 1rem;
-    background: linear-gradient(135deg, var(--november-storms) 0%, var(--sooty) 100%);
-    border: 2px dashed var(--hammock);
+    padding: 4rem 2rem;
+    background-color: var(--card-bg);
+    border: 1px dashed var(--border-color);
     border-radius: 12px;
     margin-top: 2rem;
 }
 
 .subscription-empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 3.5rem;
+    margin-bottom: 1.25rem;
+    opacity: 0.8;
 }
 
 .subscription-empty-state h3 {
-    color: var(--hep-green);
+    color: var(--yellow);
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
+    font-weight: 700;
 }
 
 .subscription-empty-state p {
     color: var(--autonomous);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
 }
 
 /* Alerts */
 .subscription-alert {
-    padding: 1rem;
-    border-radius: 6px;
-    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.75rem;
     border-left: 4px solid;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .subscription-alert.success {
-    background-color: rgba(23, 162, 184, 0.1);
-    border-color: var(--primary-teal);
-    color: var(--primary-teal);
+    background-color: rgba(16, 185, 129, 0.08);
+    border-color: #10B981;
+    color: #10B981;
 }
 
 .subscription-alert.error {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-color: #dc3545;
-    color: #ffc6d6;
+    background-color: rgba(239, 68, 68, 0.08);
+    border-color: #EF4444;
+    color: #FCA5A5;
 }
 
 .subscription-alert.warning {
-    background-color: rgba(196, 176, 69, 0.1);
-    border-color: var(--hep-green);
-    color: var(--hep-green);
+    background-color: rgba(245, 158, 11, 0.08);
+    border-color: #F59E0B;
+    color: #FCD34D;
 }
 
 /* Responsive */
@@ -362,10 +382,10 @@
 /* Loading Spinner */
 .subscription-spinner {
     display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid var(--autonomous);
-    border-top-color: var(--hep-green);
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--yellow);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
