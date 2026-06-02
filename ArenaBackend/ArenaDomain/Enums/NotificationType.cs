@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ArenaDomain.Enums
-{
-    public enum NotificationType
+    namespace ArenaDomain.Enums
     {
-        Subscription,
-        Booking,
-        Payment
-       
+        public enum NotificationType
+        {
+            Info,
+            Success,
+            Warning,
+            Error
+        }
     }
-}

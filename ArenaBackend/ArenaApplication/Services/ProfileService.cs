@@ -6,7 +6,7 @@ using ArenaApplication.Dtos.UserSupscriptionDto;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 

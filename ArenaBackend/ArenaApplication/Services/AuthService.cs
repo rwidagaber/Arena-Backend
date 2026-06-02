@@ -7,7 +7,7 @@ using ArenaApplication.IServices;
 using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -68,6 +68,8 @@ namespace ArenaApplication.Services
             };
 
             await _authRepository.CreateMemberProfileAsync(memberProfile);
+            user.MemberProfile = memberProfile;
+
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
@@ -81,6 +83,8 @@ namespace ArenaApplication.Services
 
             if (!user.IsActive)
                 return Result<AuthResponseDto>.Failure("Account is deactivated");
+            if (user.MemberProfile is null)
+                user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
@@ -102,10 +106,10 @@ namespace ArenaApplication.Services
 
             await _authRepository.RevokeRefreshTokenAsync(storedToken);
 
-            var user = await _userManager.FindByIdAsync(userIdStr);
+           
+            var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
                 return Result<AuthResponseDto>.Failure("User not found");
-
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
         }

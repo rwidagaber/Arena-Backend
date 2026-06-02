@@ -20,7 +20,7 @@ namespace ArenaDomain.Entities.User
         // Navigation Properties
         public virtual MemberProfile? MemberProfile { get; set; }
 
-        public virtual ICollection<Notification> Notifications { get; set; } = [];
+        //public virtual ICollection<Notification> Notifications { get; set; } = [];
 
         public virtual ICollection<Payment> Payments { get; set; } = [];
     }
