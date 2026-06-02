@@ -92,32 +92,8 @@ namespace ArenaApi.Controllers
             return Ok(result.Value);
         }
 
-        [HttpGet("/api/admin/bookings")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAdminBookings([FromQuery] BookingStatus? status, [FromQuery] DateTime? bookingDate)
-        {
-            var result = await _bookingService.GetAdminBookings(status, bookingDate);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result.Errors);
-            }
-
-            return Ok(result.Value);
-        }
-
-        [HttpGet("/api/admin/bookings/today")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetTodaySchedule()
-        {
-            var result = await _bookingService.GetTodaySchedule();
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result.Errors);
-            }
-
-            return Ok(result.Value);
-        }
+    
+        
     }
+
 }
