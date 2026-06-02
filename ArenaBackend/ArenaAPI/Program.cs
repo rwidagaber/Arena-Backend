@@ -4,7 +4,10 @@ using ArenaApi.Configurations.ValidatorConfig;
 using ArenaApi.Hubs;
 using ArenaApplication;
 using ArenaApplication.IServices;
+using ArenaApplication.IServices.Payment;
+using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
+using ArenaApplication.Services.Payment;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
@@ -79,6 +82,13 @@ namespace ArenaAPI
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
+            // Payment Services
+            builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
+
+
+
             var app = builder.Build();
 
             // Seed database with initial data
@@ -101,8 +111,10 @@ namespace ArenaAPI
 
             // app.UseCors("AllowAll");
 
-            app.UseHttpsRedirection();
-
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
             app.UseAuthentication();
             app.UseAuthorization();
 
