@@ -1,4 +1,7 @@
-﻿using ArenaApplication.Dtos.ProfileDtos;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.UserSupscriptionDto;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.User;
@@ -31,22 +34,25 @@ namespace ArenaApplication.Services
             var activeSubscription = user.MemberProfile?.Subscriptions
                 .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
 
+            var isSubscribed = activeSubscription != null;
+
             var profile = new GetProfileDto
             {
                 Id = user.Id,
                 MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email!,
-                PhoneNumber = user.PhoneNumber,
-                PreferredLanguage = user.PreferredLanguage,
+                // If user is not subscribed, lock profile fields by redacting them.
+                FirstName = isSubscribed ? user.FirstName : "Locked",
+                LastName = isSubscribed ? user.LastName : "Locked",
+                Email = isSubscribed ? user.Email! : "Locked",
+                PhoneNumber = isSubscribed ? user.PhoneNumber : null,
+                PreferredLanguage = isSubscribed ? user.PreferredLanguage : "Locked",
                 IsActive = user.IsActive,
-                Weight = user.MemberProfile?.Weight,
-                Height = user.MemberProfile?.Height,
-                BMI = user.MemberProfile?.BMI,
-                Gender = user.MemberProfile?.Gender.ToString(),
-                ProfileImage = user.MemberProfile?.ProfileImageUrl,
-                Birthday = user.MemberProfile?.DateOfBirth != null
+                Weight = isSubscribed ? user.MemberProfile?.Weight : null,
+                Height = isSubscribed ? user.MemberProfile?.Height : null,
+                BMI = isSubscribed ? user.MemberProfile?.BMI : null,
+                Gender = isSubscribed ? user.MemberProfile?.Gender.ToString() : null,
+                ProfileImage = isSubscribed ? user.MemberProfile?.ProfileImageUrl : null,
+                Birthday = isSubscribed && user.MemberProfile?.DateOfBirth != null
                                     ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
                                     : null,
                 ActiveSubscription = activeSubscription == null ? null : new UserSubscriptionDto
@@ -70,6 +76,15 @@ namespace ArenaApplication.Services
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
                 return Result<GetProfileDto>.Failure("User not found");
+
+            // Check subscription first - disallow updates if no active subscription
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+
+            if (activeSubscription == null)
+            {
+                return Result<GetProfileDto>.Failure("Profile is locked. Active subscription required to update profile.");
+            }
 
             // Update ApplicationUser fields
             if (dto.FirstName is not null)
