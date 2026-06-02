@@ -1,0 +1,99 @@
+@using ArenaDomain.Enums
+@model List<ArenaApplication.Dtos.Booking.BookingDto>
+
+@{
+    ViewData["Title"] = "Bookings";
+    BookingStatus? selectedStatus = ViewBag.SelectedStatus as BookingStatus?;
+    DateTime? selectedDate = ViewBag.SelectedDate as DateTime?;
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">Bookings</h2>
+            <div class="text-muted">Filter and review all bookings.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" asp-controller="AdminBooking" asp-action="Today">Today's schedule</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status">
+                        <option value="">All</option>
+                        @foreach (var s in Enum.GetValues<BookingStatus>())
+                        {
+                            var isSelected = selectedStatus.HasValue && selectedStatus.Value == s;
+                            <option value="@s" selected="@(isSelected ? "selected" : null)">@s</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Booking date</label>
+                    <input class="form-control" type="date" name="bookingDate" value="@(selectedDate.HasValue ? selectedDate.Value.ToString("yyyy-MM-dd") : "")" />
+                </div>
+                <div class="col-12 col-md-4 d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Apply filters</button>
+                    <a class="btn btn-outline-secondary" asp-controller="AdminBooking" asp-action="Index">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 18%;">Date</th>
+                            <th style="width: 14%;">Start</th>
+                            <th style="width: 14%;">End</th>
+                            <th style="width: 22%;">Member profile</th>
+                            <th style="width: 16%;">Status</th>
+                            <th style="width: 16%;">Booking ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model is null || Model.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    No bookings found for the selected filters.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var b in Model.OrderByDescending(x => x.BookingDate).ThenBy(x => x.StartTime))
+                            {
+                                var badgeClass = b.Status switch
+                                {
+                                    BookingStatus.Confirmed => "bg-success",
+                                    BookingStatus.Pending => "bg-warning text-dark",
+                                    BookingStatus.Cancelled => "bg-danger",
+                                    BookingStatus.Completed => "bg-secondary",
+                                    _ => "bg-light text-dark"
+                                };
+
+                                <tr>
+                                    <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@b.StartTime.ToString(@"hh\:mm")</td>
+                                    <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
+                                    <td><span class="font-monospace">@b.MemberProfileId</span></td>
+                                    <td><span class="badge @badgeClass">@b.Status</span></td>
+                                    <td><span class="font-monospace">@b.Id</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+

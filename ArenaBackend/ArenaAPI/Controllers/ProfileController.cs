@@ -22,11 +22,14 @@ namespace ArenaApi.Controllers
         public async Task<IActionResult> GetProfile()
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             var result = await _profileService.GetProfileAsync(userId);
             if (!result.IsSuccess)
                 return NotFound(result.Errors);
+
             return Ok(result.Value);
         }
+
 
         [HttpPut]
         public async Task<IActionResult> UpdateProfile(UpdateProfileDto dto)
@@ -35,7 +38,7 @@ namespace ArenaApi.Controllers
             var result = await _profileService.UpdateProfileAsync(userId, dto);
             if (!result.IsSuccess)
                 return BadRequest(result.Errors);
-            return NoContent();
+            return Ok(result.Value);
         }
     }
 }

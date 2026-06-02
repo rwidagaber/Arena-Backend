@@ -1,7 +1,16 @@
+using ArenaApplication;
+using ArenaInfrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.ConfigureDbContext(builder.Configuration);
+builder.Services.AddApplicationServices();
+
+// Booking dependencies (MVC Admin pages)
+builder.Services.ConfigureDbContext(builder.Configuration);
+builder.Services.AddScoped<ArenaApplication.IServices.IBookingService, ArenaApplication.Services.BookingService>();
 
 var app = builder.Build();
 
