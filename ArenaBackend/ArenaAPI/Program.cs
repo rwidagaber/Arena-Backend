@@ -1,5 +1,6 @@
 using ArenaApi.Configurations.BrearerConfig;
 using ArenaApi.Configurations.JWTConfig;
+using ArenaApi.Configurations.MapsterConfig;
 using ArenaApi.Configurations.ValidatorConfig;
 using ArenaApi.Hubs;
 using ArenaApplication;
@@ -22,6 +23,10 @@ namespace ArenaAPI
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+
+            //Add Mapster
+            builder.Services.AddMapster();
 
             // Add services to the container.
             builder.Services.AddControllers();
@@ -78,6 +83,13 @@ namespace ArenaAPI
             builder.Services.AddScoped<IGenericRepository<Booking, Guid>,
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
+
+            // Add authorization policies
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("GymMemberOrAdmin", policy =>
+                    policy.RequireRole("GymMember", "Admin"));
+            });
 
             var app = builder.Build();
 
