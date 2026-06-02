@@ -46,7 +46,7 @@ namespace ArenaApplication.Services
                 Email = isSubscribed ? user.Email! : "Locked",
                 PhoneNumber = isSubscribed ? user.PhoneNumber : null,
                 PreferredLanguage = isSubscribed ? user.PreferredLanguage : "Locked",
-                IsActive = user.IsActive,
+                IsActive = isSubscribed ? user.IsActive : false,
                 Weight = isSubscribed ? user.MemberProfile?.Weight : null,
                 Height = isSubscribed ? user.MemberProfile?.Height : null,
                 BMI = isSubscribed ? user.MemberProfile?.BMI : null,
