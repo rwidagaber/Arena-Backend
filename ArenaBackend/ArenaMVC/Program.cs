@@ -1,5 +1,10 @@
 using ArenaApplication;
 using ArenaInfrastructure;
+using ArenaApplication.IServices;
+using ArenaApplication.Services;
+using ArenaInfrastructure.Repositories;
+using ArenaDomain.Entities.Bookings;
+using ArenaDomain.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +14,20 @@ builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.AddApplicationServices();
 
 // Booking dependencies (MVC Admin pages)
-builder.Services.ConfigureDbContext(builder.Configuration);
-builder.Services.AddScoped<ArenaApplication.IServices.IBookingService, ArenaApplication.Services.BookingService>();
+// Repositories and Unit of Work
+builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Notification-related services (minimal set required by BookingService)
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
+// Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
+builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
+
+// Booking service
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
 
