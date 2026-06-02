@@ -59,7 +59,12 @@ namespace ArenaAPI
             builder.Services.AddScoped<IProfileService, ProfileService>();
 
 
-
+            // Add authorization policies
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("GymMemberOrAdmin", policy =>
+                    policy.RequireRole("GymMember", "Admin"));
+            });
 
             var app = builder.Build();
 
@@ -72,6 +77,8 @@ namespace ArenaAPI
                 app.MapGet("/", () => Results.Redirect("/scalar"));
 
             }
+
+           
 
 
             app.UseHttpsRedirection();
