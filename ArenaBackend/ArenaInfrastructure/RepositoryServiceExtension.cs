@@ -1,5 +1,5 @@
 using ArenaDomain.Entities.Subscription;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaInfrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 

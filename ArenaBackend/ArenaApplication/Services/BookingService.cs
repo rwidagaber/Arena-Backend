@@ -2,7 +2,7 @@
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Mapster;
 using Microsoft.EntityFrameworkCore;

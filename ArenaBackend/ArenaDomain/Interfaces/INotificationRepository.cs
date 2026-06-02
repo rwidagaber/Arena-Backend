@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ArenaDomain.Interfacees
+namespace ArenaDomain.Interfaces
 {
     public interface INotificationRepository : IGenericRepository<Notification, Guid>
     {

@@ -2,7 +2,7 @@ using ArenaApplication.Dtos.NotificationDtos;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Notifications;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaInfrastructure.Repositories;
 using Mapster;
 using System;
