@@ -25,7 +25,7 @@ namespace ArenaApi.Controllers
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
             var notifications = await _notificationService.GetUserNotificationsAsync(
-                _currentUserService.UserId, cancellationToken);
+                _currentUserService.MemberProfileId, cancellationToken);
 
             return Ok(notifications);
         }
@@ -35,7 +35,7 @@ namespace ArenaApi.Controllers
         public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
         {
             var count = await _notificationService.GetUnreadCountAsync(
-                _currentUserService.UserId, cancellationToken);
+                _currentUserService.MemberProfileId, cancellationToken);
 
             return Ok(new { unreadCount = count });
         }
@@ -45,7 +45,7 @@ namespace ArenaApi.Controllers
         public async Task<IActionResult> MarkAsRead(Guid id, CancellationToken cancellationToken)
         {
             await _notificationService.MarkAsReadAsync(
-                id, _currentUserService.UserId, cancellationToken);
+                id, _currentUserService.MemberProfileId, cancellationToken);
 
             return NoContent();
         }
@@ -55,7 +55,7 @@ namespace ArenaApi.Controllers
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
         {
             await _notificationService.MarkAllAsReadAsync(
-                _currentUserService.UserId, cancellationToken);
+                _currentUserService.MemberProfileId, cancellationToken);
 
             return NoContent();
         }

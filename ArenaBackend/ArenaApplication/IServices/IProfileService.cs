@@ -9,6 +9,7 @@ namespace ArenaApplication.IServices
     public interface IProfileService
     {
         Task<Result<GetProfileDto>> GetProfileAsync(Guid userId);
-        Task<Result> UpdateProfileAsync(Guid userId, UpdateProfileDto dto);
-    }
+        Task<Result<GetProfileDto>> UpdateProfileAsync(Guid userId, UpdateProfileDto dto);
+     }
+        
 }

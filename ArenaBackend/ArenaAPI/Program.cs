@@ -1,10 +1,14 @@
 using ArenaApi.Configurations.BrearerConfig;
 using ArenaApi.Configurations.JWTConfig;
+using ArenaApi.Configurations.MapsterConfig;
 using ArenaApi.Configurations.ValidatorConfig;
 using ArenaApi.Hubs;
 using ArenaApplication;
 using ArenaApplication.IServices;
+using ArenaApplication.IServices.Payment;
+using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
+using ArenaApplication.Services.Payment;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
@@ -23,6 +27,10 @@ namespace ArenaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+
+            //Add Mapster
+            builder.Services.AddMapster();
+
             // Add services to the container.
             builder.Services.AddControllers();
 
@@ -31,7 +39,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
 
             builder.Services.ConfigureDbContext(builder.Configuration);
@@ -62,7 +70,7 @@ namespace ArenaAPI
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
-
+            builder.Configuration.GetConnectionString("DefaultConnection");
             // JWT
             builder.Services.AddJwtAuthentication(builder.Configuration);
 
@@ -78,6 +86,19 @@ namespace ArenaAPI
             builder.Services.AddScoped<IGenericRepository<Booking, Guid>,
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
+
+            // Payment Services
+            builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
+
+
+            // Add authorization policies
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("GymMemberOrAdmin", policy =>
+                    policy.RequireRole("GymMember", "Admin"));
+            });
 
             var app = builder.Build();
 
@@ -101,8 +122,10 @@ namespace ArenaAPI
 
             // app.UseCors("AllowAll");
 
-            app.UseHttpsRedirection();
-
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
             app.UseAuthentication();
             app.UseAuthorization();
 

@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities.Subscription;
+using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
 using ArenaDomain.Shared;
@@ -24,11 +24,11 @@ namespace ArenaDomain.Entities.Payments
 
         public PaymentMethod PaymentMethod { get; set; }
 
-        public string TransactionId { get; set; } = string.Empty;
+        public string? TransactionId { get; set; }
 
         public string? PaymentIntentId { get; set; }
 
-        public PaymentStatus Status { get; set; }
+        public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
         public DateTime? PaymentDate { get; set; }
 

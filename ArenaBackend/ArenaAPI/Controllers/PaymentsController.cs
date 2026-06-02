@@ -1,0 +1,119 @@
+using ArenaApplication.Dtos.Payment;
+using ArenaApplication.IServices.Payment;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Security.Cryptography;
+
+namespace ArenaApi.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class PaymentsController : ControllerBase
+    {
+        private readonly IPaymentService _paymentService;
+        private readonly IPaymentGatewayService _gatewayService;
+
+        public PaymentsController(IPaymentService paymentService,
+                IPaymentGatewayService gatewayService)
+        {
+            _paymentService = paymentService;
+            _gatewayService = gatewayService;
+
+        }
+
+        //private Guid GetCurrentUserId()
+        //   => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        //POST api/payments
+
+        // TODO: Replace [FromQuery] userId with GetCurrentUserId() after JWT integration
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto, [FromQuery] Guid userId)
+        {
+            var result = await _paymentService.CreateAsync(dto, userId);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Errors });
+
+            return Ok(result.Value);
+        }
+
+
+        // TODO: Replace [FromQuery] userId with GetCurrentUserId() after JWT integration  
+        [HttpGet("my-payments")]
+        public async Task<IActionResult> GetMyPayments([FromQuery] Guid userId)
+        {
+            var result = await _paymentService.GetMyPaymentsAsync(userId);
+            return Ok(result.Value);
+        }
+        //get payment by id
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var result = await _paymentService.GetByIdAsync(id);
+
+            if(!result.IsSuccess)
+            {
+                return NotFound(new { message = result.Errors});
+            }
+            return Ok(result.Value);
+        }
+        //Admin
+        // TODO: Add [Authorize(Roles = "Admin")] after JWT integration
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] PaymentFilterDto dto)
+        {
+            var result = await _paymentService.GetAllAsync(dto);
+            return Ok(result.Value);
+        }
+
+        //Admin change status
+        // TODO: Add [Authorize(Roles = "Admin")] after JWT integration
+        [HttpPatch("{id:guid}/status")]
+        public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdatePaymentStatusDto dto)
+        {
+            var result = await _paymentService.UpdateStatusAsync(id,dto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { message = result.Errors });
+            }
+            return Ok(result.Value);
+        }
+        //Getway payment Success
+        [HttpPost("webhook/completed")]
+        [AllowAnonymous]
+        public async Task<IActionResult> WebhookCompleted([FromBody] PaymobWebhookDto dto,
+                                                          [FromQuery] string hmac)
+        {
+            if (!_gatewayService.VerifyWebhookHmac(dto, hmac))
+                return Unauthorized(new { message = "Invalid webhook signature." });
+
+
+            var transactionId = dto.Obj.Id.ToString();
+            var paymentIntentId = dto.Obj.Order.Id.ToString();
+
+            if (dto.Obj.Success)
+            {
+                var result = await _paymentService.MarkAsCompletedAsync(
+                    transactionId, paymentIntentId);
+
+                if (!result.IsSuccess)
+                    return BadRequest(new { message = result.Errors });
+            }
+            else
+            {
+                var result = await _paymentService.MarkAsFailedAsync(
+                    paymentIntentId, dto.Obj.Data.Message);
+
+                if (!result.IsSuccess)
+                    return BadRequest(new { message = result.Errors });
+            }
+
+            return Ok();
+        }
+    }
+}

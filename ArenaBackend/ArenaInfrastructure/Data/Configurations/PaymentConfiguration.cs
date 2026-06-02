@@ -25,7 +25,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
                .HasMaxLength(50);
 
         builder.Property(p => p.TransactionId)
-               .IsRequired()
+               .IsRequired(false)
                .HasMaxLength(200);
 
         builder.Property(p => p.PaymentIntentId)
@@ -62,7 +62,8 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
                .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(p => p.TransactionId)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("[TransactionId] IS NOT NULL");
 
         builder.ToTable("Payments");
     }

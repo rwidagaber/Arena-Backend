@@ -2,6 +2,15 @@ html {
   font-size: 14px;
 }
 
+:root {
+  --arena-bg: #FBFBFB;
+  --arena-surface: #C5C7C5;
+  --arena-accent: #C4B045;
+  --arena-muted: #6F8786;
+  --arena-text: #141414;
+  --arena-text-soft: #414039;
+}
+
 @media (min-width: 768px) {
   html {
     font-size: 16px;
@@ -9,7 +18,7 @@ html {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem var(--arena-bg), 0 0 0 0.25rem rgba(196, 176, 69, 0.35);
 }
 
 html {
@@ -19,6 +28,8 @@ html {
 
 body {
   margin-bottom: 60px;
+  background: var(--arena-bg);
+  color: var(--arena-text);
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {

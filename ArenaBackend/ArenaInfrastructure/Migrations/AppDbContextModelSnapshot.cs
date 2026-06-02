@@ -390,6 +390,9 @@ namespace ArenaInfrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<Guid>("MemberProfileId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -411,12 +414,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("MemberProfileId");
 
                     b.ToTable("Notifications", (string)null);
                 });
@@ -649,7 +649,6 @@ namespace ArenaInfrastructure.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("TransactionId")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
@@ -668,7 +667,8 @@ namespace ArenaInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TransactionId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[TransactionId] IS NOT NULL");
 
                     b.HasIndex("UserId");
 
@@ -1447,13 +1447,13 @@ namespace ArenaInfrastructure.Migrations
 
             modelBuilder.Entity("ArenaDomain.Entities.Notifications.Notification", b =>
                 {
-                    b.HasOne("ArenaDomain.Entities.User.ApplicationUser", "User")
+                    b.HasOne("ArenaDomain.Entities.MemberProfile", "MemberProfile")
                         .WithMany("Notifications")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("MemberProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("MemberProfile");
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Nutrition.Meal", b =>
@@ -1680,6 +1680,8 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Navigation("MealLogs");
 
+                    b.Navigation("Notifications");
+
                     b.Navigation("NutritionPlans");
 
                     b.Navigation("ProgressLogs");
@@ -1707,8 +1709,6 @@ namespace ArenaInfrastructure.Migrations
             modelBuilder.Entity("ArenaDomain.Entities.User.ApplicationUser", b =>
                 {
                     b.Navigation("MemberProfile");
-
-                    b.Navigation("Notifications");
 
                     b.Navigation("Payments");
                 });

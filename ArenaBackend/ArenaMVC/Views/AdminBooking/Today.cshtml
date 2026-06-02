@@ -1,0 +1,71 @@
+@using ArenaDomain.Enums
+@model List<ArenaApplication.Dtos.Booking.BookingDto>
+
+@{
+    ViewData["Title"] = "Today's schedule";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">Today's schedule</h2>
+            <div class="text-muted">Bookings scheduled for today (UTC).</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" asp-controller="AdminBooking" asp-action="Index">Back to all bookings</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 18%;">Date</th>
+                            <th style="width: 14%;">Start</th>
+                            <th style="width: 14%;">End</th>
+                            <th style="width: 22%;">Member profile</th>
+                            <th style="width: 16%;">Status</th>
+                            <th style="width: 16%;">Booking ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model is null || Model.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    No bookings scheduled for today.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var b in Model.OrderBy(x => x.StartTime))
+                            {
+                                var badgeClass = b.Status switch
+                                {
+                                    BookingStatus.Confirmed => "bg-success",
+                                    BookingStatus.Pending => "bg-warning text-dark",
+                                    BookingStatus.Cancelled => "bg-danger",
+                                    BookingStatus.Completed => "bg-secondary",
+                                    _ => "bg-light text-dark"
+                                };
+
+                                <tr>
+                                    <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@b.StartTime.ToString(@"hh\:mm")</td>
+                                    <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
+                                    <td><span class="font-monospace">@b.MemberProfileId</span></td>
+                                    <td><span class="badge @badgeClass">@b.Status</span></td>
+                                    <td><span class="font-monospace">@b.Id</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
