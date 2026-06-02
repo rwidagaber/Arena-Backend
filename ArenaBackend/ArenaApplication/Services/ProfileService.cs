@@ -1,18 +1,18 @@
-﻿using ArenaApplication.Dtos.ProfileDtos;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.UserSupscriptionDto;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ArenaApplication.Services
 {
-    public class ProfileService :IProfileService
+    public class ProfileService : IProfileService
     {
         private readonly IAuthRepository _authRepository;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -25,33 +25,34 @@ namespace ArenaApplication.Services
             _userManager = userManager;
         }
 
-           
-
-
-        public async Task<Result<GetProfileDto>> GetProfileAsync(Guid userId)
+        public async Task<Result<GetProfileDto>> GetProfileAsync(Guid Id)
         {
-            var user = await _authRepository.GetByIdWithProfileAsync(userId);
+            var user = await _authRepository.GetByIdWithProfileAsync(Id);
             if (user is null)
                 return Result<GetProfileDto>.Failure("User not found");
 
             var activeSubscription = user.MemberProfile?.Subscriptions
                 .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
 
+            var isSubscribed = activeSubscription != null;
+
             var profile = new GetProfileDto
             {
                 Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email!,
-                PhoneNumber = user.PhoneNumber,
-                PreferredLanguage = user.PreferredLanguage,
-                IsActive = user.IsActive,
-                Weight = (decimal?)user.MemberProfile?.Weight,
-                Height = (decimal?)user.MemberProfile?.Height,
-                BMI = (decimal?)user.MemberProfile?.BMI,
-                Gender = user.MemberProfile?.Gender.ToString(),
-                ProfileImage = user.MemberProfile?.ProfileImageUrl,
-                Birthday = user.MemberProfile?.DateOfBirth != null
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
+                // If user is not subscribed, lock profile fields by redacting them.
+                FirstName = isSubscribed ? user.FirstName : "Locked",
+                LastName = isSubscribed ? user.LastName : "Locked",
+                Email = isSubscribed ? user.Email! : "Locked",
+                PhoneNumber = isSubscribed ? user.PhoneNumber : null,
+                PreferredLanguage = isSubscribed ? user.PreferredLanguage : "Locked",
+                IsActive = isSubscribed ? user.IsActive : false,
+                Weight = isSubscribed ? user.MemberProfile?.Weight : null,
+                Height = isSubscribed ? user.MemberProfile?.Height : null,
+                BMI = isSubscribed ? user.MemberProfile?.BMI : null,
+                Gender = isSubscribed ? user.MemberProfile?.Gender.ToString() : null,
+                ProfileImage = isSubscribed ? user.MemberProfile?.ProfileImageUrl : null,
+                Birthday = isSubscribed && user.MemberProfile?.DateOfBirth != null
                                     ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
                                     : null,
                 ActiveSubscription = activeSubscription == null ? null : new UserSubscriptionDto
@@ -70,12 +71,22 @@ namespace ArenaApplication.Services
             return Result<GetProfileDto>.Success(profile);
         }
 
-        public async Task<Result> UpdateProfileAsync(Guid userId, UpdateProfileDto dto)
+        public async Task<Result<GetProfileDto>> UpdateProfileAsync(Guid userId, UpdateProfileDto dto)
         {
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
-                return Result.Failure("User not found");
+                return Result<GetProfileDto>.Failure("User not found");
 
+            // Check subscription first - disallow updates if no active subscription
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+
+            if (activeSubscription == null)
+            {
+                return Result<GetProfileDto>.Failure("Profile is locked. Active subscription required to update profile.");
+            }
+
+            // Update ApplicationUser fields
             if (dto.FirstName is not null)
                 user.FirstName = dto.FirstName;
 
@@ -90,8 +101,9 @@ namespace ArenaApplication.Services
 
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
-                return Result.Failure(updateResult.Errors.Select(e => e.Description).ToArray());
+                return Result<GetProfileDto>.Failure(updateResult.Errors.Select(e => e.Description).ToArray());
 
+            // Update MemberProfile fields
             if (user.MemberProfile is not null)
             {
                 if (dto.Weight is not null)
@@ -109,7 +121,7 @@ namespace ArenaApplication.Services
                 if (dto.Birthday is not null)
                     user.MemberProfile.DateOfBirth = dto.Birthday.Value.ToDateTime(TimeOnly.MinValue);
 
-
+                // Recalculate BMI if weight or height updated
                 if (dto.Weight is not null || dto.Height is not null)
                 {
                     var weight = user.MemberProfile.Weight;
@@ -123,7 +135,29 @@ namespace ArenaApplication.Services
                 await _authRepository.UpdateMemberProfileAsync(user.MemberProfile);
             }
 
-            return Result.Success();
+            // ✅ Build the updated DTO to return
+            var updatedProfile = new GetProfileDto
+            {
+                Id = user.Id,
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email!,
+                PhoneNumber = user.PhoneNumber,
+                PreferredLanguage = user.PreferredLanguage,
+                IsActive = user.IsActive,
+                Weight = user.MemberProfile?.Weight,
+                Height = user.MemberProfile?.Height,
+                BMI = user.MemberProfile?.BMI,
+                Gender = user.MemberProfile?.Gender.ToString(),
+                ProfileImage = user.MemberProfile?.ProfileImageUrl,
+                Birthday = user.MemberProfile?.DateOfBirth != null
+                                ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
+                                : null
+            };
+
+            return Result<GetProfileDto>.Success(updatedProfile);
         }
+
     }
 }

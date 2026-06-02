@@ -39,8 +39,18 @@ namespace ArenaApplication.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email ?? ""),
                 new Claim(ClaimTypes.GivenName, user.FirstName ?? ""),
-                new Claim(ClaimTypes.Surname, user.LastName ?? "")
+                new Claim(ClaimTypes.Surname, user.LastName ?? ""),
+                new Claim("memberProfileId", user.MemberProfile.Id.ToString())
             };
+
+
+
+            var AuthRole = await _userManager.GetRolesAsync(user);
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             //Add roles to token
             foreach (var role in roles)

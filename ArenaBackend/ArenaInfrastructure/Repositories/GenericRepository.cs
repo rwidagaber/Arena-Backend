@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Interfacees;
+﻿using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,22 +20,26 @@ namespace ArenaInfrastructure.Repositories
         public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
             await _context.AddAsync(entity, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
             _context.Update(entity);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task SoftDeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
             entity.IsDeleted = true;
             _context.Update(entity);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task HardDeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
             _context.Remove(entity);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public IQueryable<TEntity> GetAll()

@@ -7,14 +7,11 @@ using ArenaApplication.IServices;
 using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
 
 namespace ArenaApplication.Services
 {
@@ -23,17 +20,20 @@ namespace ArenaApplication.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IAuthRepository _authRepository;
         private readonly ITokenService _tokenService;
+        //private readonly IEmailService _emailService;
         private readonly JWTSettings _jwtSettings;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             IAuthRepository authRepository,
             ITokenService tokenService,
+            //IEmailService emailService,
             IOptions<JWTSettings> jwtSettings)
         {
             _userManager = userManager;
             _authRepository = authRepository;
             _tokenService = tokenService;
+            //_emailService = emailService;
             _jwtSettings = jwtSettings.Value;
         }
 
@@ -50,6 +50,7 @@ namespace ArenaApplication.Services
                 Email = dto.Email,
                 UserName = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
+                PreferredLanguage = dto.PreferredLanguage,
                 IsActive = true
             };
 
@@ -67,6 +68,8 @@ namespace ArenaApplication.Services
             };
 
             await _authRepository.CreateMemberProfileAsync(memberProfile);
+            user.MemberProfile = memberProfile;
+
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
@@ -80,6 +83,8 @@ namespace ArenaApplication.Services
 
             if (!user.IsActive)
                 return Result<AuthResponseDto>.Failure("Account is deactivated");
+            if (user.MemberProfile is null)
+                user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
@@ -101,10 +106,10 @@ namespace ArenaApplication.Services
 
             await _authRepository.RevokeRefreshTokenAsync(storedToken);
 
-            var user = await _userManager.FindByIdAsync(userIdStr);
+           
+            var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
                 return Result<AuthResponseDto>.Failure("User not found");
-
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
         }
@@ -133,9 +138,9 @@ namespace ArenaApplication.Services
                 PhoneNumber = user.PhoneNumber,
                 PreferredLanguage = user.PreferredLanguage,
                 IsActive = user.IsActive,
-                Weight = (decimal?)user.MemberProfile?.Weight,
-                Height = (decimal?)user.MemberProfile?.Height,
-                BMI = (decimal?)user.MemberProfile?.BMI,
+                Weight = user.MemberProfile?.Weight,
+                Height = user.MemberProfile?.Height,
+                BMI = user.MemberProfile?.BMI,
                 Gender = user.MemberProfile?.Gender.ToString(),
                 ProfileImage = user.MemberProfile?.ProfileImageUrl,
                 Birthday = user.MemberProfile?.DateOfBirth != null
@@ -179,6 +184,7 @@ namespace ArenaApplication.Services
                 return Result.Success();
 
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            //await _emailService.SendPasswordResetEmailAsync(user.Email!, resetToken);
 
             return Result.Success();
         }
@@ -224,6 +230,5 @@ namespace ArenaApplication.Services
                 Role = role
             };
         }
-    
     }
 }

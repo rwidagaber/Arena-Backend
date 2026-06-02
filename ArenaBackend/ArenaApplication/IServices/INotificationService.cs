@@ -1,5 +1,6 @@
 using ArenaApplication.Dtos.NotificationDtos;
 using ArenaDomain.Enums;
+using ArenaDomain.Interfacees;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -7,17 +8,17 @@ using System.Threading.Tasks;
 
 namespace ArenaApplication.IServices
 {
-    public interface INotificationService
+    public interface INotificationService 
     {
         // ── Write ─────────────────────────────────────────────────────────────
 
         Task SendNotificationAsync(CreateNotificationDto dto, CancellationToken cancellationToken = default);
    
         // ── Read ──────────────────────────────────────────────────────────────
-        Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(Guid MemberProfileId, CancellationToken cancellationToken = default);
         Task<int> GetUnreadCountAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task MarkAsReadAsync(Guid notificationId, Guid userId, CancellationToken cancellationToken = default);
-        Task MarkAllAsReadAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task MarkAsReadAsync(Guid notificationId, Guid MemberProfileId, CancellationToken cancellationToken = default);
+        Task MarkAllAsReadAsync(Guid MemberProfileId, CancellationToken cancellationToken = default);
 
        
 
@@ -30,7 +31,7 @@ namespace ArenaApplication.IServices
         Task NotifySubscriptionExpiredAsync(Guid userId, CancellationToken cancellationToken = default);
 
         // ── Bookings & Attendance ─────────────────────────────────────────────
-        Task NotifyBookingConfirmedAsync(Guid userId, DateTime bookingDate, string? trainerName, CancellationToken cancellationToken = default);
+        Task NotifyBookingConfirmedAsync(Guid userId, DateTime bookingDate,CancellationToken cancellationToken = default);
         Task NotifyQrCodeGeneratedAsync(Guid userId, DateTime bookingDate, CancellationToken cancellationToken = default);
         Task NotifySessionReminderAsync(Guid userId, DateTime bookingDate, CancellationToken cancellationToken = default);
         Task NotifyAttendanceRecordedAsync(Guid userId, int remainingSessions, CancellationToken cancellationToken = default);

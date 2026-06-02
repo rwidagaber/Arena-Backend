@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using ArenaDomain.Interfacees;
+using ArenaDomain.Interfaces;
 using ArenaInfrastructure.Repositories;
 
 namespace ArenaInfrastructure
