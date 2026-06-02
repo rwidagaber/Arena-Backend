@@ -21,5 +21,18 @@ namespace ArenaApplication.Services
 
         public string Email =>
             _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email)!;
+
+        public Guid MemberProfileId
+        {
+            get
+            {
+                var value = _httpContextAccessor.HttpContext?.User.FindFirstValue("memberProfileId");
+
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new UnauthorizedAccessException("memberProfileId claim is missing");
+
+                return Guid.Parse(value);
+            }
+        }
     }
 }

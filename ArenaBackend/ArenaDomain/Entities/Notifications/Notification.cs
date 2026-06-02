@@ -9,9 +9,9 @@ namespace ArenaDomain.Entities.Notifications
 {
     public class Notification : BaseEntity<Guid>
     {
-        public Guid UserId { get; set; }
+        public Guid MemberProfileId { get; set; }
 
-        public virtual ApplicationUser User { get; set; } = null!;
+        public virtual MemberProfile MemberProfile { get; set; } = null!;
 
         public string Title { get; set; } = string.Empty;
 

@@ -16,11 +16,15 @@ namespace ArenaApplication.Services
     {
         private readonly IGenericRepository<Booking, Guid> _bookingRepo;
         private readonly IUnitOfWork _unitOfWork;
+        INotificationService _notificationService;
 
-        public BookingService(IGenericRepository<Booking, Guid> bookingRepo, IUnitOfWork unitOfWork)
+        public BookingService(IGenericRepository<Booking, Guid> bookingRepo, IUnitOfWork unitOfWork,INotificationService notificationService)
+
         {
             _bookingRepo = bookingRepo;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
+
         }
 
         public async Task<Result<BookingDto>> CreateBooking(CreateBookingDto dto)
@@ -35,6 +39,9 @@ namespace ArenaApplication.Services
 
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
+            await _notificationService.NotifyBookingConfirmedAsync(
+            booking.MemberProfileId,
+             booking.BookingDate);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }

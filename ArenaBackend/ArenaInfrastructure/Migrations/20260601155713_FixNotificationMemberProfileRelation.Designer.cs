@@ -4,6 +4,7 @@ using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArenaInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260601155713_FixNotificationMemberProfileRelation")]
+    partial class FixNotificationMemberProfileRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -373,6 +376,9 @@ namespace ArenaInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -415,6 +421,8 @@ namespace ArenaInfrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("MemberProfileId");
 
@@ -1447,6 +1455,10 @@ namespace ArenaInfrastructure.Migrations
 
             modelBuilder.Entity("ArenaDomain.Entities.Notifications.Notification", b =>
                 {
+                    b.HasOne("ArenaDomain.Entities.User.ApplicationUser", null)
+                        .WithMany("Notifications")
+                        .HasForeignKey("ApplicationUserId");
+
                     b.HasOne("ArenaDomain.Entities.MemberProfile", "MemberProfile")
                         .WithMany("Notifications")
                         .HasForeignKey("MemberProfileId")
@@ -1709,6 +1721,8 @@ namespace ArenaInfrastructure.Migrations
             modelBuilder.Entity("ArenaDomain.Entities.User.ApplicationUser", b =>
                 {
                     b.Navigation("MemberProfile");
+
+                    b.Navigation("Notifications");
 
                     b.Navigation("Payments");
                 });

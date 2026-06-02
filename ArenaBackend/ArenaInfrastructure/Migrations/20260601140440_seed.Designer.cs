@@ -4,6 +4,7 @@ using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArenaInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260601140440_seed")]
+    partial class seed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -390,9 +393,6 @@ namespace ArenaInfrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.Property<Guid>("MemberProfileId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -414,9 +414,12 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("MemberProfileId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Notifications", (string)null);
                 });
@@ -1447,13 +1450,13 @@ namespace ArenaInfrastructure.Migrations
 
             modelBuilder.Entity("ArenaDomain.Entities.Notifications.Notification", b =>
                 {
-                    b.HasOne("ArenaDomain.Entities.MemberProfile", "MemberProfile")
+                    b.HasOne("ArenaDomain.Entities.User.ApplicationUser", "User")
                         .WithMany("Notifications")
-                        .HasForeignKey("MemberProfileId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("MemberProfile");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Nutrition.Meal", b =>
@@ -1680,8 +1683,6 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Navigation("MealLogs");
 
-                    b.Navigation("Notifications");
-
                     b.Navigation("NutritionPlans");
 
                     b.Navigation("ProgressLogs");
@@ -1709,6 +1710,8 @@ namespace ArenaInfrastructure.Migrations
             modelBuilder.Entity("ArenaDomain.Entities.User.ApplicationUser", b =>
                 {
                     b.Navigation("MemberProfile");
+
+                    b.Navigation("Notifications");
 
                     b.Navigation("Payments");
                 });

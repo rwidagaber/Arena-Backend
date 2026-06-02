@@ -8,5 +8,6 @@ namespace ArenaApplication.IServices
     {
         Guid UserId { get; }
         string Email { get; }
+        Guid MemberProfileId { get; }
     }
 }
