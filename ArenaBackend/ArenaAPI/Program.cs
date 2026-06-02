@@ -65,7 +65,12 @@ namespace ArenaAPI
 
             builder.Services.AddScoped<IBookingService, BookingService>();
 
-
+            // Add authorization policies
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("GymMemberOrAdmin", policy =>
+                    policy.RequireRole("GymMember", "Admin"));
+            });
 
             var app = builder.Build();
 

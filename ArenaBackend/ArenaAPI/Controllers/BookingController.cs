@@ -2,6 +2,7 @@
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
 using ArenaDomain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -21,6 +22,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> CreateBooking(CreateBookingDto dto)
         {
             var result = await _bookingService.CreateBooking(dto);
@@ -34,6 +36,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> GetUserBookings([FromQuery] Guid memberProfileId)
         {
             
@@ -48,6 +51,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> GetBookingById(Guid id)
         {
             var result = await _bookingService.GetBookingById(id);
@@ -61,6 +65,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpPost("cancel/{id}")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> CancelBooking(Guid id)
         {
             var result = await _bookingService.CancelBooking(id);
@@ -74,6 +79,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpPost("reschedule/{id}")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> RescheduleBooking(Guid id, UpdateBookingDto dto)
         {
             var result = await _bookingService.RescheduleBooking(id, dto);
@@ -87,6 +93,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet("/api/admin/bookings")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAdminBookings([FromQuery] BookingStatus? status, [FromQuery] DateTime? bookingDate)
         {
             var result = await _bookingService.GetAdminBookings(status, bookingDate);
@@ -100,6 +107,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet("/api/admin/bookings/today")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetTodaySchedule()
         {
             var result = await _bookingService.GetTodaySchedule();

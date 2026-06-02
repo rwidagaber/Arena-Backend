@@ -90,10 +90,22 @@ namespace ArenaApplication.Services
                 return Result<BookingDto>.Failure("Booking not found");
             }
 
+            if (booking.Status == BookingStatus.Cancelled)
+            {
+                return Result<BookingDto>.Failure("Cancelled bookings cannot be rescheduled");
+            }
+
+            if (dto.BookingDate.Date < DateTime.UtcNow.Date)
+            {
+                return Result<BookingDto>.Failure("Booking date cannot be in the past");
+            }
+
             booking.BookingDate = dto.BookingDate;
             booking.StartTime = dto.StartTime;
             booking.EndTime = dto.EndTime;
-            booking.Status = dto.Status;
+            // Do not take Status from UpdateBookingDto during reschedule:
+            // if client doesn't send it, default enum value (0) would overwrite it.
+            booking.Status = BookingStatus.Confirmed;
 
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
