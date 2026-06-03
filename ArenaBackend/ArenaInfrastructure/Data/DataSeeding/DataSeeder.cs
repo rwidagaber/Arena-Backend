@@ -16,9 +16,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
              UserManager<ApplicationUser> userManager,
              RoleManager<IdentityRole<Guid>> roleManager)
          {
-             // Run migrations automatically
-             await context.Database.MigrateAsync();
-
+             
              // ── Seed Roles ────────────────────────────────────────────────
              var roles = new[] { "Admin", "GymMember" };
              foreach (var role in roles)
@@ -27,27 +25,49 @@ namespace ArenaInfrastructure.Data.DataSeeding
                      await roleManager.CreateAsync(new IdentityRole<Guid>(role));
              }
 
-             // ── Seed Admin ────────────────────────────────────────────────
-             var adminEmail = "admin@arena.com";
-             if (await userManager.FindByEmailAsync(adminEmail) is null)
-             {
-                 var admin = new ApplicationUser
-                 {
-                     FirstName = "Arena",
-                     LastName = "Admin",
-                     Email = adminEmail,
-                     UserName = adminEmail,
-                     PreferredLanguage = "en",
-                     IsActive = true,
-                     EmailConfirmed = true
-                 };
+            // ── Seed Admin ────────────────────────────────────────────────
+            var adminEmail = "admin@arena.com";
+            var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
 
-                 await userManager.CreateAsync(admin, "Admin@123456");
-                 await userManager.AddToRoleAsync(admin, "Admin");
-             }
+            if (existingAdmin is null)
+            {
+                var admin = new ApplicationUser
+                {
+                    FirstName = "Arena",
+                    LastName = "Admin",
+                    Email = adminEmail,
+                    UserName = adminEmail,
+                    PreferredLanguage = "en",
+                    IsActive = true,
+                    EmailConfirmed = true
+                };
 
-             // ── Seed Test Member ──────────────────────────────────────────
-             var memberEmail = "member@arena.com";
+                await userManager.CreateAsync(admin, "Admin@123456");
+                await userManager.AddToRoleAsync(admin, "Admin");
+                existingAdmin = admin;
+            }
+
+            // ← Always check and create MemberProfile for admin if missing
+            var adminProfileExists = await context.MemberProfiles
+                .AnyAsync(m => m.UserId == existingAdmin.Id);
+
+            if (!adminProfileExists)
+            {
+                var adminProfile = new MemberProfile
+                {
+                    UserId = existingAdmin.Id,
+                    DateOfBirth = new DateTime(1990, 1, 1),
+                    Gender = ArenaDomain.Enums.Gender.Male,
+                    Weight = 80,
+                    Height = 180
+                };
+
+                await context.MemberProfiles.AddAsync(adminProfile);
+                await context.SaveChangesAsync();
+            }
+
+            // ── Seed Test Member ──────────────────────────────────────────
+            var memberEmail = "member@arena.com";
              if (await userManager.FindByEmailAsync(memberEmail) is null)
              {
                  var member = new ApplicationUser

@@ -23,6 +23,9 @@ namespace ArenaInfrastructure.Repositories
         public async Task<ApplicationUser?> GetByEmailAsync(string email)
         {
             return await _context.Users
+                .Include(u => u.MemberProfile)
+                    .ThenInclude(m => m!.Subscriptions)
+                        .ThenInclude(s => s.Plan)
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
 
@@ -81,6 +84,8 @@ namespace ArenaInfrastructure.Repositories
             _context.MemberProfiles.Update(memberProfile);
             await _context.SaveChangesAsync();
         }
+
+
     }
 }
 
