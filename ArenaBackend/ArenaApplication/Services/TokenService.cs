@@ -1,4 +1,4 @@
-﻿using ArenaApplication.IServices;
+using ArenaApplication.IServices;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
