@@ -1,5 +1,5 @@
 @using ArenaDomain.Enums
-@model List<ArenaApplication.Dtos.Booking.BookingDto>
+@model List<ArenaMVC.Models.AdminBookingViewModel>
 
 @{
     ViewData["Title"] = "Today's Bookings";
@@ -24,19 +24,18 @@
             <table class="booking-table">
                 <thead>
                     <tr>
-                        <th style="width: 16%;">Date</th>
-                        <th style="width: 12%;">Start</th>
-                        <th style="width: 12%;">End</th>
-                        <th style="width: 22%;">Member profile</th>
-                        <th style="width: 14%;">Status</th>
-                        <th style="width: 24%;">Booking ID</th>
+                        <th style="width: 20%;">Date</th>
+                        <th style="width: 15%;">Start</th>
+                        <th style="width: 15%;">End</th>
+                        <th style="width: 35%;">Member profile name</th>
+                        <th style="width: 15%;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model is null || Model.Count == 0)
                     {
                         <tr>
-                            <td colspan="6" class="text-empty">
+                            <td colspan="5" class="text-empty">
                                 No bookings scheduled for today.
                             </td>
                         </tr>
@@ -55,9 +54,8 @@
                                 <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
                                 <td>@b.StartTime.ToString(@"hh\:mm")</td>
                                 <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
-                                <td><span class="mono-id">@b.MemberProfileId</span></td>
+                                <td>@b.MemberProfileName</td>
                                 <td><span class="@badgeClass">@b.Status</span></td>
-                                <td><span class="mono-id">@b.Id</span></td>
                             </tr>
                         }
                     }
