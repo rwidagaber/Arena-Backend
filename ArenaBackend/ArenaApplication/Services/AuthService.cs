@@ -11,6 +11,7 @@ using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using System.Data;
 using System.Security.Claims;
 
 namespace ArenaApplication.Services
@@ -83,13 +84,90 @@ namespace ArenaApplication.Services
 
             if (!user.IsActive)
                 return Result<AuthResponseDto>.Failure("Account is deactivated");
+
             if (user.MemberProfile is null)
                 user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
-            var response = await GenerateAuthResponseAsync(user);
-            return Result<AuthResponseDto>.Success(response);
-        }
+            var authResponse = await GenerateAuthResponseAsync(user);
 
+            var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? "GymMember";
+
+            // ── Admin — return only memberProfileId ──────────────────────────────
+            if (role == "Admin")
+            {
+                return Result<AuthResponseDto>.Success(new AuthResponseDto
+                {
+                    AccessToken = authResponse.AccessToken,
+                    RefreshToken = authResponse.RefreshToken,
+                    ExpiresAt = authResponse.ExpiresAt,
+                    Role = authResponse.Role,
+                    MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
+                    Profile = null
+                });
+            }
+
+            // ── GymMember — check subscription ───────────────────────────────────
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+
+            // No active subscription — return only memberProfileId
+            if (activeSubscription is null)
+            {
+                return Result<AuthResponseDto>.Success(new AuthResponseDto
+                {
+                    AccessToken = authResponse.AccessToken,
+                    RefreshToken = authResponse.RefreshToken,
+                    ExpiresAt = authResponse.ExpiresAt,
+                    Role = authResponse.Role,
+                    MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
+                    Profile = null,
+                    IsSubscribed = false
+                });
+            }
+
+            // Active subscription — return full profile
+            var profile = new GetProfileDto
+            {
+                Id = user.Id,
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email!,
+                PhoneNumber = user.PhoneNumber,
+                PreferredLanguage = user.PreferredLanguage,
+                IsActive = user.IsActive,
+                Weight = user.MemberProfile?.Weight,
+                Height = user.MemberProfile?.Height,
+                BMI = user.MemberProfile?.BMI,
+                Gender = user.MemberProfile?.Gender.ToString(),
+                ProfileImage = user.MemberProfile?.ProfileImageUrl,
+                Birthday = user.MemberProfile?.DateOfBirth != null
+                                    ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
+                                    : null,
+                ActiveSubscription = new UserSubscriptionDto
+                {
+                    Id = activeSubscription.Id,
+                    PlanNameEn = activeSubscription.Plan.NameEn,
+                    PlanNameAr = activeSubscription.Plan.NameAr,
+                    StartDate = activeSubscription.StartDate,
+                    EndDate = activeSubscription.EndDate,
+                    Status = activeSubscription.Status,
+                    RemainingSessions = activeSubscription.RemainingSessions,
+                    ReminderSent = activeSubscription.ReminderSent
+                }
+            };
+
+            return Result<AuthResponseDto>.Success(new AuthResponseDto
+            {
+                AccessToken = authResponse.AccessToken,
+                RefreshToken = authResponse.RefreshToken,
+                ExpiresAt = authResponse.ExpiresAt,
+                Role = authResponse.Role,
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
+                Profile = profile,
+                IsSubscribed = true
+            });
+        }
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
