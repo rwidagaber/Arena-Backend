@@ -15,10 +15,16 @@ namespace ArenaApplication.Mappers
                          ? $"{src.User.FirstName} {src.User.LastName}"
                          : string.Empty)
 
+                .Map(dest => dest.MemberId,
+                         src => src.UserId != null ? $"{src.UserId}" : string.Empty)
+
                 .Map(dest => dest.PlanName,
                      src => src.UserSubscription != null && src.UserSubscription.Plan != null
                          ? src.UserSubscription.Plan.NameEn
                          : string.Empty)
+
+                .Map(dest=>dest.PlanId,
+                    src=>src.UserSubscription.PlanId)
 
                 .Map(dest => dest.PaymentMethod,
                      src => src.PaymentMethod.ToString())
