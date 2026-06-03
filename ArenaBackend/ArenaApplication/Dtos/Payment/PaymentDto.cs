@@ -4,7 +4,11 @@ namespace ArenaApplication.Dtos.Payment
     {
         public Guid Id { get; set; }
         public string MemberName { get; set; }
+        public Guid MemberId { get; set; }
         public string PlanName { get; set; }
+
+        public Guid PlanId { get; set; }
+
         public decimal Amount { get; set; }
         public string Currency { get; set; }
         public string PaymentMethod { get; set; }

@@ -97,6 +97,16 @@ namespace ArenaAPI
                     policy.RequireRole("GymMember", "Admin"));
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
@@ -114,6 +124,9 @@ namespace ArenaAPI
                 app.MapScalarApiReference();
                 app.MapGet("/", () => Results.Redirect("/scalar"));
             }
+
+            app.UseCors("AllowAll");
+
 
             if (!app.Environment.IsDevelopment())
             {
