@@ -6,8 +6,7 @@ namespace ArenaApplication.Dtos.Payment
     public class CreatePaymentDto
     {
         [Required]
-        public Guid UserSubscriptionId { get; set; }
-
+        public Guid PlanId { get; set; }
 
         [Required]
         public PaymentMethod PaymentMethod { get; set; }
