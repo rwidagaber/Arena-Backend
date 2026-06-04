@@ -23,5 +23,12 @@ namespace ArenaDomain.Entities.User
         //public virtual ICollection<Notification> Notifications { get; set; } = [];
 
         public virtual ICollection<Payment> Payments { get; set; } = [];
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? UpdatedBy { get; set; }
+        public DateTime? DeletedAt { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }
