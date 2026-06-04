@@ -7,9 +7,11 @@
 	<ItemGroup>
 		
 		<PackageReference Include="FluentValidation" Version="12.1.1" />
-		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+		<PackageReference Include="Hangfire" Version="1.8.23" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
 
-		<PackageReference Include="MailKit" Version="4.16.0" />
+		<PackageReference Include="MailKit" Version="4.17.0" />
 
 		<PackageReference Include="Mapster" Version="10.0.7" />
 		<PackageReference Include="Mapster.DependencyInjection" Version="10.0.7" />
@@ -18,14 +20,16 @@
 
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
 
-		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.18.0" />
+		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.19.1" />
+
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
+
 	</ItemGroup>
 
 	<ItemGroup>
 		<Folder Include="Dtos\ProfileDto\" />
 		<Folder Include="Interfacees\" />
-		<Folder Include="IServices\" />
 		<Folder Include="Mappers\" />
 	</ItemGroup>
 

@@ -24,24 +24,36 @@ namespace ArenaApplication.Services
         private readonly IAuthRepository _authRepository;
         private readonly ITokenService _tokenService;
         private readonly JWTSettings _jwtSettings;
+        private readonly IOtpService _otpService;
+        private readonly IBackgroundJobService _backgroundJobService;
+
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             IAuthRepository authRepository,
             ITokenService tokenService,
+            IBackgroundJobService backgroundJobService,
+            IOtpService otpService,
             IOptions<JWTSettings> jwtSettings)
         {
             _userManager = userManager;
             _authRepository = authRepository;
             _tokenService = tokenService;
             _jwtSettings = jwtSettings.Value;
+            _backgroundJobService = backgroundJobService;
+            _otpService = otpService;
         }
 
-        public async Task<Result<AuthResponseDto>> RegisterAsync(UserRegisterDto dto)
+        // =========================
+        // REGISTER
+        // =========================
+
+        public async Task<Result> RegisterAsync(UserRegisterDto dto)
         {
             var existingUser = await _authRepository.GetByEmailAsync(dto.Email);
             if (existingUser is not null)
-                return Result<AuthResponseDto>.Failure("Email is already registered");
+                return Result.Failure("Email is already registered");
+
 
             var user = new ApplicationUser
             {
@@ -50,29 +62,56 @@ namespace ArenaApplication.Services
                 Email = dto.Email,
                 UserName = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
-                IsActive = true
+                IsActive = false,
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-                return Result<AuthResponseDto>.Failure(
-                    result.Errors.Select(e => e.Description).ToArray());
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+
+            var otp = await _otpService.GenerateAndSaveOtpAsync(user.Id);
+
+            await _backgroundJobService.EnqueueEmailConfirmationAsync(user.Id, user.Email!, otp);
+
+            return Result.Success();
+        }
+
+        // ✅ الميثود الجديدة — بتأكد الإيميل وترجع tokens مباشرة
+        public async Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
+            if (user is null)
+                return Result<AuthResponseDto>.Failure("User not found");
+
+            if (user.EmailConfirmed)
+                return Result<AuthResponseDto>.Failure("Email is already confirmed");
+
+            var isValid = await _otpService.ValidateOtpAsync(dto.UserId, dto.Otp);
+            if (!isValid)
+                return Result<AuthResponseDto>.Failure("Invalid or expired OTP");
+
+            // ✅ نكمل الـ setup بعد التأكيد
+            user.IsActive = true;
+            user.EmailConfirmed = true;
+            await _userManager.UpdateAsync(user);
 
             await _userManager.AddToRoleAsync(user, "GymMember");
 
             var memberProfile = new MemberProfile
             {
                 UserId = user.Id,
-                DateOfBirth = dto.Birthday.ToDateTime(TimeOnly.MinValue)
             };
-
             await _authRepository.CreateMemberProfileAsync(memberProfile);
             user.MemberProfile = memberProfile;
-
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
         }
+
+        
+           
 
         public async Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto)
         {
@@ -86,9 +125,12 @@ namespace ArenaApplication.Services
                 user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
             var response = await GenerateAuthResponseAsync(user);
+            Console.WriteLine(dto.Email);
+            Console.WriteLine(dto.Password);
             return Result<AuthResponseDto>.Success(response);
         }
 
+        
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);

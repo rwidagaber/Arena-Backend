@@ -17,13 +17,17 @@ namespace ArenaApplication.Services
         private readonly IGenericRepository<Booking, Guid> _bookingRepo;
         private readonly IUnitOfWork _unitOfWork;
         INotificationService _notificationService;
+        private readonly IBackgroundJobService _backgroundJobService;
 
-        public BookingService(IGenericRepository<Booking, Guid> bookingRepo, IUnitOfWork unitOfWork,INotificationService notificationService)
+
+        public BookingService(IGenericRepository<Booking, Guid> bookingRepo, IUnitOfWork unitOfWork,INotificationService notificationService, IBackgroundJobService backgroundJobService)
+
 
         {
             _bookingRepo = bookingRepo;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
+            _backgroundJobService = backgroundJobService;
 
         }
 
@@ -39,9 +43,11 @@ namespace ArenaApplication.Services
 
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
-            await _notificationService.NotifyBookingConfirmedAsync(
+
+            await _backgroundJobService.ScheduleBookingReminderAsync(
             booking.MemberProfileId,
-             booking.BookingDate);
+            booking.BookingDate);
+          
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -104,6 +110,14 @@ namespace ArenaApplication.Services
 
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
+
+            await _backgroundJobService.ScheduleBookingReminderAsync(
+            booking.MemberProfileId,
+            booking.BookingDate);
+
+            await _backgroundJobService.EnqueueBookingCancellationAsync(
+               booking.MemberProfileId,
+              booking.BookingDate);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }

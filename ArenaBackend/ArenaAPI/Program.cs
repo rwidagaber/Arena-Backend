@@ -1,3 +1,4 @@
+using ArenaApi.Configurations;
 using ArenaApi.Configurations.BrearerConfig;
 using ArenaApi.Configurations.JWTConfig;
 using ArenaApi.Configurations.ValidatorConfig;
@@ -12,7 +13,9 @@ using ArenaInfrastructure;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Repositories;
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 
 namespace ArenaAPI
@@ -45,6 +48,19 @@ namespace ArenaAPI
 
             // SignalR
             builder.Services.AddSignalR();
+            builder.Services.Configure<EmailSettings>(
+              builder.Configuration.GetSection("EmailSettings"));
+
+
+            builder.Services.AddHangfire(config =>
+            {
+                config.UseSqlServerStorage(
+                    builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+            builder.Services.AddHangfireServer();
+
+            // Background job service
+            builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 
             // OpenAPI + Bearer Auth
             builder.Services.AddOpenApi(options =>
@@ -62,7 +78,6 @@ namespace ArenaAPI
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
-            builder.Configuration.GetConnectionString("DefaultConnection");
             // JWT
             builder.Services.AddJwtAuthentication(builder.Configuration);
 
@@ -74,13 +89,28 @@ namespace ArenaAPI
             // Profile Services
             builder.Services.AddScoped<IProfileService, ProfileService>();
 
+
+            builder.Services.AddMemoryCache();
+            builder.Services.AddScoped<IOtpService, OtpService>();
             // Booking Services
             builder.Services.AddScoped<IGenericRepository<Booking, Guid>,
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
 
             var app = builder.Build();
-
+            var emailSettings = app.Services.GetRequiredService<IOptions<EmailSettings>>().Value;
+            Console.WriteLine($"SmtpServer: '{emailSettings.SmtpServer}'");
+            Console.WriteLine($"Port: '{emailSettings.Port}'");
+            Console.WriteLine($"Username: '{emailSettings.Username}'");
             // Seed database with initial data
             if (app.Environment.IsDevelopment())
             {
@@ -97,9 +127,12 @@ namespace ArenaAPI
                 app.MapOpenApi();
                 app.MapScalarApiReference();
                 app.MapGet("/", () => Results.Redirect("/scalar"));
+                // Hangfire Dashboard (development only)
+                app.UseHangfireDashboard();
+
             }
 
-            // app.UseCors("AllowAll");
+            app.UseCors("AllowAll");
 
             app.UseHttpsRedirection();
 
@@ -118,6 +151,7 @@ namespace ArenaAPI
             app.MapControllers();
             app.MapHub<NotificationHub>("/hubs/notifications");
 
+            
             app.Run();
         }
     }
