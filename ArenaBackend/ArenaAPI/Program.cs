@@ -16,6 +16,7 @@ using ArenaInfrastructure;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Repositories;
+using ArenaInfrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 
@@ -97,6 +98,13 @@ namespace ArenaAPI
                     policy.RequireRole("GymMember", "Admin"));
             });
 
+
+
+            //QR Services
+            builder.Services.AddScoped<IQRCodeService, QRCodeService>();
+            builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+            
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
@@ -106,6 +114,8 @@ namespace ArenaAPI
                           .AllowAnyHeader();
                 });
             });
+
+
 
             var app = builder.Build();
 

@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <Folder Include="Dtos\ProfileDto\" />
-    <Folder Include="Interfacees\" /> <Folder Include="IServices\" />
+    <Folder Include="Interfacees\" />
     <Folder Include="Mappers\" />
   </ItemGroup>
 
