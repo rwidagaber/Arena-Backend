@@ -16,5 +16,9 @@ namespace ArenaApplication.Dtos.Payment
         public string Status { get; set; }
         public DateTime? PaymentDate { get; set; }
         public string? IframeUrl { get; set; }
+
+        // Subscription info
+        public DateTime? SubscriptionEndDate { get; set; }
+        public string? SubscriptionStatus { get; set; }
     }
 }

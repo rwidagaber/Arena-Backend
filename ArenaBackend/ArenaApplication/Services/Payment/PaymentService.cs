@@ -284,6 +284,20 @@ namespace ArenaApplication.Services.Payment
             if (dto.Status == ArenaDomain.Enums.PaymentStatus.Paid)
             {
                 payment.PaymentDate = DateTime.UtcNow;
+
+                // FIX: Also activate the user's subscription if Admin manually marks it as Paid
+                var subscription = await _subscriptionRepo.GetAll()
+                    .Include(s => s.Plan)
+                    .FirstOrDefaultAsync(s => s.Id == payment.UserSubscriptionId);
+
+                if (subscription is not null)
+                {
+                    subscription.Status = SubscriptionStatus.Active;
+                    subscription.StartDate = DateTime.UtcNow;
+                    subscription.EndDate = DateTime.UtcNow.AddMonths(subscription.Plan.DurationMonths);
+                    
+                    await _subscriptionRepo.UpdateAsync(subscription);
+                }
             }
 
             await _paymentRepo.UpdateAsync(payment);
