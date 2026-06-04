@@ -14,7 +14,9 @@ namespace ArenaApplication.Dtos.RegisterDto
 
         public string PhoneNumber { get; set; } = null!;
         public DateOnly Birthday { get; set; }
- 
+
+        public decimal Weight { get; set; }
+        public decimal Height { get; set; }
 
     }
 }

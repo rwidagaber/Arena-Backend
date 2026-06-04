@@ -65,13 +65,16 @@ namespace ArenaApplication.Services
       <table width='480' cellpadding='0' cellspacing='0'
              style='background:#fff;border-radius:16px;border:0.5px solid #e0dfd8;'>
 
-        <tr>
-          <td style='background:#1a1a1a;padding:32px;text-align:center;border-radius:16px 16px 0 0;'>
-            <span style='color:#fff;font-size:22px;font-weight:600;letter-spacing:1px;'>
-              ARENA <span style='color:#f97316;'>GYM</span>
-            </span>
-          </td>
-        </tr>
+      <tr>
+  <td style='background:#1a1a1a;padding:32px;text-align:center;border-radius:16px 16px 0 0;'>
+    <span style='color:#fff;font-size:22px;font-weight:600;letter-spacing:1px;'>
+      ARENA 
+      <span style='color:#4DA352;text-shadow:0 0 8px rgba(77,163,82,0.6);'>
+        GYM
+      </span>
+    </span>
+  </td>
+</tr>
 
         <tr>
           <td style='padding:36px 32px;'>

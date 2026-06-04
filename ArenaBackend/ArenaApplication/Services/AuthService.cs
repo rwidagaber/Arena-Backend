@@ -54,7 +54,6 @@ namespace ArenaApplication.Services
             if (existingUser is not null)
                 return Result.Failure("Email is already registered");
 
-
             var user = new ApplicationUser
             {
                 FirstName = dto.FirstName,
@@ -70,12 +69,34 @@ namespace ArenaApplication.Services
             if (!result.Succeeded)
                 return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
 
+            try
+            {
+                var memberProfile = new MemberProfile
+                {
+                    UserId = user.Id,
+                    Weight = dto.Weight,
+                    Height = dto.Height,
+                };
 
-            var otp = await _otpService.GenerateAndSaveOtpAsync(user.Id);
+                await _authRepository.CreateMemberProfileAsync(memberProfile);
 
-            await _backgroundJobService.EnqueueEmailConfirmationAsync(user.Id, user.Email!, otp);
+                var otp = await _otpService.GenerateAndSaveOtpAsync(user.Id);
 
-            return Result.Success();
+                await _backgroundJobService.EnqueueEmailConfirmationAsync(
+                    user.Id,
+                    user.Email!,
+                    otp
+                );
+
+                return Result.Success();
+            }
+            catch
+            {
+                // rollback user if profile fails
+                await _userManager.DeleteAsync(user);
+
+                return Result.Failure("Failed to create user profile");
+            }
         }
 
         // ✅ الميثود الجديدة — بتأكد الإيميل وترجع tokens مباشرة
@@ -98,13 +119,6 @@ namespace ArenaApplication.Services
             await _userManager.UpdateAsync(user);
 
             await _userManager.AddToRoleAsync(user, "GymMember");
-
-            var memberProfile = new MemberProfile
-            {
-                UserId = user.Id,
-            };
-            await _authRepository.CreateMemberProfileAsync(memberProfile);
-            user.MemberProfile = memberProfile;
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
@@ -246,7 +260,9 @@ namespace ArenaApplication.Services
 
         private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)
         {
-            var accessToken = await _tokenService.GenerateAccessToken(user);
+            var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
+
+            var accessToken = await _tokenService.GenerateAccessToken(userWithProfile ?? user);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             var token = new RefreshToken
@@ -258,7 +274,6 @@ namespace ArenaApplication.Services
             };
 
             await _authRepository.SaveRefreshTokenAsync(token);
-
             var role = (await _userManager.GetRolesAsync(user))
                 .FirstOrDefault() ?? "GymMember";
 
