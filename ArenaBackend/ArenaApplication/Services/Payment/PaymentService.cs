@@ -39,6 +39,7 @@ namespace ArenaApplication.Services.Payment
             IPaymentGatewayService paymentGateway,
             IGenericRepository<MemberProfile, Guid> memberProfileRepo,
             IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> planRepo,
+            UserManager<ApplicationUser> userManager,
             IStringLocalizer<ArenaLocalization> localizer)
         {
             _paymentRepo = paymentRepo;
@@ -48,6 +49,7 @@ namespace ArenaApplication.Services.Payment
             _paymentGateway = paymentGateway;
             _memberProfileRepo = memberProfileRepo;
             _planRepo = planRepo;
+            _userManager = userManager;
             _localizer = localizer;
         }
 
