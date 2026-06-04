@@ -4,77 +4,64 @@ using System.Collections.Generic;
 using System.Text;
 using ArenaApplication.Dtos.RegisterDto;
 using System.ComponentModel.DataAnnotations;
-
-
+using ArenaDomain.Shared;
+using Microsoft.Extensions.Localization;
 
 namespace ArenaApplication.Dtos.Validators
 {
     public class RegisterDtoValidator : AbstractValidator<UserRegisterDto>
     {
-        public RegisterDtoValidator() 
+        public RegisterDtoValidator(IStringLocalizer<ArenaLocalization> localizer) 
         {
             RuleFor(u => u.FirstName)
                 .NotEmpty()
-                .WithMessage("First Name is Required")
+                .WithMessage(localizer["FirstNameRequired"])
                 .MaximumLength(50)
-                .WithMessage("Name must be less than 50 Characters");
-
-
+                .WithMessage(localizer["NameMaxLength"]);
 
             RuleFor(u => u.LastName)
                 .NotEmpty()
-                .WithMessage("Last Name is Required")
+                .WithMessage(localizer["LastNameRequired"])
                 .MaximumLength(50)
-                .WithMessage("Name must be less than 50 characters");
-
-
+                .WithMessage(localizer["NameMaxLength"]);
 
             RuleFor(u => u.Email)
                 .NotEmpty()
-                .WithMessage("Email is required")
+                .WithMessage(localizer["EmailRequired"])
                 .EmailAddress()
-                .WithMessage("Enter a valid Email Address");
-
-
+                .WithMessage(localizer["ValidEmailRequired"]);
 
             RuleFor(u => u.Password)
                 .NotEmpty()
                 .MinimumLength(8)
-                .WithMessage("Password must be 8 characters or more")
+                .WithMessage(localizer["PasswordMinLength"])
                 .Matches("[A-z]")
-                .WithMessage("password must contain uppercase characters")
+                .WithMessage(localizer["PasswordUppercase"])
                 .Matches("[a-z]")
-                .WithMessage("password must contain lowercase characters")
+                .WithMessage(localizer["PasswordLowercase"])
                 .Matches("[0-9]")
-                .WithMessage("password must contain at least one numbers")
+                .WithMessage(localizer["PasswordNumber"])
                 .Matches("[^a-zA-Z0-9]")
-                .WithMessage("password must contain at least one speacial character");
-
-
+                .WithMessage(localizer["PasswordSpecialChar"]);
 
             RuleFor(u => u.ConfirmPassword)
                 .NotEmpty()
-                .WithMessage("confirm password is required")
+                .WithMessage(localizer["ConfirmPasswordRequired"])
                 .Equal(u => u.Password)
-                .WithMessage("passwords don't match");
+                .WithMessage(localizer["PasswordsDoNotMatch"]);
 
             RuleFor(u => u.PhoneNumber)
                 .NotEmpty()
-                .WithMessage("Phone Number is required")
+                .WithMessage(localizer["PhoneRequired"])
                 .Matches(@"^\+?[0-9]{10,15}$")
-                .WithMessage("Enter a valid phone Number")
+                .WithMessage(localizer["ValidPhoneRequired"])
                 .When(u => u.PhoneNumber != null);
-
-
 
             RuleFor(u => u.Birthday)
                 .NotEmpty()
                 .LessThan(DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-16)))
-                .WithMessage("User must be 16 years or older")
+                .WithMessage(localizer["AgeRequirement"])
                 .When(x => x.Birthday != default);
-
-
-
         }
     }
 }

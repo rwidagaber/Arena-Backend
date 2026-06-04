@@ -14,6 +14,7 @@ using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
 using ArenaInfrastructure;
 using ArenaInfrastructure.Data;
+using ArenaDomain.Shared;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Localization;
 using ArenaInfrastructure.Repositories;
@@ -46,8 +47,8 @@ namespace ArenaAPI
                 // Localization for Data Annotations
                 .AddDataAnnotationsLocalization(options =>
                 {
-                    options.DataAnnotationLocalizerProvider = (type, factory) =>
-                        factory.Create(typeof(JsonStringLocalizer));
+                options.DataAnnotationLocalizerProvider = (type, factory) =>
+                    factory.Create(typeof(ArenaLocalization));
                 });
 
 
@@ -64,6 +65,7 @@ namespace ArenaAPI
                 uiCulture: (supportedCultures[0]));
                 options.SupportedCultures = supportedCultures;
                 options.SupportedUICultures = supportedCultures;
+                options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
             });
 
             // Services

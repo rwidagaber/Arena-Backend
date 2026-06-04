@@ -2,7 +2,7 @@
 @model List<ArenaMVC.Models.AdminBookingViewModel>
 
 @{
-    ViewData["Title"] = "Admin Bookings";
+    ViewData["Title"] = Localizer["Bookings"];
     BookingStatus? selectedStatus = ViewBag.SelectedStatus as BookingStatus?;
     DateTime? selectedDate = ViewBag.SelectedDate as DateTime?;
 }
@@ -13,18 +13,18 @@
 <div class="booking-admin-container">
     <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div>
-            <h1>📅 Admin Bookings</h1>
-            <p>Filter and review all bookings.</p>
+            <h1>📅 @Localizer["Bookings"]</h1>
+            <p>@Localizer["Bookings"]</p>
         </div>
         <div class="booking-header-actions">
-            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Today">Today's Bookings</a>
+            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Today">@Localizer["TodaysBookings"]</a>
         </div>
     </div>
 
     <div class="booking-filters-card">
         <form method="get" id="bookingFiltersForm" class="row g-3 align-items-end">
             <div class="col-12 col-md-4">
-                <label class="form-label" for="statusSelect">Status</label>
+                <label class="form-label" for="statusSelect">@Localizer["Status"]</label>
                 <select class="form-select" id="statusSelect" name="status">
                     <option value="" selected="@(selectedStatus is null ? "selected" : null)">All</option>
                     <option value="Confirmed" selected="@(selectedStatus == BookingStatus.Confirmed ? "selected" : null)">Confirmed</option>
@@ -32,7 +32,7 @@
                 </select>
             </div>
             <div class="col-12 col-md-4">
-                <label class="form-label" for="bookingDateInput">Booking date</label>
+                <label class="form-label" for="bookingDateInput">@Localizer["Date"]</label>
                 <input class="form-control" id="bookingDateInput" type="date" name="bookingDate"
                        value="@(selectedDate.HasValue ? selectedDate.Value.ToString("yyyy-MM-dd") : "")" />
             </div>
@@ -63,7 +63,7 @@
                     {
                         <tr>
                             <td colspan="5" class="text-empty">
-                                No bookings found for the selected filters.
+                                @Localizer["Bookings"]
                             </td>
                         </tr>
                     }

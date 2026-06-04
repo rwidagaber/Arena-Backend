@@ -1,14 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name" dir="@(System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Arena</title>
+    <title>@ViewData["Title"] - @Localizer["Arena"]</title>
     <script type="importmap"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @if (System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft)
+    {
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    }
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/StyleSheet.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ArenaMVC.styles.css?v=@DateTime.UtcNow.Ticks" asp-append-version="true" />
@@ -16,7 +20,7 @@
 <body>
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <a asp-area="" asp-controller="Home" asp-action="Index">Arena</a>
+            <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
         </div>
         <nav class="sidebar-nav">
             @{
@@ -25,22 +29,30 @@
             }
             <ul class="nav-list">
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Home"]</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">@Localizer["Privacy"]</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">Subscription Plans</a>
+                    <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">@Localizer["SubscriptionPlans"]</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">Bookings</a>
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">@Localizer["Bookings"]</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Today" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Today">Today's Bookings</a>
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Today" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Today">@Localizer["TodaysBookings"]</a>
                 </li>
             </ul>
         </nav>
+        <div class="sidebar-footer">
+            <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture">
+                <select name="culture" onchange="document.getElementById('culture-form').submit()">
+                    <option value="en-US" selected="@(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US")">English</option>
+                    <option value="ar-EG" selected="@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG")">العربية</option>
+                </select>
+            </form>
+        </div>
     </aside>
     <div class="main-content">
         <main role="main" class="pb-3">
@@ -48,7 +60,7 @@
         </main>
         <footer class="border-top footer text-muted">
             <div class="container">
-                &copy; 2026 - Arena - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                &copy; 2026 - @Localizer["Arena"] - <a asp-area="" asp-controller="Home" asp-action="Privacy">@Localizer["Privacy"]</a>
             </div>
         </footer>
     </div>

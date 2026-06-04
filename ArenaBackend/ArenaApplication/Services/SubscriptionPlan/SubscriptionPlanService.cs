@@ -1,16 +1,22 @@
 using ArenaApplication.Dtos.SubscriptionPlanDtos;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Interfaces;
+using ArenaDomain.Shared;
+using Microsoft.Extensions.Localization;
 
 namespace ArenaApplication.Services.SubscriptionPlan
 {
     public class SubscriptionPlanService : ISubscriptionPlanService
     {
         private readonly IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> _repository;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public SubscriptionPlanService(IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> repository)
+        public SubscriptionPlanService(
+            IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> repository,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _repository = repository;
+            _localizer = localizer;
         }
 
         public async Task<IEnumerable<SubscriptionPlanDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -25,7 +31,7 @@ namespace ArenaApplication.Services.SubscriptionPlan
             var plan = plans.FirstOrDefault(p => p.Id == id && !p.IsDeleted);
 
             if (plan == null)
-                throw new KeyNotFoundException($"Subscription plan with ID {id} not found.");
+                throw new KeyNotFoundException(_localizer["SubscriptionPlanNotFoundById"]);
 
             return MapToDto(plan);
         }
@@ -56,7 +62,7 @@ namespace ArenaApplication.Services.SubscriptionPlan
             var plan = plans.FirstOrDefault(p => p.Id == id && !p.IsDeleted);
 
             if (plan == null)
-                throw new KeyNotFoundException($"Subscription plan with ID {id} not found.");
+                throw new KeyNotFoundException(_localizer["SubscriptionPlanNotFoundById"]);
 
             if (!string.IsNullOrEmpty(updateDto.Name))
             {
@@ -94,7 +100,7 @@ namespace ArenaApplication.Services.SubscriptionPlan
             var plan = plans.FirstOrDefault(p => p.Id == id && !p.IsDeleted);
 
             if (plan == null)
-                throw new KeyNotFoundException($"Subscription plan with ID {id} not found.");
+                throw new KeyNotFoundException(_localizer["SubscriptionPlanNotFoundById"]);
 
             await _repository.SoftDeleteAsync(plan, cancellationToken);
         }

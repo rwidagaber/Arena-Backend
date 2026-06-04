@@ -1,15 +1,15 @@
 @model IEnumerable<ArenaApplication.Dtos.SubscriptionPlanDtos.SubscriptionPlanDto>
 
 @{
-	ViewData["Title"] = "Subscription Plans Management";
+	ViewData["Title"] = Localizer["SubscriptionPlans"];
 }
 
 <link rel="stylesheet" href="~/css/subscription-admin.css" />
 
 <div class="subscription-admin-container">
 	<div class="subscription-admin-header">
-		<h1>📋 Subscription Plans</h1>
-		<p>Manage and create subscription plans for your fitness platform</p>
+		<h1>📋 @Localizer["SubscriptionPlans"]</h1>
+		<p>@Localizer["SubscriptionPlans"]</p>
 	</div>
 
 	<div class="container-fluid mt-4">
