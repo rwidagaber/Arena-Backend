@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ArenaApplication.Dtos.QrCodeDtos
 {
-    internal class QrDto
+    public class QrDto
     {
         public Guid Id { get; set; }
 
