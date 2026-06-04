@@ -1,6 +1,8 @@
 using ArenaApplication.Dtos.Payment;
 using ArenaApplication.IServices.Payment;
 using ArenaApplication.IServices.User;
+using ArenaDomain.Entities.Subscription;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Payments;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
@@ -20,6 +22,12 @@ namespace ArenaApplication.Services.Payment
     {
         private readonly IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> _paymentRepo;
         private readonly IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> _subscriptionRepo;
+
+        private readonly IGenericRepository<
+            ArenaDomain.Entities.Subscription.SubscriptionPlan,
+            Guid> _planRepo;
+        private readonly IGenericRepository<MemberProfile, Guid> _memberProfileRepo;
+
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserQueryService _userQuery;
 
@@ -33,7 +41,12 @@ namespace ArenaApplication.Services.Payment
             IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepo,
             IUserQueryService userQuery,
             IUnitOfWork unitOfWork,
-             IPaymentGatewayService paymentGateway
+             IPaymentGatewayService paymentGateway,
+             IGenericRepository<MemberProfile, Guid> memberProfileRepo,
+            IGenericRepository<
+            ArenaDomain.Entities.Subscription.SubscriptionPlan,
+            Guid> planRepo
+
             )
         {
             _paymentRepo = paymentRepo;
@@ -41,41 +54,49 @@ namespace ArenaApplication.Services.Payment
             _userQuery = userQuery;
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
+            _memberProfileRepo = memberProfileRepo;
+            _planRepo = planRepo;
         } 
 
         public async Task<Result<PaymentDto>> CreateAsync(CreatePaymentDto dto, Guid userId)
         {
-            
-            var subscription = _subscriptionRepo.GetAll()
-                    .Include(s => s.Plan)
-                    .Include(s=>s.MemberProfile)
-                .FirstOrDefault(s => s.Id == dto.UserSubscriptionId);
+            var plan = await _planRepo.GetAll().FirstOrDefaultAsync(p => p.Id == dto.PlanId);
+            if (plan is null)
+                return Result<PaymentDto>.Failure("Subscription Plan NotFound.");
 
-            if (subscription is null)
-                return Result<PaymentDto>.Failure("Subscription NotFound.");
+            var memberProfile = await _memberProfileRepo.GetAll().FirstOrDefaultAsync(m => m.UserId == userId);
+            if (memberProfile is null)
+                return Result<PaymentDto>.Failure("Member Profile NotFound.");
 
+            var activeSubscription = await _subscriptionRepo.GetAll()
+                .FirstOrDefaultAsync(s => s.MemberProfileId == memberProfile.Id && s.PlanId == dto.PlanId && s.Status == SubscriptionStatus.Active);
 
-            if (subscription.MemberProfile.UserId != userId)
-                return Result<PaymentDto>.Failure("Unauthorized.");
-
-            var existingPayment = _paymentRepo.GetAll()
-                .FirstOrDefault(p => p.UserSubscriptionId == dto.UserSubscriptionId && p.Status == PaymentStatus.Paid);
-
-            if (existingPayment != null)
+            if (activeSubscription != null)
             {
-                return Result<PaymentDto>
-                    .Failure("Subscription already paid.");
+                return Result<PaymentDto>.Failure("User already has an active subscription for this plan.");
             }
 
+            var newSubscription = new ArenaDomain.Entities.Subscription.UserSubscription
+            {
+                Id = Guid.NewGuid(),
+                MemberProfileId = memberProfile.Id,
+                PlanId = dto.PlanId,
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow, 
+                Status = SubscriptionStatus.Pending,
+                RemainingSessions = plan.SessionLimit ?? 0,
+                ReminderSent = false
+            };
 
+            await _subscriptionRepo.AddAsync(newSubscription);
 
-            decimal secureAmount = subscription.Plan.Price;
+            decimal secureAmount = plan.Price;
 
             var payment = new ArenaDomain.Entities.Payments.Payment
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                UserSubscriptionId = dto.UserSubscriptionId,
+                UserSubscriptionId = newSubscription.Id,
                 Amount = secureAmount,
                 Currency = dto.Currency,
                 PaymentMethod = dto.PaymentMethod,
@@ -83,29 +104,25 @@ namespace ArenaApplication.Services.Payment
                 TransactionId = null,
                 PaymentIntentId = null
             };
-                await _paymentRepo.AddAsync(payment);
+            await _paymentRepo.AddAsync(payment);
 
             var user = await _userQuery.GetByIdAsync(userId);
             if (user is null)
                 return Result<PaymentDto>.Failure("User not found.");
 
             var gatewayResponse = await _paymentGateway.GetIframeUrlAsync(
-            payment.Amount,
-            user.Email!,
-            $"{user.FirstName} {user.LastName}");
-
+                payment.Amount,
+                user.Email!,
+                $"{user.FirstName} {user.LastName}");
 
             payment.PaymentIntentId = gatewayResponse.OrderId;
 
             await _unitOfWork.SaveChangesAsync();
 
-
             var paymentDto = payment.Adapt<PaymentDto>();
             paymentDto.IframeUrl = gatewayResponse.IframeUrl;
 
             return Result<PaymentDto>.Success(paymentDto);
-
-
         }
 
         //(Admin)
@@ -267,6 +284,20 @@ namespace ArenaApplication.Services.Payment
             if (dto.Status == ArenaDomain.Enums.PaymentStatus.Paid)
             {
                 payment.PaymentDate = DateTime.UtcNow;
+
+                // FIX: Also activate the user's subscription if Admin manually marks it as Paid
+                var subscription = await _subscriptionRepo.GetAll()
+                    .Include(s => s.Plan)
+                    .FirstOrDefaultAsync(s => s.Id == payment.UserSubscriptionId);
+
+                if (subscription is not null)
+                {
+                    subscription.Status = SubscriptionStatus.Active;
+                    subscription.StartDate = DateTime.UtcNow;
+                    subscription.EndDate = DateTime.UtcNow.AddMonths(subscription.Plan.DurationMonths);
+                    
+                    await _subscriptionRepo.UpdateAsync(subscription);
+                }
             }
 
             await _paymentRepo.UpdateAsync(payment);

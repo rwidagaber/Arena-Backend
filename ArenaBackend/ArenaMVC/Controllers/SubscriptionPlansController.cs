@@ -36,7 +36,7 @@ namespace ArenaMVC.Controllers
         /// <summary>
         /// Display create form
         /// </summary>
-        [HttpGet("create")]
+        [HttpGet]
         public IActionResult Create()
         {
             return View();
@@ -80,7 +80,7 @@ namespace ArenaMVC.Controllers
         /// <summary>
         /// Display edit form
         /// </summary>
-        [HttpGet("edit/{id}")]
+        [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
         {
             try
@@ -103,7 +103,7 @@ namespace ArenaMVC.Controllers
         /// <summary>
         /// Update a subscription plan (Admin only)
         /// </summary>
-        [HttpPost("edit/{id}")]
+        [HttpPost]
         public async Task<IActionResult> Edit(
             Guid id,
             UpdateSubscriptionPlanDto updateDto,
@@ -145,7 +145,7 @@ namespace ArenaMVC.Controllers
         /// <summary>
         /// Delete a subscription plan (Admin only)
         /// </summary>
-        [HttpPost("delete/{id}")]
+        [HttpPost]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             try

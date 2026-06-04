@@ -1,4 +1,5 @@
 using ArenaApplication.Dtos.Payment;
+using ArenaApplication.IServices;
 using ArenaApplication.IServices.Payment;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -14,24 +15,24 @@ namespace ArenaApi.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly IPaymentGatewayService _gatewayService;
+        private readonly ICurrentUserService _currentUserService;
 
         public PaymentsController(IPaymentService paymentService,
-                IPaymentGatewayService gatewayService)
+                IPaymentGatewayService gatewayService,
+                ICurrentUserService currentUserService)
         {
             _paymentService = paymentService;
             _gatewayService = gatewayService;
+            _currentUserService = currentUserService;
 
         }
 
-        //private Guid GetCurrentUserId()
-        //   => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
         //POST api/payments
-
-        // TODO: Replace [FromQuery] userId with GetCurrentUserId() after JWT integration
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto, [FromQuery] Guid userId)
+        [Authorize]
+        public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
         {
+            var userId = _currentUserService.UserId;
             var result = await _paymentService.CreateAsync(dto, userId);
 
             if (!result.IsSuccess)
@@ -41,10 +42,11 @@ namespace ArenaApi.Controllers
         }
 
 
-        // TODO: Replace [FromQuery] userId with GetCurrentUserId() after JWT integration  
         [HttpGet("my-payments")]
-        public async Task<IActionResult> GetMyPayments([FromQuery] Guid userId)
+        [Authorize]
+        public async Task<IActionResult> GetMyPayments()
         {
+            var userId = _currentUserService.UserId;
             var result = await _paymentService.GetMyPaymentsAsync(userId);
             return Ok(result.Value);
         }
@@ -61,9 +63,8 @@ namespace ArenaApi.Controllers
             return Ok(result.Value);
         }
         //Admin
-        // TODO: Add [Authorize(Roles = "Admin")] after JWT integration
-
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll([FromQuery] PaymentFilterDto dto)
         {
             var result = await _paymentService.GetAllAsync(dto);
@@ -71,8 +72,8 @@ namespace ArenaApi.Controllers
         }
 
         //Admin change status
-        // TODO: Add [Authorize(Roles = "Admin")] after JWT integration
         [HttpPatch("{id:guid}/status")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdatePaymentStatusDto dto)
         {
             var result = await _paymentService.UpdateStatusAsync(id,dto);
@@ -114,6 +115,23 @@ namespace ArenaApi.Controllers
             }
 
             return Ok();
+        }
+
+        // Getway payment Callback (Browser Redirect)
+        [HttpGet("callback")]
+        [AllowAnonymous]
+        public IActionResult Callback([FromQuery] bool success)
+        {
+            var frontendCheckoutUrl = "http://localhost:4200/checkout";
+            
+            if (success)
+            {
+                return Redirect($"{frontendCheckoutUrl}?success=true");
+            }
+            else
+            {
+                return Redirect($"{frontendCheckoutUrl}?success=false");
+            }
         }
     }
 }
