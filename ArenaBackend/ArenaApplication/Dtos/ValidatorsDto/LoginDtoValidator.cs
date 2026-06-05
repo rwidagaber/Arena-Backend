@@ -3,25 +3,24 @@ using System.Collections.Generic;
 using System.Text;
 using FluentValidation;
 using ArenaApplication.Dtos.loginDto;
-
+using ArenaDomain.Shared;
+using Microsoft.Extensions.Localization;
 
 namespace ArenaApplication.Dtos.Validators
 {
     public class LoginDtoValidator : AbstractValidator<UserloginDto>
     {
-        public LoginDtoValidator() 
+        public LoginDtoValidator(IStringLocalizer<ArenaLocalization> localizer) 
         {
             RuleFor(u => u.Email)
                 .NotEmpty()
-                .WithMessage("Email is required")
+                .WithMessage(localizer["EmailRequired"])
                 .EmailAddress()
-                .WithMessage("Enter a valid Email Format");
-
+                .WithMessage(localizer["ValidEmailRequired"]);
 
             RuleFor(u => u.Password)
                 .NotEmpty()
-                .WithMessage("Password is required");
-               
+                .WithMessage(localizer["PasswordRequired"]);
         }
     }
 }

@@ -5,9 +5,14 @@ namespace ArenaApplication.Dtos.SubscriptionPlanDtos
     public class CreateSubscriptionPlanDto
     {
         [Required]
-        public string Name { get; set; }
+        public string NameEn { get; set; }
 
-        public string DescriptionEnglish { get; set; } = string.Empty;
+        [Required]
+        public string NameAr { get; set; }
+
+        public string DescriptionEn { get; set; } = string.Empty;
+
+        public string DescriptionAr { get; set; } = string.Empty;
 
         [Range(1, 24)]
         public int DurationMonths { get; set; }
