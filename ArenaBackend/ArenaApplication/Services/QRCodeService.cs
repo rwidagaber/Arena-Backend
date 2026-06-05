@@ -38,12 +38,21 @@ namespace ArenaInfrastructure.Services
                 throw new Exception($"Booking not found: {bookingId}");
 
             // 2. Check if QR already exists for this booking
-            var existing = await _qrRepo.FindAsync(
-                q => q.BookingId == bookingId);
+            var existing = await _qrRepo.FindAsync(q => q.BookingId == bookingId);
+            var existingQr = existing.FirstOrDefault();
 
-            if (existing.Any())
-                throw new Exception("QR code already generated for this booking");
-
+            if (existingQr != null)
+            {
+                return new QrDto
+                {
+                    Id = existingQr.Id,
+                    Code = existingQr.Code,
+                    GeneratedAt = existingQr.GeneratedAt,
+                    ExpirationTime = existingQr.ExpirationTime,
+                    IsUsed = existingQr.IsUsed,
+                    BookingId = existingQr.BookingId
+                };
+            }
             // 3. Generate unique code
             var code = $"ARENA-{bookingId.ToString().ToUpper().Substring(0, 8)}-{DateTime.UtcNow.Ticks}";
 

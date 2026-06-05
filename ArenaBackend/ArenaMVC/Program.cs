@@ -2,9 +2,11 @@ using ArenaApplication;
 using ArenaInfrastructure;
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
+using ArenaApplication.IServices.User;
 using ArenaInfrastructure.Repositories;
 using ArenaInfrastructure.Localization;
 using ArenaInfrastructure.Data.DataSeeding;
+using ArenaInfrastructure.Services;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
@@ -43,6 +45,9 @@ builder.Services.AddControllersWithViews()
 
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.AddApplicationServices();
+
+// User-related services
+builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 
 // Booking dependencies (MVC Admin pages)
 builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();

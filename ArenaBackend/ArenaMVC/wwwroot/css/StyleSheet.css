@@ -278,3 +278,59 @@ a:hover {
     border-color: var(--yellow) !important;
     box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15) !important;
 }
+
+/* RTL Support */
+[dir="rtl"] .sidebar {
+    left: auto !important;
+    right: 0 !important;
+    border-right: none !important;
+    border-left: 1px solid var(--border-color) !important;
+}
+
+[dir="rtl"] .main-content {
+    margin-left: 0 !important;
+    margin-right: var(--sidebar-width) !important;
+}
+
+/* Culture Flag Buttons */
+.sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.culture-flags {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.flag-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.flag-btn:hover {
+    border-color: var(--yellow);
+    background-color: rgba(196, 176, 69, 0.1);
+    transform: scale(1.1);
+}
+
+.flag-btn.active {
+    border-color: var(--yellow);
+    background-color: rgba(196, 176, 69, 0.15);
+    box-shadow: 0 0 8px rgba(196, 176, 69, 0.3);
+}
+
+.flag-icon {
+    font-size: 20px;
+    line-height: 1;
+}

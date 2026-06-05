@@ -116,5 +116,22 @@ namespace ArenaApi.Controllers
 
             return Ok();
         }
+
+        // Getway payment Callback (Browser Redirect)
+        [HttpGet("callback")]
+        [AllowAnonymous]
+        public IActionResult Callback([FromQuery] bool success)
+        {
+            var frontendCheckoutUrl = "http://localhost:4200/checkout";
+            
+            if (success)
+            {
+                return Redirect($"{frontendCheckoutUrl}?success=true");
+            }
+            else
+            {
+                return Redirect($"{frontendCheckoutUrl}?success=false");
+            }
+        }
     }
 }

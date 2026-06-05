@@ -38,19 +38,25 @@
                     <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">@Localizer["SubscriptionPlans"]</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @(currentController == "UserManagement" ? "active" : "")" asp-area="" asp-controller="UserManagement" asp-action="Index">@Localizer["UserManagement"]</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">@Localizer["Bookings"]</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Today" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Today">@Localizer["TodaysBookings"]</a>
                 </li>
+             
             </ul>
         </nav>
         <div class="sidebar-footer">
-            <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture">
-                <select name="culture" onchange="document.getElementById('culture-form').submit()">
-                    <option value="en-US" selected="@(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US")">English</option>
-                    <option value="ar-EG" selected="@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG")">العربية</option>
-                </select>
+            <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture" class="culture-flags">
+                <button type="submit" name="culture" value="en-US" class="flag-btn @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "active" : "")" title="English">
+                    <span class="flag-icon">🇺🇸</span>
+                </button>
+                <button type="submit" name="culture" value="ar-EG" class="flag-btn @(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "active" : "")" title="العربية">
+                    <span class="flag-icon">🇪🇬</span>
+                </button>
             </form>
         </div>
     </aside>

@@ -33,7 +33,13 @@ namespace ArenaApplication.Mappers
                      src => src.PaymentMethod.ToString())
 
                 .Map(dest => dest.Status,
-                     src => src.Status.ToString());
+                     src => src.Status.ToString())
+                     
+                .Map(dest => dest.SubscriptionEndDate,
+                     src => src.UserSubscription != null ? src.UserSubscription.EndDate : (DateTime?)null)
+                     
+                .Map(dest => dest.SubscriptionStatus,
+                     src => src.UserSubscription != null ? src.UserSubscription.Status.ToString() : null);
         }
     }
 }

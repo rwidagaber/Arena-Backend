@@ -252,12 +252,26 @@ namespace ArenaApplication.Services.Payment
             {
                 return Result<PaymentDto>.Failure(_localizer["PaidPaymentCannotBeModified"]);
             }
+
             payment.FailureReason = dto.FailureReason;
             payment.Status = dto.Status;
 
             if (dto.Status == ArenaDomain.Enums.PaymentStatus.Paid)
             {
                 payment.PaymentDate = DateTime.UtcNow;
+
+                var subscription = await _subscriptionRepo.GetAll()
+                    .Include(s => s.Plan)
+                    .FirstOrDefaultAsync(s => s.Id == payment.UserSubscriptionId);
+
+                if (subscription is not null)
+                {
+                    subscription.Status = SubscriptionStatus.Active;
+                    subscription.StartDate = DateTime.UtcNow;
+                    subscription.EndDate = DateTime.UtcNow.AddMonths(subscription.Plan.DurationMonths);
+
+                    await _subscriptionRepo.UpdateAsync(subscription);
+                }
             }
 
             await _paymentRepo.UpdateAsync(payment);

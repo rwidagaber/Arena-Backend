@@ -1,3 +1,4 @@
+using ArenaApplication.IServices.User;
 using ArenaApplication.Dtos.UserSubscription;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Interfaces;
@@ -14,17 +15,20 @@ namespace ArenaApplication.Services.UserSubscription
         private readonly IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> _planRepository;
         private readonly IMemberProfileRepository _memberProfileRepository;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
+        private readonly IUserQueryService _userQueryService;
 
         public UserSubscriptionService(
             IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> repository,
             IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> planRepository,
             IMemberProfileRepository memberProfileRepository,
-            IStringLocalizer<ArenaLocalization> localizer)
+            IStringLocalizer<ArenaLocalization> localizer,
+            IUserQueryService userQueryService)
         {
             _repository = repository;
             _planRepository = planRepository;
             _memberProfileRepository = memberProfileRepository;
             _localizer = localizer;
+            _userQueryService = userQueryService;
         }
 
         public async Task<IEnumerable<UserSubscriptionDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -37,7 +41,8 @@ namespace ArenaApplication.Services.UserSubscription
             {
                 var plan = await _planRepository.GetByIdAsync(s.PlanId, cancellationToken);
                 var member = await _memberProfileRepository.GetByIdAsync(s.MemberProfileId, cancellationToken);
-                result.Add(MapToDto(s, plan, member?.User));
+                var user = member != null ? await _userQueryService.GetByIdAsync(member.UserId) : null;
+                result.Add(MapToDto(s, plan, user));
             }
 
             return result;
@@ -53,20 +58,22 @@ namespace ArenaApplication.Services.UserSubscription
 
             var plan = await _planRepository.GetByIdAsync(subscription.PlanId, cancellationToken);
             var member = await _memberProfileRepository.GetByIdAsync(subscription.MemberProfileId, cancellationToken);
+            var user = member != null ? await _userQueryService.GetByIdAsync(member.UserId) : null;
 
-            return MapToDto(subscription, plan, member?.User);
+            return MapToDto(subscription, plan, user);
         }
 
         public async Task<IEnumerable<UserSubscriptionDto>> GetByMemberIdAsync(Guid memberProfileId, CancellationToken cancellationToken = default)
         {
             var subscriptions = await _repository.FindAsync(s => s.MemberProfileId == memberProfileId && !s.IsDeleted, cancellationToken);
             var member = await _memberProfileRepository.GetByIdAsync(memberProfileId, cancellationToken);
+            var user = member != null ? await _userQueryService.GetByIdAsync(member.UserId) : null;
 
             var result = new List<UserSubscriptionDto>();
             foreach (var s in subscriptions)
             {
                 var plan = await _planRepository.GetByIdAsync(s.PlanId, cancellationToken);
-                result.Add(MapToDto(s, plan, member?.User));
+                result.Add(MapToDto(s, plan, user));
             }
 
             return result;
@@ -96,7 +103,8 @@ namespace ArenaApplication.Services.UserSubscription
             };
 
             await _repository.AddAsync(subscription, cancellationToken);
-            return MapToDto(subscription, plan, member.User);
+            var user = await _userQueryService.GetByIdAsync(member.UserId);
+            return MapToDto(subscription, plan, user);
         }
 
         public async Task<UserSubscriptionDto> UpdateStatusAsync(Guid id, UpdateUserSubscriptionStatusDto updateDto, CancellationToken cancellationToken = default)
@@ -114,8 +122,9 @@ namespace ArenaApplication.Services.UserSubscription
 
             var plan = await _planRepository.GetByIdAsync(subscription.PlanId, cancellationToken);
             var member = await _memberProfileRepository.GetByIdAsync(subscription.MemberProfileId, cancellationToken);
+            var user = member != null ? await _userQueryService.GetByIdAsync(member.UserId) : null;
 
-            return MapToDto(subscription, plan, member?.User);
+            return MapToDto(subscription, plan, user);
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
