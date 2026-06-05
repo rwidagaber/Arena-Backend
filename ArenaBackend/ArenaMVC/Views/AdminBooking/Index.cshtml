@@ -78,7 +78,7 @@
                                     : "booking-badge booking-badge-other";
 
                             <tr>
-                                <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
+                                <td>@CultureHelper.FormatDate(b.BookingDate)</td>
                                 <td>@b.StartTime.ToString(@"hh\:mm")</td>
                                 <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
                                 <td>@b.MemberProfileName</td>

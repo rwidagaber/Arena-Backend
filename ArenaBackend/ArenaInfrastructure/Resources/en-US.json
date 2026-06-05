@@ -94,7 +94,6 @@
   "CancelledBookingCannotBeRescheduled": "Cancelled bookings cannot be rescheduled",
 
   "SubscriptionPlanNotFoundById": "Subscription plan not found.",
-  "SubscriptionPlanNotFound": "Subscription plan not found.",
 
   "UserSubscriptionNotFoundById": "User subscription not found.",
   "EntityNotFoundById": "{0} with ID {1} not found.",

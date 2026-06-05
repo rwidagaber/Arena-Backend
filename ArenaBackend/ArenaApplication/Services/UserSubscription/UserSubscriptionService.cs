@@ -4,6 +4,7 @@ using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure.Repositories;
 using Microsoft.Extensions.Localization;
+using System.Globalization;
 
 namespace ArenaApplication.Services.UserSubscription
 {
@@ -136,7 +137,9 @@ namespace ArenaApplication.Services.UserSubscription
             {
                 Id = subscription.Id,
                 MemberName = memberName,
-                PlanName = plan?.NameEn ?? string.Empty,
+                PlanName = plan != null
+                    ? (CultureInfo.CurrentUICulture.Name.StartsWith("ar") ? plan.NameAr : plan.NameEn)
+                    : string.Empty,
                 PlanPrice = plan?.Price ?? 0,
                 StartDate = subscription.StartDate,
                 EndDate = subscription.EndDate,

@@ -43,7 +43,7 @@ namespace ArenaMVC.Controllers
 
         [HttpPost]
         public async Task<IActionResult> Create(
-            SubscriptionPlanDto createDto,
+            CreateSubscriptionPlanDto createDto,
             CancellationToken cancellationToken)
         {
             try

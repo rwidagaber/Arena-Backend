@@ -63,27 +63,27 @@
 
 							<div class="subscription-details">
 								<div class="subscription-detail-item">
-									<div class="subscription-detail-label">Price</div>
+									<div class="subscription-detail-label">@Localizer["Price"]</div>
 									<div class="subscription-detail-value">
-										$@plan.Price.ToString("F2")
+										@CultureHelper.FormatCurrency(plan.Price)
 									</div>
 								</div>
 								<div class="subscription-detail-item">
-									<div class="subscription-detail-label">Duration</div>
+									<div class="subscription-detail-label">@Localizer["Duration"]</div>
 									<div class="subscription-detail-value">
 										@plan.DurationMonths month(s)
 									</div>
 								</div>
 								<div class="subscription-detail-item">
-									<div class="subscription-detail-label">Session Limit</div>
+									<div class="subscription-detail-label">@Localizer["SessionLimit"]</div>
 									<div class="subscription-detail-value">
 										@plan.SessionLimit
 									</div>
 								</div>
 								<div class="subscription-detail-item">
-									<div class="subscription-detail-label">Status</div>
+									<div class="subscription-detail-label">@Localizer["Status"]</div>
 									<div class="subscription-detail-value">
-										@(plan.IsActive ? "✓ Enabled" : "✗ Disabled")
+										@(plan.IsActive ? Localizer["IsActive"] : "✗ Disabled")
 									</div>
 								</div>
 							</div>
