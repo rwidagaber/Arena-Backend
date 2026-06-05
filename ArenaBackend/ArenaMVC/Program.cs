@@ -2,7 +2,9 @@ using ArenaApplication;
 using ArenaInfrastructure;
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
+using ArenaApplication.IServices.User;
 using ArenaInfrastructure.Repositories;
+using ArenaInfrastructure.Services;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Interfaces;
 
@@ -12,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.AddApplicationServices();
+
+// User-related services
+builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 
 // Booking dependencies (MVC Admin pages)
 // Repositories and Unit of Work
