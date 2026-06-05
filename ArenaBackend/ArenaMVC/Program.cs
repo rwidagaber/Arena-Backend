@@ -4,18 +4,21 @@ using ArenaApplication.IServices;
 using ArenaApplication.Services;
 using ArenaInfrastructure.Repositories;
 using ArenaInfrastructure.Localization;
+using ArenaInfrastructure.Data.DataSeeding;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Localization;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLocalization();
 
-builder.Services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>();
 
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -57,6 +60,13 @@ builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationH
 builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ArenaInfrastructure.Data.AppDbContext>();
+    await context.Database.MigrateAsync();
+    await TranslationSeeder.SeedAsync(context);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

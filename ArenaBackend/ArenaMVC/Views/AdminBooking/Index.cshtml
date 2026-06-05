@@ -26,9 +26,11 @@
             <div class="col-12 col-md-4">
                 <label class="form-label" for="statusSelect">@Localizer["Status"]</label>
                 <select class="form-select" id="statusSelect" name="status">
-                    <option value="" selected="@(selectedStatus is null ? "selected" : null)">All</option>
-                    <option value="Confirmed" selected="@(selectedStatus == BookingStatus.Confirmed ? "selected" : null)">Confirmed</option>
-                    <option value="Cancelled" selected="@(selectedStatus == BookingStatus.Cancelled ? "selected" : null)">Cancelled</option>
+                    <option value="" selected="@(selectedStatus is null ? "selected" : null)">@Localizer["All"]</option>
+                    <option value="Pending" selected="@(selectedStatus == BookingStatus.Pending ? "selected" : null)">@Localizer["Pending"]</option>
+                    <option value="Confirmed" selected="@(selectedStatus == BookingStatus.Confirmed ? "selected" : null)">@Localizer["Confirmed"]</option>
+                    <option value="Cancelled" selected="@(selectedStatus == BookingStatus.Cancelled ? "selected" : null)">@Localizer["Cancelled"]</option>
+                    <option value="Completed" selected="@(selectedStatus == BookingStatus.Completed ? "selected" : null)">@Localizer["Completed"]</option>
                 </select>
             </div>
             <div class="col-12 col-md-4">
@@ -37,10 +39,10 @@
                        value="@(selectedDate.HasValue ? selectedDate.Value.ToString("yyyy-MM-dd") : "")" />
             </div>
             <div class="col-12 col-md-4 d-flex gap-2 justify-content-md-end">
-                <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">Reset</a>
+                <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">@Localizer["Reset"]</a>
             </div>
         </form>
-        <p class="booking-filters-hint">Status filter applies automatically when changed.</p>
+        <p class="booking-filters-hint">@Localizer["StatusFilterHint"]</p>
     </div>
 
     <div class="booking-table-wrap">
@@ -51,11 +53,11 @@
             <table class="booking-table">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Date</th>
-                        <th style="width: 15%;">Start</th>
-                        <th style="width: 15%;">End</th>
-                        <th style="width: 35%;">Member Profile Name</th>
-                        <th style="width: 15%;">Status</th>
+                        <th style="width: 20%;">@Localizer["Date"]</th>
+                        <th style="width: 15%;">@Localizer["Start"]</th>
+                        <th style="width: 15%;">@Localizer["End"]</th>
+                        <th style="width: 35%;">@Localizer["MemberProfileName"]</th>
+                        <th style="width: 15%;">@Localizer["Status"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -75,14 +77,18 @@
                                 ? "booking-badge booking-badge-confirmed"
                                 : b.Status == BookingStatus.Cancelled
                                     ? "booking-badge booking-badge-cancelled"
-                                    : "booking-badge booking-badge-other";
+                                    : b.Status == BookingStatus.Pending
+                                        ? "booking-badge booking-badge-pending"
+                                        : b.Status == BookingStatus.Completed
+                                            ? "booking-badge booking-badge-completed"
+                                            : "booking-badge booking-badge-other";
 
                             <tr>
                                 <td>@CultureHelper.FormatDate(b.BookingDate)</td>
                                 <td>@b.StartTime.ToString(@"hh\:mm")</td>
                                 <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
                                 <td>@b.MemberProfileName</td>
-                                <td><span class="@badgeClass">@b.Status</span></td>
+                                <td><span class="@badgeClass">@Localizer[b.Status.ToString()]</span></td>
                             </tr>
                         }
                     }
