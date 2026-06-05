@@ -3,8 +3,10 @@ using ArenaApplication.IServices;
 using ArenaDomain.Entities.Notifications;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
+using ArenaDomain.Shared;
 using ArenaInfrastructure.Repositories;
 using Mapster;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,17 +19,20 @@ namespace ArenaApplication.Services
         private readonly IEmailService _emailService;
         private readonly IMemberProfileRepository _memberProfileRepository;
         private readonly INotificationHub _notificationHub;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public NotificationService(
             INotificationRepository repository,
             IEmailService emailService,
             IMemberProfileRepository memberProfileRepository,
-            INotificationHub notificationHub)
+            INotificationHub notificationHub,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _repository = repository;
             _emailService = emailService;
             _memberProfileRepository = memberProfileRepository;
             _notificationHub = notificationHub;
+            _localizer = localizer;
 
         }
 
@@ -90,8 +95,8 @@ namespace ArenaApplication.Services
         public Task NotifyWelcomeAsync(Guid MemberProfileId, string firstName, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 MemberProfileId,
-                "Welcome to Arena!",
-                $"Hey {firstName}! Your account is ready. Subscribe to a plan to unlock all features.",
+                _localizer["NotificationWelcomeTitle"],
+                string.Format(_localizer["NotificationWelcomeMessage"], firstName),
                 NotificationType.Success,
                 cancellationToken);
 
@@ -101,8 +106,8 @@ namespace ArenaApplication.Services
         {
             await CreateAsync(
                 MemberProfileId,
-                "Payment Confirmed",
-                $"Your payment of {amount:C} for the '{planName}' plan was successful. Enjoy your subscription!",
+                _localizer["NotificationPaymentConfirmedTitle"],
+                string.Format(_localizer["NotificationPaymentConfirmedMessage"], amount, planName),
                 NotificationType.Success,
                 cancellationToken);
 
@@ -115,8 +120,8 @@ namespace ArenaApplication.Services
         {
             await CreateAsync(
                 MemberProfileId,
-                "Subscription Expiring Soon",
-                $"Your subscription expires in {daysLeft} day(s). Renew now to keep access to all features.",
+                _localizer["NotificationSubscriptionExpiringTitle"],
+                string.Format(_localizer["NotificationSubscriptionExpiringMessage"], daysLeft),
                 NotificationType.Warning,
                 cancellationToken);
 
@@ -129,8 +134,8 @@ namespace ArenaApplication.Services
         {
             await CreateAsync(
                 MemberProfileId,
-                "Subscription Expired",
-                "Your subscription has expired. Renew your plan to continue booking sessions and using AI features.",
+                _localizer["NotificationSubscriptionExpiredTitle"],
+                _localizer["NotificationSubscriptionExpiredMessage"],
                 NotificationType.Error,
                 cancellationToken);
 
@@ -145,8 +150,8 @@ namespace ArenaApplication.Services
         {
             return CreateAsync(
                 MemberProfileId,
-                "Booking Confirmed",
-                $"Your gym session on {bookingDate:dddd, MMMM d 'at' h:mm tt} is confirmed.",
+                _localizer["NotificationBookingConfirmedTitle"],
+                string.Format(_localizer["NotificationBookingConfirmedMessage"], bookingDate),
                 NotificationType.Success,   
                 cancellationToken);
         }
@@ -154,24 +159,24 @@ namespace ArenaApplication.Services
         public Task NotifyQrCodeGeneratedAsync(Guid MemberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 MemberProfileId,
-                "QR Code Ready",
-                $"Your QR code for the session on {bookingDate:MMMM d} is ready. Show it at the gym entrance.",
+                _localizer["NotificationQRCodeTitle"],
+                string.Format(_localizer["NotificationQRCodeMessage"], bookingDate),
                 NotificationType.Info,
                 cancellationToken);
 
         public Task NotifySessionReminderAsync(Guid MemberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 MemberProfileId,
-                "Session Reminder",
-                $"Reminder: your gym session starts at {bookingDate:h:mm tt} today. Don't forget your QR code!",
+                _localizer["NotificationSessionReminderTitle"],
+                string.Format(_localizer["NotificationSessionReminderMessage"], bookingDate),
                 NotificationType.Warning,
                 cancellationToken);
 
         public Task NotifyAttendanceRecordedAsync(Guid MemberProfileId, int remainingSessions, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 MemberProfileId,
-                "Attendance Recorded",
-                $"Check-in successful! You have {remainingSessions} session(s) remaining in your current plan.",
+                _localizer["NotificationAttendanceRecordedTitle"],
+                string.Format(_localizer["NotificationAttendanceRecordedMessage"], remainingSessions),
                 NotificationType.Success,
                 cancellationToken);
 
@@ -180,24 +185,24 @@ namespace ArenaApplication.Services
         public Task NotifyWorkoutPlanReadyAsync(Guid MemberProfileId, string planName, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 MemberProfileId,
-                "Workout Plan Ready",
-                $"Your AI-generated workout plan '{planName}' is ready. Head to your dashboard to get started!",
+                _localizer["NotificationWorkoutPlanTitle"],
+                string.Format(_localizer["NotificationWorkoutPlanMessage"], planName),
                 NotificationType.Success,
                 cancellationToken);
 
         public Task NotifyNutritionPlanReadyAsync(Guid MemberProfileId, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 MemberProfileId,
-                "Nutrition Plan Ready",
-                "Your personalised AI nutrition plan is ready. Check your dashboard for your daily targets.",
+                _localizer["NotificationNutritionPlanTitle"],
+                _localizer["NotificationNutritionPlanMessage"],
                 NotificationType.Success,
                 cancellationToken);
 
         public Task NotifyMealAnalyzedAsync(Guid MemberProfileId, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 MemberProfileId,
-                "Meal Analysis Complete",
-                "Your meal image has been analyzed. View the nutritional breakdown in your meal log.",
+                _localizer["NotificationMealAnalysisTitle"],
+                _localizer["NotificationMealAnalysisMessage"],
                 NotificationType.Info,
                 cancellationToken);
     }
