@@ -50,13 +50,23 @@
             </ul>
         </nav>
         <div class="sidebar-footer">
-            <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture" class="culture-flags">
-                <button type="submit" name="culture" value="en-US" class="flag-btn @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "active" : "")" title="English">
-                    <span class="flag-icon">🇺🇸</span>
-                </button>
-                <button type="submit" name="culture" value="ar-EG" class="flag-btn @(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "active" : "")" title="العربية">
-                    <span class="flag-icon">🇪🇬</span>
-                </button>
+            <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture">
+                <div class="culture-dropdown">
+                    <button type="button" class="culture-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="flag-icon">@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "🇪🇬" : "🇺🇸")</span>
+                        <span class="dropdown-arrow">▾</span>
+                    </button>
+                    <div class="culture-dropdown-menu">
+                        <button type="submit" name="culture" value="en-US" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "selected" : "")">
+                            <span class="flag-icon">🇺🇸</span>
+                            <span>English</span>
+                        </button>
+                        <button type="submit" name="culture" value="ar-EG" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "selected" : "")">
+                            <span class="flag-icon">🇪🇬</span>
+                            <span>العربية</span>
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </aside>
@@ -73,6 +83,15 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.culture-dropdown.open').forEach(function (dd) {
+                if (!dd.contains(e.target)) {
+                    dd.classList.remove('open');
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
