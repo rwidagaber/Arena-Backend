@@ -1,6 +1,8 @@
 using ArenaApplication.IServices;
+using ArenaDomain.Shared;
 using ArenaMVC.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +13,14 @@ namespace ArenaMVC.Controllers
     public class UserManagementController : Controller
     {
         private readonly IUserManagementService _userService;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public UserManagementController(IUserManagementService userService)
+        public UserManagementController(
+            IUserManagementService userService,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _userService = userService;
+            _localizer = localizer;
         }
 
         // GET: UserManagement
@@ -26,7 +32,7 @@ namespace ArenaMVC.Controllers
                 var result = await _userService.GetUsers(search);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : "An error occurred.";
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUsers"];
                     return View(new List<UserListViewModel>());
                 }
 
@@ -45,7 +51,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception)
             {
-                TempData["Error"] = "An error occurred while retrieving users.";
+                TempData["Error"] = _localizer["AnErrorOccurredRetrievingUsers"];
                 return View(new List<UserListViewModel>());
             }
         }
@@ -59,7 +65,7 @@ namespace ArenaMVC.Controllers
                 var result = await _userService.GetUserDetails(id);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : "An error occurred.";
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUserDetails"];
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -82,7 +88,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception)
             {
-                TempData["Error"] = "An error occurred while retrieving user details.";
+                TempData["Error"] = _localizer["AnErrorOccurredRetrievingUserDetails"];
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -96,7 +102,7 @@ namespace ArenaMVC.Controllers
                 var result = await _userService.GetUserForManage(id);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : "An error occurred.";
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredLoadingManageUser"];
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -113,7 +119,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception)
             {
-                TempData["Error"] = "An error occurred while loading the manage user page.";
+                TempData["Error"] = _localizer["AnErrorOccurredLoadingManageUser"];
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -127,23 +133,23 @@ namespace ArenaMVC.Controllers
             {
                 if (id != model.Id)
                 {
-                    TempData["Error"] = "Invalid user ID.";
+                    TempData["Error"] = _localizer["InvalidUserId"];
                     return RedirectToAction(nameof(Index));
                 }
 
                 var result = await _userService.UpdateUserStatus(id, model.IsActive);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : "An error occurred.";
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredSavingUserStatus"];
                     return View(model);
                 }
 
-                TempData["Success"] = "User status updated successfully!";
+                TempData["Success"] = _localizer["UserStatusUpdatedSuccessfully"];
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception)
             {
-                TempData["Error"] = "An error occurred while saving user status changes.";
+                TempData["Error"] = _localizer["AnErrorOccurredSavingUserStatus"];
                 return View(model);
             }
         }
@@ -158,16 +164,16 @@ namespace ArenaMVC.Controllers
                 var result = await _userService.SoftDeleteUser(id);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : "An error occurred.";
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredDeletingUser"];
                     return RedirectToAction(nameof(Index));
                 }
 
-                TempData["Success"] = "User deleted successfully!";
+                TempData["Success"] = _localizer["UserDeletedSuccessfully"];
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception)
             {
-                TempData["Error"] = "An error occurred while deleting the user.";
+                TempData["Error"] = _localizer["AnErrorOccurredDeletingUser"];
                 return RedirectToAction(nameof(Index));
             }
         }
