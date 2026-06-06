@@ -3,11 +3,9 @@ using ArenaApplication.IServices;
 using ArenaDomain.Entities;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
-using ArenaDomain.Shared;
 using ArenaMVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,16 +17,13 @@ namespace ArenaMVC.Controllers
     {
         private readonly IBookingService _bookingService;
         private readonly IGenericRepository<MemberProfile, Guid> _memberProfileRepo;
-        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public AdminBookingController(
             IBookingService bookingService,
-            IGenericRepository<MemberProfile, Guid> memberProfileRepo,
-            IStringLocalizer<ArenaLocalization> localizer)
+            IGenericRepository<MemberProfile, Guid> memberProfileRepo)
         {
             _bookingService = bookingService;
             _memberProfileRepo = memberProfileRepo;
-            _localizer = localizer;
         }
 
         [HttpGet]
@@ -54,8 +49,8 @@ namespace ArenaMVC.Controllers
             var viewModels = bookings.Select(b => new AdminBookingViewModel
             {
                 Id = b.Id,
-                MemberProfileName = profilesMap.TryGetValue(b.MemberProfileId, out var name) && !string.IsNullOrWhiteSpace(name)
-                    ? name
+                MemberProfileName = profilesMap.TryGetValue(b.MemberProfileId, out var name) && !string.IsNullOrWhiteSpace(name) 
+                    ? name 
                     : b.MemberProfileId.ToString(),
                 BookingDate = b.BookingDate,
                 StartTime = b.StartTime,
@@ -91,8 +86,8 @@ namespace ArenaMVC.Controllers
             var viewModels = bookings.Select(b => new AdminBookingViewModel
             {
                 Id = b.Id,
-                MemberProfileName = profilesMap.TryGetValue(b.MemberProfileId, out var name) && !string.IsNullOrWhiteSpace(name)
-                    ? name
+                MemberProfileName = profilesMap.TryGetValue(b.MemberProfileId, out var name) && !string.IsNullOrWhiteSpace(name) 
+                    ? name 
                     : b.MemberProfileId.ToString(),
                 BookingDate = b.BookingDate,
                 StartTime = b.StartTime,

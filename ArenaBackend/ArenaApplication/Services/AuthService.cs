@@ -10,7 +10,6 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using System.Data;
 using System.Security.Claims;
@@ -22,28 +21,28 @@ namespace ArenaApplication.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IAuthRepository _authRepository;
         private readonly ITokenService _tokenService;
+        //private readonly IEmailService _emailService;
         private readonly JWTSettings _jwtSettings;
-        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             IAuthRepository authRepository,
             ITokenService tokenService,
-            IOptions<JWTSettings> jwtSettings,
-            IStringLocalizer<ArenaLocalization> localizer)
+            //IEmailService emailService,
+            IOptions<JWTSettings> jwtSettings)
         {
             _userManager = userManager;
             _authRepository = authRepository;
             _tokenService = tokenService;
+            //_emailService = emailService;
             _jwtSettings = jwtSettings.Value;
-            _localizer = localizer;
         }
 
         public async Task<Result<AuthResponseDto>> RegisterAsync(UserRegisterDto dto)
         {
             var existingUser = await _authRepository.GetByEmailAsync(dto.Email);
             if (existingUser is not null)
-                return Result<AuthResponseDto>.Failure(_localizer["EmailIsAlreadyRegistered"]);
+                return Result<AuthResponseDto>.Failure("Email is already registered");
 
             var user = new ApplicationUser
             {
@@ -72,6 +71,7 @@ namespace ArenaApplication.Services
             await _authRepository.CreateMemberProfileAsync(memberProfile);
             user.MemberProfile = memberProfile;
 
+
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
         }
@@ -80,10 +80,10 @@ namespace ArenaApplication.Services
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
             if (user is null || !await _userManager.CheckPasswordAsync(user, dto.Password))
-                return Result<AuthResponseDto>.Failure(_localizer["InvalidEmailOrPassword"]);
+                return Result<AuthResponseDto>.Failure("Invalid email or password");
 
             if (!user.IsActive)
-                return Result<AuthResponseDto>.Failure(_localizer["AccountIsDeactivated"]);
+                return Result<AuthResponseDto>.Failure("Account is deactivated");
 
             if (user.MemberProfile is null)
                 user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
@@ -92,6 +92,7 @@ namespace ArenaApplication.Services
 
             var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? "GymMember";
 
+            // ── Admin — return only memberProfileId ──────────────────────────────
             if (role == "Admin")
             {
                 return Result<AuthResponseDto>.Success(new AuthResponseDto
@@ -105,9 +106,11 @@ namespace ArenaApplication.Services
                 });
             }
 
+            // ── GymMember — check subscription ───────────────────────────────────
             var activeSubscription = user.MemberProfile?.Subscriptions
                 .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
 
+            // No active subscription — return only memberProfileId
             if (activeSubscription is null)
             {
                 return Result<AuthResponseDto>.Success(new AuthResponseDto
@@ -122,6 +125,7 @@ namespace ArenaApplication.Services
                 });
             }
 
+            // Active subscription — return full profile
             var profile = new GetProfileDto
             {
                 Id = user.Id,
@@ -170,19 +174,20 @@ namespace ArenaApplication.Services
             var userIdStr = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (userIdStr is null)
-                return Result<AuthResponseDto>.Failure(_localizer["InvalidToken"]);
+                return Result<AuthResponseDto>.Failure("Invalid token");
 
             var userId = Guid.Parse(userIdStr);
 
             var storedToken = await _authRepository.GetRefreshTokenAsync(dto.RefreshToken, userId);
             if (storedToken is null)
-                return Result<AuthResponseDto>.Failure(_localizer["InvalidOrExpiredRefreshToken"]);
+                return Result<AuthResponseDto>.Failure("Invalid or expired refresh token");
 
             await _authRepository.RevokeRefreshTokenAsync(storedToken);
 
+           
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
-                return Result<AuthResponseDto>.Failure(_localizer["UserNotFound"]);
+                return Result<AuthResponseDto>.Failure("User not found");
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
         }
@@ -197,7 +202,7 @@ namespace ArenaApplication.Services
         {
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
-                return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
+                return Result<GetProfileDto>.Failure("User not found");
 
             var activeSubscription = user.MemberProfile?.Subscriptions
                 .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
@@ -239,7 +244,7 @@ namespace ArenaApplication.Services
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user is null)
-                return Result.Failure(_localizer["UserNotFound"]);
+                return Result.Failure("User not found");
 
             var result = await _userManager.ChangePasswordAsync(
                 user, dto.OldPassword, dto.NewPassword);
@@ -257,6 +262,7 @@ namespace ArenaApplication.Services
                 return Result.Success();
 
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            //await _emailService.SendPasswordResetEmailAsync(user.Email!, resetToken);
 
             return Result.Success();
         }
@@ -265,7 +271,7 @@ namespace ArenaApplication.Services
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
             if (user is null)
-                return Result.Failure(_localizer["UserNotFound"]);
+                return Result.Failure("User not found");
 
             var result = await _userManager.ResetPasswordAsync(
                 user, dto.Token, dto.NewPassword);

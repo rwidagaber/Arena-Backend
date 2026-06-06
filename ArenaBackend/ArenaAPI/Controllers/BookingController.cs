@@ -2,11 +2,9 @@
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
 using ArenaDomain.Enums;
-using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
 using System;
 using System.Threading.Tasks;
 
@@ -17,12 +15,10 @@ namespace ArenaApi.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
-        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public BookingController(IBookingService bookingService, IStringLocalizer<ArenaLocalization> localizer)
+        public BookingController(IBookingService bookingService)
         {
             _bookingService = bookingService;
-            _localizer = localizer;
         }
 
         [HttpPost("create")]
@@ -43,6 +39,7 @@ namespace ArenaApi.Controllers
         [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> GetUserBookings([FromQuery] Guid memberProfileId)
         {
+            
             var result = await _bookingService.GetUserBookings(memberProfileId);
 
             if (!result.IsSuccess)
@@ -94,5 +91,9 @@ namespace ArenaApi.Controllers
 
             return Ok(result.Value);
         }
+
+    
+        
     }
+
 }

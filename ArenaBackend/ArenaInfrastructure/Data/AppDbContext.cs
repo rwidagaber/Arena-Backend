@@ -2,7 +2,6 @@
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
 using ArenaDomain.Entities.Health;
-using ArenaDomain.Entities.Localization;
 using ArenaDomain.Entities.Notifications;
 using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Entities.Payments;
@@ -52,10 +51,6 @@ namespace ArenaInfrastructure.Data
 
         // ── RefreshToken ───────────────────────────────────────────────────────────────
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-
-
-        // ── Localization ──────────────────────────────────────────────────────────
-        public DbSet<Translation> Translations { get; set; }
 
 
         // ── Workout ───────────────────────────────────────────────────────────────

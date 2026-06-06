@@ -9,7 +9,6 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Localization;
 
 namespace ArenaApplication.Services
 {
@@ -17,23 +16,20 @@ namespace ArenaApplication.Services
     {
         private readonly IAuthRepository _authRepository;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public ProfileService(
             IAuthRepository authRepository,
-            UserManager<ApplicationUser> userManager,
-            IStringLocalizer<ArenaLocalization> localizer)
+            UserManager<ApplicationUser> userManager)
         {
             _authRepository = authRepository;
             _userManager = userManager;
-            _localizer = localizer;
         }
 
         public async Task<Result<GetProfileDto>> GetProfileAsync(Guid Id)
         {
             var user = await _authRepository.GetByIdWithProfileAsync(Id);
             if (user is null)
-                return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
+                return Result<GetProfileDto>.Failure("User not found");
 
             var activeSubscription = user.MemberProfile?.Subscriptions
                 .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
@@ -44,11 +40,12 @@ namespace ArenaApplication.Services
             {
                 Id = user.Id,
                 MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
-                FirstName = isSubscribed ? user.FirstName : _localizer["Locked"],
-                LastName = isSubscribed ? user.LastName : _localizer["Locked"],
-                Email = isSubscribed ? user.Email! : _localizer["Locked"],
+                // If user is not subscribed, lock profile fields by redacting them.
+                FirstName = isSubscribed ? user.FirstName : "Locked",
+                LastName = isSubscribed ? user.LastName : "Locked",
+                Email = isSubscribed ? user.Email! : "Locked",
                 PhoneNumber = isSubscribed ? user.PhoneNumber : null,
-                PreferredLanguage = isSubscribed ? user.PreferredLanguage : _localizer["Locked"],
+                PreferredLanguage = isSubscribed ? user.PreferredLanguage : "Locked",
                 IsActive = isSubscribed ? user.IsActive : false,
                 Weight = isSubscribed ? user.MemberProfile?.Weight : null,
                 Height = isSubscribed ? user.MemberProfile?.Height : null,
@@ -78,16 +75,18 @@ namespace ArenaApplication.Services
         {
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
-                return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
+                return Result<GetProfileDto>.Failure("User not found");
 
+            // Check subscription first - disallow updates if no active subscription
             var activeSubscription = user.MemberProfile?.Subscriptions
                 .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
 
             if (activeSubscription == null)
             {
-                return Result<GetProfileDto>.Failure(_localizer["ProfileLockedRequiresSubscription"]);
+                return Result<GetProfileDto>.Failure("Profile is locked. Active subscription required to update profile.");
             }
 
+            // Update ApplicationUser fields
             if (dto.FirstName is not null)
                 user.FirstName = dto.FirstName;
 
@@ -104,6 +103,7 @@ namespace ArenaApplication.Services
             if (!updateResult.Succeeded)
                 return Result<GetProfileDto>.Failure(updateResult.Errors.Select(e => e.Description).ToArray());
 
+            // Update MemberProfile fields
             if (user.MemberProfile is not null)
             {
                 if (dto.Weight is not null)
@@ -121,6 +121,7 @@ namespace ArenaApplication.Services
                 if (dto.Birthday is not null)
                     user.MemberProfile.DateOfBirth = dto.Birthday.Value.ToDateTime(TimeOnly.MinValue);
 
+                // Recalculate BMI if weight or height updated
                 if (dto.Weight is not null || dto.Height is not null)
                 {
                     var weight = user.MemberProfile.Weight;
@@ -134,6 +135,7 @@ namespace ArenaApplication.Services
                 await _authRepository.UpdateMemberProfileAsync(user.MemberProfile);
             }
 
+            // ✅ Build the updated DTO to return
             var updatedProfile = new GetProfileDto
             {
                 Id = user.Id,

@@ -2,33 +2,16 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ArenaMVC.Models;
 using ArenaApplication.Services.SubscriptionPlan;
-using ArenaDomain.Shared;
-using Microsoft.Extensions.Localization;
-using Microsoft.AspNetCore.Localization;
 
 namespace ArenaMVC.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ISubscriptionPlanService _subscriptionPlanService;
-    private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-    public HomeController(ISubscriptionPlanService subscriptionPlanService, IStringLocalizer<ArenaLocalization> localizer)
+    public HomeController(ISubscriptionPlanService subscriptionPlanService)
     {
         _subscriptionPlanService = subscriptionPlanService;
-        _localizer = localizer;
-    }
-
-    [HttpPost]
-    public IActionResult SetCulture(string culture, string returnUrl)
-    {
-        var response = CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture));
-        Response.Cookies.Append(
-            CookieRequestCultureProvider.DefaultCookieName,
-            response,
-            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true }
-        );
-        return LocalRedirect(returnUrl ?? "/");
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)

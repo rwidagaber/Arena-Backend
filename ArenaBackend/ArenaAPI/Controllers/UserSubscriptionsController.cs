@@ -1,9 +1,7 @@
 using ArenaApplication.Dtos.UserSubscription;
 using ArenaApplication.Services.UserSubscription;
-using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
 
 namespace ArenaApi.Controllers
 {
@@ -12,16 +10,15 @@ namespace ArenaApi.Controllers
     public class UserSubscriptionsController : ControllerBase
     {
         private readonly IUserSubscriptionService _userSubscriptionService;
-        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public UserSubscriptionsController(
-            IUserSubscriptionService userSubscriptionService,
-            IStringLocalizer<ArenaLocalization> localizer)
+        public UserSubscriptionsController(IUserSubscriptionService userSubscriptionService)
         {
             _userSubscriptionService = userSubscriptionService;
-            _localizer = localizer;
         }
 
+        /// <summary>
+        /// Get all user subscriptions
+        /// </summary>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserSubscriptionDto>>> GetAll(CancellationToken cancellationToken)
         {
@@ -32,10 +29,13 @@ namespace ArenaApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = _localizer["AnErrorOccurredRetrievingUserSubscriptions"], details = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving user subscriptions.", details = ex.Message });
             }
         }
 
+        /// <summary>
+        /// Get a user subscription by ID
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<UserSubscriptionDto>> GetById(Guid id, CancellationToken cancellationToken)
         {
@@ -50,10 +50,13 @@ namespace ArenaApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = _localizer["AnErrorOccurredRetrievingUserSubscription"], details = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving the user subscription.", details = ex.Message });
             }
         }
 
+        /// <summary>
+        /// Get user subscriptions by member profile ID
+        /// </summary>
         [HttpGet("member/{memberProfileId}")]
         public async Task<ActionResult<IEnumerable<UserSubscriptionDto>>> GetByMemberId(Guid memberProfileId, CancellationToken cancellationToken)
         {
@@ -64,10 +67,13 @@ namespace ArenaApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = _localizer["AnErrorOccurredRetrievingUserSubscriptions"], details = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving user subscriptions.", details = ex.Message });
             }
         }
 
+        /// <summary>
+        /// Create a new user subscription
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult<UserSubscriptionDto>> Create([FromBody] CreateUserSubscriptionDto createDto, CancellationToken cancellationToken)
         {
@@ -85,10 +91,13 @@ namespace ArenaApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = _localizer["AnErrorOccurredCreatingUserSubscription"], details = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while creating the user subscription.", details = ex.Message });
             }
         }
 
+        /// <summary>
+        /// Update the status of a user subscription
+        /// </summary>
         [HttpPatch("{id}/status")]
         public async Task<ActionResult<UserSubscriptionDto>> UpdateStatus(Guid id, [FromBody] UpdateUserSubscriptionStatusDto updateDto, CancellationToken cancellationToken)
         {
@@ -106,10 +115,13 @@ namespace ArenaApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = _localizer["AnErrorOccurredUpdatingUserSubscriptionStatus"], details = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating the user subscription status.", details = ex.Message });
             }
         }
 
+        /// <summary>
+        /// Delete a user subscription
+        /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
@@ -124,7 +136,7 @@ namespace ArenaApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = _localizer["AnErrorOccurredDeletingUserSubscription"], details = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while deleting the user subscription.", details = ex.Message });
             }
         }
     }

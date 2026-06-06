@@ -2,7 +2,7 @@
 @model List<ArenaMVC.Models.AdminBookingViewModel>
 
 @{
-    ViewData["Title"] = Localizer["TodaysBookings"];
+    ViewData["Title"] = "Today's Bookings";
 }
 
 <link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
@@ -11,11 +11,11 @@
 <div class="booking-admin-container">
     <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div>
-            <h1>📆 @Localizer["TodaysBookings"]</h1>
-            <p>@Localizer["BookingsScheduledToday"]</p>
+            <h1>📆 Today's Bookings</h1>
+            <p>Bookings scheduled for today (UTC).</p>
         </div>
         <div class="booking-header-actions">
-            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">@Localizer["BackToBookings"]</a>
+            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">Back to Bookings</a>
         </div>
     </div>
 
@@ -24,11 +24,11 @@
             <table class="booking-table">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">@Localizer["Date"]</th>
-                        <th style="width: 15%;">@Localizer["Start"]</th>
-                        <th style="width: 15%;">@Localizer["End"]</th>
-                        <th style="width: 35%;">@Localizer["MemberProfileName"]</th>
-                        <th style="width: 15%;">@Localizer["Status"]</th>
+                        <th style="width: 20%;">Date</th>
+                        <th style="width: 15%;">Start</th>
+                        <th style="width: 15%;">End</th>
+                        <th style="width: 35%;">Member profile name</th>
+                        <th style="width: 15%;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,7 +36,7 @@
                     {
                         <tr>
                             <td colspan="5" class="text-empty">
-                                @Localizer["NoBookingsToday"]
+                                No bookings scheduled for today.
                             </td>
                         </tr>
                     }
@@ -48,18 +48,14 @@
                                 ? "booking-badge booking-badge-confirmed"
                                 : b.Status == BookingStatus.Cancelled
                                     ? "booking-badge booking-badge-cancelled"
-                                    : b.Status == BookingStatus.Pending
-                                        ? "booking-badge booking-badge-pending"
-                                        : b.Status == BookingStatus.Completed
-                                            ? "booking-badge booking-badge-completed"
-                                            : "booking-badge booking-badge-other";
+                                    : "booking-badge booking-badge-other";
 
                             <tr>
                                 <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
                                 <td>@b.StartTime.ToString(@"hh\:mm")</td>
                                 <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
                                 <td>@b.MemberProfileName</td>
-                                <td><span class="@badgeClass">@Localizer[b.Status.ToString()]</span></td>
+                                <td><span class="@badgeClass">@b.Status</span></td>
                             </tr>
                         }
                     }

@@ -14,16 +14,11 @@ using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
 using ArenaInfrastructure;
 using ArenaInfrastructure.Data;
-using ArenaDomain.Shared;
 using ArenaInfrastructure.Data.DataSeeding;
-using ArenaInfrastructure.Localization;
 using ArenaInfrastructure.Repositories;
 using ArenaInfrastructure.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.Extensions.Localization;
 using Scalar.AspNetCore;
-using System.Globalization;
 
 namespace ArenaAPI
 {
@@ -33,40 +28,11 @@ namespace ArenaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-
-            //Add Localization
-
-            builder.Services.AddLocalization();
-
-            builder.Services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
             // Mapster
             builder.Services.AddMapster();
 
             // Controllers
-            builder.Services.AddControllers()
-                // Localization for Data Annotations
-                .AddDataAnnotationsLocalization(options =>
-                {
-                options.DataAnnotationLocalizerProvider = (type, factory) =>
-                    factory.Create(typeof(ArenaLocalization));
-                });
-
-
-            // Localization options
-            builder.Services.Configure<RequestLocalizationOptions>(options =>
-            {
-                var supportedCultures = new[] 
-                { 
-                    new CultureInfo("en-US"),
-                    new CultureInfo("ar-EG")
-                };
-                options.DefaultRequestCulture = new RequestCulture
-                (culture: supportedCultures[0],
-                uiCulture: (supportedCultures[0]));
-                options.SupportedCultures = supportedCultures;
-                options.SupportedUICultures = supportedCultures;
-                options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
-            });
+            builder.Services.AddControllers();
 
             // Services
             builder.Services.AddScoped<IEmailService, EmailService>();
@@ -177,27 +143,10 @@ namespace ArenaAPI
                 app.UseHttpsRedirection();
             }
 
-            // Localization Middleware
-
-            var supportedCultures = new[]{"en-US","ar-EG"};
-
-
-            var localizationOptions = new RequestLocalizationOptions()
-                .SetDefaultCulture(supportedCultures[0])
-                .AddSupportedCultures(supportedCultures)
-                .AddSupportedUICultures(supportedCultures);
-
-
-            app.UseRequestLocalization(localizationOptions);
-
-            // Authentication & Authorization
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
             app.MapHub<NotificationHub>("/hubs/notifications");
-
-          
-
 
             app.Run();
         }

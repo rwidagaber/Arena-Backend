@@ -2,7 +2,6 @@
 using ArenaApplication.Dtos.Payment;
 using ArenaDomain.Entities.Payments;
 using Mapster;
-using System.Globalization;
 
 namespace ArenaApplication.Mappers
 {
@@ -21,9 +20,7 @@ namespace ArenaApplication.Mappers
 
                 .Map(dest => dest.PlanName,
                      src => src.UserSubscription != null && src.UserSubscription.Plan != null
-                         ? (CultureInfo.CurrentUICulture.Name.StartsWith("ar")
-                             ? src.UserSubscription.Plan.NameAr
-                             : src.UserSubscription.Plan.NameEn)
+                         ? src.UserSubscription.Plan.NameEn
                          : string.Empty)
 
                 .Map(dest=>dest.PlanId,

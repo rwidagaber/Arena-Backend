@@ -1,25 +1,23 @@
 using ArenaApplication.Dtos.SubscriptionPlanDtos;
 using ArenaApplication.Services.SubscriptionPlan;
-using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
 
 namespace ArenaMVC.Controllers
 {
+    //[Authorize(Roles = "Admin")]
     public class SubscriptionPlansController : Controller
     {
         private readonly ISubscriptionPlanService _subscriptionPlanService;
-        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public SubscriptionPlansController(
-            ISubscriptionPlanService subscriptionPlanService,
-            IStringLocalizer<ArenaLocalization> localizer)
+        public SubscriptionPlansController(ISubscriptionPlanService subscriptionPlanService)
         {
             _subscriptionPlanService = subscriptionPlanService;
-            _localizer = localizer;
         }
 
+        /// <summary>
+        /// Get all subscription plans (Admin only)
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
@@ -30,21 +28,28 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredRetrievingSubscriptionPlans"];
+                TempData["Error"] = "An error occurred while retrieving subscription plans.";
                 return View(new List<SubscriptionPlanDto>());
             }
         }
 
+        /// <summary>
+        /// Display create form
+        /// </summary>
         [HttpGet]
         public IActionResult Create()
         {
             return View();
         }
 
+        /// <summary>
+        /// Create a new subscription plan (Admin only)
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create(
-            CreateSubscriptionPlanDto createDto,
-            CancellationToken cancellationToken)
+            SubscriptionPlanDto createDto,
+            CancellationToken cancellationToken
+        )
         {
             try
             {
@@ -53,8 +58,11 @@ namespace ArenaMVC.Controllers
                     return View(createDto);
                 }
 
-                var createdPlan = await _subscriptionPlanService.CreateAsync(createDto, cancellationToken);
-                TempData["Success"] = _localizer["SubscriptionPlanCreatedSuccessfully"];
+                var createdPlan = await _subscriptionPlanService.CreateAsync(
+                    createDto,
+                    cancellationToken
+                );
+                TempData["Success"] = "Subscription plan created successfully!";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
@@ -64,11 +72,14 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredCreatingSubscriptionPlan"];
+                TempData["Error"] = "An error occurred while creating the subscription plan.";
                 return View(createDto);
             }
         }
 
+        /// <summary>
+        /// Display edit form
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
         {
@@ -79,21 +90,25 @@ namespace ArenaMVC.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["Error"] = _localizer["SubscriptionPlanNotFound"];
+                TempData["Error"] = "Subscription plan not found.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredRetrievingSubscriptionPlan"];
+                TempData["Error"] = "An error occurred while retrieving the subscription plan.";
                 return RedirectToAction(nameof(Index));
             }
         }
 
+        /// <summary>
+        /// Update a subscription plan (Admin only)
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Edit(
             Guid id,
             UpdateSubscriptionPlanDto updateDto,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken
+        )
         {
             try
             {
@@ -102,13 +117,17 @@ namespace ArenaMVC.Controllers
                     return View(updateDto);
                 }
 
-                var updatedPlan = await _subscriptionPlanService.UpdateAsync(id, updateDto, cancellationToken);
-                TempData["Success"] = _localizer["SubscriptionPlanUpdatedSuccessfully"];
+                var updatedPlan = await _subscriptionPlanService.UpdateAsync(
+                    id,
+                    updateDto,
+                    cancellationToken
+                );
+                TempData["Success"] = "Subscription plan updated successfully!";
                 return RedirectToAction(nameof(Index));
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["Error"] = _localizer["SubscriptionPlanNotFound"];
+                TempData["Error"] = "Subscription plan not found.";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
@@ -118,28 +137,31 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredUpdatingSubscriptionPlan"];
+                TempData["Error"] = "An error occurred while updating the subscription plan.";
                 return View(updateDto);
             }
         }
 
+        /// <summary>
+        /// Delete a subscription plan (Admin only)
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             try
             {
                 await _subscriptionPlanService.DeleteAsync(id, cancellationToken);
-                TempData["Success"] = _localizer["SubscriptionPlanDeletedSuccessfully"];
+                TempData["Success"] = "Subscription plan deleted successfully!";
                 return RedirectToAction(nameof(Index));
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["Error"] = _localizer["SubscriptionPlanNotFound"];
+                TempData["Error"] = "Subscription plan not found.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredDeletingSubscriptionPlan"];
+                TempData["Error"] = "An error occurred while deleting the subscription plan.";
                 return RedirectToAction(nameof(Index));
             }
         }
