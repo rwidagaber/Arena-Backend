@@ -38,7 +38,7 @@
     }
 
     .metric-card:hover {
-        border-color: rgba(196, 176, 69, 0.4);
+        border-color: rgba(213, 235, 69, 0.4);
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
@@ -46,8 +46,8 @@
     .metric-icon {
         width: 48px;
         height: 48px;
-        background-color: rgba(196, 176, 69, 0.1);
-        border: 1px solid rgba(196, 176, 69, 0.2);
+        background-color: rgba(213, 235, 69, 0.1);
+        border: 1px solid rgba(213, 235, 69, 0.2);
         color: var(--yellow);
         border-radius: 10px;
         display: flex;
@@ -243,7 +243,7 @@
     }
 
     .shortcut-btn:hover {
-        background-color: rgba(196, 176, 69, 0.08);
+        background-color: rgba(213, 235, 69, 0.08);
         border-color: var(--yellow);
         color: var(--yellow);
         transform: translateY(-2px);
@@ -255,42 +255,119 @@
 </style>
 
 <div class="dashboard-header">
-    <h1>@Localizer["Welcome"]</h1>
-    <p>@Localizer["Arena"]</p>
+    <h1>@Localizer["Welcome1"]</h1>
+    <p>@Localizer["subWelcom"]</p>
 </div>
 
+<!-- Metrics Dashboard Grid -->
 <div class="metrics-grid">
     <div class="metric-card">
         <div class="metric-icon">👥</div>
         <div class="metric-info">
-            <span class="metric-label">@Localizer["TotalPlans"]</span>
-            <span class="metric-value">@ViewBag.TotalPlans</span>
+            <span class="metric-label">Total Members</span>
+            <span class="metric-value">1,482</span>
+            <span class="metric-change">▲ 12% this month</span>
         </div>
     </div>
     
     <div class="metric-card">
         <div class="metric-icon">📈</div>
         <div class="metric-info">
+            <span class="metric-label">Active Subscriptions</span>
+            <span class="metric-value">954</span>
+            <span class="metric-change">▲ 4.8% this week</span>
+        </div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-icon">💰</div>
+        <div class="metric-info">
+            <span class="metric-label">Monthly Revenue</span>
+            <span class="metric-value">$18,450</span>
+            <span class="metric-change">▲ 8.2% vs last month</span>
+        </div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-icon">🔑</div>
+        <div class="metric-info">
             <span class="metric-label">@Localizer["ActivePlans"]</span>
-            <span class="metric-value">@ViewBag.ActivePlans</span>
+            <span class="metric-value">@ViewBag.ActivePlans @Localizer["Plans1"]</span>
+            <span class="metric-change">@ViewBag.TotalPlans @Localizer["TotalPlans"] </span>
         </div>
     </div>
 </div>
 
+<!-- Main Layout Grid -->
 <div class="dashboard-layout">
+    <!-- Line Chart Component -->
     <div class="dashboard-card chart-card">
         <div class="chart-header">
-            <h2 class="chart-title">@Localizer["Arena"]</h2>
+            <h2 class="chart-title">Weekly Arena Attendance & Check-ins</h2>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: var(--yellow);"></span>
+                    <span>Peak Hours Check-ins</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: var(--teal);"></span>
+                    <span>Normal Hours Check-ins</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mock-chart-container">
+            <svg class="mock-chart-svg" viewBox="0 0 500 200" preserveAspectRatio="none">
+                <!-- Grid Lines -->
+                <line x1="0" y1="50" x2="500" y2="50" stroke="#252529" stroke-dasharray="4" stroke-width="1" />
+                <line x1="0" y1="100" x2="500" y2="100" stroke="#252529" stroke-dasharray="4" stroke-width="1" />
+                <line x1="0" y1="150" x2="500" y2="150" stroke="#252529" stroke-dasharray="4" stroke-width="1" />
+                
+                <!-- SVG Area Gradients -->
+                <defs>
+                    <linearGradient id="yellowGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="var(--yellow)" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="var(--yellow)" stop-opacity="0.0"/>
+                    </linearGradient>
+                </defs>
+                
+                <!-- Area path underneath line -->
+                <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40 L 480 200 L 0 200 Z" fill="url(#yellowGradient)" />
+                
+                <!-- Glow Line Chart -->
+                <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40" fill="none" stroke="var(--yellow)" stroke-width="4" stroke-linecap="round" />
+                
+                <!-- Data Points -->
+                <circle cx="80" cy="115" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" />
+                <circle cx="160" cy="110" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" />
+                <circle cx="240" cy="85" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" />
+                <circle cx="320" cy="60" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" />
+                <circle cx="400" cy="50" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" />
+                <circle cx="480" cy="40" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" />
+                
+                <!-- X-Axis Labels -->
+                <text x="5" y="190" fill="#71717A" font-size="11" font-family="Outfit">Mon</text>
+                <text x="85" y="190" fill="#71717A" font-size="11" font-family="Outfit">Tue</text>
+                <text x="165" y="190" fill="#71717A" font-size="11" font-family="Outfit">Wed</text>
+                <text x="245" y="190" fill="#71717A" font-size="11" font-family="Outfit">Thu</text>
+                <text x="325" y="190" fill="#71717A" font-size="11" font-family="Outfit">Fri</text>
+                <text x="405" y="190" fill="#71717A" font-size="11" font-family="Outfit">Sat</text>
+                <text x="465" y="190" fill="#71717A" font-size="11" font-family="Outfit">Sun</text>
+            </svg>
         </div>
     </div>
     
+    <!-- Sidebar column: Quick Actions & Live feed -->
+    <div>
+        <!-- Quick shortcuts -->
+  
     <div>
         <div class="dashboard-card shortcuts-card">
-            <h3 class="chart-title">@Localizer["Create"]</h3>
+            <h3 class="chart-title">@Localizer["QuickAdministration"]</h3>
             <div class="shortcuts-grid">
                 <a href="@Url.Action("Create", "SubscriptionPlans")" class="shortcut-btn">
                     <span class="shortcut-icon">➕</span>
-                    <span>@Localizer["Create"]</span>
+                    <span>@Localizer["CreateSubscriptionPlan"]</span>
                 </a>
                 <a href="@Url.Action("Index", "SubscriptionPlans")" class="shortcut-btn">
                     <span class="shortcut-icon">📋</span>
@@ -302,5 +379,38 @@
                 </a>
             </div>
         </div>
+
+        
+        <!-- Recent Check-ins -->
+        <div class="dashboard-card recent-checkins-card">
+            <h3 class="chart-title">Live Gym Check-ins</h3>
+            <div class="checkin-list">
+                <div class="checkin-item">
+                    <div class="avatar" style="background-color: #8B5CF6;">JS</div>
+                    <div class="checkin-details">
+                        <div class="member-name">John Smith</div>
+                        <div class="plan-badge">Vanguard Gym Premium</div>
+                    </div>
+                    <div class="checkin-time">10 mins ago</div>
+                </div>
+                <div class="checkin-item">
+                    <div class="avatar" style="background-color: #3B82F6;">AM</div>
+                    <div class="checkin-details">
+                        <div class="member-name">Amir Mahmoud</div>
+                        <div class="plan-badge">Arena Standard</div>
+                    </div>
+                    <div class="checkin-time">14 mins ago</div>
+                </div>
+                <div class="checkin-item">
+                    <div class="avatar" style="background-color: #10B981;">WN</div>
+                    <div class="checkin-details">
+                        <div class="member-name">Wael Nabil</div>
+                        <div class="plan-badge">Elite Athlete VIP</div>
+                    </div>
+                    <div class="checkin-time">18 mins ago</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
