@@ -295,7 +295,7 @@ ASP.NET Core Web API Entity Framework Core SQL Server ASP.NET Identity
 ```
 
 ```
-JWT Authentication FluentValidation AutoMapper
+JWT Authentication FluentValidation Mapster
 ```
 
 #### Frontend
