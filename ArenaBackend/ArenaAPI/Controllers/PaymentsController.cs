@@ -1,9 +1,11 @@
 using ArenaApplication.Dtos.Payment;
 using ArenaApplication.IServices;
 using ArenaApplication.IServices.Payment;
+using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
@@ -16,18 +18,19 @@ namespace ArenaApi.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IPaymentGatewayService _gatewayService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public PaymentsController(IPaymentService paymentService,
                 IPaymentGatewayService gatewayService,
-                ICurrentUserService currentUserService)
+                ICurrentUserService currentUserService,
+                IStringLocalizer<ArenaLocalization> localizer)
         {
             _paymentService = paymentService;
             _gatewayService = gatewayService;
             _currentUserService = currentUserService;
-
+            _localizer = localizer;
         }
 
-        //POST api/payments
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
@@ -41,7 +44,6 @@ namespace ArenaApi.Controllers
             return Ok(result.Value);
         }
 
-
         [HttpGet("my-payments")]
         [Authorize]
         public async Task<IActionResult> GetMyPayments()
@@ -50,19 +52,19 @@ namespace ArenaApi.Controllers
             var result = await _paymentService.GetMyPaymentsAsync(userId);
             return Ok(result.Value);
         }
-        //get payment by id
+
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _paymentService.GetByIdAsync(id);
 
-            if(!result.IsSuccess)
+            if (!result.IsSuccess)
             {
-                return NotFound(new { message = result.Errors});
+                return NotFound(new { message = result.Errors });
             }
             return Ok(result.Value);
         }
-        //Admin
+
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll([FromQuery] PaymentFilterDto dto)
@@ -71,12 +73,11 @@ namespace ArenaApi.Controllers
             return Ok(result.Value);
         }
 
-        //Admin change status
         [HttpPatch("{id:guid}/status")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdatePaymentStatusDto dto)
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdatePaymentStatusDto dto)
         {
-            var result = await _paymentService.UpdateStatusAsync(id,dto);
+            var result = await _paymentService.UpdateStatusAsync(id, dto);
 
             if (!result.IsSuccess)
             {
@@ -84,15 +85,14 @@ namespace ArenaApi.Controllers
             }
             return Ok(result.Value);
         }
-        //Getway payment Success
+
         [HttpPost("webhook/completed")]
         [AllowAnonymous]
         public async Task<IActionResult> WebhookCompleted([FromBody] PaymobWebhookDto dto,
                                                           [FromQuery] string hmac)
         {
             if (!_gatewayService.VerifyWebhookHmac(dto, hmac))
-                return Unauthorized(new { message = "Invalid webhook signature." });
-
+                return Unauthorized(new { message = _localizer["InvalidWebhookSignature"] });
 
             var transactionId = dto.Obj.Id.ToString();
             var paymentIntentId = dto.Obj.Order.Id.ToString();

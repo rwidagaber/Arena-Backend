@@ -1,28 +1,27 @@
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = Localizer["PrivacyPolicy"];
 }
 
 <div class="dashboard-card" style="max-width: 800px; margin: 0 auto; line-height: 1.6;">
-    <h1 style="color: var(--yellow); font-weight: 800; margin-bottom: 1.5rem; font-size: 2.2rem;">🛡️ Privacy Policy</h1>
+    <h1 style="color: var(--yellow); font-weight: 800; margin-bottom: 1.5rem; font-size: 2.2rem;">🛡️ @Localizer["PrivacyPolicyHeading"]</h1>
     
     <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
-        At Arena Fitness, we prioritize the protection and confidentiality of our gym members' and administrators' data. 
-        This privacy policy details how we collect, store, and process physical fitness records, subscription details, and login information.
+        @Localizer["PrivacyPolicyIntro"]
     </p>
 
-    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">1. Data Collection</h3>
+    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">@Localizer["DataCollection"]</h3>
     <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
-        We collect account credentials, payment records, gym check-in timestamps, and membership subscription details to provide seamless operations inside the gym facility.
+        @Localizer["DataCollectionText"]
     </p>
 
-    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">2. Security Compliance</h3>
+    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">@Localizer["SecurityCompliance"]</h3>
     <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
-        All subscription transactions and membership status databases are encrypted and protected under strict security guidelines. We do not sell or share fitness tracking metrics with third-party providers.
+        @Localizer["SecurityComplianceText"]
     </p>
 
     <hr style="border-color: var(--border-color); margin: 2rem 0;" />
     
     <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
-        ⬅ Back to Dashboard
+        ⬅ @Localizer["BackToDashboard"]
     </a>
 </div>

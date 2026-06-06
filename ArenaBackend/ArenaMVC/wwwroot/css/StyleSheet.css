@@ -278,3 +278,106 @@ a:hover {
     border-color: var(--yellow) !important;
     box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15) !important;
 }
+
+/* RTL Support */
+[dir="rtl"] .sidebar {
+    left: auto !important;
+    right: 0 !important;
+    border-right: none !important;
+    border-left: 1px solid var(--border-color) !important;
+}
+
+[dir="rtl"] .main-content {
+    margin-left: 0 !important;
+    margin-right: var(--sidebar-width) !important;
+}
+
+/* Culture Dropdown */
+.sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.culture-dropdown {
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.culture-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--whiteout);
+}
+
+.culture-dropdown-toggle:hover {
+    border-color: var(--yellow);
+    background-color: rgba(196, 176, 69, 0.1);
+}
+
+.dropdown-arrow {
+    font-size: 10px;
+    transition: transform 0.3s ease;
+}
+
+.culture-dropdown.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.culture-dropdown-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 140px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 4px;
+    display: none;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+}
+
+.culture-dropdown.open .culture-dropdown-menu {
+    display: block;
+}
+
+.culture-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: #A0A0AB;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    text-align: left;
+}
+
+.culture-option:hover {
+    background-color: rgba(196, 176, 69, 0.1);
+    color: var(--yellow);
+}
+
+.culture-option.selected {
+    background-color: rgba(196, 176, 69, 0.15);
+    color: var(--yellow);
+    font-weight: 600;
+}
+
+.flag-icon {
+    font-size: 18px;
+    line-height: 1;
+}
