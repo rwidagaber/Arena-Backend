@@ -1,0 +1,114 @@
+@model ArenaApplication.Dtos.SubscriptionPlanDtos.CreateSubscriptionPlanDto
+
+@{
+	ViewData["Title"] = Localizer["CreateSubscriptionPlan"];
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" />
+
+<div class="subscription-admin-container">
+	<div class="subscription-admin-header">
+		<h1>➕ @Localizer["CreateSubscriptionPlan"]</h1>
+		<p>@Localizer["AddNewSubscriptionPlan"]</p>
+	</div>
+
+	<div class="container-fluid mt-4">
+		<div class="row">
+			<div class="col-lg-8 offset-lg-2">
+				@if (!ViewData.ModelState.IsValid)
+				{
+					<div class="subscription-alert error">
+						<strong>@Localizer["PleaseFixErrors"]</strong>
+						<ul style="margin-top: 0.5rem; margin-bottom: 0;">
+							@foreach (var modelState in ViewData.ModelState.Values)
+							{
+								@foreach (var error in modelState.Errors)
+								{
+									<li>@error.ErrorMessage</li>
+								}
+							}
+						</ul>
+					</div>
+				}
+
+				<form asp-action="Create" method="post" class="subscription-form">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="subscription-form-group">
+								<label asp-for="NameEn">@Localizer["PlanNameEnglish"] *</label>
+								<input asp-for="NameEn" type="text" placeholder="@Localizer["PlanNameEnglishPlaceholder"]" class="form-control" required />
+								<span asp-validation-for="NameEn" class="text-danger"></span>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="subscription-form-group">
+								<label asp-for="NameAr">@Localizer["PlanNameArabic"] *</label>
+								<input asp-for="NameAr" type="text" placeholder="مثال: بريميوم بلس" class="form-control" required />
+								<span asp-validation-for="NameAr" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							<div class="subscription-form-group">
+								<label asp-for="DescriptionEn">@Localizer["DescriptionEnglish"] *</label>
+								<textarea asp-for="DescriptionEn" placeholder="@Localizer["DescriptionEnglishPlaceholder"]" class="form-control" required></textarea>
+								<span asp-validation-for="DescriptionEn" class="text-danger"></span>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="subscription-form-group">
+								<label asp-for="DescriptionAr">@Localizer["DescriptionArabic"] *</label>
+								<textarea asp-for="DescriptionAr" placeholder="وصف ما تتضمنه هذه الخطة..." class="form-control" required></textarea>
+								<span asp-validation-for="DescriptionAr" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							<div class="subscription-form-group">
+								<label asp-for="Price">@Localizer["PriceWithSymbol"] *</label>
+								<input asp-for="Price" type="number" step="0.01" placeholder="0.00" class="form-control" required />
+								<span asp-validation-for="Price" class="text-danger"></span>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="subscription-form-group">
+								<label asp-for="DurationMonths">@Localizer["DurationMonths"] *</label>
+								<input asp-for="DurationMonths" type="number" placeholder="@Localizer["DurationPlaceholder"]" class="form-control" required />
+								<span asp-validation-for="DurationMonths" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							<div class="subscription-form-group">
+								<label asp-for="SessionLimit">@Localizer["SessionLimit"] *</label>
+								<input asp-for="SessionLimit" type="number" placeholder="@Localizer["SessionLimitPlaceholder"]" class="form-control" required />
+								<span asp-validation-for="SessionLimit" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+
+					<div style="display: flex; gap: 1rem; margin-top: 2rem;">
+						<button type="submit" class="btn btn-subscription-primary" style="flex: 1;">
+							✅ @Localizer["CreatePlan"]
+						</button>
+						<a href="@Url.Action("Index", "SubscriptionPlans")" class="btn btn-subscription-secondary" style="flex: 1; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+							❌ @Localizer["Cancel"]
+						</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}

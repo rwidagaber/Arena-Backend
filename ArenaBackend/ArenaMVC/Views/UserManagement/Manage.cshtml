@@ -1,0 +1,95 @@
+@model ArenaMVC.Models.ManageUserViewModel
+
+@{
+    ViewData["Title"] = Localizer["ManageUserStatus"];
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1>⚙️ @Localizer["ManageUserStatus"]</h1>
+            <p>@Localizer["AccountStatus"]</p>
+        </div>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary" asp-controller="UserManagement" asp-action="Index">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>@Localizer["BackToUsers"]
+            </a>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+
+        <div class="row justify-content-center" style="padding-top: 2rem; padding-bottom: 4rem;">
+            <div class="col-lg-6 col-md-8">
+                <div class="manage-user-card">
+                    <form asp-action="Manage" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="FullName" />
+                        <input type="hidden" asp-for="Email" />
+
+                        <!-- User Info -->
+                        <div class="subscription-form-group">
+                            <label style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["UserFullName"]</label>
+                            <input class="form-control" type="text" value="@Model.FullName" disabled />
+                        </div>
+
+                        <div class="subscription-form-group">
+                            <label style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["UserEmail"]</label>
+                            <input class="form-control" type="text" value="@Model.Email" disabled />
+                        </div>
+
+                        <!-- Toggle Switch -->
+                        <div class="subscription-form-group">
+                            <label style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["AccountStatus"]</label>
+                            <div class="switch-container">
+                                <span class="switch-label-text">
+                                    Account is <span id="statusLabelText" class="slider-status-text @(Model.IsActive ? "active" : "inactive")">@(Model.IsActive ? Localizer["Active"] : Localizer["Inactive"])</span>
+                                </span>
+                                <label class="switch" for="isActiveToggle">
+                                    <input type="checkbox" asp-for="IsActive" id="isActiveToggle" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" class="btn btn-subscription-primary" style="flex: 1; padding: 0.75rem 1.5rem; font-weight: 600;">@Localizer["SaveChanges"]</button>
+                            <a asp-action="Index" class="btn btn-ghost" style="flex: 1;">@Localizer["Cancel"]</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggle = document.getElementById('isActiveToggle');
+            const statusLabel = document.getElementById('statusLabelText');
+            if (toggle && statusLabel) {
+                toggle.addEventListener('change', function () {
+                    if (this.checked) {
+                        statusLabel.textContent = '@Localizer["Active"]';
+                        statusLabel.className = 'slider-status-text active';
+                    } else {
+                        statusLabel.textContent = '@Localizer["Inactive"]';
+                        statusLabel.className = 'slider-status-text inactive';
+                    }
+                });
+            }
+        });
+    </script>
+}

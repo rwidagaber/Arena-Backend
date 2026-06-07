@@ -2,8 +2,11 @@
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
 using ArenaDomain.Enums;
+using ArenaDomain.Shared;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Threading.Tasks;
 
@@ -14,13 +17,16 @@ namespace ArenaApi.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public BookingController(IBookingService bookingService)
+        public BookingController(IBookingService bookingService, IStringLocalizer<ArenaLocalization> localizer)
         {
             _bookingService = bookingService;
+            _localizer = localizer;
         }
 
         [HttpPost("create")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> CreateBooking(CreateBookingDto dto)
         {
             var result = await _bookingService.CreateBooking(dto);
@@ -34,7 +40,8 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUserBookings(Guid memberProfileId)
+        [Authorize(Roles = "GymMember,Admin")]
+        public async Task<IActionResult> GetUserBookings([FromQuery] Guid memberProfileId)
         {
             var result = await _bookingService.GetUserBookings(memberProfileId);
 
@@ -47,6 +54,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> GetBookingById(Guid id)
         {
             var result = await _bookingService.GetBookingById(id);
@@ -60,6 +68,7 @@ namespace ArenaApi.Controllers
         }
 
         [HttpPost("cancel/{id}")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> CancelBooking(Guid id)
         {
             var result = await _bookingService.CancelBooking(id);
@@ -73,35 +82,10 @@ namespace ArenaApi.Controllers
         }
 
         [HttpPost("reschedule/{id}")]
+        [Authorize(Roles = "GymMember,Admin")]
         public async Task<IActionResult> RescheduleBooking(Guid id, UpdateBookingDto dto)
         {
             var result = await _bookingService.RescheduleBooking(id, dto);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result.Errors);
-            }
-
-            return Ok(result.Value);
-        }
-
-        [HttpGet("/api/admin/bookings")]
-        public async Task<IActionResult> GetAdminBookings([FromQuery] BookingStatus? status, [FromQuery] DateTime? bookingDate)
-        {
-            var result = await _bookingService.GetAdminBookings(status, bookingDate);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result.Errors);
-            }
-
-            return Ok(result.Value);
-        }
-
-        [HttpGet("/api/admin/bookings/today")]
-        public async Task<IActionResult> GetTodaySchedule()
-        {
-            var result = await _bookingService.GetTodaySchedule();
 
             if (!result.IsSuccess)
             {

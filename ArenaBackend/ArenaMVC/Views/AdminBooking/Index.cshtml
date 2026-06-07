@@ -1,0 +1,122 @@
+@using ArenaDomain.Enums
+@model List<ArenaMVC.Models.AdminBookingViewModel>
+
+@{
+    ViewData["Title"] = Localizer["Bookings"];
+    BookingStatus? selectedStatus = ViewBag.SelectedStatus as BookingStatus?;
+    DateTime? selectedDate = ViewBag.SelectedDate as DateTime?;
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/booking-admin.css" asp-append-version="true" />
+
+<div class="booking-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1>📅 @Localizer["Bookings"]</h1>
+            <p>@Localizer["Bookings"]</p>
+        </div>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Today">@Localizer["TodaysBookings"]</a>
+        </div>
+    </div>
+
+    <div class="booking-filters-card">
+        <form method="get" id="bookingFiltersForm" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="statusSelect">@Localizer["Status"]</label>
+                <select class="form-select" id="statusSelect" name="status">
+                    <option value="" selected="@(selectedStatus is null ? "selected" : null)">@Localizer["All"]</option>
+                    <option value="Pending" selected="@(selectedStatus == BookingStatus.Pending ? "selected" : null)">@Localizer["Pending"]</option>
+                    <option value="Confirmed" selected="@(selectedStatus == BookingStatus.Confirmed ? "selected" : null)">@Localizer["Confirmed"]</option>
+                    <option value="Cancelled" selected="@(selectedStatus == BookingStatus.Cancelled ? "selected" : null)">@Localizer["Cancelled"]</option>
+                    <option value="Completed" selected="@(selectedStatus == BookingStatus.Completed ? "selected" : null)">@Localizer["Completed"]</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="bookingDateInput">@Localizer["Date"]</label>
+                <input class="form-control" id="bookingDateInput" type="date" name="bookingDate"
+                       value="@(selectedDate.HasValue ? selectedDate.Value.ToString("yyyy-MM-dd") : "")" />
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2 justify-content-md-end">
+                <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">@Localizer["Reset"]</a>
+            </div>
+        </form>
+        <p class="booking-filters-hint">@Localizer["StatusFilterHint"]</p>
+    </div>
+
+    <div class="booking-table-wrap">
+        <div class="booking-loading-overlay" id="bookingLoadingOverlay" aria-hidden="true">
+            <div class="booking-spinner" role="status" aria-label="Loading"></div>
+        </div>
+        <div class="table-responsive">
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">@Localizer["Date"]</th>
+                        <th style="width: 15%;">@Localizer["Start"]</th>
+                        <th style="width: 15%;">@Localizer["End"]</th>
+                        <th style="width: 35%;">@Localizer["MemberProfileName"]</th>
+                        <th style="width: 15%;">@Localizer["Status"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model is null || Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-empty">
+                                @Localizer["Bookings"]
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var b in Model.OrderByDescending(x => x.BookingDate).ThenBy(x => x.StartTime))
+                        {
+                            var badgeClass = b.Status == BookingStatus.Confirmed
+                                ? "booking-badge booking-badge-confirmed"
+                                : b.Status == BookingStatus.Cancelled
+                                    ? "booking-badge booking-badge-cancelled"
+                                    : b.Status == BookingStatus.Pending
+                                        ? "booking-badge booking-badge-pending"
+                                        : b.Status == BookingStatus.Completed
+                                            ? "booking-badge booking-badge-completed"
+                                            : "booking-badge booking-badge-other";
+
+                            <tr>
+                                <td>@CultureHelper.FormatDate(b.BookingDate)</td>
+                                <td>@b.StartTime.ToString(@"hh\:mm")</td>
+                                <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
+                                <td>@b.MemberProfileName</td>
+                                <td><span class="@badgeClass">@Localizer[b.Status.ToString()]</span></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('bookingFiltersForm');
+            const status = document.getElementById('statusSelect');
+            const date = document.getElementById('bookingDateInput');
+            const overlay = document.getElementById('bookingLoadingOverlay');
+            if (!form || !status) return;
+
+            const submitFilters = function () {
+                if (overlay) overlay.classList.add('show');
+                form.submit();
+            };
+
+            status.addEventListener('change', submitFilters);
+
+            if (date) {
+                date.addEventListener('change', submitFilters);
+            }
+        })();
+    </script>
+}

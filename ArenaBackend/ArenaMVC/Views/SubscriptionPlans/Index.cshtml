@@ -1,0 +1,124 @@
+@model IEnumerable<ArenaApplication.Dtos.SubscriptionPlanDtos.SubscriptionPlanDto>
+
+@{
+	ViewData["Title"] = Localizer["SubscriptionPlans"];
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" />
+
+<div class="subscription-admin-container">
+	<div class="subscription-admin-header">
+		<h1>📋 @Localizer["SubscriptionPlans"]</h1>
+		<p>@Localizer["SubscriptionPlans"]</p>
+	</div>
+
+	<div class="container-fluid mt-4">
+		@if (TempData["Success"] != null)
+		{
+			<div class="subscription-alert success">
+				<strong>@Localizer["Success"]</strong> @TempData["Success"]
+			</div>
+		}
+
+		@if (TempData["Error"] != null)
+		{
+			<div class="subscription-alert error">
+				<strong>@Localizer["Error"]</strong> @TempData["Error"]
+			</div>
+		}
+
+		<div class="row mb-4">
+			<div class="col-md-8">
+				<h2 style="color: var(--yellow); margin-bottom: 1.5rem;">@Localizer["AvailablePlans"]</h2>
+			</div>
+			<div class="col-md-4 text-end">
+				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary">
+					➕ @Localizer["CreateNewPlan"]
+				</a>
+			</div>
+		</div>
+
+		@if (Model != null && Model.Any())
+		{
+			<div class="row">
+				@foreach (var plan in Model)
+				{
+					<div class="col-lg-6 col-md-12 mb-4">
+						<div class="subscription-card">
+							<div class="subscription-card-header">
+								<h3 class="subscription-card-title">@plan.Name</h3>
+								@if (plan.IsActive)
+								{
+									<span class="subscription-badge">✓ @Localizer["Active"]</span>
+								}
+								else
+								{
+									<span class="subscription-badge featured">⭐ @Localizer["Inactive"]</span>
+								}
+							</div>
+
+							<p style="color: var(--autonomous); margin-bottom: 1rem; line-height: 1.6;">
+								@plan.Description
+							</p>
+
+							<div class="subscription-details">
+								<div class="subscription-detail-item">
+									<div class="subscription-detail-label">@Localizer["Price"]</div>
+									<div class="subscription-detail-value">
+										@CultureHelper.FormatCurrency(plan.Price)
+									</div>
+								</div>
+								<div class="subscription-detail-item">
+									<div class="subscription-detail-label">@Localizer["Duration"]</div>
+									<div class="subscription-detail-value">
+										@plan.DurationMonths @Localizer["Months"]
+									</div>
+								</div>
+								<div class="subscription-detail-item">
+									<div class="subscription-detail-label">@Localizer["SessionLimit"]</div>
+									<div class="subscription-detail-value">
+										@plan.SessionLimit
+									</div>
+								</div>
+								<div class="subscription-detail-item">
+									<div class="subscription-detail-label">@Localizer["Status"]</div>
+									<div class="subscription-detail-value">
+										@(plan.IsActive ? Localizer["Active"] : Localizer["Disabled"])
+									</div>
+								</div>
+							</div>
+
+							<div class="subscription-actions">
+								<a href="@Url.Action("Edit", "SubscriptionPlans", new { id = plan.Id })" class="btn btn-subscription-edit">
+									✏️ @Localizer["Edit"]
+								</a>
+								<form asp-action="Delete" asp-route-id="@plan.Id" method="post" style="flex: 1; margin: 0;" onsubmit="return confirm('@Localizer["AreYouSureDeletePlan"]');">
+									<button type="submit" class="btn btn-subscription-danger w-100">
+										🗑️ @Localizer["Delete"]
+									</button>
+								</form>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		}
+		else
+		{
+			<div class="subscription-empty-state">
+				<div class="subscription-empty-state-icon">📭</div>
+				<h3>@Localizer["NoSubscriptionPlansFound"]</h3>
+				<p>@Localizer["CreateYourFirstPlanDescription"]</p>
+				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary">
+					➕ @Localizer["CreateYourFirstPlan"]
+				</a>
+			</div>
+		}
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		// Add any future JavaScript logic here
+	</script>
+}

@@ -3,19 +3,10 @@ using ArenaApplication.IServices;
 using ArenaDomain.Entities.Notifications;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
+using ArenaDomain.Shared;
 using ArenaInfrastructure.Repositories;
 using Mapster;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-using ArenaApplication.Dtos.NotificationDtos;
-using ArenaApplication.IServices;
-using ArenaDomain.Entities.Notifications;
-using ArenaDomain.Enums;
-using ArenaDomain.Interfaces;
-using Mapster;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -29,17 +20,20 @@ namespace ArenaApplication.Services
         private readonly IEmailService _emailService;
         private readonly IMemberProfileRepository _memberProfileRepository;
         private readonly INotificationHub _notificationHub;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public NotificationService(
             INotificationRepository repository,
             IEmailService emailService,
             IMemberProfileRepository memberProfileRepository,
-            INotificationHub notificationHub)
+            INotificationHub notificationHub,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _repository = repository;
             _emailService = emailService;
             _memberProfileRepository = memberProfileRepository;
             _notificationHub = notificationHub;
+            _localizer = localizer;
         }
 
         // =========================
@@ -109,15 +103,14 @@ namespace ArenaApplication.Services
         // AUTH
         // =========================
 
-        // بتبعت email بس — مش بتحفظ في DB لأن الـ user مش عنده profile لسه
         public Task NotifyEmailConfirmationAsync(Guid userId, string email, string otp, CancellationToken cancellationToken = default) =>
             _emailService.SendOtpAsync(email, otp, cancellationToken);
 
         public Task NotifyWelcomeAsync(Guid memberProfileId, string firstName, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Welcome to Arena!",
-                $"Hey {firstName}! Your account is ready.",
+                _localizer["NotificationWelcomeTitle"],
+                string.Format(_localizer["NotificationWelcomeMessage"], firstName),
                 NotificationType.Success,
                 cancellationToken);
 
@@ -129,8 +122,8 @@ namespace ArenaApplication.Services
         {
             await CreateAsync(
                 memberProfileId,
-                "Payment Confirmed",
-                $"Payment of {amount:C} for '{planName}' successful.",
+                _localizer["NotificationPaymentConfirmedTitle"],
+                string.Format(_localizer["NotificationPaymentConfirmedMessage"], amount, planName),
                 NotificationType.Success,
                 cancellationToken);
 
@@ -144,8 +137,8 @@ namespace ArenaApplication.Services
         {
             await CreateAsync(
                 memberProfileId,
-                "Subscription Expiring Soon",
-                $"Expires in {daysLeft} day(s).",
+                _localizer["NotificationSubscriptionExpiringTitle"],
+                string.Format(_localizer["NotificationSubscriptionExpiringMessage"], daysLeft),
                 NotificationType.Warning,
                 cancellationToken);
 
@@ -159,8 +152,8 @@ namespace ArenaApplication.Services
         {
             await CreateAsync(
                 memberProfileId,
-                "Subscription Expired",
-                "Your subscription has expired.",
+                _localizer["NotificationSubscriptionExpiredTitle"],
+                _localizer["NotificationSubscriptionExpiredMessage"],
                 NotificationType.Error,
                 cancellationToken);
 
@@ -177,48 +170,48 @@ namespace ArenaApplication.Services
         public Task NotifyBookingConfirmedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Booking Confirmed",
-                $"Session on {bookingDate:dddd, MMMM d 'at' h:mm tt} confirmed.",
+                _localizer["NotificationBookingConfirmedTitle"],
+                string.Format(_localizer["NotificationBookingConfirmedMessage"], bookingDate),
                 NotificationType.Success,
                 cancellationToken);
 
         public Task NotifyBookingCancelledAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Booking Cancelled",
-                $"Session on {bookingDate:dddd, MMMM d 'at' h:mm tt} cancelled.",
+                _localizer["NotificationBookingCancelledTitle"],
+                string.Format(_localizer["NotificationBookingCancelledMessage"], bookingDate),
                 NotificationType.Warning,
                 cancellationToken);
 
         public Task NotifyBookingRescheduledAsync(Guid memberProfileId, DateTime newBookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Booking Rescheduled",
-                $"Rescheduled to {newBookingDate:dddd, MMMM d 'at' h:mm tt}.",
+                _localizer["NotificationBookingRescheduledTitle"],
+                string.Format(_localizer["NotificationBookingRescheduledMessage"], newBookingDate),
                 NotificationType.Info,
                 cancellationToken);
 
         public Task NotifyQrCodeGeneratedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "QR Code Ready",
-                $"QR for {bookingDate:MMMM d} ready.",
+                _localizer["NotificationQRCodeTitle"],
+                string.Format(_localizer["NotificationQRCodeMessage"], bookingDate),
                 NotificationType.Info,
                 cancellationToken);
 
         public Task NotifySessionReminderAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Session Reminder",
-                $"Session starts at {bookingDate:h:mm tt}.",
+                _localizer["NotificationSessionReminderTitle"],
+                string.Format(_localizer["NotificationSessionReminderMessage"], bookingDate),
                 NotificationType.Warning,
                 cancellationToken);
 
         public Task NotifyAttendanceRecordedAsync(Guid memberProfileId, int remainingSessions, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Attendance Recorded",
-                $"{remainingSessions} sessions left.",
+                _localizer["NotificationAttendanceRecordedTitle"],
+                string.Format(_localizer["NotificationAttendanceRecordedMessage"], remainingSessions),
                 NotificationType.Success,
                 cancellationToken);
 
@@ -229,24 +222,24 @@ namespace ArenaApplication.Services
         public Task NotifyWorkoutPlanReadyAsync(Guid memberProfileId, string planName, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Workout Plan Ready",
-                $"Plan '{planName}' ready.",
+                _localizer["NotificationWorkoutPlanTitle"],
+                string.Format(_localizer["NotificationWorkoutPlanMessage"], planName),
                 NotificationType.Success,
                 cancellationToken);
 
         public Task NotifyNutritionPlanReadyAsync(Guid memberProfileId, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Nutrition Plan Ready",
-                "Your plan is ready.",
+                _localizer["NotificationNutritionPlanTitle"],
+                _localizer["NotificationNutritionPlanMessage"],
                 NotificationType.Success,
                 cancellationToken);
 
         public Task NotifyMealAnalyzedAsync(Guid memberProfileId, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
-                "Meal Analyzed",
-                "Analysis completed.",
+                _localizer["NotificationMealAnalysisTitle"],
+                _localizer["NotificationMealAnalysisMessage"],
                 NotificationType.Info,
                 cancellationToken);
     }

@@ -1,0 +1,70 @@
+@using ArenaDomain.Enums
+@model List<ArenaMVC.Models.AdminBookingViewModel>
+
+@{
+    ViewData["Title"] = Localizer["TodaysBookings"];
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/booking-admin.css" asp-append-version="true" />
+
+<div class="booking-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1>📆 @Localizer["TodaysBookings"]</h1>
+            <p>@Localizer["BookingsScheduledToday"]</p>
+        </div>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">@Localizer["BackToBookings"]</a>
+        </div>
+    </div>
+
+    <div class="booking-table-wrap">
+        <div class="table-responsive">
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">@Localizer["Date"]</th>
+                        <th style="width: 15%;">@Localizer["Start"]</th>
+                        <th style="width: 15%;">@Localizer["End"]</th>
+                        <th style="width: 35%;">@Localizer["MemberProfileName"]</th>
+                        <th style="width: 15%;">@Localizer["Status"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model is null || Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-empty">
+                                @Localizer["NoBookingsToday"]
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var b in Model.OrderBy(x => x.StartTime))
+                        {
+                            var badgeClass = b.Status == BookingStatus.Confirmed
+                                ? "booking-badge booking-badge-confirmed"
+                                : b.Status == BookingStatus.Cancelled
+                                    ? "booking-badge booking-badge-cancelled"
+                                    : b.Status == BookingStatus.Pending
+                                        ? "booking-badge booking-badge-pending"
+                                        : b.Status == BookingStatus.Completed
+                                            ? "booking-badge booking-badge-completed"
+                                            : "booking-badge booking-badge-other";
+
+                            <tr>
+                                <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
+                                <td>@b.StartTime.ToString(@"hh\:mm")</td>
+                                <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
+                                <td>@b.MemberProfileName</td>
+                                <td><span class="@badgeClass">@Localizer[b.Status.ToString()]</span></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

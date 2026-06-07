@@ -1,9 +1,10 @@
-﻿using ArenaApi.Configurations;
+using ArenaApi.Configurations;
 using ArenaApplication.IServices;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using ArenaDomain.Shared;
+using Microsoft.Extensions.Localization;
 using MimeKit;
 
 namespace ArenaApplication.Services
@@ -11,20 +12,20 @@ namespace ArenaApplication.Services
     public class EmailService : IEmailService
     {
         private readonly EmailSettings _emailSettings;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-
-        public EmailService(IOptions<EmailSettings> emailSettings)
+        public EmailService(
+            IOptions<EmailSettings> emailSettings,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _emailSettings = emailSettings.Value;
+            _localizer = localizer;
         }
 
         // ── Core (private) ────────────────────────────────────────────────────
 
         private async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken cancellationToken = default)
         {
-            Console.WriteLine($"Host: '{_emailSettings.SmtpServer}'");
-            Console.WriteLine($"Port: '{_emailSettings.Port}'");
-            Console.WriteLine($"Username: '{_emailSettings.Username}'");
             var port = _emailSettings.Port;
             var username = _emailSettings.Username;
             var password = _emailSettings.Password;
@@ -38,11 +39,8 @@ namespace ArenaApplication.Services
             message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
             using var smtp = new SmtpClient();
-
             await smtp.ConnectAsync(host, port, SecureSocketOptions.Auto, cancellationToken);
-
             await smtp.AuthenticateAsync(username, password, cancellationToken);
-
             await smtp.SendAsync(message, cancellationToken);
             await smtp.DisconnectAsync(true, cancellationToken);
         }
@@ -65,16 +63,16 @@ namespace ArenaApplication.Services
       <table width='480' cellpadding='0' cellspacing='0'
              style='background:#fff;border-radius:16px;border:0.5px solid #e0dfd8;'>
 
-      <tr>
-  <td style='background:#1a1a1a;padding:32px;text-align:center;border-radius:16px 16px 0 0;'>
-    <span style='color:#fff;font-size:22px;font-weight:600;letter-spacing:1px;'>
-      ARENA 
-      <span style='color:#4DA352;text-shadow:0 0 8px rgba(77,163,82,0.6);'>
-        GYM
-      </span>
-    </span>
-  </td>
-</tr>
+        <tr>
+          <td style='background:#1a1a1a;padding:32px;text-align:center;border-radius:16px 16px 0 0;'>
+            <span style='color:#fff;font-size:22px;font-weight:600;letter-spacing:1px;'>
+              ARENA
+              <span style='color:#4DA352;text-shadow:0 0 8px rgba(77,163,82,0.6);'>
+                GYM
+              </span>
+            </span>
+          </td>
+        </tr>
 
         <tr>
           <td style='padding:36px 32px;'>
@@ -120,24 +118,12 @@ namespace ArenaApplication.Services
         // ── Subscriptions & Payments ──────────────────────────────────────────
 
         public Task SendPaymentConfirmedAsync(string toEmail, string firstName, decimal amount, string planName, CancellationToken cancellationToken = default) =>
-            SendAsync(toEmail, "Payment Confirmed ✅", $"""
-                <h2>Hey {firstName}!</h2>
-                <p>Your payment of <strong>{amount:C}</strong> for the <strong>{planName}</strong> plan was successful.</p>
-                <p>Your subscription is now active. Enjoy Arena!</p>
-            """, cancellationToken);
+            SendAsync(toEmail, _localizer["EmailPaymentConfirmedSubject"], string.Format(_localizer["EmailPaymentConfirmedBody"], firstName, amount, planName), cancellationToken);
 
         public Task SendSubscriptionExpiringAsync(string toEmail, string firstName, int daysLeft, CancellationToken cancellationToken = default) =>
-            SendAsync(toEmail, "Your Subscription is Expiring Soon ⚠️", $"""
-                <h2>Hey {firstName}!</h2>
-                <p>Your Arena subscription expires in <strong>{daysLeft} day(s)</strong>.</p>
-                <p>Renew now to keep access to all features and AI tools.</p>
-            """, cancellationToken);
+            SendAsync(toEmail, _localizer["EmailSubscriptionExpiringSubject"], string.Format(_localizer["EmailSubscriptionExpiringBody"], firstName, daysLeft), cancellationToken);
 
         public Task SendSubscriptionExpiredAsync(string toEmail, string firstName, CancellationToken cancellationToken = default) =>
-            SendAsync(toEmail, "Your Subscription Has Expired ❌", $"""
-                <h2>Hey {firstName}!</h2>
-                <p>Your Arena subscription has expired.</p>
-                <p>Renew your plan to continue booking sessions and using AI features.</p>
-            """, cancellationToken);
+            SendAsync(toEmail, _localizer["EmailSubscriptionExpiredSubject"], string.Format(_localizer["EmailSubscriptionExpiredBody"], firstName), cancellationToken);
     }
 }

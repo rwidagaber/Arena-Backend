@@ -2,22 +2,25 @@
 using ArenaApplication.Dtos.loginDto;
 using ArenaApplication.Dtos.RegisterDto;
 using ArenaApplication.IServices;
+using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using System.Security.Claims;
 
 namespace ArenaApi.Controllers
 {
-
     [ApiController]
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IStringLocalizer<ArenaLocalization> localizer)
         {
             _authService = authService;
+            _localizer = localizer;
         }
 
         [HttpPost("register")]
@@ -96,7 +99,7 @@ namespace ArenaApi.Controllers
             var result = await _authService.ForgotPasswordAsync(dto);
             if (!result.IsSuccess)
                 return BadRequest(result.Errors);
-            return Ok("If the email exists a reset link has been sent");
+            return Ok(_localizer["IfTheEmailExistsResetLinkSent"]);
         }
 
         [HttpPost("reset-password")]

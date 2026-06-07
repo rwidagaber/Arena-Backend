@@ -1,50 +1,97 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name" dir="@(System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ArenaMVC</title>
+    <title>@ViewData["Title"] - @Localizer["Arena"]</title>
     <script type="importmap"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @if (System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft)
+    {
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    }
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/ArenaMVC.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/StyleSheet.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ArenaMVC.styles.css?v=@DateTime.UtcNow.Ticks" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ArenaMVC</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+        </div>
+        <nav class="sidebar-nav">
+            @{
+                var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+            }
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Home"]</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">@Localizer["Privacy"]</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">@Localizer["SubscriptionPlans"]</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "UserManagement" ? "active" : "")" asp-area="" asp-controller="UserManagement" asp-action="Index">@Localizer["UserManagement"]</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">@Localizer["Bookings"]</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Today" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Today">@Localizer["TodaysBookings"]</a>
+                </li>
+             
+            </ul>
         </nav>
-    </header>
-    <div class="container">
+        <div class="sidebar-footer">
+            <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture">
+                <div class="culture-dropdown">
+                    <button type="button" class="culture-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="flag-icon">@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "🇪🇬" : "🇺🇸")</span>
+                        <span class="dropdown-arrow">▾</span>
+                    </button>
+                    <div class="culture-dropdown-menu">
+                        <button type="submit" name="culture" value="en-US" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "selected" : "")">
+                            <span class="flag-icon">🇺🇸</span>
+                            <span>English</span>
+                        </button>
+                        <button type="submit" name="culture" value="ar-EG" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "selected" : "")">
+                            <span class="flag-icon">🇪🇬</span>
+                            <span>العربية</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </aside>
+    <div class="main-content">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
+        <footer class="border-top footer text-muted">
+            <div class="container">
+                &copy; 2026 - @Localizer["Arena"] - <a asp-area="" asp-controller="Home" asp-action="Privacy">@Localizer["Privacy"]</a>
+            </div>
+        </footer>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - ArenaMVC - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.culture-dropdown.open').forEach(function (dd) {
+                if (!dd.contains(e.target)) {
+                    dd.classList.remove('open');
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -5,7 +5,7 @@ using ArenaInfrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Principal;
 
-namespace ArenaAPI
+namespace ArenaInfrastructure.Repositories
 {
     public class MemberProfileRepository : IMemberProfileRepository
     {
