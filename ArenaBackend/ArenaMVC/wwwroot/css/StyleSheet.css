@@ -3,7 +3,7 @@
 /* Color Palette */
 :root {
     color-scheme: dark;
-    --yellow: #C4B045;       /* Hep Green / Gym Athletic Yellow Accent */
+    --yellow: #d5eb45;       /* Neon Green Accent */
     --teal: #6F8786;         /* Hammock / Muted Blue-Gray Accent */
     --dark-gray: #414039;    /* November Storms / Warm Charcoal */
     --whiteout: #FBFBFB;     /* Light Text & Highlights */
@@ -64,7 +64,7 @@ body {
 
 .sidebar-brand a:hover {
     color: var(--whiteout);
-    text-shadow: 0 0 10px rgba(196, 176, 69, 0.4);
+    text-shadow: 0 0 10px rgba(213, 235, 69, 0.4);
 }
 
 .sidebar-nav {
@@ -94,15 +94,15 @@ body {
 }
 
 .nav-link:hover {
-    background-color: rgba(196, 176, 69, 0.08);
+    background-color: rgba(213, 235, 69, 0.08);
     color: var(--yellow);
 }
 
 .nav-link.active {
-    background-color: rgba(196, 176, 69, 0.15);
+    background-color: rgba(213, 235, 69, 0.15);
     color: var(--yellow);
     font-weight: 600;
-    box-shadow: inset 0 0 0 1px rgba(196, 176, 69, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(213, 235, 69, 0.2);
 }
 
 /* Main Content Area */
@@ -173,7 +173,7 @@ a {
 }
 
 a:hover {
-    color: #ebd45b;
+    color: #e2f574;
 }
 
 /* Button Styling */
@@ -188,11 +188,11 @@ a:hover {
 }
 
 .btn-primary:hover {
-    background-color: #ebd45b;
-    border-color: #ebd45b;
+    background-color: #e2f574;
+    border-color: #e2f574;
     color: var(--black);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(196, 176, 69, 0.25);
+    box-shadow: 0 4px 12px rgba(213, 235, 69, 0.25);
 }
 
 .nav-pills .nav-link.active,
@@ -214,7 +214,7 @@ a:hover {
 
 .dashboard-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(196, 176, 69, 0.4);
+    border-color: rgba(213, 235, 69, 0.4);
 }
 
 /* Main Header for Mobile/Tablet */
@@ -329,7 +329,7 @@ a:hover {
 .form-control:focus, .form-select:focus {
     background-color: rgba(255, 255, 255, 0.08) !important;
     border-color: var(--yellow) !important;
-    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15) !important;
 }
 
 /* RTL Support */
@@ -374,7 +374,7 @@ a:hover {
 
 .culture-dropdown-toggle:hover {
     border-color: var(--yellow);
-    background-color: rgba(196, 176, 69, 0.1);
+    background-color: rgba(213, 235, 69, 0.1);
 }
 
 .dropdown-arrow {
@@ -422,12 +422,12 @@ a:hover {
 }
 
 .culture-option:hover {
-    background-color: rgba(196, 176, 69, 0.1);
+    background-color: rgba(213, 235, 69, 0.1);
     color: var(--yellow);
 }
 
 .culture-option.selected {
-    background-color: rgba(196, 176, 69, 0.15);
+    background-color: rgba(213, 235, 69, 0.15);
     color: var(--yellow);
     font-weight: 600;
 }

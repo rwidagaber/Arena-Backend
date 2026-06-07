@@ -5,6 +5,9 @@ using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
+using ArenaDomain.Shared;
+using Microsoft.Extensions.Localization;
+using System;
 
 namespace ArenaInfrastructure.Services
 {
@@ -15,19 +18,22 @@ namespace ArenaInfrastructure.Services
         private readonly IGenericRepository<Attendance, Guid> _attendanceRepo;
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public QRCodeService(
             IGenericRepository<QRCode, Guid> qrRepo,
             IGenericRepository<Booking, Guid> bookingRepo,
             IGenericRepository<Attendance, Guid> attendanceRepo,
             IGenericRepository<UserSubscription, Guid> subscriptionRepo,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _qrRepo = qrRepo;
             _bookingRepo = bookingRepo;
             _attendanceRepo = attendanceRepo;
             _subscriptionRepo = subscriptionRepo;
             _unitOfWork = unitOfWork;
+            _localizer = localizer;
         }
 
         public async Task<QrDto> GenerateAsync(Guid bookingId)
@@ -35,7 +41,7 @@ namespace ArenaInfrastructure.Services
             // 1. Check booking exists
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
             if (booking == null)
-                throw new Exception($"Booking not found: {bookingId}");
+                throw new KeyNotFoundException(_localizer["BookingNotFound"]);
 
             // 2. Check if QR already exists for this booking
             var existing = await _qrRepo.FindAsync(q => q.BookingId == bookingId);
@@ -90,7 +96,7 @@ namespace ArenaInfrastructure.Services
             if (qr == null)
                 return new QrScanResultDto
                 {
-                    Message = "❌ Invalid QR code"
+                    Message = _localizer["QRInvalid"]
                 };
 
             // 2. Check if already used
@@ -99,7 +105,7 @@ namespace ArenaInfrastructure.Services
                 {
                     IsAlreadyUsed = true,
                     BookingId = qr.BookingId,
-                    Message = "❌ QR code already scanned"
+                    Message = _localizer["QRAlreadyScanned"]
                 };
 
             // 3. Check if expired
@@ -108,7 +114,7 @@ namespace ArenaInfrastructure.Services
                 {
                     IsExpired = true,
                     BookingId = qr.BookingId,
-                    Message = "❌ QR code has expired"
+                    Message = _localizer["QRExpired"]
                 };
 
             // 4. Get booking
@@ -116,7 +122,7 @@ namespace ArenaInfrastructure.Services
             if (booking == null)
                 return new QrScanResultDto
                 {
-                    Message = "❌ Booking not found"
+                    Message = _localizer["BookingNotFound"]
                 };
 
             // 5. Mark QR as used
@@ -154,7 +160,7 @@ namespace ArenaInfrastructure.Services
 
             return new QrScanResultDto
             {
-                Message = "✅ Attendance recorded successfully",
+                Message = _localizer["QRScannedSuccess"],
                 BookingId = qr.BookingId,
                 MemberProfileId = booking.MemberProfileId
             };

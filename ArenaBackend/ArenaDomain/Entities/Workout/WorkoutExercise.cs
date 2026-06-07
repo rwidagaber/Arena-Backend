@@ -10,7 +10,7 @@ namespace ArenaDomain.Entities.Workout
         public Guid WorkoutDayId { get; set; }
 
         public virtual WorkoutDay WorkoutDay { get; set; } = null!;
-
+        public string ExrciseName { get; set; }
         public Guid ExerciseId { get; set; }
 
         public virtual Exercise Exercise { get; set; } = null!;

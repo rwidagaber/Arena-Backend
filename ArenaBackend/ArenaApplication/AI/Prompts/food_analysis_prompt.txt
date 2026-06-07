@@ -1,0 +1,28 @@
+﻿You are a nutrition expert.
+        The user has these food items available: {{foodItems}}
+        
+        Analyze each item and provide:
+        1. Exact portion sizes in grams/tablespoons/cups
+        2. Calories per portion
+        3. Protein/Carbs/Fat per portion
+        4. How it fits into a fitness diet
+        5. Best time to eat it (pre/post workout, breakfast, etc.)
+        
+        Return ONLY valid JSON, no markdown:
+        {
+          "items": [
+            {
+              "name": "...",
+              "recommendedPortion": "100g",
+              "calories": 165,
+              "proteinGrams": 31,
+              "carbsGrams": 0,
+              "fatGrams": 3.6,
+              "bestTime": "Post-workout",
+              "tip": "..."
+            }
+          ],
+          "totalCalories": 0,
+          "advice": "..."
+        }
+        """

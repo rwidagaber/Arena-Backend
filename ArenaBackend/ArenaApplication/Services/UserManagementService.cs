@@ -5,6 +5,7 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +16,14 @@ namespace ArenaApplication.Services
     public class UserManagementService : IUserManagementService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public UserManagementService(IUserRepository userRepository)
+        public UserManagementService(
+            IUserRepository userRepository,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _userRepository = userRepository;
+            _localizer = localizer;
         }
 
         public async Task<Result<List<UserManagementDto>>> GetUsers(string search)
@@ -67,7 +72,7 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<List<UserManagementDto>>.Failure("An error occurred while retrieving users.");
+                return Result<List<UserManagementDto>>.Failure(_localizer["AnErrorOccurredRetrievingUsers"]);
             }
         }
 
@@ -79,7 +84,7 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<UserManagementDetailsDto>.Failure("User not found.");
+                    return Result<UserManagementDetailsDto>.Failure(_localizer["UserNotFound"]);
                 }
 
                 var memberProfile = user.MemberProfile;
@@ -127,7 +132,7 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<UserManagementDetailsDto>.Failure("An error occurred while retrieving user details.");
+                return Result<UserManagementDetailsDto>.Failure(_localizer["AnErrorOccurredRetrievingUserDetails"]);
             }
         }
 
@@ -139,7 +144,7 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<UserManagementDetailsDto>.Failure("User not found.");
+                    return Result<UserManagementDetailsDto>.Failure(_localizer["UserNotFound"]);
                 }
 
                 var dto = new UserManagementDetailsDto
@@ -154,7 +159,7 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<UserManagementDetailsDto>.Failure("An error occurred while loading manage user details.");
+                return Result<UserManagementDetailsDto>.Failure(_localizer["AnErrorOccurredLoadingManageUser"]);
             }
         }
 
@@ -166,7 +171,7 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<bool>.Failure("User not found.");
+                    return Result<bool>.Failure(_localizer["UserNotFound"]);
                 }
 
                 user.IsActive = isActive;
@@ -176,7 +181,7 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<bool>.Failure("An error occurred while updating user status.");
+                return Result<bool>.Failure(_localizer["AnErrorOccurredSavingUserStatus"]);
             }
         }
 
@@ -188,7 +193,7 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<bool>.Failure("User not found.");
+                    return Result<bool>.Failure(_localizer["UserNotFound"]);
                 }
 
                 user.IsDeleted = true;
@@ -201,7 +206,7 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<bool>.Failure("An error occurred while deleting the user.");
+                return Result<bool>.Failure(_localizer["AnErrorOccurredDeletingUser"]);
             }
         }
 

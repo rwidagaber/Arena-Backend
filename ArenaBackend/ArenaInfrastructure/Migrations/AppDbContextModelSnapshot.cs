@@ -363,6 +363,9 @@ namespace ArenaInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ActivityLevel")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("BMI")
                         .HasColumnType("decimal(5,2)");
 
@@ -378,13 +381,34 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DietaryRestrictions")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Equipment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FitnessExperience")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Gender")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("Goal")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HealthConditions")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("Height")
                         .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("Injuries")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -1118,6 +1142,10 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Property<Guid>("ExerciseId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ExrciseName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");

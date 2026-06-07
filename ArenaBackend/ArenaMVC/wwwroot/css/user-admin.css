@@ -100,7 +100,7 @@
 .search-input-wrapper input {
     height: 46px;
     background-color: rgba(22, 22, 26, 0.5) !important;
-    border: 1px solid rgba(196, 176, 69, 0.15) !important;
+    border: 1px solid rgba(213, 235, 69, 0.15) !important;
     border-radius: 8px !important;
     color: var(--whiteout) !important;
     padding: 0 1rem 0 3rem !important;
@@ -110,9 +110,9 @@
 }
 
 .search-input-wrapper input:focus {
-    border-color: rgba(196, 176, 69, 0.5) !important;
+    border-color: rgba(213, 235, 69, 0.5) !important;
     background-color: rgba(22, 22, 26, 0.75) !important;
-    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
     outline: none;
 }
 
@@ -137,7 +137,7 @@
 
 .user-details-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(196, 176, 69, 0.3);
+    border-color: rgba(213, 235, 69, 0.3);
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
 }
 
@@ -171,8 +171,8 @@
 
 .user-detail-row:hover {
     transform: translateX(3px) !important;
-    background-color: rgba(230, 200, 120, 0.02) !important;
-    border-left-color: rgba(196, 176, 69, 0.5) !important;
+    background-color: rgba(217, 237, 115, 0.02) !important;
+    border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
 
 [dir="rtl"] .user-detail-row {
@@ -195,7 +195,7 @@
 }
 
 .user-detail-row:hover .user-detail-label {
-    color: #D4AF37 !important;
+    color: #cbe83e !important;
 }
 
 .user-detail-value {
@@ -211,7 +211,7 @@
 }
 
 .user-detail-row:hover .user-detail-value {
-    color: #E6C878 !important;
+    color: #d9ed73 !important;
 }
 
 .details-empty-state {
@@ -318,7 +318,7 @@ input:checked + .slider:before {
 
 .manage-user-card:hover {
     transform: translateY(-5px) scale(1.01);
-    border-color: rgba(196, 176, 69, 0.3);
+    border-color: rgba(213, 235, 69, 0.3);
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
 }
 
@@ -381,17 +381,17 @@ input:checked + .slider:before {
 }
 
 .btn-action-settings {
-    background-color: rgba(196, 176, 69, 0.04) !important;
-    border-color: rgba(196, 176, 69, 0.15) !important;
+    background-color: rgba(213, 235, 69, 0.04) !important;
+    border-color: rgba(213, 235, 69, 0.15) !important;
     color: var(--yellow) !important;
 }
 
 .btn-action-settings:hover {
-    background-color: rgba(196, 176, 69, 0.1) !important;
-    border-color: rgba(196, 176, 69, 0.45) !important;
+    background-color: rgba(213, 235, 69, 0.1) !important;
+    border-color: rgba(213, 235, 69, 0.45) !important;
     color: var(--yellow) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 10px rgba(196, 176, 69, 0.22) !important;
+    box-shadow: 0 0 12px rgba(213, 235, 69, 0.25) !important;
 }
 
 .btn-action-delete {
@@ -465,8 +465,8 @@ input:checked + .slider:before {
     background-color: var(--card-bg) !important;
 }
 
-.user-mgmt-table th {
-    color: rgba(196, 176, 69, 0.85) !important;
+.subscription-table th {
+    color: rgba(213, 235, 69, 0.85) !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
@@ -531,6 +531,17 @@ input:checked + .slider:before {
 
 .user-mgmt-table tbody tr:hover td:first-child {
     border-left-color: rgba(196, 176, 69, 0.5) !important;
+.subscription-table tbody tr:hover td {
+    background-color: rgba(217, 237, 115, 0.02) !important;
+}
+
+/* Warm Champagne Gold for user info columns 1-4 on hover */
+.subscription-table tbody tr:hover td:nth-child(-n+4) {
+    color: #d9ed73 !important;
+}
+
+.subscription-table tbody tr:hover td:first-child {
+    border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
 
 [dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child {
