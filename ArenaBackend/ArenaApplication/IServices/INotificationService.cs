@@ -15,30 +15,36 @@ namespace ArenaApplication.IServices
         Task SendNotificationAsync(CreateNotificationDto dto, CancellationToken cancellationToken = default);
    
         // ── Read ──────────────────────────────────────────────────────────────
-        Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(Guid MemberProfileId, CancellationToken cancellationToken = default);
-        Task<int> GetUnreadCountAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task MarkAsReadAsync(Guid notificationId, Guid MemberProfileId, CancellationToken cancellationToken = default);
-        Task MarkAllAsReadAsync(Guid MemberProfileId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
+        Task<int> GetUnreadCountAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
+        Task MarkAsReadAsync(Guid notificationId, Guid memberProfileId, CancellationToken cancellationToken = default);
+        Task MarkAllAsReadAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
 
-       
+
 
         // ── Authentication ────────────────────────────────────────────────────
-        Task NotifyWelcomeAsync(Guid userId, string firstName, CancellationToken cancellationToken = default);
+        
+        Task NotifyEmailConfirmationAsync(Guid userId, string email, string otp, CancellationToken cancellationToken = default);
+        Task NotifyWelcomeAsync(Guid memberProfileId, string firstName, CancellationToken cancellationToken = default);
 
         // ── Subscriptions & Payments ──────────────────────────────────────────
-        Task NotifyPaymentConfirmedAsync(Guid userId, decimal amount, string planName, CancellationToken cancellationToken = default);
-        Task NotifySubscriptionExpiringAsync(Guid userId, int daysLeft, CancellationToken cancellationToken = default);
-        Task NotifySubscriptionExpiredAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task NotifyPaymentConfirmedAsync(Guid memberProfileId, decimal amount, string planName, CancellationToken cancellationToken = default);
+        Task NotifySubscriptionExpiringAsync(Guid memberProfileId, int daysLeft, CancellationToken cancellationToken = default);
+        Task NotifySubscriptionExpiredAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
 
         // ── Bookings & Attendance ─────────────────────────────────────────────
-        Task NotifyBookingConfirmedAsync(Guid userId, DateTime bookingDate,CancellationToken cancellationToken = default);
-        Task NotifyQrCodeGeneratedAsync(Guid userId, DateTime bookingDate, CancellationToken cancellationToken = default);
-        Task NotifySessionReminderAsync(Guid userId, DateTime bookingDate, CancellationToken cancellationToken = default);
-        Task NotifyAttendanceRecordedAsync(Guid userId, int remainingSessions, CancellationToken cancellationToken = default);
+        Task NotifyBookingConfirmedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default);
+        Task NotifyBookingCancelledAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default);
+        Task NotifyBookingRescheduledAsync(Guid memberProfileId, DateTime newBookingDate, CancellationToken cancellationToken = default);
+
+        Task NotifyQrCodeGeneratedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default);
+        Task NotifySessionReminderAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default);
+        Task NotifyAttendanceRecordedAsync(Guid memberProfileId, int remainingSessions, CancellationToken cancellationToken = default);
+
 
         // ── AI Features ───────────────────────────────────────────────────────
-        Task NotifyWorkoutPlanReadyAsync(Guid userId, string planName, CancellationToken cancellationToken = default);
-        Task NotifyNutritionPlanReadyAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task NotifyMealAnalyzedAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task NotifyWorkoutPlanReadyAsync(Guid memberProfileId, string planName, CancellationToken cancellationToken = default);
+        Task NotifyNutritionPlanReadyAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
+        Task NotifyMealAnalyzedAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
     }
 }

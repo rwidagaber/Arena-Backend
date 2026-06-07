@@ -15,23 +15,26 @@ namespace ArenaApplication.Services
 {
     public class BookingService : IBookingService
     {
-        private readonly IGenericRepository<Booking, Guid> _bookingRepo;
+         private readonly IGenericRepository<Booking, Guid> _bookingRepo;
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificationService _notificationService;
+        private readonly IBackgroundJobService _backgroundJobService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public BookingService(
+
+       public BookingService(
             IGenericRepository<Booking, Guid> bookingRepo,
             IUnitOfWork unitOfWork,
             INotificationService notificationService,
+            IBackgroundJobService backgroundJobService,
             IStringLocalizer<ArenaLocalization> localizer)
         {
             _bookingRepo = bookingRepo;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
+            _backgroundJobService = backgroundJobService;
             _localizer = localizer;
         }
-
         public async Task<Result<BookingDto>> CreateBooking(CreateBookingDto dto)
         {
             if (dto.BookingDate.Date < DateTime.UtcNow.Date)
@@ -44,9 +47,11 @@ namespace ArenaApplication.Services
 
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
-            await _notificationService.NotifyBookingConfirmedAsync(
+
+            await _backgroundJobService.ScheduleBookingReminderAsync(
             booking.MemberProfileId,
-             booking.BookingDate);
+            booking.BookingDate);
+          
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -119,6 +124,14 @@ namespace ArenaApplication.Services
 
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
+
+            await _backgroundJobService.ScheduleBookingReminderAsync(
+            booking.MemberProfileId,
+            booking.BookingDate);
+
+            await _backgroundJobService.EnqueueBookingCancellationAsync(
+               booking.MemberProfileId,
+              booking.BookingDate);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }

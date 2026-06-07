@@ -23,12 +23,17 @@ namespace ArenaApplication.Services
         private readonly IAuthRepository _authRepository;
         private readonly ITokenService _tokenService;
         private readonly JWTSettings _jwtSettings;
+        private readonly IOtpService _otpService;
+        private readonly IBackgroundJobService _backgroundJobService;
+
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             IAuthRepository authRepository,
             ITokenService tokenService,
+            IBackgroundJobService backgroundJobService,
+            IOtpService otpService,
             IOptions<JWTSettings> jwtSettings,
             IStringLocalizer<ArenaLocalization> localizer)
         {
@@ -36,14 +41,20 @@ namespace ArenaApplication.Services
             _authRepository = authRepository;
             _tokenService = tokenService;
             _jwtSettings = jwtSettings.Value;
+            _backgroundJobService = backgroundJobService;
+            _otpService = otpService;
             _localizer = localizer;
         }
 
-        public async Task<Result<AuthResponseDto>> RegisterAsync(UserRegisterDto dto)
+        // =========================
+        // REGISTER
+        // =========================
+
+        public async Task<Result> RegisterAsync(UserRegisterDto dto)
         {
             var existingUser = await _authRepository.GetByEmailAsync(dto.Email);
             if (existingUser is not null)
-                return Result<AuthResponseDto>.Failure(_localizer["EmailIsAlreadyRegistered"]);
+                return Result.Failure("Email is already registered");
 
             var user = new ApplicationUser
             {
@@ -52,29 +63,71 @@ namespace ArenaApplication.Services
                 Email = dto.Email,
                 UserName = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
-                PreferredLanguage = dto.PreferredLanguage,
-                IsActive = true
+                IsActive = false,
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-                return Result<AuthResponseDto>.Failure(
-                    result.Errors.Select(e => e.Description).ToArray());
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+            try
+            {
+                var memberProfile = new MemberProfile
+                {
+                    UserId = user.Id,
+                    Weight = dto.Weight,
+                    Height = dto.Height,
+                };
+
+                await _authRepository.CreateMemberProfileAsync(memberProfile);
+
+                var otp = await _otpService.GenerateAndSaveOtpAsync(user.Id);
+
+                await _backgroundJobService.EnqueueEmailConfirmationAsync(
+                    user.Id,
+                    user.Email!,
+                    otp
+                );
+
+                return Result.Success();
+            }
+            catch
+            {
+                // rollback user if profile fails
+                await _userManager.DeleteAsync(user);
+
+                return Result.Failure("Failed to create user profile");
+            }
+        }
+
+        // ✅ الميثود الجديدة — بتأكد الإيميل وترجع tokens مباشرة
+        public async Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
+            if (user is null)
+                return Result<AuthResponseDto>.Failure("User not found");
+
+            if (user.EmailConfirmed)
+                return Result<AuthResponseDto>.Failure("Email is already confirmed");
+
+            var isValid = await _otpService.ValidateOtpAsync(dto.UserId, dto.Otp);
+            if (!isValid)
+                return Result<AuthResponseDto>.Failure("Invalid or expired OTP");
+
+            // ✅ نكمل الـ setup بعد التأكيد
+            user.IsActive = true;
+            user.EmailConfirmed = true;
+            await _userManager.UpdateAsync(user);
 
             await _userManager.AddToRoleAsync(user, "GymMember");
-
-            var memberProfile = new MemberProfile
-            {
-                UserId = user.Id,
-                DateOfBirth = dto.Birthday.ToDateTime(TimeOnly.MinValue)
-            };
-
-            await _authRepository.CreateMemberProfileAsync(memberProfile);
-            user.MemberProfile = memberProfile;
 
             var response = await GenerateAuthResponseAsync(user);
             return Result<AuthResponseDto>.Success(response);
         }
+
+        
+           
 
         public async Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto)
         {
@@ -88,82 +141,13 @@ namespace ArenaApplication.Services
             if (user.MemberProfile is null)
                 user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
-            var authResponse = await GenerateAuthResponseAsync(user);
-
-            var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? "GymMember";
-
-            if (role == "Admin")
-            {
-                return Result<AuthResponseDto>.Success(new AuthResponseDto
-                {
-                    AccessToken = authResponse.AccessToken,
-                    RefreshToken = authResponse.RefreshToken,
-                    ExpiresAt = authResponse.ExpiresAt,
-                    Role = authResponse.Role,
-                    MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
-                    Profile = null
-                });
-            }
-
-            var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
-
-            if (activeSubscription is null)
-            {
-                return Result<AuthResponseDto>.Success(new AuthResponseDto
-                {
-                    AccessToken = authResponse.AccessToken,
-                    RefreshToken = authResponse.RefreshToken,
-                    ExpiresAt = authResponse.ExpiresAt,
-                    Role = authResponse.Role,
-                    MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
-                    Profile = null,
-                    IsSubscribed = false
-                });
-            }
-
-            var profile = new GetProfileDto
-            {
-                Id = user.Id,
-                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email!,
-                PhoneNumber = user.PhoneNumber,
-                PreferredLanguage = user.PreferredLanguage,
-                IsActive = user.IsActive,
-                Weight = user.MemberProfile?.Weight,
-                Height = user.MemberProfile?.Height,
-                BMI = user.MemberProfile?.BMI,
-                Gender = user.MemberProfile?.Gender.ToString(),
-                ProfileImage = user.MemberProfile?.ProfileImageUrl,
-                Birthday = user.MemberProfile?.DateOfBirth != null
-                                    ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
-                                    : null,
-                ActiveSubscription = new UserSubscriptionDto
-                {
-                    Id = activeSubscription.Id,
-                    PlanNameEn = activeSubscription.Plan.NameEn,
-                    PlanNameAr = activeSubscription.Plan.NameAr,
-                    StartDate = activeSubscription.StartDate,
-                    EndDate = activeSubscription.EndDate,
-                    Status = activeSubscription.Status,
-                    RemainingSessions = activeSubscription.RemainingSessions,
-                    ReminderSent = activeSubscription.ReminderSent
-                }
-            };
-
-            return Result<AuthResponseDto>.Success(new AuthResponseDto
-            {
-                AccessToken = authResponse.AccessToken,
-                RefreshToken = authResponse.RefreshToken,
-                ExpiresAt = authResponse.ExpiresAt,
-                Role = authResponse.Role,
-                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
-                Profile = profile,
-                IsSubscribed = true
-            });
+            var response = await GenerateAuthResponseAsync(user);
+            Console.WriteLine(dto.Email);
+            Console.WriteLine(dto.Password);
+            return Result<AuthResponseDto>.Success(response);
         }
+
+        
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
@@ -278,7 +262,9 @@ namespace ArenaApplication.Services
 
         private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)
         {
-            var accessToken = await _tokenService.GenerateAccessToken(user);
+            var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
+
+            var accessToken = await _tokenService.GenerateAccessToken(userWithProfile ?? user);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             var token = new RefreshToken
@@ -290,7 +276,6 @@ namespace ArenaApplication.Services
             };
 
             await _authRepository.SaveRefreshTokenAsync(token);
-
             var role = (await _userManager.GetRolesAsync(user))
                 .FirstOrDefault() ?? "GymMember";
 
