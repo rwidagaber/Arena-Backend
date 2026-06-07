@@ -1,3 +1,4 @@
+using ArenaApplication.Dtos.UserManagement;
 using ArenaApplication.IServices;
 using ArenaDomain.Shared;
 using ArenaMVC.Models;
@@ -43,7 +44,9 @@ namespace ArenaMVC.Controllers
                     Email = u.Email,
                     PhoneNumber = u.PhoneNumber,
                     RegisterDate = u.RegisterDate,
-                    IsActive = u.IsActive
+                    IsActive = u.IsActive,
+                    IsMember = u.IsMember,
+                    SubscriptionStatus = u.SubscriptionStatus
                 }).ToList();
 
                 ViewBag.SearchString = search;
@@ -81,7 +84,22 @@ namespace ArenaMVC.Controllers
                     IsActive = user.IsActive,
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
-                    RegisterDate = user.RegisterDate
+                    RegisterDate = user.RegisterDate,
+
+                    // Membership Summary (Section 1)
+                    MembershipStatus = user.MembershipStatus,
+                    IsMember = user.IsMember,
+                    MemberSince = user.MemberSince,
+                    TotalSubscriptions = user.TotalSubscriptions,
+                    CurrentSubscriptionStatus = user.CurrentSubscriptionStatus,
+
+                    // Current Active Subscription (Section 2)
+                    CurrentSubscription = user.CurrentSubscription != null ? MapSubscriptionItem(user.CurrentSubscription) : null,
+
+                    // Subscription History (Section 3)
+                    SubscriptionHistory = user.SubscriptionHistory
+                        .Select(s => MapSubscriptionItem(s))
+                        .ToList()
                 };
 
                 return View(viewModel);
@@ -176,6 +194,20 @@ namespace ArenaMVC.Controllers
                 TempData["Error"] = _localizer["AnErrorOccurredDeletingUser"];
                 return RedirectToAction(nameof(Index));
             }
+        }
+
+        private static SubscriptionItemViewModel MapSubscriptionItem(UserSubscriptionItemDto dto)
+        {
+            return new SubscriptionItemViewModel
+            {
+                PlanName = dto.PlanName,
+                Status = dto.Status,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                RemainingSessions = dto.RemainingSessions,
+                DurationDays = dto.DurationDays,
+                CreatedAt = dto.CreatedAt
+            };
         }
     }
 }

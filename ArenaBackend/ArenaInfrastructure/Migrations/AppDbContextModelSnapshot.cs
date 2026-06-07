@@ -498,10 +498,10 @@ namespace ArenaInfrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Calories")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(8,2)");
 
                     b.Property<decimal>("Carbs")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(6,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -513,28 +513,31 @@ namespace ArenaInfrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("Fat")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(6,2)");
 
                     b.Property<string>("Ingredients")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("MealType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<Guid>("NutritionPlanId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Protein")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(6,2)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -546,7 +549,7 @@ namespace ArenaInfrastructure.Migrations
 
                     b.HasIndex("NutritionPlanId");
 
-                    b.ToTable("Meals");
+                    b.ToTable("Meals", (string)null);
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Nutrition.MealLog", b =>
@@ -1318,7 +1321,7 @@ namespace ArenaInfrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
