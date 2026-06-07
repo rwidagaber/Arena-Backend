@@ -7,6 +7,7 @@ namespace ArenaApplication.Dtos.WorkoutDtos
     public class WorkoutExerciseDto
     {
         public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         public Guid WorkoutDayId { get; set; }
 

@@ -9,12 +9,15 @@ using ArenaApplication.IServices;
 using ArenaApplication.IServices.Payment;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
+using ArenaApplication.Services.AI;
 using ArenaApplication.Services.Payment;
+using ArenaApplication.settings;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure;
+using ArenaInfrastructure.AI;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Localization;
@@ -135,6 +138,15 @@ namespace ArenaAPI
             builder.Services.AddScoped<IUserQueryService, UserQueryService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddHttpClient<IPaymentGatewayService, PaymobService>();
+
+            // ── AI ───────────────────────────────────────────────────
+            builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAISettings"));
+            builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+            builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
+            builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
+            builder.Services.AddScoped<IBookingAIService, BookingAIService>();
+
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>
