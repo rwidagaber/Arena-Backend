@@ -55,17 +55,23 @@ namespace ArenaAPI
             // Localization options
             builder.Services.Configure<RequestLocalizationOptions>(options =>
             {
-                var supportedCultures = new[] 
-                { 
+                var supportedCultures = new[]
+                {
                     new CultureInfo("en-US"),
                     new CultureInfo("ar-EG")
                 };
-                options.DefaultRequestCulture = new RequestCulture
-                (culture: supportedCultures[0],
-                uiCulture: (supportedCultures[0]));
+
+                options.DefaultRequestCulture = new RequestCulture("en-US");
                 options.SupportedCultures = supportedCultures;
                 options.SupportedUICultures = supportedCultures;
-                options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
+
+                // Keep Accept-Language header as the primary provider
+                options.RequestCultureProviders = new List<IRequestCultureProvider>
+                {
+                    new AcceptLanguageHeaderRequestCultureProvider(),
+                    new CookieRequestCultureProvider(),
+                    new QueryStringRequestCultureProvider()
+                };
             });
 
             // Services
@@ -182,13 +188,8 @@ namespace ArenaAPI
             var supportedCultures = new[]{"en-US","ar-EG"};
 
 
-            var localizationOptions = new RequestLocalizationOptions()
-                .SetDefaultCulture(supportedCultures[0])
-                .AddSupportedCultures(supportedCultures)
-                .AddSupportedUICultures(supportedCultures);
 
-
-            app.UseRequestLocalization(localizationOptions);
+            app.UseRequestLocalization();
 
             // Authentication & Authorization
             app.UseAuthentication();
