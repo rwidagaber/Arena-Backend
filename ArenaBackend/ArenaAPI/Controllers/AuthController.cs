@@ -29,9 +29,19 @@ namespace ArenaApi.Controllers
             var result = await _authService.RegisterAsync(dto);
             if (!result.IsSuccess)
                 return BadRequest(result.Errors);
-            return CreatedAtAction(nameof(GetProfile), result.Value);
+            return Ok("Registration successful. Please confirm your email.");
         }
 
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailDto dto)
+        {
+            var result = await _authService.ConfirmEmailAsync(dto);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Errors);
+
+            return Ok(result.Value);
+        }
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserloginDto dto)
         {

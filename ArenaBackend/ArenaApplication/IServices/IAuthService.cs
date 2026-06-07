@@ -13,7 +13,7 @@ namespace ArenaApplication.IServices
 {
     public interface IAuthService
     {
-        Task<Result<AuthResponseDto>> RegisterAsync(UserRegisterDto dto);
+        Task<Result> RegisterAsync(UserRegisterDto dto);
         Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto);
         Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto);
         Task<Result> LogoutAsync(Guid userId);
@@ -21,6 +21,7 @@ namespace ArenaApplication.IServices
         Task<Result> ChangePasswordAsync(Guid userId, ChangePasswordDto dto);
         Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<Result> ResetPasswordAsync(ResetPasswordDto dto);
+        Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto);
 
     }
 }

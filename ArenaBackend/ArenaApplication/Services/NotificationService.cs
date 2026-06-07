@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 namespace ArenaApplication.Services
 {
     public class NotificationService : INotificationService
@@ -33,19 +34,23 @@ namespace ArenaApplication.Services
             _memberProfileRepository = memberProfileRepository;
             _notificationHub = notificationHub;
             _localizer = localizer;
-
         }
 
-        // ── Core (private) ────────────────────────────────────────────────────
+        // =========================
+        // CORE (private)
+        // =========================
 
         private async Task CreateAsync(
-     Guid MemberProfileId, string title, string message, NotificationType type,
-     CancellationToken cancellationToken = default)
+            Guid memberProfileId,
+            string title,
+            string message,
+            NotificationType type,
+            CancellationToken cancellationToken = default)
         {
             var entity = new Notification
             {
                 Id = Guid.NewGuid(),
-                MemberProfileId = MemberProfileId,
+                MemberProfileId = memberProfileId,
                 Title = title,
                 Message = message,
                 Type = type,
@@ -55,152 +60,184 @@ namespace ArenaApplication.Services
             await _repository.AddAsync(entity, cancellationToken);
 
             await _notificationHub.SendToUserAsync(
-                MemberProfileId,
+                memberProfileId,
                 entity.Adapt<NotificationDto>(),
                 cancellationToken);
         }
 
-        // ── Write ─────────────────────────────────────────────────────────────
+        // =========================
+        // WRITE
+        // =========================
 
         public Task SendNotificationAsync(CreateNotificationDto dto, CancellationToken cancellationToken = default) =>
             CreateAsync(dto.MemberProfileId, dto.Title, dto.Message, dto.Type, cancellationToken);
 
-        // ── Read ──────────────────────────────────────────────────────────────
+        // =========================
+        // READ
+        // =========================
 
-        public async Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(Guid MemberProfileId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(Guid memberProfileId, CancellationToken cancellationToken = default)
         {
-            var list = await _repository.GetByMemberProfileIdAsync(MemberProfileId, cancellationToken);
+            var list = await _repository.GetByMemberProfileIdAsync(memberProfileId, cancellationToken);
             return list.Adapt<IEnumerable<NotificationDto>>();
         }
 
-        public async Task<int> GetUnreadCountAsync(Guid MemberProfileId, CancellationToken cancellationToken = default) =>
-            await _repository.GetUnreadCountAsync(MemberProfileId, cancellationToken);
+        public Task<int> GetUnreadCountAsync(Guid memberProfileId, CancellationToken cancellationToken = default) =>
+            _repository.GetUnreadCountAsync(memberProfileId, cancellationToken);
 
-        public async Task MarkAsReadAsync(Guid notificationId, Guid MemberProfileId, CancellationToken cancellationToken = default)
+        public async Task MarkAsReadAsync(Guid notificationId, Guid memberProfileId, CancellationToken cancellationToken = default)
         {
             var notification = await _repository.GetByIdAsync(notificationId, cancellationToken);
 
-            if (notification is null || notification.MemberProfileId != MemberProfileId)
+            if (notification is null || notification.MemberProfileId != memberProfileId)
                 return;
 
             notification.IsRead = true;
             await _repository.UpdateAsync(notification, cancellationToken);
         }
 
-        public async Task MarkAllAsReadAsync(Guid MemberProfileId, CancellationToken cancellationToken = default) =>
-            await _repository.MarkAllAsReadAsync(MemberProfileId, cancellationToken);
+        public Task MarkAllAsReadAsync(Guid memberProfileId, CancellationToken cancellationToken = default) =>
+            _repository.MarkAllAsReadAsync(memberProfileId, cancellationToken);
 
-        // ── Authentication ────────────────────────────────────────────────────
+        // =========================
+        // AUTH
+        // =========================
 
-        public Task NotifyWelcomeAsync(Guid MemberProfileId, string firstName, CancellationToken cancellationToken = default) =>
+        public Task NotifyEmailConfirmationAsync(Guid userId, string email, string otp, CancellationToken cancellationToken = default) =>
+            _emailService.SendOtpAsync(email, otp, cancellationToken);
+
+        public Task NotifyWelcomeAsync(Guid memberProfileId, string firstName, CancellationToken cancellationToken = default) =>
             CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationWelcomeTitle"],
                 string.Format(_localizer["NotificationWelcomeMessage"], firstName),
                 NotificationType.Success,
                 cancellationToken);
 
-        // ── Subscriptions & Payments ──────────────────────────────────────────
+        // =========================
+        // SUBSCRIPTIONS & PAYMENTS
+        // =========================
 
-        public async Task NotifyPaymentConfirmedAsync(Guid MemberProfileId, decimal amount, string planName, CancellationToken cancellationToken = default)
+        public async Task NotifyPaymentConfirmedAsync(Guid memberProfileId, decimal amount, string planName, CancellationToken cancellationToken = default)
         {
             await CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationPaymentConfirmedTitle"],
                 string.Format(_localizer["NotificationPaymentConfirmedMessage"], amount, planName),
                 NotificationType.Success,
                 cancellationToken);
 
-            var user = await _memberProfileRepository.GetByIdAsync(MemberProfileId, cancellationToken);
-            if (user is not null)
-                await _emailService.SendPaymentConfirmedAsync(user.User.Email, user.User.FirstName, amount, planName, cancellationToken);
+            var profile = await _memberProfileRepository.GetByIdAsync(memberProfileId, cancellationToken);
+            if (profile?.User != null)
+                await _emailService.SendPaymentConfirmedAsync(
+                    profile.User.Email!, profile.User.FirstName, amount, planName, cancellationToken);
         }
 
-        public async Task NotifySubscriptionExpiringAsync(Guid MemberProfileId, int daysLeft, CancellationToken cancellationToken = default)
+        public async Task NotifySubscriptionExpiringAsync(Guid memberProfileId, int daysLeft, CancellationToken cancellationToken = default)
         {
             await CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationSubscriptionExpiringTitle"],
                 string.Format(_localizer["NotificationSubscriptionExpiringMessage"], daysLeft),
                 NotificationType.Warning,
                 cancellationToken);
 
-            var user = await _memberProfileRepository.GetByIdAsync(MemberProfileId, cancellationToken);
-            if (user is not null)
-                await _emailService.SendSubscriptionExpiringAsync(user.User.Email, user.User.FirstName, daysLeft, cancellationToken);
+            var profile = await _memberProfileRepository.GetByIdAsync(memberProfileId, cancellationToken);
+            if (profile?.User != null)
+                await _emailService.SendSubscriptionExpiringAsync(
+                    profile.User.Email!, profile.User.FirstName, daysLeft, cancellationToken);
         }
 
-        public async Task NotifySubscriptionExpiredAsync(Guid MemberProfileId, CancellationToken cancellationToken = default)
+        public async Task NotifySubscriptionExpiredAsync(Guid memberProfileId, CancellationToken cancellationToken = default)
         {
             await CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationSubscriptionExpiredTitle"],
                 _localizer["NotificationSubscriptionExpiredMessage"],
                 NotificationType.Error,
                 cancellationToken);
 
-            var user = await _memberProfileRepository.GetByIdAsync(MemberProfileId, cancellationToken);
-            if (user is not null)
-                await _emailService.SendSubscriptionExpiredAsync(user.User.Email, user.User.FirstName, cancellationToken);
+            var profile = await _memberProfileRepository.GetByIdAsync(memberProfileId, cancellationToken);
+            if (profile?.User != null)
+                await _emailService.SendSubscriptionExpiredAsync(
+                    profile.User.Email!, profile.User.FirstName, cancellationToken);
         }
 
-        // ── Bookings & Attendance ─────────────────────────────────────────────
+        // =========================
+        // BOOKINGS & ATTENDANCE
+        // =========================
 
-        public Task NotifyBookingConfirmedAsync(Guid MemberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default)
-        {
-            return CreateAsync(
-                MemberProfileId,
+        public Task NotifyBookingConfirmedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
+            CreateAsync(
+                memberProfileId,
                 _localizer["NotificationBookingConfirmedTitle"],
                 string.Format(_localizer["NotificationBookingConfirmedMessage"], bookingDate),
-                NotificationType.Success,   
+                NotificationType.Success,
                 cancellationToken);
-        }
 
-        public Task NotifyQrCodeGeneratedAsync(Guid MemberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
+        public Task NotifyBookingCancelledAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
-                MemberProfileId,
+                memberProfileId,
+                _localizer["NotificationBookingCancelledTitle"],
+                string.Format(_localizer["NotificationBookingCancelledMessage"], bookingDate),
+                NotificationType.Warning,
+                cancellationToken);
+
+        public Task NotifyBookingRescheduledAsync(Guid memberProfileId, DateTime newBookingDate, CancellationToken cancellationToken = default) =>
+            CreateAsync(
+                memberProfileId,
+                _localizer["NotificationBookingRescheduledTitle"],
+                string.Format(_localizer["NotificationBookingRescheduledMessage"], newBookingDate),
+                NotificationType.Info,
+                cancellationToken);
+
+        public Task NotifyQrCodeGeneratedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
+            CreateAsync(
+                memberProfileId,
                 _localizer["NotificationQRCodeTitle"],
                 string.Format(_localizer["NotificationQRCodeMessage"], bookingDate),
                 NotificationType.Info,
                 cancellationToken);
 
-        public Task NotifySessionReminderAsync(Guid MemberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
+        public Task NotifySessionReminderAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationSessionReminderTitle"],
                 string.Format(_localizer["NotificationSessionReminderMessage"], bookingDate),
                 NotificationType.Warning,
                 cancellationToken);
 
-        public Task NotifyAttendanceRecordedAsync(Guid MemberProfileId, int remainingSessions, CancellationToken cancellationToken = default) =>
+        public Task NotifyAttendanceRecordedAsync(Guid memberProfileId, int remainingSessions, CancellationToken cancellationToken = default) =>
             CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationAttendanceRecordedTitle"],
                 string.Format(_localizer["NotificationAttendanceRecordedMessage"], remainingSessions),
                 NotificationType.Success,
                 cancellationToken);
 
-        // ── AI Features ───────────────────────────────────────────────────────
+        // =========================
+        // AI
+        // =========================
 
-        public Task NotifyWorkoutPlanReadyAsync(Guid MemberProfileId, string planName, CancellationToken cancellationToken = default) =>
+        public Task NotifyWorkoutPlanReadyAsync(Guid memberProfileId, string planName, CancellationToken cancellationToken = default) =>
             CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationWorkoutPlanTitle"],
                 string.Format(_localizer["NotificationWorkoutPlanMessage"], planName),
                 NotificationType.Success,
                 cancellationToken);
 
-        public Task NotifyNutritionPlanReadyAsync(Guid MemberProfileId, CancellationToken cancellationToken = default) =>
+        public Task NotifyNutritionPlanReadyAsync(Guid memberProfileId, CancellationToken cancellationToken = default) =>
             CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationNutritionPlanTitle"],
                 _localizer["NotificationNutritionPlanMessage"],
                 NotificationType.Success,
                 cancellationToken);
 
-        public Task NotifyMealAnalyzedAsync(Guid MemberProfileId, CancellationToken cancellationToken = default) =>
+        public Task NotifyMealAnalyzedAsync(Guid memberProfileId, CancellationToken cancellationToken = default) =>
             CreateAsync(
-                MemberProfileId,
+                memberProfileId,
                 _localizer["NotificationMealAnalysisTitle"],
                 _localizer["NotificationMealAnalysisMessage"],
                 NotificationType.Info,
