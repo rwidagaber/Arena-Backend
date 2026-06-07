@@ -10,5 +10,7 @@
         public string Password { get; set; } = string.Empty;
 
         public bool EnableSsl { get; set; } = true;
+
+        public string FrontendUrl { get; set; } = string.Empty;
     }
 }
