@@ -24,6 +24,6 @@ namespace ArenaApplication.IServices
         // =========================
         // (Optional Future)
         // =========================
-        // Task EnqueueAttendanceRecordedAsync(Guid memberId, int remainingSessions);
+        Task EnqueuePasswordResetTokenEmailAsync(string email, string resetToken, string userEmail); // للـ Link    
     }
 }

@@ -97,18 +97,15 @@ namespace ArenaApi.Controllers
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
         {
             var result = await _authService.ForgotPasswordAsync(dto);
-            if (!result.IsSuccess)
-                return BadRequest(result.Errors);
-            return Ok(_localizer["IfTheEmailExistsResetLinkSent"]);
+            return result.IsSuccess ? Ok() : BadRequest(result.Errors);
         }
 
+        
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
         {
             var result = await _authService.ResetPasswordAsync(dto);
-            if (!result.IsSuccess)
-                return BadRequest(result.Errors);
-            return NoContent();
+            return result.IsSuccess ? Ok() : BadRequest(result.Errors);
         }
     }
 }
