@@ -46,7 +46,6 @@ namespace ArenaApplication.Services.Payment
             IGenericRepository<
             ArenaDomain.Entities.Subscription.SubscriptionPlan,
             Guid> planRepo
-
             )
         {
             _paymentRepo = paymentRepo;
