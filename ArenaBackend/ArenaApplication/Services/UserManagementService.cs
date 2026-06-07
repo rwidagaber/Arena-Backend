@@ -1,9 +1,11 @@
 using ArenaApplication.Dtos.UserManagement;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.User;
+using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +16,14 @@ namespace ArenaApplication.Services
     public class UserManagementService : IUserManagementService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public UserManagementService(IUserRepository userRepository)
+        public UserManagementService(
+            IUserRepository userRepository,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _userRepository = userRepository;
+            _localizer = localizer;
         }
 
         public async Task<Result<List<UserManagementDto>>> GetUsers(string search)
@@ -26,6 +32,7 @@ namespace ArenaApplication.Services
             {
                 var query = _userRepository.GetAll()
                     .Include(u => u.MemberProfile)
+                        .ThenInclude(mp => mp.Subscriptions)
                     .AsNoTracking();
 
                 // Exclude soft-deleted users
@@ -42,21 +49,30 @@ namespace ArenaApplication.Services
 
                 var users = await query.ToListAsync();
 
-                var dtos = users.Select(u => new UserManagementDto
+                var dtos = users.Select(u => 
                 {
-                    Id = u.Id,
-                    FullName = $"{u.FirstName} {u.LastName}".Trim(),
-                    Email = u.Email ?? string.Empty,
-                    PhoneNumber = u.PhoneNumber ?? string.Empty,
-                    RegisterDate = u.MemberProfile?.CreatedAt,
-                    IsActive = u.IsActive
+                    // Get subscriptions from MemberProfile if it exists
+                    var subscriptions = u.MemberProfile?.Subscriptions ?? new List<ArenaDomain.Entities.Subscription.UserSubscription>();
+
+                    return new UserManagementDto
+                    {
+                        Id = u.Id,
+                        FullName = $"{u.FirstName} {u.LastName}".Trim(),
+                        Email = u.Email ?? string.Empty,
+                        PhoneNumber = u.PhoneNumber ?? string.Empty,
+                        RegisterDate = u.MemberProfile?.CreatedAt,
+                        IsActive = u.IsActive,
+                        // Membership is now determined by subscriptions, not MemberProfile existence
+                        IsMember = DetermineMembershipStatus(subscriptions),
+                        SubscriptionStatus = DetermineSubscriptionStatus(subscriptions)
+                    };
                 }).ToList();
 
                 return Result<List<UserManagementDto>>.Success(dtos);
             }
             catch (Exception)
             {
-                return Result<List<UserManagementDto>>.Failure("An error occurred while retrieving users.");
+                return Result<List<UserManagementDto>>.Failure(_localizer["AnErrorOccurredRetrievingUsers"]);
             }
         }
 
@@ -68,8 +84,19 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<UserManagementDetailsDto>.Failure("User not found.");
+                    return Result<UserManagementDetailsDto>.Failure(_localizer["UserNotFound"]);
                 }
+
+                var memberProfile = user.MemberProfile;
+
+                // Get subscriptions - empty list if no MemberProfile or no subscriptions
+                var subscriptions = memberProfile?.Subscriptions?.ToList() ?? new List<ArenaDomain.Entities.Subscription.UserSubscription>();
+
+                var activeSubscription = subscriptions.FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+
+                // Determine membership status based on subscriptions only
+                var membershipStatus = DetermineMembershipStatus(subscriptions);
+                var subscriptionStatus = DetermineSubscriptionStatus(subscriptions);
 
                 var dto = new UserManagementDetailsDto
                 {
@@ -82,14 +109,30 @@ namespace ArenaApplication.Services
                     IsActive = user.IsActive,
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
-                    RegisterDate = user.MemberProfile?.CreatedAt
+                    RegisterDate = memberProfile?.CreatedAt,
+
+                    // Membership Info (based on subscriptions)
+                    MembershipStatus = membershipStatus,
+                    IsMember = membershipStatus != MembershipStatus.User,
+                    MemberSince = memberProfile?.CreatedAt,
+                    TotalSubscriptions = subscriptions.Count,
+                    CurrentSubscriptionStatus = subscriptionStatus,
+
+                    // Current Subscription
+                    CurrentSubscription = activeSubscription != null ? MapSubscriptionItem(activeSubscription) : null,
+
+                    // Subscription History (newest first)
+                    SubscriptionHistory = subscriptions
+                        .OrderByDescending(s => s.CreatedAt)
+                        .Select(s => MapSubscriptionItem(s))
+                        .ToList()
                 };
 
                 return Result<UserManagementDetailsDto>.Success(dto);
             }
             catch (Exception)
             {
-                return Result<UserManagementDetailsDto>.Failure("An error occurred while retrieving user details.");
+                return Result<UserManagementDetailsDto>.Failure(_localizer["AnErrorOccurredRetrievingUserDetails"]);
             }
         }
 
@@ -101,7 +144,7 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<UserManagementDetailsDto>.Failure("User not found.");
+                    return Result<UserManagementDetailsDto>.Failure(_localizer["UserNotFound"]);
                 }
 
                 var dto = new UserManagementDetailsDto
@@ -116,7 +159,7 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<UserManagementDetailsDto>.Failure("An error occurred while loading manage user details.");
+                return Result<UserManagementDetailsDto>.Failure(_localizer["AnErrorOccurredLoadingManageUser"]);
             }
         }
 
@@ -128,7 +171,7 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<bool>.Failure("User not found.");
+                    return Result<bool>.Failure(_localizer["UserNotFound"]);
                 }
 
                 user.IsActive = isActive;
@@ -138,7 +181,7 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<bool>.Failure("An error occurred while updating user status.");
+                return Result<bool>.Failure(_localizer["AnErrorOccurredSavingUserStatus"]);
             }
         }
 
@@ -150,7 +193,7 @@ namespace ArenaApplication.Services
 
                 if (user == null || user.IsDeleted)
                 {
-                    return Result<bool>.Failure("User not found.");
+                    return Result<bool>.Failure(_localizer["UserNotFound"]);
                 }
 
                 user.IsDeleted = true;
@@ -163,8 +206,57 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<bool>.Failure("An error occurred while deleting the user.");
+                return Result<bool>.Failure(_localizer["AnErrorOccurredDeletingUser"]);
             }
+        }
+
+        // --- Private helpers ---
+
+        /// <summary>
+        /// Determines membership status based on UserSubscriptions only.
+        /// Does NOT rely on MemberProfile existence.
+        /// Returns enum value to be localized in views.
+        /// </summary>
+        private static MembershipStatus DetermineMembershipStatus(IEnumerable<ArenaDomain.Entities.Subscription.UserSubscription>? subscriptions)
+        {
+            if (subscriptions == null || !subscriptions.Any())
+                return MembershipStatus.User;
+
+            if (subscriptions.Any(s => s.Status == SubscriptionStatus.Active))
+                return MembershipStatus.ActiveMembership;
+
+            return MembershipStatus.ExpiredMembership;
+        }
+
+        /// <summary>
+        /// Determines subscription status based on UserSubscriptions only.
+        /// Does NOT rely on MemberProfile existence.
+        /// Returns enum value to be localized in views.
+        /// </summary>
+        private static SubscriptionStatus? DetermineSubscriptionStatus(IEnumerable<ArenaDomain.Entities.Subscription.UserSubscription>? subscriptions)
+        {
+            if (subscriptions == null || !subscriptions.Any())
+                return null;
+
+            if (subscriptions.Any(s => s.Status == SubscriptionStatus.Active))
+                return SubscriptionStatus.Active;
+
+            return SubscriptionStatus.Expired;
+        }
+
+        private static UserSubscriptionItemDto MapSubscriptionItem(ArenaDomain.Entities.Subscription.UserSubscription subscription)
+        {
+            return new UserSubscriptionItemDto
+            {
+                PlanName = subscription.Plan?.NameEn ?? string.Empty,
+                Status = subscription.Status.ToString(),
+                StartDate = subscription.StartDate,
+                EndDate = subscription.EndDate,
+                RemainingSessions = subscription.RemainingSessions,
+                DurationDays = (subscription.EndDate - subscription.StartDate).Days,
+                CreatedAt = subscription.CreatedAt
+            };
         }
     }
 }
+

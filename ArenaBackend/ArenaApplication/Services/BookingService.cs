@@ -6,6 +6,7 @@ using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,24 +15,31 @@ namespace ArenaApplication.Services
 {
     public class BookingService : IBookingService
     {
-        private readonly IGenericRepository<Booking, Guid> _bookingRepo;
+         private readonly IGenericRepository<Booking, Guid> _bookingRepo;
         private readonly IUnitOfWork _unitOfWork;
-        INotificationService _notificationService;
+        private readonly INotificationService _notificationService;
+        private readonly IBackgroundJobService _backgroundJobService;
+        private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public BookingService(IGenericRepository<Booking, Guid> bookingRepo, IUnitOfWork unitOfWork,INotificationService notificationService)
 
+       public BookingService(
+            IGenericRepository<Booking, Guid> bookingRepo,
+            IUnitOfWork unitOfWork,
+            INotificationService notificationService,
+            IBackgroundJobService backgroundJobService,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _bookingRepo = bookingRepo;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
-
+            _backgroundJobService = backgroundJobService;
+            _localizer = localizer;
         }
-
         public async Task<Result<BookingDto>> CreateBooking(CreateBookingDto dto)
         {
             if (dto.BookingDate.Date < DateTime.UtcNow.Date)
             {
-                return Result<BookingDto>.Failure("Booking date cannot be in the past");
+                return Result<BookingDto>.Failure(_localizer["BookingDateCannotBeInPast"]);
             }
 
             var booking = dto.Adapt<Booking>();
@@ -39,9 +47,11 @@ namespace ArenaApplication.Services
 
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
-            await _notificationService.NotifyBookingConfirmedAsync(
+
+            await _backgroundJobService.ScheduleBookingReminderAsync(
             booking.MemberProfileId,
-             booking.BookingDate);
+            booking.BookingDate);
+          
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -60,7 +70,7 @@ namespace ArenaApplication.Services
 
             if (booking == null)
             {
-                return Result<BookingDto>.Failure("Booking not found");
+                return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
             }
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
@@ -72,12 +82,12 @@ namespace ArenaApplication.Services
 
             if (booking == null)
             {
-                return Result<BookingDto>.Failure("Booking not found");
+                return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
             }
 
             if (booking.Status == BookingStatus.Cancelled)
             {
-                return Result<BookingDto>.Failure("Booking is already cancelled");
+                return Result<BookingDto>.Failure(_localizer["BookingAlreadyCancelled"]);
             }
 
             booking.Status = BookingStatus.Cancelled;
@@ -94,28 +104,34 @@ namespace ArenaApplication.Services
 
             if (booking == null)
             {
-                return Result<BookingDto>.Failure("Booking not found");
+                return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
             }
 
             if (booking.Status == BookingStatus.Cancelled)
             {
-                return Result<BookingDto>.Failure("Cancelled bookings cannot be rescheduled");
+                return Result<BookingDto>.Failure(_localizer["CancelledBookingCannotBeRescheduled"]);
             }
 
             if (dto.BookingDate.Date < DateTime.UtcNow.Date)
             {
-                return Result<BookingDto>.Failure("Booking date cannot be in the past");
+                return Result<BookingDto>.Failure(_localizer["BookingDateCannotBeInPast"]);
             }
 
             booking.BookingDate = dto.BookingDate;
             booking.StartTime = dto.StartTime;
             booking.EndTime = dto.EndTime;
-            // Do not take Status from UpdateBookingDto during reschedule:
-            // if client doesn't send it, default enum value (0) would overwrite it.
             booking.Status = BookingStatus.Confirmed;
 
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
+
+            await _backgroundJobService.ScheduleBookingReminderAsync(
+            booking.MemberProfileId,
+            booking.BookingDate);
+
+            await _backgroundJobService.EnqueueBookingCancellationAsync(
+               booking.MemberProfileId,
+              booking.BookingDate);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }

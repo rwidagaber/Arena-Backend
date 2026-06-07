@@ -1,2 +1,11 @@
 ﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
 <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/lib/jquery-validation/localization/messages_ar.min.js"></script>
+<script>
+    var culture = '@System.Globalization.CultureInfo.CurrentUICulture.Name';
+    if (culture === 'ar-EG') {
+        $.validator.methods.date = function (value, element) {
+            return this.optional(element) || !/Invalid|NaN/.test(new Date(value));
+        };
+    }
+</script>

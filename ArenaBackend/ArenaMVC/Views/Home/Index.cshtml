@@ -1,9 +1,8 @@
 @{
-    ViewData["Title"] = "Gym Admin Dashboard";
+    ViewData["Title"] = Localizer["Arena"];
 }
 
 <style>
-    /* Home Dashboard specific styles */
     .dashboard-header {
         margin-bottom: 2rem;
     }
@@ -20,7 +19,6 @@
         font-size: 1rem;
     }
 
-    /* Metric Grid */
     .metrics-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -40,7 +38,7 @@
     }
 
     .metric-card:hover {
-        border-color: rgba(196, 176, 69, 0.4);
+        border-color: rgba(213, 235, 69, 0.4);
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
@@ -48,8 +46,8 @@
     .metric-icon {
         width: 48px;
         height: 48px;
-        background-color: rgba(196, 176, 69, 0.1);
-        border: 1px solid rgba(196, 176, 69, 0.2);
+        background-color: rgba(213, 235, 69, 0.1);
+        border: 1px solid rgba(213, 235, 69, 0.2);
         color: var(--yellow);
         border-radius: 10px;
         display: flex;
@@ -81,7 +79,7 @@
 
     .metric-change {
         font-size: 0.8rem;
-        color: #10B981; /* green success */
+        color: #10B981;
         display: flex;
         align-items: center;
         gap: 4px;
@@ -91,7 +89,6 @@
         color: #EF4444;
     }
 
-    /* Main Grid Layout */
     .dashboard-layout {
         display: grid;
         grid-template-columns: 2fr 1fr;
@@ -105,7 +102,6 @@
         }
     }
 
-    /* Analytics Chart Card */
     .chart-card {
         min-height: 350px;
     }
@@ -142,7 +138,6 @@
         border-radius: 50%;
     }
 
-    /* Mock Line Chart using SVG */
     .mock-chart-container {
         width: 100%;
         height: 220px;
@@ -154,7 +149,6 @@
         height: 100%;
     }
 
-    /* Check-ins & Actions Sidebar */
     .recent-checkins-card {
         display: flex;
         flex-direction: column;
@@ -220,7 +214,6 @@
         color: #71717A;
     }
 
-    /* Quick Shortcuts Grid */
     .shortcuts-card {
         margin-bottom: 1.5rem;
     }
@@ -250,7 +243,7 @@
     }
 
     .shortcut-btn:hover {
-        background-color: rgba(196, 176, 69, 0.08);
+        background-color: rgba(213, 235, 69, 0.08);
         border-color: var(--yellow);
         color: var(--yellow);
         transform: translateY(-2px);
@@ -262,8 +255,8 @@
 </style>
 
 <div class="dashboard-header">
-    <h1>Welcome back, Admin 👋</h1>
-    <p>Here is your overview of the Arena Fitness Platform today.</p>
+    <h1>@Localizer["Welcome1"]</h1>
+    <p>@Localizer["subWelcom"]</p>
 </div>
 
 <!-- Metrics Dashboard Grid -->
@@ -298,9 +291,9 @@
     <div class="metric-card">
         <div class="metric-icon">🔑</div>
         <div class="metric-info">
-            <span class="metric-label">Active Plans</span>
-            <span class="metric-value">@ViewBag.ActivePlans Plans</span>
-            <span class="metric-change">@ViewBag.TotalPlans total</span>
+            <span class="metric-label">@Localizer["ActivePlans"]</span>
+            <span class="metric-value">@ViewBag.ActivePlans @Localizer["Plans1"]</span>
+            <span class="metric-change">@ViewBag.TotalPlans @Localizer["TotalPlans"] </span>
         </div>
     </div>
 </div>
@@ -367,24 +360,27 @@
     <!-- Sidebar column: Quick Actions & Live feed -->
     <div>
         <!-- Quick shortcuts -->
+  
+    <div>
         <div class="dashboard-card shortcuts-card">
-            <h3 class="chart-title">Quick Administration</h3>
+            <h3 class="chart-title">@Localizer["QuickAdministration"]</h3>
             <div class="shortcuts-grid">
                 <a href="@Url.Action("Create", "SubscriptionPlans")" class="shortcut-btn">
                     <span class="shortcut-icon">➕</span>
-                    <span>Add Plan</span>
+                    <span>@Localizer["CreateSubscriptionPlan"]</span>
                 </a>
                 <a href="@Url.Action("Index", "SubscriptionPlans")" class="shortcut-btn">
                     <span class="shortcut-icon">📋</span>
-                    <span>View Plans</span>
+                    <span>@Localizer["SubscriptionPlans"]</span>
                 </a>
                 <a href="@Url.Action("Privacy", "Home")" class="shortcut-btn" style="grid-column: span 2;">
                     <span class="shortcut-icon">🛡️</span>
-                    <span>Privacy Policy & Regulations</span>
+                    <span>@Localizer["Privacy"]</span>
                 </a>
             </div>
         </div>
 
+        
         <!-- Recent Check-ins -->
         <div class="dashboard-card recent-checkins-card">
             <h3 class="chart-title">Live Gym Check-ins</h3>
@@ -417,3 +413,4 @@
         </div>
     </div>
 </div>
+

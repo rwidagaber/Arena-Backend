@@ -1,7 +1,7 @@
 @model ArenaMVC.Models.UserDetailsViewModel
 
 @{
-    ViewData["Title"] = "User Details";
+    ViewData["Title"] = Localizer["UserDetails"];
 }
 
 <link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
@@ -10,60 +10,232 @@
 <div class="subscription-admin-container">
     <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div>
-            <h1>ℹ️ User Details</h1>
-            <p>Detailed view of user profile and account configuration.</p>
+            <h1>ℹ️ @Localizer["UserDetails"]</h1>
+            <p>@Localizer["ProfileInformation"]</p>
         </div>
         <div class="booking-header-actions">
             <a class="btn btn-subscription-secondary" asp-controller="UserManagement" asp-action="Index">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>Back to Users
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>@Localizer["BackToUsers"]
             </a>
         </div>
     </div>
 
     <div class="container-fluid mt-4">
+        <!-- Row 1: Profile Information + Account Information -->
         <div class="user-details-grid">
             <!-- Profile Information Card -->
             <div class="user-details-card">
-                <h3>👤 Profile Information</h3>
+                <h3>👤 @Localizer["ProfileInformation"]</h3>
                 <div class="user-detail-row">
-                    <span class="user-detail-label">Full Name</span>
+                    <span class="user-detail-label">@Localizer["FullName"]</span>
                     <span class="user-detail-value">@Model.FullName</span>
                 </div>
                 <div class="user-detail-row">
-                    <span class="user-detail-label">Email Address</span>
+                    <span class="user-detail-label">@Localizer["EmailAddress"]</span>
                     <span class="user-detail-value">@Model.Email</span>
                 </div>
                 <div class="user-detail-row">
-                    <span class="user-detail-label">Phone Number</span>
+                    <span class="user-detail-label">@Localizer["PhoneNumber"]</span>
                     <span class="user-detail-value">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "-" : Model.PhoneNumber)</span>
                 </div>
             </div>
 
             <!-- Account Information Card -->
             <div class="user-details-card">
-                <h3>🛡️ Account Information</h3>
+                <h3>🛡️ @Localizer["AccountInformation"]</h3>
                 <div class="user-detail-row">
-                    <span class="user-detail-label">Account Status</span>
+                    <span class="user-detail-label">@Localizer["AccountStatus"]</span>
                     <span class="user-detail-value">
                         @if (Model.IsActive)
                         {
-                            <span class="user-badge badge-emerald">Active</span>
+                            <span class="user-badge badge-emerald">@Localizer["Active"]</span>
                         }
                         else
                         {
-                            <span class="user-badge badge-crimson">Inactive</span>
+                            <span class="user-badge badge-crimson">@Localizer["Inactive"]</span>
                         }
                     </span>
                 </div>
                 <div class="user-detail-row">
-                    <span class="user-detail-label">Preferred Language</span>
+                    <span class="user-detail-label">@Localizer["PreferredLanguage"]</span>
                     <span class="user-detail-value" style="text-transform: uppercase;">@Model.PreferredLanguage</span>
                 </div>
                 <div class="user-detail-row">
-                    <span class="user-detail-label">Register Date</span>
+                    <span class="user-detail-label">@Localizer["RegisterDate"]</span>
                     <span class="user-detail-value">@(Model.RegisterDate.HasValue ? Model.RegisterDate.Value.ToString("yyyy-MM-dd HH:mm:ss") : "N/A")</span>
                 </div>
             </div>
+        </div>
+
+        <!-- Row 2: Membership Information + Current Subscription -->
+        <div class="user-details-grid">
+            <!-- SECTION 1: Membership Summary Card -->
+            <div class="user-details-card">
+                <h3>🏅 @Localizer["MembershipInformation"]</h3>
+
+                <!-- Membership Status Badge -->
+                <div class="user-detail-row">
+                    <span class="user-detail-label">@Localizer["MembershipStatus"]</span>
+                    <span class="user-detail-value">
+                        @if (Model.MembershipStatus == ArenaDomain.Enums.MembershipStatus.ActiveMembership)
+                        {
+                            <span class="user-badge badge-emerald">@Localizer["ActiveMembership"]</span>
+                        }
+                        else if (Model.MembershipStatus == ArenaDomain.Enums.MembershipStatus.ExpiredMembership)
+                        {
+                            <span class="user-badge badge-orange">@Localizer["ExpiredMembership"]</span>
+                        }
+                        else
+                        {
+                            <span class="user-badge badge-gray">@Localizer["User"]</span>
+                        }
+                    </span>
+                </div>
+
+                <!-- Total Subscriptions -->
+                <div class="user-detail-row">
+                    <span class="user-detail-label">@Localizer["TotalSubscriptions"]</span>
+                    <span class="user-detail-value">@Model.TotalSubscriptions</span>
+                </div>
+
+                <!-- Current Subscription Status -->
+                <div class="user-detail-row">
+                    <span class="user-detail-label">@Localizer["CurrentSubscriptionStatus"]</span>
+                    <span class="user-detail-value">
+                        @if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Active)
+                        {
+                            <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                        }
+                        else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
+                        {
+                            <span class="user-badge badge-orange">@Localizer["Expired"]</span>
+                        }
+                        else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Cancelled)
+                        {
+                            <span class="user-badge badge-crimson">@Localizer["Cancelled"]</span>
+                        }
+                        else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Pending)
+                        {
+                            <span class="user-badge badge-amber">@Localizer["Pending"]</span>
+                        }
+                        else
+                        {
+                            <span class="user-badge badge-gray">@Localizer["NA"]</span>
+                        }
+                    </span>
+                </div>
+
+                <!-- Member Since -->
+                @if (Model.MemberSince.HasValue)
+                {
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">@Localizer["MemberSince"]</span>
+                        <span class="user-detail-value">@Model.MemberSince.Value.ToString("yyyy-MM-dd")</span>
+                    </div>
+                }
+            </div>
+
+            <!-- SECTION 2: Current Subscription Card -->
+            <div class="user-details-card">
+                <h3>📋 @Localizer["CurrentSubscription"]</h3>
+                @if (Model.CurrentSubscription != null)
+                {
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">@Localizer["PlanName"]</span>
+                        <span class="user-detail-value">@Model.CurrentSubscription.PlanName</span>
+                    </div>
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">@Localizer["SubscriptionStatus"]</span>
+                        <span class="user-detail-value">
+                            <span class="user-badge badge-emerald">@Model.CurrentSubscription.Status</span>
+                        </span>
+                    </div>
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">@Localizer["StartDate"]</span>
+                        <span class="user-detail-value">@Model.CurrentSubscription.StartDate.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">@Localizer["EndDate"]</span>
+                        <span class="user-detail-value">@Model.CurrentSubscription.EndDate.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">@Localizer["RemainingSessions"]</span>
+                        <span class="user-detail-value">@Model.CurrentSubscription.RemainingSessions</span>
+                    </div>
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">@Localizer["SubscriptionDuration"]</span>
+                        <span class="user-detail-value">@Model.CurrentSubscription.DurationDays @Localizer["Days"]</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="details-empty-state">
+                        <p>@Localizer["NoActiveSubscription"]</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Row 3: SECTION 3 - Subscription History (Full Width) -->
+        <div class="user-details-card" style="margin-bottom: 2.5rem;">
+            <h3>📜 @Localizer["SubscriptionHistory"]</h3>
+            @if (Model.SubscriptionHistory != null && Model.SubscriptionHistory.Any())
+            {
+                <div class="table-responsive">
+                    <table class="subscription-table user-history-table">
+                        <thead>
+                            <tr>
+                                <th>@Localizer["PlanName"]</th>
+                                <th>@Localizer["StartDate"]</th>
+                                <th>@Localizer["EndDate"]</th>
+                                <th>@Localizer["Status"]</th>
+                                <th>@Localizer["RemainingSessions"]</th>
+                                <th>@Localizer["CreatedAt"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sub in Model.SubscriptionHistory)
+                            {
+                                <tr class="history-row">
+                                    <td data-label="@Localizer["PlanName"]" class="history-plan-cell">@sub.PlanName</td>
+                                    <td data-label="@Localizer["StartDate"]" class="history-start-cell">@sub.StartDate.ToString("yyyy-MM-dd")</td>
+                                    <td data-label="@Localizer["EndDate"]" class="history-end-cell">@sub.EndDate.ToString("yyyy-MM-dd")</td>
+                                    <td data-label="@Localizer["Status"]" class="history-status-cell">
+                                        @if (sub.Status == "Active")
+                                        {
+                                            <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                                        }
+                                        else if (sub.Status == "Expired")
+                                        {
+                                            <span class="user-badge badge-orange">@Localizer["Expired"]</span>
+                                        }
+                                        else if (sub.Status == "Cancelled")
+                                        {
+                                            <span class="user-badge badge-crimson">@Localizer["Cancelled"]</span>
+                                        }
+                                        else if (sub.Status == "Pending")
+                                        {
+                                            <span class="user-badge badge-amber">@Localizer["Pending"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="user-badge badge-gray">@sub.Status</span>
+                                        }
+                                    </td>
+                                    <td data-label="@Localizer["RemainingSessions"]" class="history-sessions-cell">@sub.RemainingSessions</td>
+                                    <td data-label="@Localizer["CreatedAt"]" class="history-created-cell">@sub.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="details-empty-state">
+                    <p>@Localizer["NoSubscriptionHistoryAvailable"]</p>
+                </div>
+            }
         </div>
     </div>
 </div>
