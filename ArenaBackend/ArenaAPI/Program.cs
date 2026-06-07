@@ -185,10 +185,6 @@ namespace ArenaAPI
 
             // Localization Middleware
 
-            var supportedCultures = new[]{"en-US","ar-EG"};
-
-
-
             app.UseRequestLocalization();
 
             // Authentication & Authorization
