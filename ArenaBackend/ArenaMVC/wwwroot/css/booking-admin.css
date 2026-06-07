@@ -72,16 +72,16 @@
 }
 
 .booking-table tbody tr:hover td {
-    background-color: rgba(230, 200, 120, 0.02) !important;
+    background-color: rgba(217, 237, 115, 0.02) !important;
 }
 
 /* Warm Champagne Gold for booking info columns 1-4 on hover */
 .booking-table tbody tr:hover td:nth-child(-n+4) {
-    color: #E6C878 !important;
+    color: #d9ed73 !important;
 }
 
 .booking-table tbody tr:hover td:first-child {
-    border-left-color: rgba(196, 176, 69, 0.5) !important;
+    border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
 
 .booking-table td {
