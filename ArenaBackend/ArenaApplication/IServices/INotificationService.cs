@@ -27,6 +27,7 @@ namespace ArenaApplication.IServices
         Task NotifyEmailConfirmationAsync(Guid userId, string email, string otp, CancellationToken cancellationToken = default);
         Task NotifyWelcomeAsync(Guid memberProfileId, string firstName, CancellationToken cancellationToken = default);
 
+        Task NotifyPasswordResetAsync(string email, string resetToken, string userEmail);
         // ── Subscriptions & Payments ──────────────────────────────────────────
         Task NotifyPaymentConfirmedAsync(Guid memberProfileId, decimal amount, string planName, CancellationToken cancellationToken = default);
         Task NotifySubscriptionExpiringAsync(Guid memberProfileId, int daysLeft, CancellationToken cancellationToken = default);

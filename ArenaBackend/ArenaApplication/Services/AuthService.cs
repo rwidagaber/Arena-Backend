@@ -10,10 +10,14 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using System.Data;
 using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace ArenaApplication.Services
 {
@@ -237,13 +241,22 @@ namespace ArenaApplication.Services
         public async Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
+
             if (user is null)
                 return Result.Success();
 
+            // مش محتاج OTP خالص
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            await _backgroundJobService.EnqueuePasswordResetTokenEmailAsync(
+                user.Email!,
+                resetToken,
+                dto.Email);
 
             return Result.Success();
         }
+
+
 
         public async Task<Result> ResetPasswordAsync(ResetPasswordDto dto)
         {
@@ -251,15 +264,25 @@ namespace ArenaApplication.Services
             if (user is null)
                 return Result.Failure(_localizer["UserNotFound"]);
 
-            var result = await _userManager.ResetPasswordAsync(
-                user, dto.Token, dto.NewPassword);
+            try
+            {
+                // Decode الـ token
+                var decodedToken = Encoding.UTF8.GetString(
+                    WebEncoders.Base64UrlDecode(dto.Token));
 
-            if (!result.Succeeded)
-                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+                var result = await _userManager.ResetPasswordAsync(
+                    user, decodedToken, dto.NewPassword);
 
-            return Result.Success();
+                if (!result.Succeeded)
+                    return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+                return Result.Success();
+            }
+            catch (FormatException)
+            {
+                return Result.Failure("Invalid or malformed reset token.");
+            }
         }
-
         private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)
         {
             var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
