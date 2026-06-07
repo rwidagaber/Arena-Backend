@@ -51,8 +51,8 @@
 }
 
 .subscription-card:hover {
-    border-color: rgba(196, 176, 69, 0.4);
-    box-shadow: 0 8px 24px rgba(196, 176, 69, 0.15);
+    border-color: rgba(213, 235, 69, 0.4);
+    box-shadow: 0 8px 24px rgba(213, 235, 69, 0.15);
     transform: translateY(-3px);
 }
 
@@ -75,8 +75,8 @@
 .subscription-badge {
     display: inline-block;
     padding: 0.4rem 0.8rem;
-    background-color: rgba(196, 176, 69, 0.1);
-    border: 1px solid rgba(196, 176, 69, 0.3);
+    background-color: rgba(213, 235, 69, 0.1);
+    border: 1px solid rgba(213, 235, 69, 0.3);
     color: var(--yellow);
     border-radius: 20px;
     font-size: 0.8rem;
@@ -134,7 +134,7 @@
     background-color: rgba(255, 255, 255, 0.05);
     border-color: var(--yellow);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15);
+    box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15);
 }
 
 .subscription-form-group textarea {
@@ -156,9 +156,9 @@
 }
 
 .btn-subscription-primary:hover {
-    background-color: #ebd45b;
+    background-color: #e2f574;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(196, 176, 69, 0.25);
+    box-shadow: 0 6px 16px rgba(213, 235, 69, 0.25);
 }
 
 .btn-subscription-secondary {
