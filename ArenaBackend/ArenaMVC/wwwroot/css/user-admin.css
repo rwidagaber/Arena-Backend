@@ -1,7 +1,14 @@
 /* User Management Admin - Design Styles */
 
 /* Common Transitions and Animations */
-.btn, .user-details-card, .subscription-table tbody tr, .form-control, .slider, .switch-container, .action-icon-btn, .user-badge {
+.btn,
+.user-details-card,
+.subscription-table tbody tr,
+.form-control,
+.slider,
+.switch-container,
+.action-icon-btn,
+.user-badge {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
@@ -185,7 +192,7 @@
 
 [dir="rtl"] .user-detail-row:hover {
     transform: translateX(-3px) !important;
-    border-right-color: rgba(196, 176, 69, 0.5) !important;
+    border-right-color: rgba(213, 235, 69, 0.5) !important;
 }
 
 .user-detail-label {
@@ -284,11 +291,11 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .slider {
+input:checked+.slider {
     background-color: #34d399;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
     transform: translateX(28px);
 }
 
@@ -439,20 +446,21 @@ input:checked + .slider:before {
 }
 
 .user-contact-cell a {
-    color: rgba(255,255,255,0.95) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
     font-weight: 600;
     text-decoration: none;
     font-size: 0.9rem;
 }
 
 .user-contact-cell .contact-phone {
-    color: rgba(255,255,255,0.55);
+    color: rgba(255, 255, 255, 0.55);
     font-size: 0.85rem;
     font-weight: 500;
 }
 
 .actions-cell .action-icon-btn svg {
-    width: 16px; height: 16px;
+    width: 16px;
+    height: 16px;
 }
 
 /* Table Wrapper */
@@ -467,7 +475,7 @@ input:checked + .slider:before {
 
 /* Table Structure */
 .user-mgmt-table {
-    border-collapse: separate !important;
+    border-collapse: collapse !important;
     border-spacing: 0 !important;
     width: 100%;
     table-layout: fixed !important;
@@ -527,29 +535,30 @@ input:checked + .slider:before {
 }
 
 .user-mgmt-table tbody tr:hover td {
-    background-color: rgba(230, 200, 120, 0.02) !important;
+    background-color: rgba(217, 237, 115, 0.02) !important;
 }
 
 .user-mgmt-table tbody tr:hover td:nth-child(-n+2) {
-    color: #E6C878 !important;
+    color: #d9ed73 !important;
 }
 
 .user-mgmt-table tbody tr:hover .user-contact-cell a {
-    color: #E6C878 !important;
+    color: #d9ed73 !important;
 }
 
 .user-mgmt-table tbody tr:hover .user-contact-cell .contact-phone {
-    color: #E6C878 !important;
+    color: #d9ed73 !important;
 }
 
 .user-mgmt-table tbody tr:hover td:first-child {
-    border-left-color: rgba(196, 176, 69, 0.5) !important;
+    border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
+
 .subscription-table tbody tr:hover td {
     background-color: rgba(217, 237, 115, 0.02) !important;
 }
 
-/* Warm Champagne Gold for user info columns 1-4 on hover */
+/* Warm Pastel Green for user info columns 1-4 on hover */
 .subscription-table tbody tr:hover td:nth-child(-n+4) {
     color: #d9ed73 !important;
 }
@@ -559,17 +568,34 @@ input:checked + .slider:before {
 }
 
 [dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child {
-    border-right-color: rgba(196, 176, 69, 0.5) !important;
+    border-right-color: rgba(213, 235, 69, 0.5) !important;
 }
 
 /* Desktop column widths */
 @media (min-width: 768px) {
-    .col-user-name { width: 18%; }
-    .col-user-contact { width: 22%; }
-    .col-user-account { width: 13%; }
-    .col-user-member { width: 15%; }
-    .col-user-subscription { width: 18%; }
-    .col-user-actions { width: 14%; }
+    .col-user-name {
+        width: 18%;
+    }
+
+    .col-user-contact {
+        width: 22%;
+    }
+
+    .col-user-account {
+        width: 13%;
+    }
+
+    .col-user-member {
+        width: 15%;
+    }
+
+    .col-user-subscription {
+        width: 18%;
+    }
+
+    .col-user-actions {
+        width: 14%;
+    }
 
     /* Centered Table Headers and Cell Contents */
     .user-mgmt-table th,
@@ -630,7 +656,8 @@ input:checked + .slider:before {
     }
 
     .actions-cell .action-icon-btn svg {
-        width: 14px; height: 14px;
+        width: 14px;
+        height: 14px;
     }
 
     .user-details-grid {
@@ -647,6 +674,7 @@ input:checked + .slider:before {
    MOBILE RESPONSIVE CARDS (< 768px)
    ---------------------------------------------------- */
 @media (max-width: 767.98px) {
+
     /* Table wrapper becomes transparent */
     .user-table-wrap {
         background: transparent;
@@ -699,8 +727,8 @@ input:checked + .slider:before {
 
     .user-mgmt-table tbody tr:hover {
         transform: translateY(-2px) !important;
-        border-color: rgba(196, 176, 69, 0.4) !important;
-        box-shadow: 0 6px 16px rgba(196, 176, 69, 0.15) !important;
+        border-color: rgba(213, 235, 69, 0.4) !important;
+        box-shadow: 0 6px 16px rgba(213, 235, 69, 0.15) !important;
     }
 
     /* Each cell becomes a labeled row */
@@ -721,12 +749,29 @@ input:checked + .slider:before {
     }
 
     /* Ordering */
-    .user-name-cell { order: 1; }
-    .user-contact-cell { order: 2; }
-    .user-account-cell { order: 3; }
-    .user-member-cell { order: 4; }
-    .user-subscription-cell { order: 5; }
-    .user-actions-cell { order: 6; }
+    .user-name-cell {
+        order: 1;
+    }
+
+    .user-contact-cell {
+        order: 2;
+    }
+
+    .user-account-cell {
+        order: 3;
+    }
+
+    .user-member-cell {
+        order: 4;
+    }
+
+    .user-subscription-cell {
+        order: 5;
+    }
+
+    .user-actions-cell {
+        order: 6;
+    }
 
     /* Full Name as primary heading */
     .user-mgmt-table .user-name-cell {
@@ -798,7 +843,8 @@ input:checked + .slider:before {
     }
 
     .actions-cell .action-icon-btn svg {
-        width: 16px; height: 16px;
+        width: 16px;
+        height: 16px;
     }
 
     /* Details page: single column grid */
@@ -917,6 +963,8 @@ input:checked + .slider:before {
 .user-history-table {
     margin-top: 0 !important;
     table-layout: auto !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
 }
 
 .user-history-table thead {
@@ -924,7 +972,7 @@ input:checked + .slider:before {
 }
 
 .user-history-table th {
-    color: rgba(196, 176, 69, 0.85) !important;
+    color: rgba(213, 235, 69, 0.85) !important;
     font-size: 0.78rem !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
@@ -948,8 +996,8 @@ input:checked + .slider:before {
 }
 
 .user-history-table tbody tr:hover td {
-    background-color: rgba(230, 200, 120, 0.02) !important;
-    color: #E6C878 !important;
+    background-color: rgba(217, 237, 115, 0.02) !important;
+    color: #d9ed73 !important;
 }
 
 .user-history-table tbody tr td:first-child {
@@ -971,11 +1019,11 @@ input:checked + .slider:before {
 }
 
 .user-history-table tbody tr:hover td:first-child {
-    border-left-color: rgba(196, 176, 69, 0.5) !important;
+    border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
 
 [dir="rtl"] .user-history-table tbody tr:hover td:first-child {
-    border-right-color: rgba(196, 176, 69, 0.5) !important;
+    border-right-color: rgba(213, 235, 69, 0.5) !important;
 }
 
 /* Desktop styles for subscription history table */
@@ -1009,7 +1057,7 @@ input:checked + .slider:before {
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 16px !important;
     color: var(--whiteout) !important;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255,255,255,0.04) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
     overflow: hidden;
 }
 
@@ -1101,9 +1149,5 @@ input:checked + .slider:before {
 }
 
 .modal-dark .btn-subscription-danger:active {
-    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
-    border-color: #991b1b !important;
-    color: #fff !important;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
-    transform: scale(0.98) !important;
+    transform: scale(0.98);
 }

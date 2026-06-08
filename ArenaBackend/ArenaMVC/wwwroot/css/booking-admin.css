@@ -45,7 +45,7 @@
     background-color: rgba(255, 255, 255, 0.05) !important;
     border-color: var(--yellow) !important;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15) !important;
 }
 
 .booking-filters-card select.form-select option {
@@ -74,7 +74,8 @@
 .booking-table {
     width: 100%;
     margin: 0;
-    border-collapse: collapse;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
 }
 
 .booking-table thead {
@@ -128,11 +129,26 @@
     .booking-table {
         table-layout: fixed !important;
     }
-    .col-booking-member { width: 22%; }
-    .col-booking-date { width: 22%; }
-    .col-booking-start { width: 16%; }
-    .col-booking-end { width: 16%; }
-    .col-booking-status { width: 24%; }
+
+    .col-booking-member {
+        width: 22%;
+    }
+
+    .col-booking-date {
+        width: 22%;
+    }
+
+    .col-booking-start {
+        width: 16%;
+    }
+
+    .col-booking-end {
+        width: 16%;
+    }
+
+    .col-booking-status {
+        width: 24%;
+    }
 
     .booking-table th,
     [dir="rtl"] .booking-table th {
@@ -147,18 +163,19 @@
     .booking-table tbody tr td:first-child {
         border-left: 3px solid transparent !important;
     }
-.booking-table tbody tr:hover td {
-    background-color: rgba(217, 237, 115, 0.02) !important;
-}
 
-/* Warm Champagne Gold for booking info columns 1-4 on hover */
-.booking-table tbody tr:hover td:nth-child(-n+4) {
-    color: #d9ed73 !important;
-}
+    .booking-table tbody tr:hover td {
+        background-color: rgba(217, 237, 115, 0.02) !important;
+    }
 
-.booking-table tbody tr:hover td:first-child {
-    border-left-color: rgba(213, 235, 69, 0.5) !important;
-}
+    /* Warm Pastel Green for booking info columns 1-4 on hover */
+    .booking-table tbody tr:hover td:nth-child(-n+4) {
+        color: #d9ed73 !important;
+    }
+
+    .booking-table tbody tr:hover td:first-child {
+        border-left-color: rgba(213, 235, 69, 0.5) !important;
+    }
 
     .booking-table tbody tr:hover {
         transform: translateX(-3px) !important;
@@ -169,15 +186,15 @@
     }
 
     .booking-table tbody tr:hover td {
-        background-color: rgba(230, 200, 120, 0.02) !important;
+        background-color: rgba(217, 237, 115, 0.02) !important;
     }
 
     .booking-table tbody tr:hover td:not(.booking-status-cell-wrap) {
-        color: #E6C878 !important;
+        color: #d9ed73 !important;
     }
 
     .booking-table tbody tr:hover td:first-child {
-        border-left-color: rgba(196, 176, 69, 0.5) !important;
+        border-left-color: rgba(213, 235, 69, 0.5) !important;
     }
 
     [dir="rtl"] .booking-table tbody tr td:first-child {
@@ -186,7 +203,7 @@
     }
 
     [dir="rtl"] .booking-table tbody tr:hover td:first-child {
-        border-right-color: rgba(196, 176, 69, 0.5) !important;
+        border-right-color: rgba(213, 235, 69, 0.5) !important;
     }
 }
 
@@ -271,7 +288,9 @@
 }
 
 @keyframes booking-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .booking-header-actions {
@@ -294,7 +313,7 @@
    TABLET & MOBILE RESPONSIVE FILTERS (<= 1024px)
    ---------------------------------------------------- */
 @media (max-width: 1024px) {
-    .booking-filters-card .row > [class*="col-"] {
+    .booking-filters-card .row>[class*="col-"] {
         width: 100% !important;
         flex: 0 0 100% !important;
         max-width: 100% !important;
@@ -375,8 +394,8 @@
 
     .booking-table tbody tr:hover {
         transform: translateY(-2px) !important;
-        border-color: rgba(196, 176, 69, 0.4) !important;
-        box-shadow: 0 6px 16px rgba(196, 176, 69, 0.15) !important;
+        border-color: rgba(213, 235, 69, 0.4) !important;
+        box-shadow: 0 6px 16px rgba(213, 235, 69, 0.15) !important;
     }
 
     .booking-table tbody tr td {
@@ -396,11 +415,25 @@
     }
 
     /* Flex ordering */
-    .booking-member-cell { order: 1; }
-    .booking-date-cell { order: 2; }
-    .booking-start-cell { order: 3; }
-    .booking-end-cell { order: 4; }
-    .booking-status-cell { order: 5; }
+    .booking-member-cell {
+        order: 1;
+    }
+
+    .booking-date-cell {
+        order: 2;
+    }
+
+    .booking-start-cell {
+        order: 3;
+    }
+
+    .booking-end-cell {
+        order: 4;
+    }
+
+    .booking-status-cell {
+        order: 5;
+    }
 
     /* Member name as card heading */
     .booking-table .booking-member-cell {
