@@ -208,8 +208,7 @@
   "EmailSubscriptionExpiredSubject": "انتهى اشتراكك",
   "EmailSubscriptionExpiredBody": "<h2>مرحبًا {0}!</h2><p>انتهى اشتراكك في أرينا.</p><p>جدد خطتك للاستمرار في حجز الجلسات واستخدام ميزات الذكاء الاصطناعي.</p>",
 
-  "ArenaBrandName": "أرينا",
-  "ArenaBrandNameWithSlogan": "أرينا - رحلة لياقتك",
+  "ArenaBrandNameWithSlogan": "Arena - رحلة لياقتك",
   "FullName": "الاسم الكامل",
   "EmailAddress": "البريد الإلكتروني",
   "PhoneNumber": "رقم الهاتف",
