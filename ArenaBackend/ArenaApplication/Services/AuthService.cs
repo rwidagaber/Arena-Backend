@@ -1,4 +1,5 @@
-﻿using ArenaApplication.Dtos.AuthDtos;
+using ArenaApplication.Dtos.AuthDtos;
+using ArenaApplication.Dtos.loginDto;
 using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.RegisterDto;
 using ArenaApplication.Dtos.UserSupscriptionDto;
@@ -181,6 +182,12 @@ namespace ArenaApplication.Services
             if (user is null)
                 return Result<AuthResponseDto>.Failure(_localizer["UserNotFound"]);
             var response = await GenerateAuthResponseAsync(user);
+
+            // Check if user has active subscription
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+            response.IsSubscribed = activeSubscription is not null;
+
             return Result<AuthResponseDto>.Success(response);
         }
 
