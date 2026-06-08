@@ -27,7 +27,6 @@ using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 using System.Globalization;
 
@@ -54,8 +53,6 @@ namespace ArenaAPI
                 options.DefaultRequestCulture = new RequestCulture("en-US");
                 options.SupportedCultures = supportedCultures;
                 options.SupportedUICultures = supportedCultures;
-                
-                // Keep Accept-Language header as the primary provider
                 options.RequestCultureProviders = new List<IRequestCultureProvider>
                 {
                     new AcceptLanguageHeaderRequestCultureProvider(),
@@ -97,6 +94,7 @@ namespace ArenaAPI
                     builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddHangfireServer();
             builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+            builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
             // ── Mapster ───────────────────────────────────────────────────
             builder.Services.AddMapster();
@@ -130,6 +128,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
+            builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 
             // ── Profile ───────────────────────────────────────────────────
             builder.Services.AddScoped<IProfileService, ProfileService>();
@@ -203,7 +202,6 @@ namespace ArenaAPI
             if (!app.Environment.IsDevelopment())
                 app.UseHttpsRedirection();
 
-            // Localization middleware configuration
             var localizationOptions = new RequestLocalizationOptions()
                 .SetDefaultCulture("en-US")
                 .AddSupportedCultures("en-US", "ar-EG")
