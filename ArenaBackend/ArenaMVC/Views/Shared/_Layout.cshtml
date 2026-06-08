@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="~/ArenaMVC.styles.css?v=@DateTime.UtcNow.Ticks" asp-append-version="true" />
 </head>
 <body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="sidebar">
         <div class="sidebar-brand">
             <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
@@ -38,15 +39,14 @@
                     <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">@Localizer["SubscriptionPlans"]</a>
                 </li>
                 <li class="nav-item">
+                @*     <a class="nav-link @(currentController == "UserSubscriptions" ? "active" : "")" asp-area="" asp-controller="UserSubscriptions" asp-action="Index">@Localizer["UserSubscriptions"]</a>
+                </li>
+                <li class="nav-item"> *@
                     <a class="nav-link @(currentController == "UserManagement" ? "active" : "")" asp-area="" asp-controller="UserManagement" asp-action="Index">@Localizer["UserManagement"]</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">@Localizer["Bookings"]</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Today" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Today">@Localizer["TodaysBookings"]</a>
-                </li>
-             
             </ul>
         </nav>
         <div class="sidebar-footer">
@@ -71,6 +71,15 @@
         </div>
     </aside>
     <div class="main-content">
+        <header class="main-header">
+            <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+                <span class="hamburger-icon">&#9776;</span>
+            </button>
+            <div class="header-brand">
+                <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+            </div>
+            <div style="width: 32px;"></div>
+        </header>
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
@@ -84,6 +93,23 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+                
+                overlay.addEventListener('click', function () {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
         document.addEventListener('click', function (e) {
             document.querySelectorAll('.culture-dropdown.open').forEach(function (dd) {
                 if (!dd.contains(e.target)) {

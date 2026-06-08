@@ -23,10 +23,22 @@ namespace ArenaApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserSubscriptionDto>>> GetAll(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAll(
+            CancellationToken cancellationToken,
+            [FromQuery] int? page = null,
+            [FromQuery] int? pageSize = null)
         {
             try
             {
+                if (page.HasValue || pageSize.HasValue)
+                {
+                    var result = await _userSubscriptionService.GetAllPagedAsync(
+                        page ?? 1,
+                        pageSize ?? 10,
+                        cancellationToken);
+                    return Ok(result);
+                }
+
                 var subscriptions = await _userSubscriptionService.GetAllAsync(cancellationToken);
                 return Ok(subscriptions);
             }

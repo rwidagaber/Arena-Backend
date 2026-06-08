@@ -21,14 +21,14 @@
 
     <div class="booking-table-wrap">
         <div class="table-responsive">
-            <table class="booking-table">
+            <table class="booking-table" aria-label="@Localizer["TodaysBookings"]">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">@Localizer["Date"]</th>
-                        <th style="width: 15%;">@Localizer["Start"]</th>
-                        <th style="width: 15%;">@Localizer["End"]</th>
-                        <th style="width: 35%;">@Localizer["MemberProfileName"]</th>
-                        <th style="width: 15%;">@Localizer["Status"]</th>
+                        <th class="col-booking-member">@Localizer["MemberProfileName"]</th>
+                        <th class="col-booking-date">@Localizer["Date"]</th>
+                        <th class="col-booking-start">@Localizer["Start"]</th>
+                        <th class="col-booking-end">@Localizer["End"]</th>
+                        <th class="col-booking-status">@Localizer["Status"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,11 +55,13 @@
                                             : "booking-badge booking-badge-other";
 
                             <tr>
-                                <td>@b.BookingDate.ToString("yyyy-MM-dd")</td>
-                                <td>@b.StartTime.ToString(@"hh\:mm")</td>
-                                <td>@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
-                                <td>@b.MemberProfileName</td>
-                                <td><span class="@badgeClass">@Localizer[b.Status.ToString()]</span></td>
+                                <td data-label="@Localizer["MemberProfileName"]" class="booking-member-cell">@b.MemberProfileName</td>
+                                <td data-label="@Localizer["Date"]" class="booking-date-cell">@b.BookingDate.ToString("yyyy-MM-dd")</td>
+                                <td data-label="@Localizer["Start"]" class="booking-start-cell">@b.StartTime.ToString(@"hh\:mm")</td>
+                                <td data-label="@Localizer["End"]" class="booking-end-cell">@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
+                                <td data-label="@Localizer["Status"]" class="booking-status-cell">
+                                    <span class="@badgeClass">@Localizer[b.Status.ToString()]</span>
+                                </td>
                             </tr>
                         }
                     }

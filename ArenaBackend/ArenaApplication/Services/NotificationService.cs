@@ -114,6 +114,9 @@ namespace ArenaApplication.Services
                 NotificationType.Success,
                 cancellationToken);
 
+        public Task NotifyPasswordResetAsync(string email, string resetToken, string userEmail) =>
+    _emailService.SendPasswordResetTokenAsync(email, resetToken, userEmail);
+
         // =========================
         // SUBSCRIPTIONS & PAYMENTS
         // =========================

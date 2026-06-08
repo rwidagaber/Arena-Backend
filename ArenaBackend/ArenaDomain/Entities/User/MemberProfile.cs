@@ -32,6 +32,31 @@ namespace ArenaDomain.Entities
 
         public string? ProfileImageUrl { get; set; }
 
+        public string? FirstName { get; set; }
+
+
+        public string? Goal { get; set; }
+        // "WeightLoss" | "MuscleGain" | "Endurance" | "GeneralFitness"
+
+        public string? ActivityLevel { get; set; }
+        // "Sedentary" | "Light" | "Moderate" | "Active" | "VeryActive"
+
+        public string? HealthConditions { get; set; }
+        // "Diabetes, Knee Injury, Hypertension"
+
+        public string? Injuries { get; set; }
+        // "Lower back pain, Left knee"
+
+        public string? FitnessExperience { get; set; }
+        // "Beginner" | "Intermediate" | "Advanced"
+
+        public string? DietaryRestrictions { get; set; }
+        // "Vegetarian, Lactose Intolerant"
+
+        public string? Equipment { get; set; }
+       
+
+
         // Navigation Properties
         public virtual ICollection<UserSubscription> Subscriptions { get; set; } = [];
         public virtual ICollection<Notification> Notifications { get; set; } = [];

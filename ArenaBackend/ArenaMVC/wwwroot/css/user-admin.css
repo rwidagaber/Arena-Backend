@@ -67,6 +67,25 @@
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.06) !important;
 }
 
+.badge-orange {
+    background-color: rgba(245, 158, 11, 0.08) !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+    color: #fbbf24 !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.06) !important;
+}
+
+.badge-amber {
+    background-color: rgba(251, 191, 36, 0.08) !important;
+    border: 1px solid rgba(251, 191, 36, 0.25) !important;
+    color: #fbbf24 !important;
+}
+
+.badge-gray {
+    background-color: rgba(160, 160, 171, 0.08) !important;
+    border: 1px solid rgba(160, 160, 171, 0.2) !important;
+    color: #a0a0ab !important;
+}
+
 /* Search Input Styling */
 .search-input-wrapper {
     position: relative;
@@ -81,7 +100,7 @@
 .search-input-wrapper input {
     height: 46px;
     background-color: rgba(22, 22, 26, 0.5) !important;
-    border: 1px solid rgba(196, 176, 69, 0.15) !important;
+    border: 1px solid rgba(213, 235, 69, 0.15) !important;
     border-radius: 8px !important;
     color: var(--whiteout) !important;
     padding: 0 1rem 0 3rem !important;
@@ -91,9 +110,9 @@
 }
 
 .search-input-wrapper input:focus {
-    border-color: rgba(196, 176, 69, 0.5) !important;
+    border-color: rgba(213, 235, 69, 0.5) !important;
     background-color: rgba(22, 22, 26, 0.75) !important;
-    box-shadow: 0 0 0 3px rgba(196, 176, 69, 0.15), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
     outline: none;
 }
 
@@ -103,7 +122,7 @@
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 2rem;
     margin-bottom: 2.5rem;
-    align-items: stretch; /* Forces equal heights */
+    align-items: stretch;
 }
 
 .user-details-card {
@@ -118,7 +137,7 @@
 
 .user-details-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(196, 176, 69, 0.3);
+    border-color: rgba(213, 235, 69, 0.3);
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
 }
 
@@ -152,8 +171,18 @@
 
 .user-detail-row:hover {
     transform: translateX(3px) !important;
-    background-color: rgba(230, 200, 120, 0.02) !important;
-    border-left-color: rgba(196, 176, 69, 0.5) !important;
+    background-color: rgba(217, 237, 115, 0.02) !important;
+    border-left-color: rgba(213, 235, 69, 0.5) !important;
+}
+
+[dir="rtl"] .user-detail-row {
+    border-left: none;
+    border-right: 3px solid transparent;
+}
+
+[dir="rtl"] .user-detail-row:hover {
+    transform: translateX(-3px) !important;
+    border-right-color: rgba(196, 176, 69, 0.5) !important;
 }
 
 .user-detail-label {
@@ -166,7 +195,7 @@
 }
 
 .user-detail-row:hover .user-detail-label {
-    color: #D4AF37 !important;
+    color: #cbe83e !important;
 }
 
 .user-detail-value {
@@ -177,8 +206,18 @@
     transition: color 0.25s ease !important;
 }
 
+[dir="rtl"] .user-detail-value {
+    text-align: left;
+}
+
 .user-detail-row:hover .user-detail-value {
-    color: #E6C878 !important;
+    color: #d9ed73 !important;
+}
+
+.details-empty-state {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--autonomous);
 }
 
 /* Switch Toggle Switch UI */
@@ -224,7 +263,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #f87171; /* Crimson when unchecked (Inactive) */
+    background-color: #f87171;
     transition: .4s;
     border-radius: 34px;
 }
@@ -243,7 +282,7 @@
 }
 
 input:checked + .slider {
-    background-color: #34d399; /* Emerald when checked (Active) */
+    background-color: #34d399;
 }
 
 input:checked + .slider:before {
@@ -279,7 +318,7 @@ input:checked + .slider:before {
 
 .manage-user-card:hover {
     transform: translateY(-5px) scale(1.01);
-    border-color: rgba(196, 176, 69, 0.3);
+    border-color: rgba(213, 235, 69, 0.3);
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
 }
 
@@ -313,14 +352,14 @@ input:checked + .slider:before {
     transform: translateY(-2px);
 }
 
-/* Icon Action Buttons Redesign (SaaS Panel Vercel/Stripe style) */
+/* Icon Action Buttons (SaaS Panel Vercel/Stripe style) */
 .action-icon-btn {
-    width: 40px !important;
-    height: 40px !important;
+    width: 34px !important;
+    height: 34px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 50% !important; /* Perfectly circular */
+    border-radius: 50% !important;
     border: 1px solid transparent !important;
     cursor: pointer !important;
     text-decoration: none !important;
@@ -338,21 +377,21 @@ input:checked + .slider:before {
     border-color: rgba(14, 165, 233, 0.45) !important;
     color: #38bdf8 !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 12px rgba(14, 165, 233, 0.25) !important;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.22) !important;
 }
 
 .btn-action-settings {
-    background-color: rgba(196, 176, 69, 0.04) !important;
-    border-color: rgba(196, 176, 69, 0.15) !important;
+    background-color: rgba(213, 235, 69, 0.04) !important;
+    border-color: rgba(213, 235, 69, 0.15) !important;
     color: var(--yellow) !important;
 }
 
 .btn-action-settings:hover {
-    background-color: rgba(196, 176, 69, 0.1) !important;
-    border-color: rgba(196, 176, 69, 0.45) !important;
+    background-color: rgba(213, 235, 69, 0.1) !important;
+    border-color: rgba(213, 235, 69, 0.45) !important;
     color: var(--yellow) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 12px rgba(196, 176, 69, 0.25) !important;
+    box-shadow: 0 0 12px rgba(213, 235, 69, 0.25) !important;
 }
 
 .btn-action-delete {
@@ -366,103 +405,657 @@ input:checked + .slider:before {
     border-color: rgba(239, 68, 68, 0.45) !important;
     color: #fca5a5 !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.25) !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.22) !important;
 }
 
 .action-icon-btn:active {
     transform: scale(0.96) !important;
 }
 
-/* Table Sleek Upgrades (Data dense, white-space nowrap) */
-.subscription-table {
+/* Name / Contact visual hierarchy */
+.user-name-cell {
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    color: var(--whiteout) !important;
+}
+
+.user-contact-cell .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.user-contact-cell a {
+    color: rgba(255,255,255,0.95) !important;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.user-contact-cell .contact-phone {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.actions-cell .action-icon-btn svg {
+    width: 16px; height: 16px;
+}
+
+/* Table Wrapper */
+.user-table-wrap {
+    position: relative;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Table Structure */
+.user-mgmt-table {
     border-collapse: separate !important;
     border-spacing: 0 !important;
     width: 100%;
+    table-layout: fixed !important;
+    margin-top: 0 !important;
 }
 
-.subscription-table thead {
-    background-color: rgba(10, 10, 12, 0.75) !important;
+.user-mgmt-table thead {
+    background-color: var(--card-bg) !important;
 }
 
 .subscription-table th {
-    color: rgba(196, 176, 69, 0.85) !important;
+    color: rgba(213, 235, 69, 0.85) !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 1px !important;
-    padding: 1.15rem 1.25rem !important;
+    padding: 1rem 0.85rem !important;
     border-bottom: 2px solid rgba(255, 255, 255, 0.05) !important;
     border-top: none !important;
-    white-space: nowrap !important;
+    white-space: normal !important;
+    text-align: left;
 }
 
-.subscription-table tbody tr {
+[dir="rtl"] .user-mgmt-table th {
+    text-align: right;
+}
+
+.user-mgmt-table tbody tr {
     background-color: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     transition: transform 0.25s ease, background-color 0.25s ease !important;
 }
 
-.subscription-table tbody tr td {
+.user-mgmt-table tbody tr td {
     border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
-    white-space: nowrap !important;
+    padding: 1rem 0.85rem !important;
+    vertical-align: middle !important;
+    word-break: break-word;
     transition: color 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease !important;
 }
 
-.subscription-table tbody tr td:first-child {
+.user-mgmt-table tbody tr td:first-child {
     border-left: 3px solid transparent !important;
 }
 
-.subscription-table tbody tr:hover {
+[dir="rtl"] .user-mgmt-table tbody tr td:first-child {
+    border-left: none !important;
+    border-right: 3px solid transparent !important;
+}
+
+.user-mgmt-table tbody tr:hover {
+    transform: translateX(-3px) !important;
+}
+
+[dir="rtl"] .user-mgmt-table tbody tr:hover {
     transform: translateX(3px) !important;
 }
 
-.subscription-table tbody tr:hover td {
+.user-mgmt-table tbody tr:hover td {
     background-color: rgba(230, 200, 120, 0.02) !important;
+}
+
+.user-mgmt-table tbody tr:hover td:nth-child(-n+2) {
+    color: #E6C878 !important;
+}
+
+.user-mgmt-table tbody tr:hover .user-contact-cell a {
+    color: #E6C878 !important;
+}
+
+.user-mgmt-table tbody tr:hover .user-contact-cell .contact-phone {
+    color: #E6C878 !important;
+}
+
+.user-mgmt-table tbody tr:hover td:first-child {
+    border-left-color: rgba(196, 176, 69, 0.5) !important;
+.subscription-table tbody tr:hover td {
+    background-color: rgba(217, 237, 115, 0.02) !important;
 }
 
 /* Warm Champagne Gold for user info columns 1-4 on hover */
 .subscription-table tbody tr:hover td:nth-child(-n+4) {
-    color: #E6C878 !important;
+    color: #d9ed73 !important;
 }
 
 .subscription-table tbody tr:hover td:first-child {
+    border-left-color: rgba(213, 235, 69, 0.5) !important;
+}
+
+[dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child {
+    border-right-color: rgba(196, 176, 69, 0.5) !important;
+}
+
+/* Desktop column widths */
+@media (min-width: 768px) {
+    .col-user-name { width: 18%; }
+    .col-user-contact { width: 22%; }
+    .col-user-account { width: 13%; }
+    .col-user-member { width: 15%; }
+    .col-user-subscription { width: 18%; }
+    .col-user-actions { width: 14%; }
+
+    .user-mgmt-table th.col-user-account,
+    .user-mgmt-table th.col-user-member,
+    .user-mgmt-table th.col-user-subscription,
+    .user-mgmt-table th.col-user-actions {
+        text-align: center !important;
+    }
+
+    .user-mgmt-table .user-account-cell,
+    .user-mgmt-table .user-member-cell,
+    .user-mgmt-table .user-subscription-cell,
+    .user-mgmt-table .user-actions-cell {
+        text-align: center !important;
+    }
+
+    .user-mgmt-table .user-name-cell,
+    .user-mgmt-table .user-contact-cell {
+        white-space: normal !important;
+    }
+
+    .user-mgmt-table .user-badge {
+        white-space: nowrap !important;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .user-mgmt-table th {
+        font-size: 0.65rem !important;
+        padding: 0.75rem 0.6rem !important;
+    }
+
+    .user-mgmt-table tbody tr td {
+        padding: 0.75rem 0.6rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .user-name-cell {
+        font-size: 0.9rem !important;
+    }
+
+    .user-contact-cell a {
+        font-size: 0.8rem !important;
+    }
+
+    .user-contact-cell .contact-phone {
+        font-size: 0.75rem !important;
+    }
+
+    .action-icon-btn {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    .actions-cell .action-icon-btn svg {
+        width: 14px; height: 14px;
+    }
+
+    .user-details-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .user-details-card {
+        padding: 1.75rem;
+    }
+}
+
+/* ----------------------------------------------------
+   MOBILE RESPONSIVE CARDS (< 768px)
+   ---------------------------------------------------- */
+@media (max-width: 767.98px) {
+    /* Table wrapper becomes transparent */
+    .user-table-wrap {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .user-table-wrap .table-responsive {
+        overflow-x: visible;
+        border: none;
+    }
+
+    .user-mgmt-table {
+        display: block;
+        width: 100%;
+    }
+
+    /* Hide table headers accessibly */
+    .user-mgmt-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .user-mgmt-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    /* Each row becomes a card */
+    .user-mgmt-table tbody tr {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        gap: 0.5rem;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+    }
+
+    .user-mgmt-table tbody tr:hover {
+        transform: translateY(-2px) !important;
+        border-color: rgba(196, 176, 69, 0.4) !important;
+        box-shadow: 0 6px 16px rgba(196, 176, 69, 0.15) !important;
+    }
+
+    /* Each cell becomes a labeled row */
+    .user-mgmt-table tbody tr td {
+        padding: 0.5rem 0 !important;
+        border: none !important;
+        background-color: transparent !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.95rem;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.08) !important;
+        color: var(--whiteout) !important;
+    }
+
+    .user-mgmt-table tbody tr td:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Ordering */
+    .user-name-cell { order: 1; }
+    .user-contact-cell { order: 2; }
+    .user-account-cell { order: 3; }
+    .user-member-cell { order: 4; }
+    .user-subscription-cell { order: 5; }
+    .user-actions-cell { order: 6; }
+
+    /* Full Name as primary heading */
+    .user-mgmt-table .user-name-cell {
+        display: block !important;
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        color: var(--yellow) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        padding-bottom: 0.75rem !important;
+        margin-bottom: 0.25rem;
+        text-align: left;
+    }
+
+    [dir="rtl"] .user-mgmt-table .user-name-cell {
+        text-align: right;
+    }
+
+    .user-mgmt-table .user-name-cell::before {
+        display: none !important;
+    }
+
+    /* Contact cell as block */
+    .user-mgmt-table .user-contact-cell {
+        display: block !important;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.08) !important;
+        padding-bottom: 0.6rem !important;
+    }
+
+    .user-mgmt-table .user-contact-cell::before {
+        display: block !important;
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--autonomous);
+        font-size: 0.8rem;
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Data labels for remaining cells */
+    .user-mgmt-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--autonomous);
+        font-size: 0.9rem;
+    }
+
+    /* Actions cell: center aligned */
+    .user-mgmt-table .user-actions-cell {
+        display: flex !important;
+        justify-content: center !important;
+        padding-top: 0.75rem !important;
+        border-bottom: none !important;
+    }
+
+    .user-mgmt-table .user-actions-cell::before {
+        display: none !important;
+    }
+
+    .user-mgmt-table .user-actions-cell .actions-cell {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Action buttons slightly larger on mobile for touch */
+    .action-icon-btn {
+        width: 38px !important;
+        height: 38px !important;
+    }
+
+    .actions-cell .action-icon-btn svg {
+        width: 16px; height: 16px;
+    }
+
+    /* Details page: single column grid */
+    .user-details-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .user-details-card {
+        padding: 1.5rem;
+    }
+
+    .user-details-card h3 {
+        font-size: 1.15rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .user-detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+        padding: 0.85rem 1rem;
+    }
+
+    [dir="rtl"] .user-detail-row {
+        align-items: flex-end;
+    }
+
+    .user-detail-value {
+        text-align: left;
+    }
+
+    [dir="rtl"] .user-detail-value {
+        text-align: right;
+    }
+
+    /* Subscription history table as cards */
+    .user-history-table {
+        display: block;
+        width: 100%;
+    }
+
+    .user-history-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .user-history-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .user-history-table tbody tr {
+        display: flex;
+        flex-direction: column;
+        background-color: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        gap: 0.4rem;
+    }
+
+    .user-history-table tbody tr td {
+        padding: 0.4rem 0 !important;
+        border: none !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.06) !important;
+        white-space: normal !important;
+    }
+
+    .user-history-table tbody tr td:last-child {
+        border-bottom: none !important;
+    }
+
+    .user-history-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--autonomous);
+        font-size: 0.8rem;
+    }
+
+    /* Plan name as card heading */
+    .user-history-table .history-plan-cell {
+        display: block !important;
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: var(--yellow) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        padding-bottom: 0.6rem !important;
+    }
+
+    .user-history-table .history-plan-cell::before {
+        display: none !important;
+    }
+
+    /* Disable tooltips on mobile (touch) */
+    [data-tooltip]::after {
+        display: none;
+    }
+}
+
+/* ------------------------------------------------
+   SUBSCRIPTION HISTORY TABLE — Details Page
+   ------------------------------------------------ */
+.user-history-table {
+    margin-top: 0 !important;
+    table-layout: auto !important;
+}
+
+.user-history-table thead {
+    background-color: var(--card-bg) !important;
+}
+
+.user-history-table th {
+    color: rgba(196, 176, 69, 0.85) !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    padding: 1rem 1.15rem !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05) !important;
+    white-space: nowrap !important;
+}
+
+.user-history-table td {
+    padding: 0.95rem 1.15rem !important;
+    vertical-align: middle !important;
+    font-size: 0.92rem;
+    color: var(--whiteout) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+    transition: color 0.25s ease, background-color 0.25s ease !important;
+}
+
+.user-history-table tbody tr {
+    transition: transform 0.25s ease, background-color 0.25s ease !important;
+}
+
+.user-history-table tbody tr:hover td {
+    background-color: rgba(230, 200, 120, 0.02) !important;
+    color: #E6C878 !important;
+}
+
+.user-history-table tbody tr td:first-child {
+    border-left: 3px solid transparent !important;
+    transition: border-color 0.25s ease !important;
+}
+
+[dir="rtl"] .user-history-table tbody tr td:first-child {
+    border-left: none !important;
+    border-right: 3px solid transparent !important;
+}
+
+.user-history-table tbody tr:hover {
+    transform: translateX(-3px) !important;
+}
+
+[dir="rtl"] .user-history-table tbody tr:hover {
+    transform: translateX(3px) !important;
+}
+
+.user-history-table tbody tr:hover td:first-child {
     border-left-color: rgba(196, 176, 69, 0.5) !important;
 }
 
-.subscription-table td, .subscription-table th {
-    vertical-align: middle !important;
-    padding: 1.15rem 1.25rem !important;
+[dir="rtl"] .user-history-table tbody tr:hover td:first-child {
+    border-right-color: rgba(196, 176, 69, 0.5) !important;
 }
 
-/* Dark Confirmation Modal */
+/* Dark Confirmation Modal — SaaS-style */
 .modal-dark .modal-content {
     background-color: var(--card-bg) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 16px !important;
     color: var(--whiteout) !important;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255,255,255,0.04) !important;
+    overflow: hidden;
 }
 
 .modal-dark .modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-    padding: 1.5rem 1.75rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 1.75rem 2rem 1.5rem !important;
+    background-color: rgba(239, 68, 68, 0.03);
 }
 
 .modal-dark .modal-title {
-    color: var(--yellow) !important;
+    color: #fca5a5 !important;
     font-weight: 700 !important;
+    font-size: 1.15rem !important;
+    letter-spacing: -0.01em;
 }
 
 .modal-dark .modal-body {
-    padding: 1.75rem !important;
-    font-size: 1.05rem !important;
-    color: var(--whiteout) !important;
+    padding: 2rem !important;
+    font-size: 1rem !important;
+    color: rgba(255, 255, 255, 0.75) !important;
+    line-height: 1.65;
 }
 
 .modal-dark .modal-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
-    padding: 1.25rem 1.75rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 1.25rem 2rem 1.75rem !important;
+    gap: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .modal-dark .btn-close {
     filter: invert(1) !important;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.modal-dark .btn-close:hover {
+    opacity: 1;
+}
+
+/* Modal Cancel Button */
+.modal-dark .btn-ghost {
+    background-color: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.65) !important;
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.modal-dark .btn-ghost:hover {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: var(--whiteout) !important;
+}
+
+.modal-dark .btn-ghost:focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: 2px;
+}
+
+/* Modal Danger Confirm Button */
+.modal-dark .btn-subscription-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+    color: #fff !important;
+    padding: 0.6rem 1.6rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.modal-dark .btn-subscription-danger:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35) !important;
+    transform: translateY(-1px);
+}
+
+.modal-dark .btn-subscription-danger:focus-visible {
+    outline: 2px solid #ef4444;
+    outline-offset: 2px;
+}
+
+.modal-dark .btn-subscription-danger:active {
+    transform: scale(0.98);
 }

@@ -52,6 +52,7 @@ builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 // Booking dependencies (MVC Admin pages)
 builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 
 // Notification-related services (minimal set required by BookingService)
 builder.Services.AddScoped<IEmailService, EmailService>();
