@@ -39,6 +39,9 @@
                     <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">@Localizer["SubscriptionPlans"]</a>
                 </li>
                 <li class="nav-item">
+                @*     <a class="nav-link @(currentController == "UserSubscriptions" ? "active" : "")" asp-area="" asp-controller="UserSubscriptions" asp-action="Index">@Localizer["UserSubscriptions"]</a>
+                </li>
+                <li class="nav-item"> *@
                     <a class="nav-link @(currentController == "UserManagement" ? "active" : "")" asp-area="" asp-controller="UserManagement" asp-action="Index">@Localizer["UserManagement"]</a>
                 </li>
                 <li class="nav-item">
