@@ -34,7 +34,7 @@ namespace ArenaApplication.Services.AI
     };
 
             foreach (var msg in history)
-                messages.Add(new { role = msg.Role, content = msg.Content });
+                messages.Add(new { role = msg.Sender, content = msg.MessageText });
 
             messages.Add(new { role = "user", content = userMessage });
 
