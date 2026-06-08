@@ -307,7 +307,8 @@ namespace ArenaApplication.Services
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiryMinutes),
-                Role = role
+                Role = role,
+                MemberProfileId = userWithProfile?.MemberProfile?.Id ?? Guid.Empty
             };
         }
     }

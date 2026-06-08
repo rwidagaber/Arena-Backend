@@ -1,37 +1,60 @@
 ﻿using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.IServices;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ArenaApi.Controllers.AIControllers
+[ApiController]
+[Route("api/chat")]
+//[Authorize]
+public class ChatController : ControllerBase
 {
-    [ApiController]
-    [Route("api/chat")]
-    //[Authorize]
-    public class ChatController : ControllerBase
+    private readonly IChatService _chatService;
+
+    public ChatController(IChatService chatService)
     {
-        private readonly IChatService _chatService;
+        _chatService = chatService;
+    }
 
-        public ChatController(IChatService chatService)
-        {
-            _chatService = chatService;
-        }
+    // Send message (new or existing conversation)
+    [HttpPost]
+    public async Task<IActionResult> SendMessage([FromBody] SendMessageDto dto)
+    {
+        var result = await _chatService.SendMessageAsync(
+            dto.MemberProfileId,
+            dto.ConversationId,
+            dto.Message);
+        return Ok(result);
+    }
 
-        [HttpPost]
-        public async Task<IActionResult> SendMessage(
-            [FromBody] SendMessageDto dto)
-        {
-            var reply = await _chatService
-                .SendMessageAsync(dto.MemberProfileId, dto.Message);
-            return Ok(new ChatResponseDto { Reply = reply });
-        }
+    // Get all conversations
+    [HttpGet("conversations/{memberProfileId}")]
+    public async Task<IActionResult> GetConversations(Guid memberProfileId)
+    {
+        var result = await _chatService.GetConversationsAsync(memberProfileId);
+        return Ok(result);
+    }
 
-        [HttpGet("history/{memberProfileId}")]
-        public async Task<IActionResult> GetHistory(Guid memberProfileId)
-        {
-            var history = await _chatService.GetHistoryAsync(memberProfileId);
-            return Ok(history);
-        }
+    // Get messages in conversation
+    [HttpGet("conversations/{conversationId}/messages")]
+    public async Task<IActionResult> GetMessages(Guid conversationId)
+    {
+        var result = await _chatService.GetConversationMessagesAsync(conversationId);
+        return Ok(result);
+    }
+
+    // Create new conversation
+    [HttpPost("conversations")]
+    public async Task<IActionResult> CreateConversation([FromBody] CreateConversationDto dto)
+    {
+        var result = await _chatService.CreateConversationAsync(dto);
+        return Ok(result);
+    }
+
+    // Delete conversation
+    [HttpDelete("conversations/{conversationId}")]
+    public async Task<IActionResult> DeleteConversation(Guid conversationId)
+    {
+        await _chatService.DeleteConversationAsync(conversationId);
+        return NoContent();
     }
 }

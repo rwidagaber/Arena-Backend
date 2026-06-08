@@ -11,5 +11,6 @@ namespace ArenaApplication.Dtos.ChatDtos
         public Guid MemberProfileId { get; set; }
         [Required]
         public string Message { get; set; } = string.Empty;
+        public Guid? ConversationId { get; set; }
     }
 }
