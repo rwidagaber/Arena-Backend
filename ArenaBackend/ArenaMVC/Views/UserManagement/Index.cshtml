@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="container-fluid mt-4">
+    <div class="mt-4">
         @if (TempData["Success"] != null)
         {
             <div class="subscription-alert success">
@@ -35,7 +35,7 @@
             <div class="row align-items-center">
                 <div class="col-12">
                     <div class="search-input-wrapper">
-                        <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--autonomous); display: flex; align-items: center; z-index: 10;">
+                        <span style="position: absolute; inset-inline-start: 16px; top: 50%; transform: translateY(-50%); color: var(--autonomous); display: flex; align-items: center; z-index: 10;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </span>
                         <input class="form-control" id="searchInput" type="text" placeholder="@Localizer["SearchByNameOrEmail"]" />

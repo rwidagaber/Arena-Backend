@@ -192,11 +192,23 @@
     cursor: pointer;
 }
 
-.btn-subscription-danger:hover {
-    background-color: #EF4444;
-    color: var(--whiteout);
+.btn-subscription-danger:hover,
+.btn-subscription-danger:focus,
+.btn-subscription-danger:focus-visible {
+    background-color: #EF4444 !important;
+    color: var(--whiteout) !important;
+    border-color: #EF4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+    outline: none !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.btn-subscription-danger:active {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: var(--whiteout) !important;
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
 }
 
 .btn-subscription-edit {

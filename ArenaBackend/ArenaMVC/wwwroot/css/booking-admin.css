@@ -124,7 +124,6 @@
     text-align: center !important;
 }
 
-/* Desktop & Tablet Table Styles (>= 768px) */
 @media (min-width: 768px) {
     .booking-table {
         table-layout: fixed !important;
@@ -135,7 +134,16 @@
     .col-booking-end { width: 16%; }
     .col-booking-status { width: 24%; }
 
-    /* Left border transition on hover */
+    .booking-table th,
+    [dir="rtl"] .booking-table th {
+        text-align: center !important;
+    }
+
+    .booking-table tbody tr td,
+    [dir="rtl"] .booking-table tbody tr td {
+        text-align: center !important;
+    }
+
     .booking-table tbody tr td:first-child {
         border-left: 3px solid transparent !important;
     }

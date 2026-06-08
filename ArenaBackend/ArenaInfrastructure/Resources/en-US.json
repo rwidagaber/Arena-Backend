@@ -255,6 +255,9 @@
  "BookingCancelled": "Cancelled",
  "BookingCompleted": "Completed",
  "ContactInfo": "Contact Info",
- "Days": "days"
-  
+ "Days": "days",
+ "Basic": "Basic",
+ "Premium": "Premium",
+ "Silver": "Silver",
+ "Gold": "Gold"
 }
