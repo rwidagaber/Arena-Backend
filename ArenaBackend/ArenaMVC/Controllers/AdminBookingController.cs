@@ -31,14 +31,20 @@ namespace ArenaMVC.Controllers
             _localizer = localizer;
         }
 
+        private const int DefaultPageSize = 10;
+
         [HttpGet]
-        public async Task<IActionResult> Index(BookingStatus? status, DateTime? bookingDate)
+        public async Task<IActionResult> Index(BookingStatus? status, DateTime? bookingDate, int page = 1, int pageSize = DefaultPageSize)
         {
-            var result = await _bookingService.GetAdminBookings(status, bookingDate);
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
+
+            var result = await _bookingService.GetAdminBookings(status, bookingDate, page, pageSize);
             if (!result.IsSuccess)
                 return View("Error");
 
-            var bookings = result.Value;
+            var pagedResult = result.Value;
+            var bookings = pagedResult.Items;
             var memberProfileIds = bookings.Select(b => b.MemberProfileId).Distinct().ToList();
 
             var profiles = await _memberProfileRepo.GetAll()
@@ -63,9 +69,19 @@ namespace ArenaMVC.Controllers
                 Status = b.Status
             }).ToList();
 
+            var viewModel = new AdminBookingPagedViewModel
+            {
+                Items = viewModels,
+                TotalCount = pagedResult.TotalCount,
+                Page = page,
+                PageSize = pageSize,
+                SelectedStatus = status,
+                SelectedDate = bookingDate
+            };
+
             ViewBag.SelectedStatus = status;
             ViewBag.SelectedDate = bookingDate?.Date;
-            return View(viewModels);
+            return View(viewModel);
         }
 
         [HttpGet]

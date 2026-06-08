@@ -1,4 +1,4 @@
-﻿using ArenaApplication.Dtos.AuthDtos;
+using ArenaApplication.Dtos.AuthDtos;
 using ArenaApplication.Dtos.loginDto;
 using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.RegisterDto;
@@ -18,6 +18,8 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
+using ArenaApplication.Dtos.AuthDtos.loginDto;
+
 
 namespace ArenaApplication.Services
 {
@@ -29,7 +31,7 @@ namespace ArenaApplication.Services
         private readonly JWTSettings _jwtSettings;
         private readonly IOtpService _otpService;
         private readonly IBackgroundJobService _backgroundJobService;
-
+        private readonly IGoogleTokenValidator _googleTokenValidator;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public AuthService(
@@ -39,7 +41,8 @@ namespace ArenaApplication.Services
             IBackgroundJobService backgroundJobService,
             IOtpService otpService,
             IOptions<JWTSettings> jwtSettings,
-            IStringLocalizer<ArenaLocalization> localizer)
+            IStringLocalizer<ArenaLocalization> localizer,
+             IGoogleTokenValidator googleTokenValidator)
         {
             _userManager = userManager;
             _authRepository = authRepository;
@@ -48,17 +51,19 @@ namespace ArenaApplication.Services
             _backgroundJobService = backgroundJobService;
             _otpService = otpService;
             _localizer = localizer;
+            _googleTokenValidator = googleTokenValidator;
+
         }
 
         // =========================
         // REGISTER
         // =========================
 
-        public async Task<Result> RegisterAsync(UserRegisterDto dto)
+        public async Task<Result<Guid>> RegisterAsync(UserRegisterDto dto)
         {
             var existingUser = await _authRepository.GetByEmailAsync(dto.Email);
             if (existingUser is not null)
-                return Result.Failure("Email is already registered");
+                return Result<Guid>.Failure("Email is already registered");
 
             var user = new ApplicationUser
             {
@@ -73,7 +78,7 @@ namespace ArenaApplication.Services
 
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+                return Result<Guid>.Failure(result.Errors.Select(e => e.Description).ToArray());
 
             try
             {
@@ -94,14 +99,15 @@ namespace ArenaApplication.Services
                     otp
                 );
 
-                return Result.Success();
+                return Result<Guid>.Success(user.Id); // ← رجّع الـ userId
             }
-            catch
+            catch (Exception ex)
             {
-                // rollback user if profile fails
-                await _userManager.DeleteAsync(user);
+                Console.WriteLine($"❌ Register failed: {ex.Message}");
+                Console.WriteLine($"❌ Inner: {ex.InnerException?.Message}");
 
-                return Result.Failure("Failed to create user profile");
+                await _userManager.DeleteAsync(user);
+                return Result<Guid>.Failure("Failed to create user profile");
             }
         }
 
@@ -130,12 +136,18 @@ namespace ArenaApplication.Services
             return Result<AuthResponseDto>.Success(response);
         }
 
-        
-           
+
+
+
 
         public async Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto)
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
+
+            // لو اتسجل بـ Google مش هيقدر يعمل login عادي
+            if (user?.IsGoogleAccount == true)
+                return Result<AuthResponseDto>.Failure("This account uses Google Sign-In. Please login with Google.");
+
             if (user is null || !await _userManager.CheckPasswordAsync(user, dto.Password))
                 return Result<AuthResponseDto>.Failure(_localizer["InvalidEmailOrPassword"]);
 
@@ -146,12 +158,10 @@ namespace ArenaApplication.Services
                 user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
             var response = await GenerateAuthResponseAsync(user);
-            Console.WriteLine(dto.Email);
-            Console.WriteLine(dto.Password);
             return Result<AuthResponseDto>.Success(response);
         }
 
-        
+
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
@@ -172,6 +182,12 @@ namespace ArenaApplication.Services
             if (user is null)
                 return Result<AuthResponseDto>.Failure(_localizer["UserNotFound"]);
             var response = await GenerateAuthResponseAsync(user);
+
+            // Check if user has active subscription
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+            response.IsSubscribed = activeSubscription is not null;
+
             return Result<AuthResponseDto>.Success(response);
         }
 
@@ -283,7 +299,7 @@ namespace ArenaApplication.Services
                 return Result.Failure("Invalid or malformed reset token.");
             }
         }
-        private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)
+        private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user, bool isGoogleUser = false)
         {
             var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
 
@@ -308,8 +324,84 @@ namespace ArenaApplication.Services
                 RefreshToken = refreshToken,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiryMinutes),
                 Role = role,
-                MemberProfileId = userWithProfile?.MemberProfile?.Id ?? Guid.Empty
+                IsGoogleUser = isGoogleUser
             };
+        }
+
+        public async Task<Result<AuthResponseDto>> GoogleLoginAsync(string idToken)
+        {
+            var googleUser = await _googleTokenValidator.ValidateAsync(idToken);
+            if (googleUser is null)
+                return Result<AuthResponseDto>.Failure("Invalid Google token");
+
+            var email = googleUser.Email;
+            var firstName = googleUser.FirstName;
+            var lastName = googleUser.LastName;
+            var user = await _authRepository.GetByEmailAsync(email);
+
+            if (user is null)
+            {
+                user = new ApplicationUser
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Email = email,
+                    UserName = email,
+                    IsActive = true,
+                    EmailConfirmed = true,
+                    IsGoogleAccount = true
+                };
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                    return Result<AuthResponseDto>.Failure(
+                        createResult.Errors.Select(e => e.Description).ToArray());
+
+                var memberProfile = new MemberProfile { UserId = user.Id };
+                await _authRepository.CreateMemberProfileAsync(memberProfile);
+
+                await _userManager.AddToRoleAsync(user, "GymMember");
+
+                // يوديه يكمل البروفايل
+                var newUserResponse = await GenerateAuthResponseAsync(user, isGoogleUser: true);
+                return Result<AuthResponseDto>.Success(newUserResponse);
+            }
+
+            // يوزر موجود — Login عادي
+            var response = await GenerateAuthResponseAsync(user, isGoogleUser: false);
+            return Result<AuthResponseDto>.Success(response);
+        }
+
+        public async Task<Result> CompleteProfileAsync(Guid userId, CompleteProfileDto dto)
+        {
+            var user = await _authRepository.GetByIdWithProfileAsync(userId);
+            if (user is null)
+                return Result.Failure(_localizer["UserNotFound"]);
+
+            // تحديث الـ phone
+            user.PhoneNumber = dto.PhoneNumber;
+            await _userManager.UpdateAsync(user);
+
+            if (user.MemberProfile is null)
+                return Result.Failure("Profile not found");
+
+            // تحديث الـ profile
+            user.MemberProfile.DateOfBirth = dto.DateOfBirth;
+            user.MemberProfile.Weight = dto.Weight;
+            user.MemberProfile.Height = dto.Height;
+            user.MemberProfile.Gender = dto.Gender;
+
+            // حساب الـ BMI
+            if (dto.Height > 0)
+            {
+                var heightInMeters = dto.Height / 100;
+                user.MemberProfile.BMI = Math.Round(
+                    dto.Weight / (heightInMeters * heightInMeters), 1);
+            }
+
+            await _authRepository.UpdateMemberProfileAsync(user.MemberProfile);
+
+            return Result.Success();
         }
     }
 }

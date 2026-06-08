@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ArenaApplication.Dtos.loginDto
+namespace ArenaApplication.Dtos.AuthDtos.loginDto
 {
     public class UserloginDto
     {

@@ -1,4 +1,5 @@
-﻿using ArenaApplication.Dtos.Booking;
+using ArenaApplication.Dtos.Booking;
+using ArenaApplication.Dtos.UserSubscription;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Enums;
@@ -136,22 +137,50 @@ namespace ArenaApplication.Services
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
 
-        public async Task<Result<List<BookingDto>>> GetAdminBookings(BookingStatus? status, DateTime? bookingDate)
+        public async Task<Result<PagedResult<BookingDto>>> GetAdminBookings(BookingStatus? status, DateTime? bookingDate, int page, int pageSize)
         {
-            var query = _bookingRepo.GetAll();
-
-            if (status.HasValue)
+            try
             {
-                query = query.Where(b => b.Status == status.Value);
-            }
+                if (page < 1) page = 1;
+                if (pageSize < 1) pageSize = 10;
 
-            if (bookingDate.HasValue)
+                var query = _bookingRepo.GetAll();
+
+                if (status.HasValue)
+                {
+                    query = query.Where(b => b.Status == status.Value);
+                }
+
+                if (bookingDate.HasValue)
+                {
+                    query = query.Where(b => b.BookingDate.Date == bookingDate.Value.Date);
+                }
+
+                int totalCount = await query.CountAsync();
+
+                var bookings = await query
+                    .OrderByDescending(x => x.BookingDate)
+                    .ThenBy(x => x.StartTime)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var dtos = bookings.Adapt<List<BookingDto>>();
+
+                var pagedResult = new PagedResult<BookingDto>
+                {
+                    Items = dtos,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize
+                };
+
+                return Result<PagedResult<BookingDto>>.Success(pagedResult);
+            }
+            catch (Exception)
             {
-                query = query.Where(b => b.BookingDate.Date == bookingDate.Value.Date);
+                return Result<PagedResult<BookingDto>>.Failure(_localizer["AnErrorOccurredWhileRetrievingBookings"]);
             }
-
-            var bookings = await query.ToListAsync();
-            return Result<List<BookingDto>>.Success(bookings.Adapt<List<BookingDto>>());
         }
 
         public async Task<Result<List<BookingDto>>> GetTodaySchedule()

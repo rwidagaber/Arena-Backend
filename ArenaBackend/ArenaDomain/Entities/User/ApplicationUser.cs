@@ -30,5 +30,9 @@ namespace ArenaDomain.Entities.User
         public string? UpdatedBy { get; set; }
         public DateTime? DeletedAt { get; set; }
         public bool IsDeleted { get; set; } = false;
+
+        public bool IsGoogleAccount { get; set; } = false;
+
+
     }
 }
