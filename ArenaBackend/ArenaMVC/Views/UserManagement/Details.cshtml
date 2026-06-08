@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    <div class="container-fluid mt-4">
+    <div class="mt-4">
         <!-- Row 1: Profile Information + Account Information -->
         <div class="user-details-grid">
             <!-- Profile Information Card -->
@@ -142,7 +142,7 @@
                 {
                     <div class="user-detail-row">
                         <span class="user-detail-label">@Localizer["PlanName"]</span>
-                        <span class="user-detail-value">@Model.CurrentSubscription.PlanName</span>
+                        <span class="user-detail-value">@Localizer[Model.CurrentSubscription.PlanName]</span>
                     </div>
                     <div class="user-detail-row">
                         <span class="user-detail-label">@Localizer["SubscriptionStatus"]</span>
@@ -197,7 +197,7 @@
                             @foreach (var sub in Model.SubscriptionHistory)
                             {
                                 <tr class="history-row">
-                                    <td data-label="@Localizer["PlanName"]" class="history-plan-cell">@sub.PlanName</td>
+                                    <td data-label="@Localizer["PlanName"]" class="history-plan-cell">@Localizer[sub.PlanName]</td>
                                     <td data-label="@Localizer["StartDate"]" class="history-start-cell">@sub.StartDate.ToString("yyyy-MM-dd")</td>
                                     <td data-label="@Localizer["EndDate"]" class="history-end-cell">@sub.EndDate.ToString("yyyy-MM-dd")</td>
                                     <td data-label="@Localizer["Status"]" class="history-status-cell">

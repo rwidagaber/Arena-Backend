@@ -1,4 +1,5 @@
 using ArenaApplication.Dtos.UserManagement;
+using ArenaApplication.Dtos.UserSubscription;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Enums;
@@ -26,10 +27,13 @@ namespace ArenaApplication.Services
             _localizer = localizer;
         }
 
-        public async Task<Result<List<UserManagementDto>>> GetUsers(string search)
+        public async Task<Result<PagedResult<UserManagementDto>>> GetUsers(string search, int page, int pageSize)
         {
             try
             {
+                if (page < 1) page = 1;
+                if (pageSize < 1) pageSize = 10;
+
                 var query = _userRepository.GetAll()
                     .Include(u => u.MemberProfile)
                         .ThenInclude(mp => mp.Subscriptions)
@@ -47,7 +51,12 @@ namespace ArenaApplication.Services
                     );
                 }
 
-                var users = await query.ToListAsync();
+                int totalCount = await query.CountAsync();
+
+                var users = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
 
                 var dtos = users.Select(u => 
                 {
@@ -68,11 +77,19 @@ namespace ArenaApplication.Services
                     };
                 }).ToList();
 
-                return Result<List<UserManagementDto>>.Success(dtos);
+                var pagedResult = new PagedResult<UserManagementDto>
+                {
+                    Items = dtos,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize
+                };
+
+                return Result<PagedResult<UserManagementDto>>.Success(pagedResult);
             }
             catch (Exception)
             {
-                return Result<List<UserManagementDto>>.Failure(_localizer["AnErrorOccurredRetrievingUsers"]);
+                return Result<PagedResult<UserManagementDto>>.Failure(_localizer["AnErrorOccurredRetrievingUsers"]);
             }
         }
 

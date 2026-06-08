@@ -24,20 +24,27 @@ namespace ArenaMVC.Controllers
             _localizer = localizer;
         }
 
+        private const int DefaultPageSize = 10;
+
         // GET: UserManagement
         [HttpGet]
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = DefaultPageSize)
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
+
             try
             {
-                var result = await _userService.GetUsers(search);
+                var result = await _userService.GetUsers(search, page, pageSize);
                 if (!result.IsSuccess)
                 {
                     TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUsers"];
-                    return View(new List<UserListViewModel>());
+                    return View(new UserListPagedViewModel { Page = page, PageSize = pageSize });
                 }
 
-                var viewModels = result.Value.Select(u => new UserListViewModel
+                var pagedResult = result.Value;
+
+                var viewModels = pagedResult.Items.Select(u => new UserListViewModel
                 {
                     Id = u.Id,
                     FullName = u.FullName,
@@ -49,13 +56,22 @@ namespace ArenaMVC.Controllers
                     SubscriptionStatus = u.SubscriptionStatus
                 }).ToList();
 
+                var viewModel = new UserListPagedViewModel
+                {
+                    Items = viewModels,
+                    TotalCount = pagedResult.TotalCount,
+                    Page = page,
+                    PageSize = pageSize,
+                    Search = search
+                };
+
                 ViewBag.SearchString = search;
-                return View(viewModels);
+                return View(viewModel);
             }
             catch (Exception)
             {
                 TempData["Error"] = _localizer["AnErrorOccurredRetrievingUsers"];
-                return View(new List<UserListViewModel>());
+                return View(new UserListPagedViewModel { Page = page, PageSize = pageSize });
             }
         }
 

@@ -103,7 +103,10 @@
     border: 1px solid rgba(213, 235, 69, 0.15) !important;
     border-radius: 8px !important;
     color: var(--whiteout) !important;
-    padding: 0 1rem 0 3rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-inline-start: 3rem !important;
+    padding-inline-end: 1rem !important;
     font-size: 0.95rem !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
     backdrop-filter: blur(10px);
@@ -408,6 +411,16 @@ input:checked + .slider:before {
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.22) !important;
 }
 
+.btn-action-delete:focus,
+.btn-action-delete:focus-visible,
+.btn-action-delete:active {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    border-color: #ef4444 !important;
+    color: #fca5a5 !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4) !important;
+    outline: none !important;
+}
+
 .action-icon-btn:active {
     transform: scale(0.96) !important;
 }
@@ -531,6 +544,7 @@ input:checked + .slider:before {
 
 .user-mgmt-table tbody tr:hover td:first-child {
     border-left-color: rgba(196, 176, 69, 0.5) !important;
+}
 .subscription-table tbody tr:hover td {
     background-color: rgba(217, 237, 115, 0.02) !important;
 }
@@ -557,18 +571,23 @@ input:checked + .slider:before {
     .col-user-subscription { width: 18%; }
     .col-user-actions { width: 14%; }
 
-    .user-mgmt-table th.col-user-account,
-    .user-mgmt-table th.col-user-member,
-    .user-mgmt-table th.col-user-subscription,
-    .user-mgmt-table th.col-user-actions {
+    /* Centered Table Headers and Cell Contents */
+    .user-mgmt-table th,
+    [dir="rtl"] .user-mgmt-table th {
         text-align: center !important;
     }
 
-    .user-mgmt-table .user-account-cell,
-    .user-mgmt-table .user-member-cell,
-    .user-mgmt-table .user-subscription-cell,
-    .user-mgmt-table .user-actions-cell {
+    .user-mgmt-table tbody tr td,
+    [dir="rtl"] .user-mgmt-table tbody tr td {
         text-align: center !important;
+    }
+
+    .user-contact-cell .contact-info {
+        align-items: center !important;
+    }
+
+    .user-mgmt-table .actions-cell {
+        justify-content: center !important;
     }
 
     .user-mgmt-table .user-name-cell,
@@ -959,6 +978,31 @@ input:checked + .slider:before {
     border-right-color: rgba(196, 176, 69, 0.5) !important;
 }
 
+/* Desktop styles for subscription history table */
+@media (min-width: 768px) {
+    .user-history-table {
+        table-layout: fixed !important;
+    }
+
+    .user-history-table th,
+    [dir="rtl"] .user-history-table th {
+        text-align: center !important;
+    }
+
+    .user-history-table td,
+    [dir="rtl"] .user-history-table td {
+        text-align: center !important;
+    }
+
+    /* Column widths for clean alignment */
+    .user-history-table th:nth-child(1), .user-history-table td:nth-child(1) { width: 16%; }
+    .user-history-table th:nth-child(2), .user-history-table td:nth-child(2) { width: 16%; }
+    .user-history-table th:nth-child(3), .user-history-table td:nth-child(3) { width: 16%; }
+    .user-history-table th:nth-child(4), .user-history-table td:nth-child(4) { width: 16%; }
+    .user-history-table th:nth-child(5), .user-history-table td:nth-child(5) { width: 16%; }
+    .user-history-table th:nth-child(6), .user-history-table td:nth-child(6) { width: 20%; }
+}
+
 /* Dark Confirmation Modal — SaaS-style */
 .modal-dark .modal-content {
     background-color: var(--card-bg) !important;
@@ -1045,17 +1089,21 @@ input:checked + .slider:before {
     box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
 }
 
-.modal-dark .btn-subscription-danger:hover {
+.modal-dark .btn-subscription-danger:hover,
+.modal-dark .btn-subscription-danger:focus,
+.modal-dark .btn-subscription-danger:focus-visible {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35) !important;
+    color: #fff !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4), 0 4px 16px rgba(239, 68, 68, 0.35) !important;
+    outline: none !important;
     transform: translateY(-1px);
 }
 
-.modal-dark .btn-subscription-danger:focus-visible {
-    outline: 2px solid #ef4444;
-    outline-offset: 2px;
-}
-
 .modal-dark .btn-subscription-danger:active {
-    transform: scale(0.98);
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+    border-color: #991b1b !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
+    transform: scale(0.98) !important;
 }
