@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ArenaDomain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,6 +20,9 @@ namespace ArenaApplication.Dtos.RegisterDto
 
         public decimal Weight { get; set; }
         public decimal Height { get; set; }
+
+        public Gender gender { get; set; }
+
 
     }
 }

@@ -6,8 +6,10 @@ namespace ArenaApplication.Dtos.ChatDtos
 {
     public class ChatMessageDto
     {
-        public string Role { get; set; } = string.Empty; // "user" or "assistant"
-        public string Content { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
+        public Guid Id { get; set; }
+        public string MessageText { get; set; } = string.Empty;
+        public string Sender { get; set; } = string.Empty; // "User" or "AI"
+        public string Intent { get; set; } = string.Empty;
+        public DateTime SentAt { get; set; }
     }
 }

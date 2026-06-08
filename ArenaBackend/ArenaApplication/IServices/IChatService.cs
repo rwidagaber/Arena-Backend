@@ -7,7 +7,13 @@ namespace ArenaApplication.IServices
 {
     public interface IChatService
     {
-        Task<string> SendMessageAsync(Guid memberProfileId, string userMessage);
-        Task<List<ChatMessageDto>> GetHistoryAsync(Guid memberProfileId);
+        Task<ChatResponseWithHistoryDto> SendMessageAsync(
+        Guid memberProfileId,
+        Guid? conversationId,
+        string userMessage);
+        Task<List<ConversationDto>> GetConversationsAsync(Guid memberProfileId);
+        Task<List<ChatResponseDto>> GetConversationMessagesAsync(Guid conversationId);
+        Task<ConversationDto> CreateConversationAsync(CreateConversationDto dto);
+        Task DeleteConversationAsync(Guid conversationId);
     }
 }
