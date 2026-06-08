@@ -25,9 +25,23 @@ namespace ArenaApplication.Services
 
             return Task.CompletedTask;
         }
+
+        // =========================
+        // Password Reset
+        // =========================
+
+        public Task EnqueuePasswordResetTokenEmailAsync(string email, string resetToken, string userEmail)
+        {
+            BackgroundJob.Enqueue(() =>
+                _notificationService.NotifyPasswordResetAsync(email, resetToken, userEmail));
+
+            return Task.CompletedTask;
+        }
+
         // =========================
         // Subscriptions
         // =========================
+
         public Task EnqueueSubscriptionPaymentJobAsync(Guid memberId, decimal amount, string planName)
         {
             BackgroundJob.Enqueue(() =>
@@ -39,7 +53,6 @@ namespace ArenaApplication.Services
         public Task ScheduleSubscriptionExpiryReminderAsync(Guid memberId, DateTime expiryDate)
         {
             var runAt = expiryDate.Date.AddDays(-5).AddHours(9);
-
             var delay = runAt.ToUniversalTime() - DateTime.UtcNow;
 
             if (delay <= TimeSpan.Zero)
@@ -59,7 +72,6 @@ namespace ArenaApplication.Services
         public Task ScheduleBookingReminderAsync(Guid memberId, DateTime bookingDate)
         {
             var runAt = bookingDate.Date.AddDays(-1).AddHours(9);
-
             var delay = runAt.ToUniversalTime() - DateTime.UtcNow;
 
             if (delay <= TimeSpan.Zero)
@@ -72,18 +84,18 @@ namespace ArenaApplication.Services
             return Task.CompletedTask;
         }
 
-        public Task EnqueueBookingCancellationAsync(Guid memberId, DateTime bookingDate)
-        {
-            BackgroundJob.Enqueue(() =>
-                _notificationService.NotifyBookingCancelledAsync(memberId, bookingDate));
-
-            return Task.CompletedTask;
-        }
-
         public Task EnqueueBookingConfirmationAsync(Guid memberId, DateTime bookingDate)
         {
             BackgroundJob.Enqueue(() =>
                 _notificationService.NotifyBookingConfirmedAsync(memberId, bookingDate));
+
+            return Task.CompletedTask;
+        }
+
+        public Task EnqueueBookingCancellationAsync(Guid memberId, DateTime bookingDate)
+        {
+            BackgroundJob.Enqueue(() =>
+                _notificationService.NotifyBookingCancelledAsync(memberId, bookingDate));
 
             return Task.CompletedTask;
         }

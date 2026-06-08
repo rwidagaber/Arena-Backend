@@ -51,12 +51,17 @@ namespace ArenaAPI
 
             builder.Services.Configure<RequestLocalizationOptions>(options =>
             {
-                options.DefaultRequestCulture = new RequestCulture(
-                    culture: supportedCultures[0],
-                    uiCulture: supportedCultures[0]);
+                options.DefaultRequestCulture = new RequestCulture("en-US");
                 options.SupportedCultures = supportedCultures;
                 options.SupportedUICultures = supportedCultures;
-                options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
+                
+                // Keep Accept-Language header as the primary provider
+                options.RequestCultureProviders = new List<IRequestCultureProvider>
+                {
+                    new AcceptLanguageHeaderRequestCultureProvider(),
+                    new CookieRequestCultureProvider(),
+                    new QueryStringRequestCultureProvider()
+                };
             });
 
             // ── Controllers ───────────────────────────────────────────────
@@ -135,18 +140,17 @@ namespace ArenaAPI
             builder.Services.AddScoped<IBookingService, BookingService>();
 
             // ── Payment ───────────────────────────────────────────────────
-            builder.Services.AddScoped<IUserQueryService, UserQueryService>();
+            builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
-            builder.Services.AddHttpClient<IPaymentGatewayService, PaymobService>();
+            builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
 
-            // ── AI ───────────────────────────────────────────────────
+            // ── AI / Chatbot Features ─────────────────────────────────────
             builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAISettings"));
             builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
-
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>
@@ -171,12 +175,6 @@ namespace ArenaAPI
             // ═════════════════════════════════════════════════════════════
             var app = builder.Build();
             // ═════════════════════════════════════════════════════════════
-
-            // ── Log email settings (dev helper) ───────────────────────────
-            var emailSettings = app.Services.GetRequiredService<IOptions<EmailSettings>>().Value;
-//             Console.WriteLine($"SmtpServer: '{emailSettings.SmtpServer}'");
-//             Console.WriteLine($"Port: '{emailSettings.Port}'");
-//             Console.WriteLine($"Username: '{emailSettings.Username}'");
 
             // ── Seed Database ─────────────────────────────────────────────
             using (var scope = app.Services.CreateScope())
@@ -205,7 +203,7 @@ namespace ArenaAPI
             if (!app.Environment.IsDevelopment())
                 app.UseHttpsRedirection();
 
-            // Localization middleware
+            // Localization middleware configuration
             var localizationOptions = new RequestLocalizationOptions()
                 .SetDefaultCulture("en-US")
                 .AddSupportedCultures("en-US", "ar-EG")
