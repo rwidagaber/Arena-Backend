@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using FluentValidation;
-using ArenaApplication.Dtos.loginDto;
 using ArenaDomain.Shared;
 using Microsoft.Extensions.Localization;
+using ArenaApplication.Dtos.AuthDtos.loginDto;
 
 namespace ArenaApplication.Dtos.Validators
 {

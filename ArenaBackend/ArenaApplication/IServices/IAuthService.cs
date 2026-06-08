@@ -1,6 +1,6 @@
 ﻿using ArenaApplication.Dtos;
 using ArenaApplication.Dtos.AuthDtos;
-using ArenaApplication.Dtos.loginDto;
+using ArenaApplication.Dtos.AuthDtos.loginDto;
 using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.RegisterDto;
 using ArenaDomain.Entities;
@@ -13,7 +13,8 @@ namespace ArenaApplication.IServices
 {
     public interface IAuthService
     {
-        Task<Result> RegisterAsync(UserRegisterDto dto);
+        Task<Result<Guid>> RegisterAsync(UserRegisterDto dto);
+
         Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto);
         Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto);
         Task<Result> LogoutAsync(Guid userId);
@@ -22,6 +23,8 @@ namespace ArenaApplication.IServices
         Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<Result> ResetPasswordAsync(ResetPasswordDto dto);
         Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto);
+        Task<Result<AuthResponseDto>> GoogleLoginAsync(string idToken);
+        Task<Result> CompleteProfileAsync(Guid userId, CompleteProfileDto dto);
 
     }
 }

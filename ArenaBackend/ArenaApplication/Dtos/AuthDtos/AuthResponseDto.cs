@@ -15,5 +15,7 @@ namespace ArenaApplication.Dtos.AuthDtos
         public bool IsSubscribed { get; set; }
         public GetProfileDto? Profile { get; set; }
 
+        public bool IsGoogleUser { get; set; }
+
     }
 }

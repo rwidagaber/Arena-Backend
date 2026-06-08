@@ -8,10 +8,11 @@ namespace ArenaApplication.Services
     public class BackgroundJobService : IBackgroundJobService
     {
         private readonly INotificationService _notificationService;
-
-        public BackgroundJobService(INotificationService notificationService)
+        private readonly IBackgroundJobClient _jobClient;
+        public BackgroundJobService(INotificationService notificationService, IBackgroundJobClient jobClient)
         {
             _notificationService = notificationService;
+            _jobClient = jobClient;
         }
 
         // =========================
@@ -20,8 +21,8 @@ namespace ArenaApplication.Services
 
         public Task EnqueueEmailConfirmationAsync(Guid userId, string email, string otp)
         {
-            BackgroundJob.Enqueue(() =>
-                _notificationService.NotifyEmailConfirmationAsync(userId, email, otp));
+            _jobClient.Enqueue<INotificationService>(s =>
+                 s.NotifyEmailConfirmationAsync(userId, email, otp, CancellationToken.None));
 
             return Task.CompletedTask;
         }
@@ -32,8 +33,8 @@ namespace ArenaApplication.Services
 
         public Task EnqueuePasswordResetTokenEmailAsync(string email, string resetToken, string userEmail)
         {
-            BackgroundJob.Enqueue(() =>
-                _notificationService.NotifyPasswordResetAsync(email, resetToken, userEmail));
+            _jobClient.Enqueue<INotificationService>(s =>
+               s.NotifyPasswordResetAsync(email, resetToken, userEmail));
 
             return Task.CompletedTask;
         }
@@ -44,7 +45,7 @@ namespace ArenaApplication.Services
 
         public Task EnqueueSubscriptionPaymentJobAsync(Guid memberId, decimal amount, string planName)
         {
-            BackgroundJob.Enqueue(() =>
+            _jobClient.Enqueue(() =>
                 _notificationService.NotifyPaymentConfirmedAsync(memberId, amount, planName));
 
             return Task.CompletedTask;
@@ -58,7 +59,7 @@ namespace ArenaApplication.Services
             if (delay <= TimeSpan.Zero)
                 delay = TimeSpan.FromMinutes(1);
 
-            BackgroundJob.Schedule(() =>
+            _jobClient.Schedule(() =>
                 _notificationService.NotifySubscriptionExpiringAsync(memberId, 5),
                 delay);
 
@@ -77,7 +78,7 @@ namespace ArenaApplication.Services
             if (delay <= TimeSpan.Zero)
                 delay = TimeSpan.FromMinutes(1);
 
-            BackgroundJob.Schedule(() =>
+            _jobClient.Schedule(() =>
                 _notificationService.NotifySessionReminderAsync(memberId, bookingDate),
                 delay);
 
@@ -86,7 +87,7 @@ namespace ArenaApplication.Services
 
         public Task EnqueueBookingConfirmationAsync(Guid memberId, DateTime bookingDate)
         {
-            BackgroundJob.Enqueue(() =>
+            _jobClient.Enqueue(() =>
                 _notificationService.NotifyBookingConfirmedAsync(memberId, bookingDate));
 
             return Task.CompletedTask;
@@ -94,7 +95,7 @@ namespace ArenaApplication.Services
 
         public Task EnqueueBookingCancellationAsync(Guid memberId, DateTime bookingDate)
         {
-            BackgroundJob.Enqueue(() =>
+            _jobClient.Enqueue(() =>
                 _notificationService.NotifyBookingCancelledAsync(memberId, bookingDate));
 
             return Task.CompletedTask;
@@ -102,7 +103,7 @@ namespace ArenaApplication.Services
 
         public Task EnqueueBookingRescheduledAsync(Guid memberId, DateTime newBookingDate)
         {
-            BackgroundJob.Enqueue(() =>
+            _jobClient.Enqueue(() =>
                 _notificationService.NotifyBookingRescheduledAsync(memberId, newBookingDate));
 
             return Task.CompletedTask;

@@ -1,3 +1,4 @@
+using ArenaApi.Configurations;
 using ArenaApi.Configurations.BrearerConfig;
 using ArenaApi.Configurations.JWTConfig;
 using ArenaApi.Configurations.MapsterConfig;
@@ -12,13 +13,14 @@ using ArenaApplication.Services.Payment;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
+using ArenaDomain.Shared;
 using ArenaInfrastructure;
 using ArenaInfrastructure.Data;
-using ArenaDomain.Shared;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Localization;
 using ArenaInfrastructure.Repositories;
 using ArenaInfrastructure.Services;
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Localization;
@@ -33,7 +35,7 @@ namespace ArenaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-
+            builder.Services.AddApplicationServices();
             //Add Localization
 
             builder.Services.AddLocalization();
@@ -82,11 +84,16 @@ namespace ArenaAPI
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
-
+            builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+            builder.Services.AddScoped<IOtpService, OtpService>();
+            builder.Services.AddMemoryCache();
             builder.Services.ConfigureDbContext(builder.Configuration);
             builder.Services.AddRepositories();
             builder.Services.AddApplicationServices();
-
+            builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+            builder.Services.AddMemoryCache();
+            builder.Services.Configure<EmailSettings>(
+                builder.Configuration.GetSection("EmailSettings"));
             // Validators
             builder.Services.AddValidators();
 
@@ -117,6 +124,12 @@ namespace ArenaAPI
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddHangfire(config =>
+            config.UseSqlServerStorage(
+            builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddHangfireServer();
+            builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
             // Profile
             builder.Services.AddScoped<IProfileService, ProfileService>();
@@ -173,6 +186,7 @@ namespace ArenaAPI
                 app.MapOpenApi();
                 app.MapScalarApiReference();
                 app.MapGet("/", () => Results.Redirect("/scalar"));
+                app.UseHangfireDashboard();
             }
 
             app.UseCors("AllowAll");

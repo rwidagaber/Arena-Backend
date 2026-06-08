@@ -1,5 +1,5 @@
 ﻿using ArenaApplication.Dtos.AuthDtos;
-using ArenaApplication.Dtos.loginDto;
+using ArenaApplication.Dtos.AuthDtos.loginDto;
 using ArenaApplication.Dtos.RegisterDto;
 using ArenaApplication.IServices;
 using ArenaDomain.Shared;
@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using System.Security.Claims;
+
 
 namespace ArenaApi.Controllers
 {
@@ -29,7 +30,8 @@ namespace ArenaApi.Controllers
             var result = await _authService.RegisterAsync(dto);
             if (!result.IsSuccess)
                 return BadRequest(result.Errors);
-            return Ok("Registration successful. Please confirm your email.");
+
+            return Ok(new { userId = result.Value }); // ← رجّع userId
         }
 
         [HttpPost("confirm-email")]
@@ -105,6 +107,22 @@ namespace ArenaApi.Controllers
         public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
         {
             var result = await _authService.ResetPasswordAsync(dto);
+            return result.IsSuccess ? Ok() : BadRequest(result.Errors);
+        }
+
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin(GoogleLoginDto dto)
+        {
+            var result = await _authService.GoogleLoginAsync(dto.IdToken);
+            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        }
+
+        [Authorize]
+        [HttpPost("complete-profile")]
+        public async Task<IActionResult> CompleteProfile(CompleteProfileDto dto)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await _authService.CompleteProfileAsync(userId, dto);
             return result.IsSuccess ? Ok() : BadRequest(result.Errors);
         }
     }
