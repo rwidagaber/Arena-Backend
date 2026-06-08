@@ -5,6 +5,7 @@ namespace ArenaApplication.Services.UserSubscription
     public interface IUserSubscriptionService
     {
         Task<IEnumerable<UserSubscriptionDto>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<PagedResult<UserSubscriptionDto>> GetAllPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
         Task<UserSubscriptionDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<IEnumerable<UserSubscriptionDto>> GetByMemberIdAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
         Task<UserSubscriptionDto> CreateAsync(CreateUserSubscriptionDto createDto, CancellationToken cancellationToken = default);
