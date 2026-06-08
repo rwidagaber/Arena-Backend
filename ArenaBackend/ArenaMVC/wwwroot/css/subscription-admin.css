@@ -477,6 +477,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.25rem;
     min-width: 38px;
     height: 38px;
     padding: 0 0.5rem;
@@ -514,4 +515,12 @@
     color: var(--autonomous);
     padding: 0 0.25rem;
     font-weight: 600;
-}
+}
+
+/* RTL Arrow Flipping Support */
+html[dir="rtl"] .usub-arrow-prev,
+html[dir="rtl"] .usub-arrow-next {
+    display: inline-block;
+    transform: scaleX(-1);
+}
+

@@ -259,5 +259,12 @@
  "Basic": "Basic",
  "Premium": "Premium",
  "Silver": "Silver",
- "Gold": "Gold"
+ "Gold": "Gold",
+ "Previous": "Previous",
+ "Next": "Next",
+ "Page": "Page",
+ "Of": "of",
+ "Records": "Records",
+ "Showing": "Showing",
+ "RowsPerPage": "Rows Per Page"
 }

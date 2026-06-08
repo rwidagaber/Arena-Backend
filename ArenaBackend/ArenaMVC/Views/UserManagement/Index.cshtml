@@ -1,4 +1,4 @@
-@model List<ArenaMVC.Models.UserListViewModel>
+@model ArenaMVC.Models.UserListPagedViewModel
 
 @{
     ViewData["Title"] = Localizer["UsersManagement"];
@@ -32,20 +32,32 @@
 
         <!-- Search Card -->
         <div class="booking-filters-card mb-4" style="background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);">
-            <div class="row align-items-center">
+            <form method="get" id="userSearchForm" class="row align-items-center">
+                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
                 <div class="col-12">
                     <div class="search-input-wrapper">
                         <span style="position: absolute; inset-inline-start: 16px; top: 50%; transform: translateY(-50%); color: var(--autonomous); display: flex; align-items: center; z-index: 10;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </span>
-                        <input class="form-control" id="searchInput" type="text" placeholder="@Localizer["SearchByNameOrEmail"]" />
+                        <input class="form-control" id="searchInput" type="text" name="search" value="@Model.Search" placeholder="@Localizer["SearchByNameOrEmail"]" />
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
 
-        @if (Model != null && Model.Any())
+        @if (Model != null && Model.Items != null && Model.Items.Any())
         {
+            @* Summary bar *@
+            <div class="usub-summary-bar">
+                <span>
+                    @Localizer["Showing"]
+                    <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>–<strong>@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))</strong>
+                    @Localizer["Of"] <strong>@Model.TotalCount</strong> @Localizer["Records"]
+                </span>
+                <span class="usub-page-info">@Localizer["Page"] @Model.Page @Localizer["Of"] @Model.TotalPages</span>
+            </div>
+
             <div class="user-table-wrap">
                 <div class="table-responsive">
                     <table class="subscription-table user-mgmt-table" id="usersTable" aria-label="@Localizer["UsersManagement"]">
@@ -60,7 +72,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var user in Model)
+                            @foreach (var user in Model.Items)
                             {
                                 <tr class="user-row">
                                     <td data-label="@Localizer["FullName"]" class="user-name-cell">@user.FullName</td>
@@ -126,9 +138,13 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
 
-            <div id="noUsersMatchMessage" class="subscription-empty-state" style="display: none;">
+                @await Html.PartialAsync("_Pagination", new PaginationInfo { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, TotalPages = Model.TotalPages, HasPreviousPage = Model.HasPreviousPage, HasNextPage = Model.HasNextPage })
+            </div>
+        }
+        else if (Model != null && !string.IsNullOrWhiteSpace(Model.Search))
+        {
+            <div class="subscription-empty-state">
                 <div class="subscription-empty-state-icon">🔍</div>
                 <h3>@Localizer["NoMatchingUsersFound"]</h3>
                 <p>@Localizer["NoUsersFound"]</p>
@@ -177,43 +193,6 @@
                     const userId = button.getAttribute('data-userid');
                     const form = document.getElementById('deleteForm');
                     form.action = '@Url.Action("Delete", "UserManagement")/' + userId;
-                });
-            }
-
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', function () {
-                    const filter = this.value.toLowerCase().trim();
-                    const rows = document.querySelectorAll('#usersTable tbody .user-row');
-                    let visibleCount = 0;
-
-                    rows.forEach(row => {
-                        const nameEl = row.querySelector('.user-name-cell');
-                        const contactEl = row.querySelector('.user-contact-cell');
-
-                        const nameText = nameEl ? nameEl.textContent.toLowerCase() : '';
-                        const emailText = contactEl ? (contactEl.querySelector('a') ? contactEl.querySelector('a').textContent.toLowerCase() : '') : '';
-                        const phoneText = contactEl ? (contactEl.querySelector('.contact-phone') ? contactEl.querySelector('.contact-phone').textContent.toLowerCase() : '') : '';
-
-                        if (nameText.includes(filter) || emailText.includes(filter) || phoneText.includes(filter)) {
-                            row.style.display = '';
-                            visibleCount++;
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-
-                    const tableWrap = document.querySelector('.user-table-wrap');
-                    const emptyState = document.getElementById('noUsersMatchMessage');
-                    if (emptyState && tableWrap) {
-                        if (visibleCount === 0 && rows.length > 0) {
-                            tableWrap.style.display = 'none';
-                            emptyState.style.display = '';
-                        } else {
-                            tableWrap.style.display = '';
-                            emptyState.style.display = 'none';
-                        }
-                    }
                 });
             }
         });

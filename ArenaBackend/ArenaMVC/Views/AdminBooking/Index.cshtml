@@ -1,10 +1,10 @@
 @using ArenaDomain.Enums
-@model List<ArenaMVC.Models.AdminBookingViewModel>
+@model ArenaMVC.Models.AdminBookingPagedViewModel
 
 @{
     ViewData["Title"] = Localizer["Bookings"];
-    BookingStatus? selectedStatus = ViewBag.SelectedStatus as BookingStatus?;
-    DateTime? selectedDate = ViewBag.SelectedDate as DateTime?;
+    BookingStatus? selectedStatus = Model.SelectedStatus;
+    DateTime? selectedDate = Model.SelectedDate;
 }
 
 <link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
@@ -23,6 +23,8 @@
 
     <div class="booking-filters-card">
         <form method="get" id="bookingFiltersForm" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
             <div class="col-12 col-md-4">
                 <label class="form-label" for="statusSelect">@Localizer["Status"]</label>
                 <select class="form-select" id="statusSelect" name="status">
@@ -43,6 +45,18 @@
         <p class="booking-filters-hint">@Localizer["StatusFilterHint"]</p>
     </div>
 
+    @if (Model != null && Model.Items != null && Model.Items.Any())
+    {
+        <div class="usub-summary-bar mt-4">
+            <span>
+                @Localizer["Showing"]
+                <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>–<strong>@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))</strong>
+                @Localizer["Of"] <strong>@Model.TotalCount</strong> @Localizer["Records"]
+            </span>
+            <span class="usub-page-info">@Localizer["Page"] @Model.Page @Localizer["Of"] @Model.TotalPages</span>
+        </div>
+    }
+
     <div class="booking-table-wrap">
         <div class="booking-loading-overlay" id="bookingLoadingOverlay" aria-hidden="true">
             <div class="booking-spinner" role="status" aria-label="Loading"></div>
@@ -59,7 +73,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model is null || Model.Count == 0)
+                    @if (Model is null || Model.Items is null || !Model.Items.Any())
                     {
                         <tr>
                             <td colspan="5" class="text-empty">
@@ -69,7 +83,7 @@
                     }
                     else
                     {
-                        foreach (var b in Model.OrderByDescending(x => x.BookingDate).ThenBy(x => x.StartTime))
+                        foreach (var b in Model.Items)
                         {
                             var badgeClass = b.Status == BookingStatus.Confirmed
                                 ? "booking-badge booking-badge-confirmed"
@@ -95,6 +109,7 @@
                 </tbody>
             </table>
         </div>
+        @await Html.PartialAsync("_Pagination", new PaginationInfo { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, TotalPages = Model.TotalPages, HasPreviousPage = Model.HasPreviousPage, HasNextPage = Model.HasNextPage })
     </div>
 </div>
 
