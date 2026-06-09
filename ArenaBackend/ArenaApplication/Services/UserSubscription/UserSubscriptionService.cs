@@ -48,6 +48,39 @@ namespace ArenaApplication.Services.UserSubscription
             return result;
         }
 
+        public async Task<PagedResult<UserSubscriptionDto>> GetAllPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var subscriptions = await _repository.GetAllAsync(cancellationToken);
+            var activeSubscriptions = subscriptions.Where(s => !s.IsDeleted).ToList();
+
+            int totalCount = activeSubscriptions.Count;
+
+            var paged = activeSubscriptions
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var result = new List<UserSubscriptionDto>();
+            foreach (var s in paged)
+            {
+                var plan = await _planRepository.GetByIdAsync(s.PlanId, cancellationToken);
+                var member = await _memberProfileRepository.GetByIdAsync(s.MemberProfileId, cancellationToken);
+                var user = member != null ? await _userQueryService.GetByIdAsync(member.UserId) : null;
+                result.Add(MapToDto(s, plan, user));
+            }
+
+            return new PagedResult<UserSubscriptionDto>
+            {
+                Items = result,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<UserSubscriptionDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var subscriptions = await _repository.GetAllAsync(cancellationToken);

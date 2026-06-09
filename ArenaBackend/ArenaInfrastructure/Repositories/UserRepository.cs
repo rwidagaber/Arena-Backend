@@ -26,6 +26,8 @@ namespace ArenaInfrastructure.Repositories
         {
             return await _context.Users
                 .Include(u => u.MemberProfile)
+                    .ThenInclude(mp => mp.Subscriptions)
+                        .ThenInclude(s => s.Plan)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 

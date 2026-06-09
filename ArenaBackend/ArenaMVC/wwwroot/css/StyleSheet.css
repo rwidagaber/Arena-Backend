@@ -41,6 +41,7 @@ body {
     z-index: 1000 !important;
     overflow-y: auto !important;
     box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .sidebar-brand {
@@ -216,47 +217,99 @@ a:hover {
     border-color: rgba(213, 235, 69, 0.4);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .sidebar {
-        width: 200px;
-        --sidebar-width: 200px;
-    }
-
-    .main-content {
-        margin-left: 200px;
-        width: calc(100% - 200px);
-    }
-
-    main {
-        padding: 20px 15px;
-    }
-
-    .footer {
-        padding: 15px 15px;
-        font-size: 12px;
-    }
+/* Main Header for Mobile/Tablet */
+.main-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 99;
 }
 
-@media (max-width: 480px) {
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: var(--yellow);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+    background-color: rgba(196, 176, 69, 0.1);
+}
+
+.header-brand a {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--yellow);
+    text-decoration: none;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .main-header {
+        display: flex;
+    }
+
     .sidebar {
-        width: 0;
-        --sidebar-width: 0;
+        width: var(--sidebar-width) !important;
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
+    }
+
+    [dir="rtl"] .sidebar {
+        transform: translateX(100%);
     }
 
     .sidebar.active {
-        transform: translateX(0);
+        transform: translateX(0) !important;
+    }
+
+    [dir="rtl"] .sidebar.active {
+        transform: translateX(0) !important;
     }
 
     .main-content {
-        margin-left: 0;
-        width: 100%;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
     }
 
     main {
-        padding: 15px 10px;
+        padding: 24px 16px !important;
+    }
+
+    .footer {
+        padding: 15px 15px !important;
+        font-size: 12px !important;
     }
 }
 
@@ -287,9 +340,11 @@ a:hover {
     border-left: 1px solid var(--border-color) !important;
 }
 
-[dir="rtl"] .main-content {
-    margin-left: 0 !important;
-    margin-right: var(--sidebar-width) !important;
+@media (min-width: 1025px) {
+    [dir="rtl"] .main-content {
+        margin-left: 0 !important;
+        margin-right: var(--sidebar-width) !important;
+    }
 }
 
 /* Culture Dropdown */

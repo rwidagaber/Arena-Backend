@@ -9,12 +9,15 @@ using ArenaApplication.IServices;
 using ArenaApplication.IServices.Payment;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
+using ArenaApplication.Services.AI;
 using ArenaApplication.Services.Payment;
+using ArenaApplication.settings;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure;
+using ArenaInfrastructure.AI;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Localization;
@@ -35,39 +38,21 @@ namespace ArenaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddApplicationServices();
-            //Add Localization
-
+            // ── Localization ──────────────────────────────────────────────
             builder.Services.AddLocalization();
-
             builder.Services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
-            // Mapster
-            builder.Services.AddMapster();
 
-            // Controllers
-            builder.Services.AddControllers()
-                // Localization for Data Annotations
-                .AddDataAnnotationsLocalization(options =>
-                {
-                options.DataAnnotationLocalizerProvider = (type, factory) =>
-                    factory.Create(typeof(ArenaLocalization));
-                });
+            var supportedCultures = new[]
+            {
+                new CultureInfo("en-US"),
+                new CultureInfo("ar-EG")
+            };
 
-
-            // Localization options
             builder.Services.Configure<RequestLocalizationOptions>(options =>
             {
-                var supportedCultures = new[]
-                {
-                    new CultureInfo("en-US"),
-                    new CultureInfo("ar-EG")
-                };
-
                 options.DefaultRequestCulture = new RequestCulture("en-US");
                 options.SupportedCultures = supportedCultures;
                 options.SupportedUICultures = supportedCultures;
-
-                // Keep Accept-Language header as the primary provider
                 options.RequestCultureProviders = new List<IRequestCultureProvider>
                 {
                     new AcceptLanguageHeaderRequestCultureProvider(),
@@ -76,37 +61,55 @@ namespace ArenaAPI
                 };
             });
 
-            // Services
+            // ── Controllers ───────────────────────────────────────────────
+            builder.Services.AddControllers()
+                .AddDataAnnotationsLocalization(options =>
+                {
+                    options.DataAnnotationLocalizerProvider = (type, factory) =>
+                        factory.Create(typeof(ArenaLocalization));
+                });
+
+            // ── Core Services ─────────────────────────────────────────────
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMemoryCache();
+
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
-            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
-            builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
-            builder.Services.AddScoped<IOtpService, OtpService>();
-            builder.Services.AddMemoryCache();
+
+            builder.Services.Configure<EmailSettings>(
+                builder.Configuration.GetSection("EmailSettings"));
+
+            // ── Database ──────────────────────────────────────────────────
             builder.Services.ConfigureDbContext(builder.Configuration);
             builder.Services.AddRepositories();
             builder.Services.AddApplicationServices();
-            builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
-            builder.Services.AddMemoryCache();
-            builder.Services.Configure<EmailSettings>(
-                builder.Configuration.GetSection("EmailSettings"));
-            // Validators
+
+            // ── Hangfire ──────────────────────────────────────────────────
+            builder.Services.AddHangfire(config =>
+                config.UseSqlServerStorage(
+                    builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddHangfireServer();
+            builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+            builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
+
+            // ── Mapster ───────────────────────────────────────────────────
+            builder.Services.AddMapster();
+
+            // ── Validators ────────────────────────────────────────────────
             builder.Services.AddValidators();
 
-            // SignalR
+            // ── SignalR ───────────────────────────────────────────────────
             builder.Services.AddSignalR();
 
-            // OpenAPI + Bearer
+            // ── OpenAPI + Bearer Auth ─────────────────────────────────────
             builder.Services.AddOpenApi(options =>
-            {
-                options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
-            });
+                options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
-            // Identity
+            // ── Identity ──────────────────────────────────────────────────
             builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -117,70 +120,75 @@ namespace ArenaAPI
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-            // JWT
+            // ── JWT ───────────────────────────────────────────────────────
             builder.Services.AddJwtAuthentication(builder.Configuration);
 
-            // Auth
+            // ── Auth ──────────────────────────────────────────────────────
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddHangfire(config =>
-            config.UseSqlServerStorage(
-            builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddScoped<IOtpService, OtpService>();
+            builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 
-            builder.Services.AddHangfireServer();
-            builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
-
-            // Profile
+            // ── Profile ───────────────────────────────────────────────────
             builder.Services.AddScoped<IProfileService, ProfileService>();
 
-            // Booking
+            // ── Booking ───────────────────────────────────────────────────
             builder.Services.AddScoped<IGenericRepository<Booking, Guid>,
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
-            // Payment
+            // ── Payment ───────────────────────────────────────────────────
             builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
 
-            // Authorization
+            // ── AI / Chatbot Features ─────────────────────────────────────
+            builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAISettings"));
+            builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+            builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
+            builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
+            builder.Services.AddScoped<IBookingAIService, BookingAIService>();
+
+            // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("GymMemberOrAdmin", policy =>
                     policy.RequireRole("GymMember", "Admin"));
             });
 
-
-
-            //QR Services
+            // ── QR / Attendance ───────────────────────────────────────────
             builder.Services.AddScoped<IQRCodeService, QRCodeService>();
             builder.Services.AddScoped<IAttendanceService, AttendanceService>();
-            
 
+            // ── CORS ──────────────────────────────────────────────────────
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
-                {
                     policy.AllowAnyOrigin()
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
-                });
+                          .AllowAnyHeader());
             });
 
-
-
+            // ═════════════════════════════════════════════════════════════
             var app = builder.Build();
+            // ═════════════════════════════════════════════════════════════
 
+            // ── Seed Database ─────────────────────────────────────────────
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
+                if (app.Environment.IsDevelopment())
+                    context.Database.EnsureCreated();
+
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
             }
 
-            // Middleware
+            // ── Middleware Pipeline ───────────────────────────────────────
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -191,24 +199,21 @@ namespace ArenaAPI
 
             app.UseCors("AllowAll");
 
-
             if (!app.Environment.IsDevelopment())
-            {
                 app.UseHttpsRedirection();
-            }
 
-            // Localization Middleware
+            var localizationOptions = new RequestLocalizationOptions()
+                .SetDefaultCulture("en-US")
+                .AddSupportedCultures("en-US", "ar-EG")
+                .AddSupportedUICultures("en-US", "ar-EG");
 
-            app.UseRequestLocalization();
+            app.UseRequestLocalization(localizationOptions);
 
-            // Authentication & Authorization
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapControllers();
             app.MapHub<NotificationHub>("/hubs/notifications");
-
-          
-
 
             app.Run();
         }
