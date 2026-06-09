@@ -1,4 +1,5 @@
 ﻿using ArenaApplication.Dtos.AuthDtos;
+using ArenaApplication.Dtos.AuthDtos.loginDto;
 using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.RegisterDto;
 using ArenaApplication.Dtos.UserSupscriptionDto;
