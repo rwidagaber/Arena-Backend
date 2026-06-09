@@ -1,6 +1,27 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = Localizer["PrivacyPolicy"];
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="dashboard-card" style="max-width: 800px; margin: 0 auto; line-height: 1.6;">
+    <h1 style="color: var(--yellow); font-weight: 800; margin-bottom: 1.5rem; font-size: 2.2rem;">🛡️ @Localizer["PrivacyPolicyHeading"]</h1>
+    
+    <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
+        @Localizer["PrivacyPolicyIntro"]
+    </p>
+
+    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">@Localizer["DataCollection"]</h3>
+    <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
+        @Localizer["DataCollectionText"]
+    </p>
+
+    <h3 style="color: var(--whiteout); font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem;">@Localizer["SecurityCompliance"]</h3>
+    <p style="color: #A0A0AB; margin-bottom: 1.25rem;">
+        @Localizer["SecurityComplianceText"]
+    </p>
+
+    <hr style="border-color: var(--border-color); margin: 2rem 0;" />
+    
+    <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
+        ⬅ @Localizer["BackToDashboard"]
+    </a>
+</div>

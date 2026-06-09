@@ -1,19 +1,41 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\ArenaDomain\ArenaDomain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="IServices\" />
-    <Folder Include="Mappers\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArenaDomain\ArenaDomain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="Hangfire" Version="1.8.23" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
+    <PackageReference Include="Mapster" Version="10.0.7" />
+    <PackageReference Include="Mapster.DependencyInjection" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.19.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<Content Include="AI\Prompts\*.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Dtos\ProfileDto\" />
+    <Folder Include="Interfacees\" />
+    <Folder Include="Mappers\" />
+  </ItemGroup>
 
 </Project>

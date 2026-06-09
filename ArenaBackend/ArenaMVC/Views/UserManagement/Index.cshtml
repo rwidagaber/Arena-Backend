@@ -1,0 +1,200 @@
+@model ArenaMVC.Models.UserListPagedViewModel
+
+@{
+    ViewData["Title"] = Localizer["UsersManagement"];
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1>👥 @Localizer["UsersManagement"]</h1>
+            <p>@Localizer["ManageUserStatus"]</p>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        @if (TempData["Success"] != null)
+        {
+            <div class="subscription-alert success">
+                <strong>@Localizer["Success"]</strong> @TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+
+        <!-- Search Card -->
+        <div class="booking-filters-card mb-4" style="background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);">
+            <form method="get" id="userSearchForm" class="row align-items-center">
+                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                <div class="col-12">
+                    <div class="search-input-wrapper">
+                        <span style="position: absolute; inset-inline-start: 16px; top: 50%; transform: translateY(-50%); color: var(--autonomous); display: flex; align-items: center; z-index: 10;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </span>
+                        <input class="form-control" id="searchInput" type="text" name="search" value="@Model.Search" placeholder="@Localizer["SearchByNameOrEmail"]" />
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        @if (Model != null && Model.Items != null && Model.Items.Any())
+        {
+            @* Summary bar *@
+            <div class="usub-summary-bar">
+                <span>
+                    @Localizer["Showing"]
+                    <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>–<strong>@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))</strong>
+                    @Localizer["Of"] <strong>@Model.TotalCount</strong> @Localizer["Records"]
+                </span>
+                <span class="usub-page-info">@Localizer["Page"] @Model.Page @Localizer["Of"] @Model.TotalPages</span>
+            </div>
+
+            <div class="user-table-wrap">
+                <div class="table-responsive">
+                    <table class="subscription-table user-mgmt-table" id="usersTable" aria-label="@Localizer["UsersManagement"]">
+                        <thead>
+                            <tr>
+                                <th class="col-user-name">@Localizer["FullName"]</th>
+                                <th class="col-user-contact">@Localizer["ContactInfo"]</th>
+                                <th class="col-user-account">@Localizer["AccountStatus"]</th>
+                                <th class="col-user-member">@Localizer["Member"]</th>
+                                <th class="col-user-subscription">@Localizer["SubscriptionStatus"]</th>
+                                <th class="col-user-actions">@Localizer["Actions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.Items)
+                            {
+                                <tr class="user-row">
+                                    <td data-label="@Localizer["FullName"]" class="user-name-cell">@user.FullName</td>
+                                    <td data-label="@Localizer["ContactInfo"]" class="user-contact-cell">
+                                        <div class="contact-info">
+                                            <a href="mailto:@user.Email">@user.Email</a>
+                                            <div class="contact-phone">@(string.IsNullOrWhiteSpace(user.PhoneNumber) ? "-" : user.PhoneNumber)</div>
+                                        </div>
+                                    </td>
+                                    <td data-label="@Localizer["AccountStatus"]" class="user-account-cell">
+                                        @if (user.IsActive)
+                                        {
+                                            <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="user-badge badge-crimson">@Localizer["Inactive"]</span>
+                                        }
+                                    </td>
+                                    <td data-label="@Localizer["Member"]" class="user-member-cell">
+                                        @if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ActiveMembership)
+                                        {
+                                            <span class="user-badge badge-emerald">@Localizer["ActiveMembership"]</span>
+                                        }
+                                        else if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ExpiredMembership)
+                                        {
+                                            <span class="user-badge badge-orange">@Localizer["ExpiredMembership"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="user-badge badge-gray">@Localizer["User"]</span>
+                                        }
+                                    </td>
+                                    <td data-label="@Localizer["SubscriptionStatus"]" class="user-subscription-cell">
+                                        @if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Active)
+                                        {
+                                            <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                                        }
+                                        else if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
+                                        {
+                                            <span class="user-badge badge-orange">@Localizer["Expired"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="user-badge badge-gray">@Localizer["NA"]</span>
+                                        }
+                                    </td>
+                                    <td data-label="@Localizer["Actions"]" class="user-actions-cell">
+                                        <div class="d-flex justify-content-center gap-2 align-items-center actions-cell">
+                                            <a href="@Url.Action("Details", "UserManagement", new { id = user.Id })" class="action-icon-btn btn-action-view" data-tooltip="@Localizer["ViewDetails"]">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            </a>
+                                            <a href="@Url.Action("Manage", "UserManagement", new { id = user.Id })" class="action-icon-btn btn-action-settings" data-tooltip="@Localizer["Manage"]">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                            </a>
+                                            <button type="button" class="action-icon-btn btn-action-delete" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" data-userid="@user.Id" data-tooltip="@Localizer["Delete"]">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @await Html.PartialAsync("_Pagination", new PaginationInfo { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, TotalPages = Model.TotalPages, HasPreviousPage = Model.HasPreviousPage, HasNextPage = Model.HasNextPage })
+            </div>
+        }
+        else if (Model != null && !string.IsNullOrWhiteSpace(Model.Search))
+        {
+            <div class="subscription-empty-state">
+                <div class="subscription-empty-state-icon">🔍</div>
+                <h3>@Localizer["NoMatchingUsersFound"]</h3>
+                <p>@Localizer["NoUsersFound"]</p>
+            </div>
+        }
+        else
+        {
+            <div class="subscription-empty-state">
+                <div class="subscription-empty-state-icon">👥</div>
+                <h3>@Localizer["NoUsersFound"]</h3>
+                <p>@Localizer["NoUsersFound"]</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade modal-dark" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">⚠️ @Localizer["ConfirmDeletion"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @Localizer["AreYouSureDeleteUser"]
+            </div>
+            <div class="modal-footer">
+                <form id="deleteForm" method="post" style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-subscription-danger" style="height: 38px;">@Localizer["Confirm"]</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+            if (deleteConfirmModal) {
+                deleteConfirmModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const userId = button.getAttribute('data-userid');
+                    const form = document.getElementById('deleteForm');
+                    form.action = '@Url.Action("Delete", "UserManagement")/' + userId;
+                });
+            }
+        });
+    </script>
+}

@@ -7,8 +7,8 @@ namespace ArenaApplication.Dtos.NotificationDtos
 {
     public class CreateNotificationDto
     {
-        public Guid UserId { get; set; }
-
+        public Guid MemberProfileId { get; set; }
+        
         public string Title { get; set; } = string.Empty;
 
         public string Message { get; set; } = string.Empty;

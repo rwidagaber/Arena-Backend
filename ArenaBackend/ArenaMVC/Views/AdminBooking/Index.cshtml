@@ -1,0 +1,137 @@
+@using ArenaDomain.Enums
+@model ArenaMVC.Models.AdminBookingPagedViewModel
+
+@{
+    ViewData["Title"] = Localizer["Bookings"];
+    BookingStatus? selectedStatus = Model.SelectedStatus;
+    DateTime? selectedDate = Model.SelectedDate;
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/booking-admin.css" asp-append-version="true" />
+
+<div class="booking-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1>📅 @Localizer["Bookings"]</h1>
+            <p>@Localizer["Bookings"]</p>
+        </div>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Today">@Localizer["TodaysBookings"]</a>
+        </div>
+    </div>
+
+    <div class="booking-filters-card">
+        <form method="get" id="bookingFiltersForm" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="statusSelect">@Localizer["Status"]</label>
+                <select class="form-select" id="statusSelect" name="status">
+                    <option value="" selected="@(selectedStatus is null ? "selected" : null)">@Localizer["All"]</option>
+                    <option value="Confirmed" selected="@(selectedStatus == BookingStatus.Confirmed ? "selected" : null)">@Localizer["Confirmed"]</option>
+                    <option value="Cancelled" selected="@(selectedStatus == BookingStatus.Cancelled ? "selected" : null)">@Localizer["Cancelled"]</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="bookingDateInput">@Localizer["Date"]</label>
+                <input class="form-control" id="bookingDateInput" type="date" name="bookingDate"
+                       value="@(selectedDate.HasValue ? selectedDate.Value.ToString("yyyy-MM-dd") : "")" />
+            </div>
+            <div class="col-12 col-md-4 booking-filters-actions d-flex gap-2 justify-content-md-end">
+                <a class="btn btn-subscription-secondary" asp-controller="AdminBooking" asp-action="Index">@Localizer["Reset"]</a>
+            </div>
+        </form>
+        <p class="booking-filters-hint">@Localizer["StatusFilterHint"]</p>
+    </div>
+
+    @if (Model != null && Model.Items != null && Model.Items.Any())
+    {
+        <div class="usub-summary-bar mt-4">
+            <span>
+                @Localizer["Showing"]
+                <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>–<strong>@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))</strong>
+                @Localizer["Of"] <strong>@Model.TotalCount</strong> @Localizer["Records"]
+            </span>
+            <span class="usub-page-info">@Localizer["Page"] @Model.Page @Localizer["Of"] @Model.TotalPages</span>
+        </div>
+    }
+
+    <div class="booking-table-wrap">
+        <div class="booking-loading-overlay" id="bookingLoadingOverlay" aria-hidden="true">
+            <div class="booking-spinner" role="status" aria-label="Loading"></div>
+        </div>
+        <div class="table-responsive">
+            <table class="booking-table" aria-label="@Localizer["Bookings"]">
+                <thead>
+                    <tr>
+                        <th class="col-booking-member">@Localizer["MemberProfileName"]</th>
+                        <th class="col-booking-date">@Localizer["Date"]</th>
+                        <th class="col-booking-start">@Localizer["Start"]</th>
+                        <th class="col-booking-end">@Localizer["End"]</th>
+                        <th class="col-booking-status">@Localizer["Status"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model is null || Model.Items is null || !Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-empty">
+                                @Localizer["Bookings"]
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var b in Model.Items)
+                        {
+                            var badgeClass = b.Status == BookingStatus.Confirmed
+                                ? "booking-badge booking-badge-confirmed"
+                                : b.Status == BookingStatus.Cancelled
+                                    ? "booking-badge booking-badge-cancelled"
+                                    : b.Status == BookingStatus.Pending
+                                        ? "booking-badge booking-badge-pending"
+                                        : b.Status == BookingStatus.Completed
+                                            ? "booking-badge booking-badge-completed"
+                                            : "booking-badge booking-badge-other";
+
+                            <tr>
+                                <td data-label="@Localizer["MemberProfileName"]" class="booking-member-cell">@b.MemberProfileName</td>
+                                <td data-label="@Localizer["Date"]" class="booking-date-cell">@CultureHelper.FormatDate(b.BookingDate)</td>
+                                <td data-label="@Localizer["Start"]" class="booking-start-cell">@b.StartTime.ToString(@"hh\:mm")</td>
+                                <td data-label="@Localizer["End"]" class="booking-end-cell">@(b.EndTime.HasValue ? b.EndTime.Value.ToString(@"hh\:mm") : "-")</td>
+                                <td data-label="@Localizer["Status"]" class="booking-status-cell">
+                                    <span class="@badgeClass">@Localizer[b.Status.ToString()]</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        @await Html.PartialAsync("_Pagination", new PaginationInfo { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, TotalPages = Model.TotalPages, HasPreviousPage = Model.HasPreviousPage, HasNextPage = Model.HasNextPage })
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('bookingFiltersForm');
+            const status = document.getElementById('statusSelect');
+            const date = document.getElementById('bookingDateInput');
+            const overlay = document.getElementById('bookingLoadingOverlay');
+            if (!form || !status) return;
+
+            const submitFilters = function () {
+                if (overlay) overlay.classList.add('show');
+                form.submit();
+            };
+
+            status.addEventListener('change', submitFilters);
+
+            if (date) {
+                date.addEventListener('change', submitFilters);
+            }
+        })();
+    </script>
+}

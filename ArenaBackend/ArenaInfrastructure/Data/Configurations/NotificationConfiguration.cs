@@ -27,11 +27,11 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
                .IsRequired()
                .HasDefaultValue(false);
 
-        // ApplicationUser → Notifications (many)
-        builder.HasOne(n => n.User)
-               .WithMany(u => u.Notifications)
-               .HasForeignKey(n => n.UserId)
-               .OnDelete(DeleteBehavior.Cascade);
+        // MemberProfile → Notifications (many)
+        builder.HasOne(n => n.MemberProfile)
+       .WithMany(mp => mp.Notifications)
+       .HasForeignKey(n => n.MemberProfileId)
+       .OnDelete(DeleteBehavior.Cascade);
 
         builder.ToTable("Notifications");
     }
