@@ -25,6 +25,6 @@ namespace ArenaApplication.IServices
         Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto);
         Task<Result<AuthResponseDto>> GoogleLoginAsync(string idToken);
         Task<Result> CompleteProfileAsync(Guid userId, CompleteProfileDto dto);
-
+        Task<Result> ResendConfirmationAsync(Guid userId);
     }
 }
