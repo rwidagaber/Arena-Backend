@@ -125,5 +125,12 @@ namespace ArenaApi.Controllers
             var result = await _authService.CompleteProfileAsync(userId, dto);
             return result.IsSuccess ? Ok() : BadRequest(result.Errors);
         }
+
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationDto dto)
+        {
+            var result = await _authService.ResendConfirmationAsync(dto.UserId);
+            return result.IsSuccess ? Ok() : BadRequest(result.Errors);
+        }
     }
 }

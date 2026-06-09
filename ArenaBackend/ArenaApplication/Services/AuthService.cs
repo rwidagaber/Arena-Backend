@@ -1,5 +1,5 @@
 using ArenaApplication.Dtos.AuthDtos;
-using ArenaApplication.Dtos.loginDto;
+using ArenaApplication.Dtos.AuthDtos.loginDto;
 using ArenaApplication.Dtos.ProfileDtos;
 using ArenaApplication.Dtos.RegisterDto;
 using ArenaApplication.Dtos.UserSupscriptionDto;
@@ -400,6 +400,26 @@ namespace ArenaApplication.Services
             }
 
             await _authRepository.UpdateMemberProfileAsync(user.MemberProfile);
+
+            return Result.Success();
+        }
+
+        public async Task<Result> ResendConfirmationAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null)
+                return Result.Failure("User not found");
+
+            if (user.EmailConfirmed)
+                return Result.Failure("Email is already confirmed");
+
+            var otp = await _otpService.GenerateAndSaveOtpAsync(user.Id);
+
+            await _backgroundJobService.EnqueueEmailConfirmationAsync(
+                user.Id,
+                user.Email!,
+                otp
+            );
 
             return Result.Success();
         }
