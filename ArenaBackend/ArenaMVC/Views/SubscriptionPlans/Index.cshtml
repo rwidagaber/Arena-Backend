@@ -61,11 +61,12 @@
 								@plan.Description
 							</p>
 
+										@* @CultureHelper.FormatCurrency(plan.Price) *@
 							<div class="subscription-details">
 								<div class="subscription-detail-item">
 									<div class="subscription-detail-label">@Localizer["Price"]</div>
 									<div class="subscription-detail-value">
-										@CultureHelper.FormatCurrency(plan.Price)
+										@plan.Price @Localizer["Currency"]
 									</div>
 								</div>
 								<div class="subscription-detail-item">

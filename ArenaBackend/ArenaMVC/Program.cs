@@ -46,6 +46,7 @@ builder.Services.AddApplicationServices();
 
 // User-related services
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Booking dependencies (MVC Admin pages)
 builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();
@@ -79,6 +80,10 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ArenaInfrastructure.Data.AppDbContext>();
     await context.Database.MigrateAsync();
     await TranslationSeeder.SeedAsync(context);
+    if (app.Environment.IsDevelopment())
+    {
+        await DashboardDataSeeder.SeedAsync(context);
+    }
 }
 
 // Configure the HTTP request pipeline.
