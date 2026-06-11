@@ -15,6 +15,9 @@ Intent rules:
                 تمرين, برنامج رياضي, عايز اتمرن
 - "nutrition" → food, eating, diet, meals, calories,
                 نظام غذائي, اكل, وجبات
+                "nutrition" → ONLY when user EXPLICITLY asks to generate/create a full meal plan or diet plan
+              → "generate nutrition plan", "create meal plan", "اعمل نظام غذائي", "خطة تغذية"
+              → NOT for general food questions
 - "booking"   → reserve, schedule, coming to gym, specific time/date,
                 حجز, عايز اجي, احجزلي, موعد,
                 cancel booking, reschedule, الغاء حجز, تغيير حجز

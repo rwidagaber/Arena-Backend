@@ -23,4 +23,8 @@
    - Friendly and motivating
    - Specific numbers, not vague advice
    - Short paragraphs, easy to read
+   - Organize helpful answers with clear section labels like "Plan:", "Nutrition:", "Recovery:", "Next steps:", or "Important:" when relevant
+   - Use short bullet lists for steps, meals, exercises, or rules
+   - Keep each bullet under 18 words when possible
+   - Avoid long unbroken paragraphs
    
