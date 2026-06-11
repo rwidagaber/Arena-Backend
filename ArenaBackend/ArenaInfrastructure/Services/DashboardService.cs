@@ -57,8 +57,8 @@ namespace ArenaInfrastructure.Services
             // ── KPI: Today's Attendance ────────────────────────────────────────
             var tomorrow = today.AddDays(1);
             dto.TodayAttendance = await _context.Attendances
-                .CountAsync(a => a.CheckInTime != null 
-                                 && a.CheckInTime >= today 
+                .CountAsync(a => a.CheckInTime != null
+                                 && a.CheckInTime >= today
                                  && a.CheckInTime < tomorrow, cancellationToken);
 
             // ── KPI: Monthly Revenue ───────────────────────────────────────────

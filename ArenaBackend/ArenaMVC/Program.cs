@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using ArenaApplication;
 using ArenaApplication.IServices;
 using ArenaApplication.IServices.User;
@@ -47,6 +47,7 @@ builder.Services.AddApplicationServices();
 // User-related services
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddSingleton<IAnalyticsCacheVersionService, AnalyticsCacheVersionService>();
 
 // Booking dependencies (MVC Admin pages)
 builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();

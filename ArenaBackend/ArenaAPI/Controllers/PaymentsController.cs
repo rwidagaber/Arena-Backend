@@ -18,16 +18,19 @@ namespace ArenaApi.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IPaymentGatewayService _gatewayService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAnalyticsCacheVersionService _analyticsCacheVersionService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public PaymentsController(IPaymentService paymentService,
                 IPaymentGatewayService gatewayService,
                 ICurrentUserService currentUserService,
+                IAnalyticsCacheVersionService analyticsCacheVersionService,
                 IStringLocalizer<ArenaLocalization> localizer)
         {
             _paymentService = paymentService;
             _gatewayService = gatewayService;
             _currentUserService = currentUserService;
+            _analyticsCacheVersionService = analyticsCacheVersionService;
             _localizer = localizer;
         }
 
@@ -40,6 +43,8 @@ namespace ArenaApi.Controllers
 
             if (!result.IsSuccess)
                 return BadRequest(new { message = result.Errors });
+
+            _analyticsCacheVersionService.BumpVersion();
 
             return Ok(result.Value);
         }
@@ -83,6 +88,9 @@ namespace ArenaApi.Controllers
             {
                 return BadRequest(new { message = result.Errors });
             }
+
+            _analyticsCacheVersionService.BumpVersion();
+
             return Ok(result.Value);
         }
 
@@ -104,6 +112,8 @@ namespace ArenaApi.Controllers
 
                 if (!result.IsSuccess)
                     return BadRequest(new { message = result.Errors });
+
+                _analyticsCacheVersionService.BumpVersion();
             }
             else
             {
@@ -112,6 +122,8 @@ namespace ArenaApi.Controllers
 
                 if (!result.IsSuccess)
                     return BadRequest(new { message = result.Errors });
+
+                _analyticsCacheVersionService.BumpVersion();
             }
 
             return Ok();
@@ -123,7 +135,7 @@ namespace ArenaApi.Controllers
         public IActionResult Callback([FromQuery] bool success)
         {
             var frontendCheckoutUrl = "http://localhost:4200/checkout";
-            
+
             if (success)
             {
                 return Redirect($"{frontendCheckoutUrl}?success=true");
