@@ -42,6 +42,7 @@ Attendance tracked in Dashboard KPIs
 ```
 
 ### Key Endpoints (Revenue Generating)
+
 - **POST /api/payments** → CreateAsync(CreatePaymentDto, userId)
 - **Webhook handler** → MarkAsCompletedAsync(transactionId, paymentIntentId)
 - **POST /api/user-subscriptions** → CreateAsync(CreateUserSubscriptionDto)
@@ -52,18 +53,21 @@ Attendance tracked in Dashboard KPIs
 ### Secondary Flows
 
 **Booking Workflow:**
+
 - POST /api/booking/create → Confirmed
 - POST /api/booking/cancel/{id} → Cancelled
 - POST /api/booking/reschedule/{id} → Rescheduled
 - Background reminder job 1 day before booking
 
 **AI/Chat Engagement:**
+
 - POST /api/chat → SendMessageAsync(memberProfileId, conversationId, message)
 - Stores ChatMessage with Intent detection
 - Generates workout/nutrition plans via AI
 - Tracks conversation history per member
 
 **Notifications:**
+
 - Built-in types: Payment, Booking, Subscription expiry, Session reminders
 - Uses SignalR NotificationHub for real-time
 - Both Email + In-app notifications via NotificationService
@@ -73,10 +77,17 @@ Attendance tracked in Dashboard KPIs
 ## 2. EXISTING KPI ENDPOINTS & AGGREGATIONS
 
 ### Dashboard Endpoint
+
 **MVC:** HomeController.Index() → calls IDashboardService.GetDashboardDataAsync()
 **Returns:** AdminDashboardDto with:
 
+Policy note:
+
+- Admin controls and admin-facing analytics endpoints should be implemented in ArenaMVC.
+- ArenaAPI should remain focused on shared business workflow endpoints.
+
 #### KPI Cards (Summary)
+
 ```csharp
 public class AdminDashboardDto
 {
@@ -100,11 +111,13 @@ public class AdminDashboardDto
 ```
 
 ### Calculation Methods
-- **Growth %:** ((currentMonth - previousMonth) / previousMonth) * 100
+
+- **Growth %:** ((currentMonth - previousMonth) / previousMonth) \* 100
 - **Weekly Attendance:** Group CheckInTime by DayOfWeek for week boundaries (Mon-Sun)
 - **Monthly Revenue:** Filter Payments where Status=Paid AND PaymentDate in current month
 
 ### Accessible Endpoints (Member Level)
+
 - **GET /api/user-subscriptions** → GetAllAsync() / GetAllPagedAsync(page, size)
 - **GET /api/payments/my-payments** → GetMyPaymentsAsync(userId)
 - **GET /api/booking** → GetUserBookings(memberProfileId)
@@ -117,6 +130,7 @@ public class AdminDashboardDto
 ## 3. AVAILABLE OPERATIONAL & FINANCIAL DATA
 
 ### Financial Data Available
+
 ```
 Payment Entity:
   - Amount (decimal)
@@ -143,6 +157,7 @@ SubscriptionPlan Entity:
 ```
 
 ### Operational Data Available
+
 ```
 Member Profiles:
   - Weight, Height, BMI
@@ -175,8 +190,9 @@ AI Usage:
 ```
 
 ### Feasible Formulas NOW
+
 1. **Revenue per member:** Payment.Amount / (membership duration in months)
-2. **Member retention:** (Active subscriptions / Total members) * 100
+2. **Member retention:** (Active subscriptions / Total members) \* 100
 3. **Booking utilization:** Bookings with attendance / Total bookings
 4. **Session utilization:** RemainingSessions trend (sessions used = SessionLimit - RemainingSessions)
 5. **Trainer assignment rate:** Workouts with AssignedTrainerId / Total active workouts
@@ -191,6 +207,7 @@ AI Usage:
 ## 4. MISSING AUDIT/HISTORICAL TRACKING & LOGGING
 
 ### Critical Gaps
+
 1. **No Audit Log Entity** - No tracking of who modified subscriptions, payments, bookings
 2. **No Activity Log** - No record of admin actions (plan changes, member status updates)
 3. **No Historical Snapshots** - Can't track how subscription status changed over time
@@ -203,6 +220,7 @@ AI Usage:
 10. **No Data Change Tracking** - No soft deletes with timestamps for member profile changes
 
 ### Consequences
+
 - **Reconciliation impossible** - Can't verify revenue against booking patterns
 - **Fraud detection impossible** - Can't detect duplicate payments or abuse
 - **Legal compliance risk** - No audit trail for financial records
@@ -211,6 +229,7 @@ AI Usage:
 - **Performance attribution impossible** - Can't link booking attendance to member outcomes
 
 ### Recommended Additions
+
 ```csharp
 AuditLog
   - EntityType (string)
@@ -249,6 +268,7 @@ SessionLog
 ## 5. N+1 QUERY HOTSPOTS & PERFORMANCE RISKS
 
 ### CRITICAL: UserSubscriptionService (HIGH IMPACT)
+
 **File:** [UserSubscriptionService.cs](ArenaBackend/ArenaApplication/Services/UserSubscription/UserSubscriptionService.cs#L34)
 
 ```csharp
@@ -263,6 +283,7 @@ foreach (var s in activeSubscriptions)
 ```
 
 **Same issue in:**
+
 - `GetAllPagedAsync()` - Same triple N+1
 - `GetByIdAsync()` - 2 extra queries per call
 - `GetByMemberIdAsync()` - N+1 inside foreach
@@ -272,6 +293,7 @@ foreach (var s in activeSubscriptions)
 ---
 
 ### HIGH RISK: PaymentService Filters
+
 **File:** [PaymentService.cs](ArenaBackend/ArenaApplication/Services/Payment/PaymentService.cs#L128)
 
 ```csharp
@@ -279,7 +301,7 @@ foreach (var s in activeSubscriptions)
 query = query
     .Include(p => p.User)
     .Include(p => p.UserSubscription).ThenInclude(s => s.Plan) // Good!
-    
+
 // BUT filter operations on IEnumerable:
 var payments = await query.ToListAsync();
 var filtered = payments.Where(p => p.Status == status).ToList();
@@ -291,6 +313,7 @@ var filtered = payments.Where(p => p.Status == status).ToList();
 ---
 
 ### MEDIUM RISK: QRCodeService
+
 **File:** [QRCodeService.cs](ArenaBackend/ArenaApplication/Services/QRCodeService.cs#L37)
 
 ```csharp
@@ -303,13 +326,15 @@ var existingQr = existing.FirstOrDefault(); // Finds first
 ---
 
 ### MEDIUM RISK: DashboardService Multiple Queries
+
 **File:** [DashboardService.cs](ArenaBackend/ArenaInfrastructure/Services/DashboardService.cs)
 
 **12+ separate async queries:**
+
 ```csharp
 // Current month members
 dto.TotalMembers = await _context.Users.CountAsync(...)
-// Previous month members  
+// Previous month members
 var currentMonthMembers = await _context.Users.CountAsync(...)
 var previousMonthMembers = await _context.Users.CountAsync(...)
 // Attendance
@@ -328,6 +353,7 @@ var subscriptions = ...
 ---
 
 ### ARCHITECTURE ISSUE: Repository Pattern Without Includes
+
 **GenericRepository** doesn't support `.Include()` chaining consistently - forces multiple round-trips
 
 ---
@@ -335,6 +361,7 @@ var subscriptions = ...
 ## 6. MISSING DATA COLLECTION OPPORTUNITIES
 
 ### Trainer Features (Minimal Today)
+
 - WorkoutPlan.AssignedTrainerId exists but NO:
   - Trainer entity
   - Trainer availability calendar
@@ -343,6 +370,7 @@ var subscriptions = ...
   - Trainer commission tracking
 
 ### AI Metrics (Captured but Not Analyzed)
+
 - ChatMessage.Intent is stored but no KPI on:
   - Most common intents
   - Intent resolution success
@@ -350,6 +378,7 @@ var subscriptions = ...
   - Booking intent → actual booking rate
 
 ### Session Data
+
 - Booking duration tracked but no:
   - Session type classification
   - Equipment used per session
@@ -358,3 +387,25 @@ var subscriptions = ...
 
 ---
 
+## 7. LOCALIZATION & EGYPT READINESS REQUIREMENTS
+
+### Baseline
+
+- Primary client market is Egypt.
+- All projects and connected modules/controllers must support English (`en`) and Egyptian Arabic (`ar-EG`).
+- This applies to both existing/past features and all upcoming features.
+
+### Required Coverage
+
+- Localize API/controller user-facing responses, validation errors, and workflow status messages.
+- Localize notifications (in-app, SignalR payload text, email templates, and admin dashboard labels).
+- Ensure dashboard and reporting strings are bilingual in ArenaMVC admin pages.
+- Keep UTC in persistence and apply `Africa/Cairo` when presenting user-facing timestamps.
+- Keep financial displays Egypt-ready with `EGP` formatting across subscriptions, payments, and analytics.
+
+### Operational Follow-up
+
+- Add localization readiness checks to controller/service review checklists.
+- Add regression checks to ensure legacy endpoints remain localized after refactors.
+
+---
