@@ -303,5 +303,21 @@
     "RevenueDecreasedBy": "Revenue decreased by",
     "AverageDailyAttendance": "Average daily attendance is",
     "SubscriptionsExpiringSoon": "Subscriptions expiring soon:",
-    "SessionCompletionRate": "Session completion rate is"
+    "SessionCompletionRate": "Session completion rate is",
+    "Revenue": "Revenue",
+    "Attendance": "Attendance",
+    "CheckIns": "Check-ins",
+    "MonthlyRevenue": "Monthly Revenue",
+    "ThisMonth": "this month",
+    "VsLastMonth": "vs last month",
+    "ExpiringSoon": "Expiring Soon",
+    "Within7Days": "Within 7 days",
+    "CheckInsToday": "Check-ins today",
+    "WeeklyAttendanceAndCheckins": "Weekly Arena Attendance & Check-ins",
+    "LiveGymCheckins": "Live Gym Check-ins",
+    "NoCheckInsYetToday": "No check-ins yet today",
+    "JustNow": "Just now",
+    "MinsAgo": "{0} mins ago",
+    "HrsAgo": "{0} hrs ago",
+    "DaysAgo": "{0} days ago"
 }

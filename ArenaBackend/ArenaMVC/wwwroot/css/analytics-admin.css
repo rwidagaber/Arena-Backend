@@ -139,6 +139,7 @@
   background: var(--input-bg);
   border-radius: 10px;
   padding: 0.45rem;
+  position: relative;
 }
 
 .line-chart {

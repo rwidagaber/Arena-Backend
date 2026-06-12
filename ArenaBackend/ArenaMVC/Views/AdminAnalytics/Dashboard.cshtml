@@ -152,7 +152,10 @@
                 attendanceAvg: @Html.Raw(JsonSerializer.Serialize(Localizer["AverageDailyAttendance"].Value)),
                 expiringWarn: @Html.Raw(JsonSerializer.Serialize(Localizer["SubscriptionsExpiringSoon"].Value)),
                 completionRate: @Html.Raw(JsonSerializer.Serialize(Localizer["SessionCompletionRate"].Value)),
-                checkInRate: @Html.Raw(JsonSerializer.Serialize(Localizer["CheckInRate"].Value))
+                checkInRate: @Html.Raw(JsonSerializer.Serialize(Localizer["CheckInRate"].Value)),
+                revenue: @Html.Raw(JsonSerializer.Serialize(Localizer["Revenue"].Value)),
+                attendance: @Html.Raw(JsonSerializer.Serialize(Localizer["Attendance"].Value)),
+                date: @Html.Raw(JsonSerializer.Serialize(Localizer["Date"].Value))
             };
 
             const el = {
@@ -266,7 +269,75 @@
                 if (target) target.textContent = value;
             }
 
-            function drawChart(svgId, points, color) {
+            function getOrCreateTooltip(shell) {
+                let tip = shell.querySelector('.chart-tooltip');
+                if (!tip) {
+                    tip = document.createElement('div');
+                    tip.className = 'chart-tooltip';
+                    shell.appendChild(tip);
+                }
+                return tip;
+            }
+
+            function showChartTooltip(tip, shell, svgEl, cx, cy, dateLabel, metricLabel, valueText, dotColor) {
+                tip.innerHTML = [
+                    `<div class="chart-tooltip-row">`,
+                    `  <span class="chart-tooltip-dot" style="background:${dotColor}"></span>`,
+                    `  <span class="chart-tooltip-label">${metricLabel}</span>`,
+                    `</div>`,
+                    `<div class="chart-tooltip-value">${valueText}</div>`,
+                    `<div class="chart-tooltip-divider"></div>`,
+                    `<div class="chart-tooltip-label">${strings.date}: ${dateLabel}</div>`
+                ].join('');
+
+                // Display first so we can measure
+                tip.style.display = 'flex';
+                tip.style.opacity = '0';
+
+                const svgRect = svgEl.getBoundingClientRect();
+                const shellRect = shell.getBoundingClientRect();
+                const tipW = tip.offsetWidth;
+                const tipH = tip.offsetHeight;
+
+                // viewBox => pixel coords
+                const vbW = 800;
+                const vbH = 280;
+                const scaleX = svgRect.width / vbW;
+                const scaleY = svgRect.height / vbH;
+
+                const pixCx = parseFloat(cx) * scaleX + (svgRect.left - shellRect.left);
+                const pixCy = parseFloat(cy) * scaleY + (svgRect.top - shellRect.top);
+
+                const isRtl = document.documentElement.dir === 'rtl';
+                let left = isRtl ? pixCx - tipW - 8 : pixCx + 8;
+                let top = pixCy - tipH - 10;
+
+                // Clamp inside shell
+                const shellW = shellRect.width;
+                if (left + tipW > shellW - 4) left = shellW - tipW - 4;
+                if (left < 4) left = 4;
+                if (top < 4) top = pixCy + 18;
+
+                tip.style.left = `${left}px`;
+                tip.style.top = `${top}px`;
+
+                // Force reflow then animate in
+                void tip.offsetWidth;
+                tip.classList.add('visible');
+                tip.style.opacity = '';
+            }
+
+            function hideChartTooltip(tip) {
+                tip.classList.remove('visible');
+                // Wait for transition then hide
+                setTimeout(() => {
+                    if (!tip.classList.contains('visible')) {
+                        tip.style.display = 'none';
+                    }
+                }, 160);
+            }
+
+            function drawChart(svgId, points, color, metricLabel, formatFn) {
                 const svg = document.getElementById(svgId);
                 if (!svg) return;
 
@@ -300,6 +371,7 @@
                     return `${x},${y}`;
                 });
 
+                // Grid base line
                 const grid = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 grid.setAttribute('x1', `${padX}`);
                 grid.setAttribute('x2', `${width - padX}`);
@@ -309,6 +381,7 @@
                 grid.setAttribute('stroke-width', '1');
                 svg.appendChild(grid);
 
+                // Line
                 const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
                 polyline.setAttribute('points', coords.join(' '));
                 polyline.setAttribute('fill', 'none');
@@ -318,18 +391,58 @@
                 polyline.setAttribute('stroke-linejoin', 'round');
                 svg.appendChild(polyline);
 
+                // Resolve the shell wrapper for tooltip anchoring
+                const shell = svg.closest('.chart-shell');
+                const tip = shell ? getOrCreateTooltip(shell) : null;
+                const fmtFn = typeof formatFn === 'function' ? formatFn : formatNumber;
+
                 cleanPoints.forEach((point, index) => {
-                    const [x, y] = coords[index].split(',');
+                    const [cx, cy] = coords[index].split(',');
+
+                    // Outer invisible hit-area circle for easy hover targeting
+                    const hitCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    hitCircle.setAttribute('cx', cx);
+                    hitCircle.setAttribute('cy', cy);
+                    hitCircle.setAttribute('r', '12');
+                    hitCircle.setAttribute('fill', 'transparent');
+                    hitCircle.style.cursor = 'pointer';
+                    svg.appendChild(hitCircle);
+
+                    // Visible data-point circle
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    circle.setAttribute('cx', x);
-                    circle.setAttribute('cy', y);
-                    circle.setAttribute('r', '4.5');
+                    circle.setAttribute('cx', cx);
+                    circle.setAttribute('cy', cy);
+                    circle.setAttribute('r', '5');
                     circle.setAttribute('fill', color);
+                    circle.setAttribute('stroke', 'var(--card-bg)');
+                    circle.setAttribute('stroke-width', '2');
+                    circle.classList.add('chart-point');
                     svg.appendChild(circle);
 
+                    if (tip) {
+                        const dateLabel = formatDate(point.date);
+                        const valueText = fmtFn(point.value);
+
+                        const enterHandler = () => {
+                            // Enlarge circle on hover
+                            circle.setAttribute('r', '7');
+                            showChartTooltip(tip, shell, svg, cx, cy, dateLabel, metricLabel, valueText, color);
+                        };
+                        const leaveHandler = () => {
+                            circle.setAttribute('r', '5');
+                            hideChartTooltip(tip);
+                        };
+
+                        hitCircle.addEventListener('mouseenter', enterHandler);
+                        hitCircle.addEventListener('mouseleave', leaveHandler);
+                        circle.addEventListener('mouseenter', enterHandler);
+                        circle.addEventListener('mouseleave', leaveHandler);
+                    }
+
+                    // Edge date labels
                     if (index === 0 || index === cleanPoints.length - 1) {
                         const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        label.setAttribute('x', x);
+                        label.setAttribute('x', cx);
                         label.setAttribute('y', `${height - 6}`);
                         label.setAttribute('text-anchor', 'middle');
                         label.setAttribute('fill', 'var(--text-secondary)');
@@ -409,8 +522,8 @@
                 const timezone = meta.timezone || displayTimezone;
                 el.meta.textContent = `${strings.generatedAt}: ${generatedAt} | ${strings.window}: ${start} - ${end} | ${strings.timezone}: ${timezone}`;
 
-                drawChart('revenueChart', financial.dailyRevenue || [], 'var(--yellow)');
-                drawChart('attendanceChart', operational.dailyAttendance || [], 'var(--teal)');
+                drawChart('revenueChart', financial.dailyRevenue || [], 'var(--yellow)', strings.revenue, formatCurrency);
+                drawChart('attendanceChart', operational.dailyAttendance || [], 'var(--teal)', strings.attendance, formatNumber);
                 renderInsights(executive, financial, operational);
             }
 
