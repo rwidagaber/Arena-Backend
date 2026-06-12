@@ -1,4 +1,6 @@
 @using ArenaApplication.Dtos.Dashboard
+@using System.Globalization
+@using System.Text.Json
 @model AdminDashboardDto
 @{
     ViewData["Title"] = Localizer["Arena"];
@@ -12,6 +14,20 @@
     var usableWidth = chartWidth - (chartPadding * 2);
     var dayCount = Model.WeeklyAttendance.Count;
     var daySpacing = dayCount > 1 ? usableWidth / (dayCount - 1) : 0;
+
+    string GetTimeAgo(DateTime checkInTime)
+    {
+        var diff = DateTime.UtcNow - checkInTime;
+
+        if (diff.TotalMinutes < 1)
+            return Localizer["JustNow"].Value;
+        if (diff.TotalMinutes < 60)
+            return string.Format(Localizer["MinsAgo"].Value, ((int)diff.TotalMinutes).ToString(CultureInfo.InvariantCulture));
+        if (diff.TotalHours < 24)
+            return string.Format(Localizer["HrsAgo"].Value, ((int)diff.TotalHours).ToString(CultureInfo.InvariantCulture));
+
+        return string.Format(Localizer["DaysAgo"].Value, ((int)diff.TotalDays).ToString(CultureInfo.InvariantCulture));
+    }
 }
 
 <style>
@@ -62,8 +78,8 @@
     .metric-icon {
         width: 48px;
         height: 48px;
-        background-color: rgba(213, 235, 69, 0.1);
-        border: 1px solid rgba(213, 235, 69, 0.2);
+        background-color: var(--active-bg);
+        border: 1px solid var(--yellow);
         color: var(--yellow);
         border-radius: 10px;
         display: flex;
@@ -301,10 +317,10 @@
     <div class="metric-card">
         <div class="metric-icon"><i data-lucide="users"></i></div>
         <div class="metric-info">
-            <span class="metric-label">Total Members</span>
-            <span class="metric-value">@Model.TotalMembers.ToString("N0")</span>
+            <span class="metric-label">@Localizer["TotalMembers"]</span>
+            <span class="metric-value">@Model.TotalMembers.ToString("N0", CultureInfo.InvariantCulture)</span>
             <span class="metric-change @(Model.MemberGrowthPercent < 0 ? "negative" : "")">
-                @(Model.MemberGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.MemberGrowthPercent)% this month
+                @(Model.MemberGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.MemberGrowthPercent).ToString("0.##", CultureInfo.InvariantCulture)% @Localizer["ThisMonth"]
             </span>
         </div>
     </div>
@@ -313,10 +329,10 @@
     <div class="metric-card">
         <div class="metric-icon"><i data-lucide="trending-up"></i></div>
         <div class="metric-info">
-            <span class="metric-label">Active Subscriptions</span>
-            <span class="metric-value">@Model.ActiveSubscriptions.ToString("N0")</span>
+            <span class="metric-label">@Localizer["ActiveSubscriptions"]</span>
+            <span class="metric-value">@Model.ActiveSubscriptions.ToString("N0", CultureInfo.InvariantCulture)</span>
             <span class="metric-change @(Model.SubscriptionGrowthPercent < 0 ? "negative" : "")">
-                @(Model.SubscriptionGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.SubscriptionGrowthPercent)% this month
+                @(Model.SubscriptionGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.SubscriptionGrowthPercent).ToString("0.##", CultureInfo.InvariantCulture)% @Localizer["ThisMonth"]
             </span>
         </div>
     </div>
@@ -325,10 +341,10 @@
     <div class="metric-card">
         <div class="metric-icon"><i data-lucide="dollar-sign"></i></div>
         <div class="metric-info">
-            <span class="metric-label">Monthly Revenue</span>
-            <span class="metric-value">@Model.MonthlyRevenue.ToString("N0") EGP</span>
+            <span class="metric-label">@Localizer["MonthlyRevenue"]</span>
+            <span class="metric-value">@Model.MonthlyRevenue.ToString("N0", CultureInfo.InvariantCulture) @Localizer["Currency"]</span>
             <span class="metric-change @(Model.RevenueGrowthPercent < 0 ? "negative" : "")">
-                @(Model.RevenueGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.RevenueGrowthPercent)% vs last month
+                @(Model.RevenueGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.RevenueGrowthPercent).ToString("0.##", CultureInfo.InvariantCulture)% @Localizer["VsLastMonth"]
             </span>
         </div>
     </div>
@@ -338,8 +354,8 @@
         <div class="metric-icon"><i data-lucide="key"></i></div>
         <div class="metric-info">
             <span class="metric-label">@Localizer["ActivePlans"]</span>
-            <span class="metric-value">@Model.ActivePlans @Localizer["Plans1"]</span>
-            <span class="metric-change">@Model.TotalPlans @Localizer["TotalPlans"]</span>
+            <span class="metric-value">@Model.ActivePlans.ToString(CultureInfo.InvariantCulture) @Localizer["Plans1"]</span>
+            <span class="metric-change">@Model.TotalPlans.ToString(CultureInfo.InvariantCulture) @Localizer["TotalPlans"]</span>
         </div>
     </div>
 
@@ -347,10 +363,10 @@
     <div class="metric-card">
         <div class="metric-icon">⏳</div>
         <div class="metric-info">
-            <span class="metric-label">Expiring Soon</span>
-            <span class="metric-value">@Model.ExpiringSubscriptions</span>
+            <span class="metric-label">@Localizer["ExpiringSoon"]</span>
+            <span class="metric-value">@Model.ExpiringSubscriptions.ToString(CultureInfo.InvariantCulture)</span>
             <span class="metric-change @(Model.ExpiringSubscriptions > 0 ? "negative" : "")">
-                @(Model.ExpiringSubscriptions > 0 ? "⚠" : "✓") Within 7 days
+                @(Model.ExpiringSubscriptions > 0 ? "⚠" : "✓") @Localizer["Within7Days"]
             </span>
         </div>
     </div>
@@ -359,9 +375,9 @@
     <div class="metric-card">
         <div class="metric-icon">🏋️</div>
         <div class="metric-info">
-            <span class="metric-label">Today's Attendance</span>
-            <span class="metric-value">@Model.TodayAttendance</span>
-            <span class="metric-change">Check-ins today</span>
+            <span class="metric-label">@Localizer["AttendanceToday"]</span>
+            <span class="metric-value">@Model.TodayAttendance.ToString(CultureInfo.InvariantCulture)</span>
+            <span class="metric-change">@Localizer["CheckInsToday"]</span>
         </div>
     </div>
 </div>
@@ -371,16 +387,17 @@
     <!-- Line Chart Component -->
     <div class="dashboard-card chart-card">
         <div class="chart-header">
-            <h2 class="chart-title">Weekly Arena Attendance &amp; Check-ins</h2>
+            <h2 class="chart-title">@Localizer["WeeklyAttendanceAndCheckins"]</h2>
             <div class="chart-legend">
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: var(--yellow);"></span>
-                    <span>Check-ins</span>
+                    <span>@Localizer["CheckIns"]</span>
                 </div>
             </div>
         </div>
         
         <div class="mock-chart-container">
+            <div class="chart-tooltip" id="homeChartTooltip"></div>
             <svg class="mock-chart-svg" viewBox="0 0 520 220" preserveAspectRatio="none">
                 <!-- Grid Lines -->
                 <line x1="0" y1="50" x2="500" y2="50" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
@@ -418,9 +435,24 @@
                     <path d="@linePath" fill="none" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 
                     // Data point circles
-                    foreach (var point in points)
+                    var dayOfWeekOrder = new[]
                     {
-                        <circle cx="@point.X" cy="@point.Y" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" />
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+                    };
+
+                    for (int i = 0; i < points.Count; i++)
+                    {
+                        var point = points[i];
+                        var rawCount = Model.WeeklyAttendance[i].Count;
+                        var dow = dayOfWeekOrder[i];
+                        var localizedDay = CultureInfo.CurrentUICulture.DateTimeFormat.GetDayName(dow);
+
+                        <!-- Hit Area Circle for Hover -->
+                        <circle cx="@point.X" cy="@point.Y" r="12" fill="transparent" style="cursor: pointer;" class="chart-point-hitarea" data-index="@i" data-day="@localizedDay" data-count="@rawCount" />
+
+                        <!-- Visible Circle -->
+                        <circle id="point-circle-@i" cx="@point.X" cy="@point.Y" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" class="chart-point" data-index="@i" />
                     }
                 }
                 else
@@ -430,13 +462,22 @@
                 }
                 
                 <!-- X-Axis Labels -->
+                @{
+                    var dayOfWeekOrderForLabels = new[]
+                    {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+                    };
+                }
                 @for (int i = 0; i < Model.WeeklyAttendance.Count; i++)
                 {
                     var xPos = chartPadding + (i * daySpacing);
-                    @Html.Raw($"<text x=\"{xPos}\" y=\"210\" fill=\"#71717A\" font-size=\"11\" font-family=\"Outfit\" text-anchor=\"middle\">{Model.WeeklyAttendance[i].DayName}</text>")
+                    var dow = dayOfWeekOrderForLabels[i];
+                    var localizedAbbr = CultureInfo.CurrentUICulture.DateTimeFormat.GetAbbreviatedDayName(dow);
+                    @Html.Raw($"<text x=\"{xPos}\" y=\"210\" fill=\"#71717A\" font-size=\"11\" font-family=\"Outfit\" text-anchor=\"middle\">{localizedAbbr}</text>")
                 }
                 <!-- Area path underneath line -->
-                <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40 L 480 200 L 0 200 Z" fill="url(#yellowGradient)" />
+                @* <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40 L 480 200 L 0 200 Z" fill="url(#yellowGradient)" />
                 
                 <!-- Glow Line Chart -->
                 <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40" fill="none" stroke="var(--yellow)" stroke-width="4" stroke-linecap="round" />
@@ -456,7 +497,7 @@
                 <text x="245" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Thu</text>
                 <text x="325" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Fri</text>
                 <text x="405" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Sat</text>
-                <text x="465" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Sun</text>
+                <text x="465" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Sun</text> *@
             </svg>
         </div>
     </div>
@@ -486,7 +527,7 @@
         
         <!-- Recent Check-ins -->
         <div class="dashboard-card recent-checkins-card">
-            <h3 class="chart-title">Live Gym Check-ins</h3>
+            <h3 class="chart-title">@Localizer["LiveGymCheckins"]</h3>
             @if (Model.RecentCheckIns.Any())
             {
                 <div class="checkin-list">
@@ -498,7 +539,7 @@
                                 <div class="member-name">@checkIn.MemberName</div>
                                 <div class="plan-badge">@checkIn.PlanName</div>
                             </div>
-                            <div class="checkin-time">@checkIn.TimeAgo</div>
+                            <div class="checkin-time">@GetTimeAgo(checkIn.CheckInTime)</div>
                         </div>
                     }
                 </div>
@@ -507,9 +548,105 @@
             {
                 <div class="empty-checkins">
                     <div class="empty-checkins-icon">🏋️</div>
-                    <span>No check-ins yet today</span>
+                    <span>@Localizer["NoCheckInsYetToday"]</span>
                 </div>
             }
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const container = document.querySelector('.mock-chart-container');
+            if (!container) return;
+
+            const svg = container.querySelector('.mock-chart-svg');
+            const tip = document.getElementById('homeChartTooltip');
+            const hitAreas = container.querySelectorAll('.chart-point-hitarea');
+
+            hitAreas.forEach(hitArea => {
+                const index = hitArea.getAttribute('data-index');
+                const day = hitArea.getAttribute('data-day');
+                const count = hitArea.getAttribute('data-count');
+                const circle = document.getElementById(`point-circle-${index}`);
+
+                const enterHandler = () => {
+                    if (circle) {
+                        circle.setAttribute('r', '7');
+                    }
+
+                    const labelText = @Html.Raw(JsonSerializer.Serialize(Localizer["CheckIns"].Value));
+                    const dateLabelText = @Html.Raw(JsonSerializer.Serialize(Localizer["Date"].Value));
+
+                    tip.innerHTML = `
+                        <div class="chart-tooltip-row">
+                            <span class="chart-tooltip-dot" style="background: var(--yellow)"></span>
+                            <span class="chart-tooltip-label">${labelText}</span>
+                        </div>
+                        <div class="chart-tooltip-value">${count}</div>
+                        <div class="chart-tooltip-divider"></div>
+                        <div class="chart-tooltip-label">${dateLabelText}: ${day}</div>
+                    `;
+
+                    tip.style.display = 'flex';
+                    tip.style.opacity = '0';
+
+                    const svgRect = svg.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+
+                    const cx = parseFloat(hitArea.getAttribute('cx'));
+                    const cy = parseFloat(hitArea.getAttribute('cy'));
+
+                    // SVG viewBox width is 520, height is 220
+                    const scaleX = svgRect.width / 520;
+                    const scaleY = svgRect.height / 220;
+
+                    const pixCx = cx * scaleX + (svgRect.left - containerRect.left);
+                    const pixCy = cy * scaleY + (svgRect.top - containerRect.top);
+
+                    const tipW = tip.offsetWidth;
+                    const tipH = tip.offsetHeight;
+
+                    const isRtl = document.documentElement.dir === 'rtl';
+                    let left = isRtl ? pixCx - tipW - 8 : pixCx + 8;
+                    let top = pixCy - tipH - 10;
+
+                    // Clamp within container boundaries
+                    const containerW = containerRect.width;
+                    if (left + tipW > containerW - 4) left = containerW - tipW - 4;
+                    if (left < 4) left = 4;
+                    if (top < 4) top = pixCy + 18;
+
+                    tip.style.left = `${left}px`;
+                    tip.style.top = `${top}px`;
+
+                    // Trigger reflow
+                    void tip.offsetWidth;
+                    tip.classList.add('visible');
+                    tip.style.opacity = '';
+                };
+
+                const leaveHandler = () => {
+                    if (circle) {
+                        circle.setAttribute('r', '5');
+                    }
+                    tip.classList.remove('visible');
+                    // Wait for transition to complete
+                    setTimeout(() => {
+                        if (!tip.classList.contains('visible')) {
+                            tip.style.display = 'none';
+                        }
+                    }, 160);
+                };
+
+                hitArea.addEventListener('mouseenter', enterHandler);
+                hitArea.addEventListener('mouseleave', leaveHandler);
+                if (circle) {
+                    circle.addEventListener('mouseenter', enterHandler);
+                    circle.addEventListener('mouseleave', leaveHandler);
+                }
+            });
+        })();
+    </script>
+}

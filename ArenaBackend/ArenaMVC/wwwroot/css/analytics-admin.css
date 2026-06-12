@@ -21,7 +21,7 @@
 
 .analytics-header p {
   margin: 0.4rem 0 0;
-  color: #a0a0ab;
+  color: var(--text-secondary);
 }
 
 .analytics-header-actions {
@@ -35,7 +35,7 @@
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 14px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow);
 }
 
 .analytics-filter-card {
@@ -57,9 +57,9 @@
 }
 
 .btn-analytics-secondary {
-  color: #d5eb45;
-  border: 1px solid rgba(213, 235, 69, 0.45);
-  background: rgba(213, 235, 69, 0.07);
+  color: var(--yellow);
+  border: 1px solid color-mix(in srgb, var(--yellow) 45%, transparent);
+  background: color-mix(in srgb, var(--yellow) 7%, transparent);
 }
 
 .btn-analytics-secondary:hover {
@@ -71,7 +71,7 @@
 .analytics-meta {
   margin-top: 0.9rem;
   font-size: 0.88rem;
-  color: #a0a0ab;
+  color: var(--text-secondary);
 }
 
 .kpi-grid {
@@ -87,11 +87,11 @@
 
 .kpi-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(213, 235, 69, 0.45);
+  border-color: color-mix(in srgb, var(--yellow) 45%, transparent);
 }
 
 .kpi-label {
-  color: #8f8f98;
+  color: var(--text-secondary);
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -130,15 +130,16 @@
 }
 
 .panel-note {
-  color: #8f8f98;
+  color: var(--text-secondary);
   font-size: 0.82rem;
 }
 
 .chart-shell {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
   border-radius: 10px;
   padding: 0.45rem;
+  position: relative;
 }
 
 .line-chart {
@@ -153,7 +154,7 @@
 }
 
 .funnel-label {
-  color: #8f8f98;
+  color: var(--text-secondary);
   font-size: 0.82rem;
 }
 
@@ -172,7 +173,7 @@
 
 .funnel-bar-label {
   margin-bottom: 0.25rem;
-  color: #a0a0ab;
+  color: var(--text-secondary);
   font-size: 0.85rem;
 }
 
@@ -180,7 +181,7 @@
   width: 100%;
   height: 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-color);
   overflow: hidden;
 }
 
@@ -188,12 +189,12 @@
   height: 100%;
   width: 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, #d5eb45, #b7d129);
+  background: linear-gradient(90deg, var(--yellow), color-mix(in srgb, var(--yellow) 80%, black));
   transition: width 0.5s ease;
 }
 
 .funnel-bar-fill.secondary {
-  background: linear-gradient(90deg, #6f8786, #8ab3b1);
+  background: linear-gradient(90deg, var(--teal), color-mix(in srgb, var(--teal) 80%, white));
 }
 
 .insights-list {
@@ -205,11 +206,11 @@
 }
 
 .insights-list li {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--text-primary) 3%, transparent);
   border-radius: 10px;
   padding: 0.65rem 0.75rem;
-  color: #dadade;
+  color: var(--text-primary);
   font-size: 0.92rem;
 }
 
@@ -219,7 +220,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 15, 17, 0.55);
+  background: color-mix(in srgb, var(--bg-color) 55%, transparent);
   border-radius: 14px;
   backdrop-filter: blur(2px);
 }
@@ -260,4 +261,8 @@
   .analytics-header h1 {
     font-size: 1.55rem;
   }
+}
+
+.form-label {
+  color: var(--text-primary);
 }

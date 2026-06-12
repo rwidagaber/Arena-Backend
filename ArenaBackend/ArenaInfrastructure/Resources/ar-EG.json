@@ -302,5 +302,21 @@
     "RevenueDecreasedBy": "انخفاض في الإيرادات بنسبة",
     "AverageDailyAttendance": "متوسط الحضور اليومي هو",
     "SubscriptionsExpiringSoon": "الاشتراكات التي أوشكت على الانتهاء:",
-    "SessionCompletionRate": "معدل إكمال الجلسات هو"
+    "SessionCompletionRate": "معدل إكمال الجلسات هو",
+    "Revenue": "الإيرادات",
+    "Attendance": "الحضور",
+    "CheckIns": "تسجيلات الدخول",
+    "MonthlyRevenue": "الإيرادات الشهرية",
+    "ThisMonth": "هذا الشهر",
+    "VsLastMonth": "مقارنة بالشهر الماضي",
+    "ExpiringSoon": "توشك على الانتهاء",
+    "Within7Days": "خلال ٧ أيام",
+    "CheckInsToday": "تسجيلات الدخول اليوم",
+    "WeeklyAttendanceAndCheckins": "حضور الصالة الرياضية الأسبوعي وتسجيلات الدخول",
+    "LiveGymCheckins": "تسجيلات الدخول المباشرة للجيم",
+    "NoCheckInsYetToday": "لا توجد تسجيلات دخول اليوم بعد",
+    "JustNow": "الآن",
+    "MinsAgo": "منذ {0} دقيقة",
+    "HrsAgo": "منذ {0} ساعة",
+    "DaysAgo": "منذ {0} يوم"
 }
