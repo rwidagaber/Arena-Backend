@@ -5,6 +5,7 @@ using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -19,16 +20,19 @@ namespace ArenaApi.Controllers
         private readonly IPaymentGatewayService _gatewayService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
+        private readonly IConfiguration _config;
 
         public PaymentsController(IPaymentService paymentService,
                 IPaymentGatewayService gatewayService,
                 ICurrentUserService currentUserService,
-                IStringLocalizer<ArenaLocalization> localizer)
+                IStringLocalizer<ArenaLocalization> localizer,
+                IConfiguration config)
         {
             _paymentService = paymentService;
             _gatewayService = gatewayService;
             _currentUserService = currentUserService;
             _localizer = localizer;
+            _config = config;
         }
 
         [HttpPost]
@@ -122,7 +126,8 @@ namespace ArenaApi.Controllers
         [AllowAnonymous]
         public IActionResult Callback([FromQuery] bool success)
         {
-            var frontendCheckoutUrl = "http://localhost:4200/checkout";
+            var frontendUrl = _config["EmailSettings:FrontendUrl"] ?? "http://localhost:4200";
+            var frontendCheckoutUrl = $"{frontendUrl.TrimEnd('/')}/checkout";
             
             if (success)
             {

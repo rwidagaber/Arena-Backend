@@ -140,15 +140,20 @@ namespace ArenaApplication.Services
 
 
 
+        // ── LoginAsync ────────────────────────────────────────────
         public async Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto)
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
 
-            // لو اتسجل بـ Google مش هيقدر يعمل login عادي
-            if (user?.IsGoogleAccount == true)
-                return Result<AuthResponseDto>.Failure("This account uses Google Sign-In. Please login with Google.");
+            if (user is null)
+                return Result<AuthResponseDto>.Failure(_localizer["InvalidEmailOrPassword"]);
 
-            if (user is null || !await _userManager.CheckPasswordAsync(user, dto.Password))
+            // Google account بدون باسورد
+            if (user.IsGoogleAccount && !await _userManager.HasPasswordAsync(user))
+                return Result<AuthResponseDto>.Failure(
+                    "This account uses Google Sign-In. Use Forgot Password to set a password, or login with Google.");
+
+            if (!await _userManager.CheckPasswordAsync(user, dto.Password))
                 return Result<AuthResponseDto>.Failure(_localizer["InvalidEmailOrPassword"]);
 
             if (!user.IsActive)
@@ -274,6 +279,7 @@ namespace ArenaApplication.Services
 
 
 
+        // ── ResetPasswordAsync ────────────────────────────────────
         public async Task<Result> ResetPasswordAsync(ResetPasswordDto dto)
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
@@ -282,12 +288,22 @@ namespace ArenaApplication.Services
 
             try
             {
-                // Decode الـ token
                 var decodedToken = Encoding.UTF8.GetString(
                     WebEncoders.Base64UrlDecode(dto.Token));
 
-                var result = await _userManager.ResetPasswordAsync(
-                    user, decodedToken, dto.NewPassword);
+                IdentityResult result;
+
+                if (user.IsGoogleAccount && !await _userManager.HasPasswordAsync(user))
+                {
+                    // Google account بدون باسورد — ضيف باسورد جديد
+                    result = await _userManager.AddPasswordAsync(user, dto.NewPassword);
+                }
+                else
+                {
+                    // Normal account — reset الباسورد
+                    result = await _userManager.ResetPasswordAsync(
+                        user, decodedToken, dto.NewPassword);
+                }
 
                 if (!result.Succeeded)
                     return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
@@ -328,6 +344,7 @@ namespace ArenaApplication.Services
             };
         }
 
+        // ── GoogleLoginAsync ──────────────────────────────────────
         public async Task<Result<AuthResponseDto>> GoogleLoginAsync(string idToken)
         {
             var googleUser = await _googleTokenValidator.ValidateAsync(idToken);
@@ -337,10 +354,12 @@ namespace ArenaApplication.Services
             var email = googleUser.Email;
             var firstName = googleUser.FirstName;
             var lastName = googleUser.LastName;
+
             var user = await _authRepository.GetByEmailAsync(email);
 
             if (user is null)
             {
+                // يوزر جديد
                 user = new ApplicationUser
                 {
                     FirstName = firstName,
@@ -359,18 +378,25 @@ namespace ArenaApplication.Services
 
                 var memberProfile = new MemberProfile { UserId = user.Id };
                 await _authRepository.CreateMemberProfileAsync(memberProfile);
-
                 await _userManager.AddToRoleAsync(user, "GymMember");
 
-                // يوديه يكمل البروفايل
                 var newUserResponse = await GenerateAuthResponseAsync(user, isGoogleUser: true);
                 return Result<AuthResponseDto>.Success(newUserResponse);
             }
 
-            // يوزر موجود — Login عادي
+            // يوزر موجود — ربط الأكونت بـ Google لو مش مربوط
+            if (!user.IsGoogleAccount)
+            {
+                user.IsGoogleAccount = true;
+                user.EmailConfirmed = true;
+                user.IsActive = true;
+                await _userManager.UpdateAsync(user);
+            }
+
             var response = await GenerateAuthResponseAsync(user, isGoogleUser: false);
             return Result<AuthResponseDto>.Success(response);
         }
+
 
         public async Task<Result> CompleteProfileAsync(Guid userId, CompleteProfileDto dto)
         {
