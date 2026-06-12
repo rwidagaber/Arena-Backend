@@ -3,8 +3,8 @@
 :root {
     --hep-green: var(--yellow);
     --hammock: var(--border-color);
-    --autonomous: #A0A0AB;
-    --sooty: var(--black);
+    --autonomous: var(--autonomous-color);
+    --sooty: var(--bg-color);
     --november-storms: var(--card-bg);
     --primary-teal: var(--teal);
 }
@@ -22,7 +22,7 @@
     border-bottom: 3px solid var(--yellow);
     margin-bottom: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--card-shadow);
 }
 
 .subscription-admin-header h1 {
@@ -47,13 +47,18 @@
     margin-bottom: 1.5rem;
     transition: all 0.3s ease;
     color: var(--whiteout);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-shadow);
 }
 
 .subscription-card:hover {
     border-color: rgba(213, 235, 69, 0.4);
     box-shadow: 0 8px 24px rgba(213, 235, 69, 0.15);
     transform: translateY(-3px);
+}
+
+html[data-theme="light"] .subscription-card:hover {
+    border-color: rgba(54, 127, 221, 0.3);
+    box-shadow: 0 8px 24px rgba(54, 127, 221, 0.08);
 }
 
 .subscription-card-header {
@@ -95,7 +100,7 @@
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 2.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--card-shadow);
 }
 
 .subscription-form-group {
@@ -115,7 +120,7 @@
 .subscription-form-group select {
     width: 100%;
     padding: 0.75rem;
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: var(--input-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     color: var(--whiteout);
@@ -131,9 +136,16 @@
 .subscription-form-group input:focus,
 .subscription-form-group textarea:focus,
 .subscription-form-group select:focus {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: var(--yellow);
+    background-color: var(--input-bg-focus);
+    border-color: var(--accent-color);
     outline: none;
+    box-shadow: 0 0 0 3px rgba(54, 127, 221, 0.15);
+}
+
+html:not([data-theme="light"]) .subscription-form-group input:focus,
+html:not([data-theme="light"]) .subscription-form-group textarea:focus,
+html:not([data-theme="light"]) .subscription-form-group select:focus {
+    border-color: var(--yellow);
     box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15);
 }
 
@@ -161,6 +173,11 @@
     box-shadow: 0 6px 16px rgba(213, 235, 69, 0.25);
 }
 
+html[data-theme="light"] .btn-subscription-primary:hover {
+    background-color: #2563EB;
+    box-shadow: 0 6px 16px rgba(54, 127, 221, 0.25);
+}
+
 .btn-subscription-secondary {
     background-color: transparent;
     color: var(--autonomous);
@@ -174,9 +191,9 @@
 }
 
 .btn-subscription-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: var(--hover-bg);
     color: var(--whiteout);
-    border-color: #71717A;
+    border-color: var(--yellow);
     transform: translateY(-2px);
 }
 
@@ -255,11 +272,16 @@
 }
 
 .subscription-detail-item {
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: var(--input-bg);
     border: 1px solid var(--border-color);
     padding: 1rem;
     border-radius: 8px;
     border-left: 3px solid var(--yellow);
+}
+
+[dir="rtl"] .subscription-detail-item {
+    border-left: none;
+    border-right: 3px solid var(--yellow);
 }
 
 .subscription-detail-label {
@@ -289,7 +311,7 @@
 }
 
 .subscription-table thead {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--table-header-bg);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -301,13 +323,17 @@
     font-size: 0.95rem;
 }
 
+[dir="rtl"] .subscription-table th {
+    text-align: right;
+}
+
 .subscription-table tbody tr {
     border-bottom: 1px solid var(--border-color);
     transition: background-color 0.3s ease;
 }
 
 .subscription-table tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: var(--table-row-hover);
 }
 
 .subscription-table td {
@@ -446,7 +472,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: var(--input-bg);
     border: 1px solid var(--border-color);
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
@@ -483,7 +509,7 @@
     padding: 0 0.5rem;
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
-    color: var(--whiteout);
+    color: var(--text-primary);
     border-radius: 8px;
     font-weight: 600;
     font-size: 0.9rem;

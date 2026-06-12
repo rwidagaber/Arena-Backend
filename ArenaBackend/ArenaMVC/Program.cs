@@ -1,19 +1,20 @@
 using ArenaApplication;
-using ArenaInfrastructure;
 using ArenaApplication.IServices;
-using ArenaApplication.Services;
 using ArenaApplication.IServices.User;
-using ArenaInfrastructure.Repositories;
-using ArenaInfrastructure.Localization;
-using ArenaInfrastructure.Data.DataSeeding;
-using ArenaInfrastructure.Services;
+using ArenaApplication.Services;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
+using ArenaInfrastructure;
+using ArenaInfrastructure.Data.DataSeeding;
+using ArenaInfrastructure.Localization;
+using ArenaInfrastructure.Repositories;
+using ArenaInfrastructure.Services;
+using Hangfire;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System.Globalization;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +62,12 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
 // Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
 builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
+builder.Services.AddHangfire(config =>
+               config.UseSqlServerStorage(
+                   builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
 // Booking service
 builder.Services.AddScoped<IBookingService, BookingService>();
