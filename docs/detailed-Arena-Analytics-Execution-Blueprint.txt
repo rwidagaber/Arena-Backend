@@ -1,0 +1,226 @@
+Concrete Execution Blueprint (No Code)
+
+1. API Contracts Layer
+   1.1 Contract strategy
+   Keep the current dashboard contract intact for backward compatibility with Index.cshtml.
+   Introduce a versioned analytics contract family for enterprise sections.
+   Use additive evolution only in the first rollout wave.
+   1.2 Endpoint blueprint
+   Aggregated admin analytics endpoint
+   Purpose: one-call dashboard hydration for executive landing.
+   Scope: executive summary, financial overview, user analytics, operational analytics, growth metrics, alerts.
+   Filters: fromDate, toDate, timezone, granularity, compareMode.
+   Output: sectioned payload with metadata block containing generatedAtUtc, timezoneApplied, freshness, dataQualityFlags.
+   Focused drilldown endpoints
+   Membership analytics endpoint:
+   Active vs inactive, renewals due, expiring windows, churn/retention rollups.
+   Revenue analytics endpoint:
+   Revenue trend, revenue by plan, revenue by payment method, payment failure trend.
+   Operational analytics endpoint:
+   Attendance trend, peak-hours heatmap, booking funnel, no-show trend.
+   Engagement analytics endpoint:
+   At-risk members list, AI adoption trend, intent mix.
+   Alerts endpoint:
+   Expiring bursts, attendance drop alerts, payment anomaly alerts.
+   Governance endpoints
+   Analytics metadata endpoint:
+   Schema/version, available metrics, blocked metrics, freshness SLA.
+   Health endpoint:
+   Last snapshot build status and lag.
+   1.3 Authorization model alignment
+   Harden all admin analytics routes to Admin role policy.
+   Align MVC admin access model with API role boundaries currently configured in Program.cs.
+   Treat unsecured analytics-adjacent routes as a precondition task before rollout.
+2. Query Model Layer
+   2.1 Read model split
+   Real-time query group
+   KPI cards that need near-live values:
+   today attendance
+   active subscriptions
+   expiring in next 7 days
+   Source pattern: direct transactional tables with narrow predicates.
+   Historical query group
+   Trend and segmentation charts:
+   monthly revenue, attendance trends, heatmap, churn/retention trend
+   Source pattern: pre-aggregated fact tables at daily and hourly grain.
+   2.2 Canonical metric fact model
+   FactMemberDaily:
+   activeMembers, inactiveMembers, newMembers, atRiskMembers
+   FactSubscriptionDaily:
+   activeSubs, expiredSubs, cancelledSubs, renewalsCount, expiring7dCount, expiring30dCount
+   FactRevenueDaily:
+   grossRevenue, paidCount, failedCount, avgRevenuePerMember
+   FactAttendanceHourly:
+   checkIns by dayOfWeek/hour, distinctMembers, utilization proxy
+   FactBookingDaily:
+   totalBookings, confirmedBookings, attendedBookings, noShows, cancellations
+   2.3 Event capture requirements
+   Add lifecycle events for:
+   subscription state transitions
+   booking state transitions
+   payment attempts and outcomes
+   These events are required for reliable churn and renewal analytics.
+   2.4 Query ownership boundaries
+   Legacy dashboard stays in existing service path:
+   DashboardService.cs
+   New analytics queries move to dedicated analytics read services (separate from transactional command services).
+3. DTO Evolution Layer
+   3.1 Backward compatibility
+   Keep AdminDashboardDto.cs unchanged for existing MVC home page.
+   3.2 New DTO family (v2 analytics)
+   AnalyticsEnvelopeDto
+   version
+   generatedAtUtc
+   timezone
+   freshnessSeconds
+   dataQualityFlags
+   Section DTOs
+   ExecutiveSummaryDto
+   FinancialOverviewDto
+   UserAnalyticsDto
+   OperationalAnalyticsDto
+   GrowthMetricsDto
+   AlertsRisksDto
+   PredictiveInsightsDto (phase 3 only)
+   Common chart DTOs
+   TimeSeriesPointDto
+   CategoryValueDto
+   HeatmapCellDto
+   FunnelStageDto
+   RankedMemberDto
+   3.3 Data quality signaling
+   Every section includes:
+   completeness flag
+   blockedMetricReasons list
+   sourceWindow coverage indicator
+4. Indexing and Storage Layer
+   4.1 Current gap
+   Existing configuration coverage is narrow; high-volume analytics predicates need additional indexes in the transactional model.
+
+4.2 Index blueprint (priority order)
+User subscriptions
+Status + EndDate
+MemberProfileId + Status
+CreatedAt (for growth cohorts)
+Payments
+Status + PaymentDate
+PaymentMethod + PaymentDate
+UserSubscriptionId + PaymentDate
+Attendance
+CheckInTime
+MemberProfileId + CheckInTime
+BookingId (already relationally important)
+Bookings
+BookingDate + Status
+MemberProfileId + BookingDate
+Users
+IsDeleted + CreatedAt
+IsActive + CreatedAt
+4.3 Analytics storage additions
+Create daily and hourly fact tables for section metrics.
+Create snapshot run log table:
+runStart, runEnd, status, rowsProcessed, lagSeconds, errorSummary. 5. Cache Policy Layer
+5.1 Tiered TTL policy
+Real-time cards
+TTL: 30 to 90 seconds
+Invalidate on payment completion, attendance check-in, subscription status change.
+Near-real-time charts
+TTL: 5 to 15 minutes
+Invalidate on hourly snapshot completion.
+Historical trends
+TTL: 30 to 60 minutes
+Invalidate on daily snapshot completion.
+5.2 Cache key strategy
+Key dimensions:
+section
+date range
+timezone
+granularity
+filter set hash
+Include contract version in key namespace.
+5.3 Cache correctness controls
+Stamp payload with freshness metadata.
+Serve stale-if-error for non-critical sections.
+Never serve stale for financial totals beyond SLA threshold. 6. Visualization Backlog Layer
+Wave 1: Must Have (build now from existing data)
+Executive summary
+KPI cards:
+total members
+active subscriptions
+expiring 7d and 30d
+today attendance
+monthly revenue
+renewals due
+Visuals:
+member growth line
+active vs inactive doughnut
+Financial overview
+Revenue trend area chart
+Revenue by plan stacked bar
+Payment method pie
+Payment failure trend line
+Operational analytics
+Attendance daily line
+Peak-hours heatmap
+Booking funnel
+No-show rate trend
+Growth metrics
+subscription growth and revenue growth trend panels
+Wave 2: Should Have
+User analytics
+At-risk members table
+Retention 30/60/90 trend
+engagement score bands
+Alerts and risks
+anomaly cards for attendance/revenue/payment failures
+subscription expiry alert buckets by urgency
+Drilldown UX
+date-window compare mode
+export-ready tabular drilldowns
+Wave 3: Nice to Have
+Predictive insights
+churn propensity buckets
+occupancy and revenue forecast bands
+recommended actions panel
+Narrative insight summaries
+confidence and data coverage badges
+Blocked backlog items (schema required first)
+Trainer performance analytics
+Class attendance analytics
+Equipment utilization analytics
+Branch performance analytics 7. Delivery Phases and Acceptance Gates
+Phase 1 gate
+Contracts published and documented.
+Legacy dashboard unchanged.
+Wave 1 charts live.
+p95 latency target met for aggregated endpoint at 10k users.
+Admin authorization enforced for analytics surface.
+Phase 2 gate
+Snapshot pipeline operational.
+Wave 2 sections live.
+Data-quality flags active.
+p95 latency and DB load stable at 100k users.
+Phase 3 gate
+Predictive services integrated.
+Wave 3 insights live.
+Horizontal scaling and cache hit ratio targets met for 1M-read scenarios. 8. Concrete Mapping to Existing Project Assets
+Legacy dashboard baseline:
+
+DashboardService.cs
+AdminDashboardDto.cs
+Index.cshtml
+Core business event sources:
+
+PaymentsController.cs
+BookingController.cs
+AttendanceController.cs
+PaymentService.cs
+BookingService.cs
+Persistence model anchors:
+
+AppDbContext.cs
+UserSubscription.cs
+Payment.cs
+Attendance.cs
+Booking.cs
+This blueprint is now execution-ready for implementation agents without requiring code generation in this step.

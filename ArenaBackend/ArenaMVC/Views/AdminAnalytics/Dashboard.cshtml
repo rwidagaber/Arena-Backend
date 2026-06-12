@@ -1,0 +1,459 @@
+@using System.Globalization
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = Localizer["AnalyticsDashboard"];
+    var currentCulture = CultureInfo.CurrentUICulture.Name;
+}
+
+<link rel="stylesheet" href="~/css/analytics-admin.css" asp-append-version="true" />
+
+<div class="analytics-admin-page">
+    <div class="analytics-header">
+        <div>
+            <h1>@Localizer["AnalyticsDashboard"]</h1>
+            <p>@Localizer["AnalyticsSubtitle"]</p>
+        </div>
+        <div class="analytics-header-actions">
+            <button type="button" id="refreshAnalyticsBtn" class="btn btn-primary">@Localizer["Refresh"]</button>
+        </div>
+    </div>
+
+    <section class="analytics-filter-card" aria-label="@Localizer["Filters"]">
+        <div class="analytics-filter-grid">
+            <div>
+                <label class="form-label" for="startDateUtc">@Localizer["StartDate"]</label>
+                <input class="form-control" type="date" id="startDateUtc" />
+            </div>
+            <div>
+                <label class="form-label" for="endDateUtc">@Localizer["EndDate"]</label>
+                <input class="form-control" type="date" id="endDateUtc" />
+            </div>
+            <div class="analytics-filter-actions">
+                <button type="button" class="btn btn-analytics-secondary" data-range="7">@Localizer["Last7Days"]</button>
+                <button type="button" class="btn btn-analytics-secondary" data-range="30">@Localizer["Last30Days"]</button>
+                <button type="button" class="btn btn-analytics-secondary" data-range="90">@Localizer["Last90Days"]</button>
+                <button type="button" id="applyFiltersBtn" class="btn btn-primary">@Localizer["ApplyFilters"]</button>
+            </div>
+        </div>
+        <div class="analytics-meta" id="analyticsMeta">@Localizer["Loading"]</div>
+    </section>
+
+    <section class="kpi-grid" aria-label="@Localizer["Kpis"]">
+        <article class="kpi-card">
+            <div class="kpi-label">@Localizer["TotalMembers"]</div>
+            <div class="kpi-value" id="kpiTotalMembers">-</div>
+        </article>
+        <article class="kpi-card">
+            <div class="kpi-label">@Localizer["ActiveSubscriptions"]</div>
+            <div class="kpi-value" id="kpiActiveSubscriptions">-</div>
+        </article>
+        <article class="kpi-card">
+            <div class="kpi-label">@Localizer["ExpiringSubscriptions7Days"]</div>
+            <div class="kpi-value" id="kpiExpiringSoon">-</div>
+        </article>
+        <article class="kpi-card">
+            <div class="kpi-label">@Localizer["AttendanceToday"]</div>
+            <div class="kpi-value" id="kpiAttendanceToday">-</div>
+        </article>
+        <article class="kpi-card">
+            <div class="kpi-label">@Localizer["RevenueInWindow"]</div>
+            <div class="kpi-value" id="kpiRevenueWindow">-</div>
+        </article>
+        <article class="kpi-card">
+            <div class="kpi-label">@Localizer["RevenueGrowth"]</div>
+            <div class="kpi-value" id="kpiRevenueGrowth">-</div>
+        </article>
+    </section>
+
+    <section class="analytics-charts-grid">
+        <article class="analytics-panel">
+            <div class="panel-header">
+                <h2>@Localizer["DailyRevenueTrend"]</h2>
+                <span class="panel-note">@Localizer["Currency"]</span>
+            </div>
+            <div class="chart-shell">
+                <svg id="revenueChart" class="line-chart" viewBox="0 0 800 280" role="img" aria-label="@Localizer["DailyRevenueTrend"]"></svg>
+            </div>
+        </article>
+
+        <article class="analytics-panel">
+            <div class="panel-header">
+                <h2>@Localizer["DailyAttendanceTrend"]</h2>
+                <span class="panel-note">@Localizer["Members"]</span>
+            </div>
+            <div class="chart-shell">
+                <svg id="attendanceChart" class="line-chart" viewBox="0 0 800 280" role="img" aria-label="@Localizer["DailyAttendanceTrend"]"></svg>
+            </div>
+        </article>
+    </section>
+
+    <section class="analytics-charts-grid">
+        <article class="analytics-panel">
+            <div class="panel-header">
+                <h2>@Localizer["BookingFunnel"]</h2>
+            </div>
+            <div class="funnel-grid">
+                <div>
+                    <div class="funnel-label">@Localizer["BookingsInWindow"]</div>
+                    <div class="funnel-value" id="bookingsWindow">-</div>
+                </div>
+                <div>
+                    <div class="funnel-label">@Localizer["CheckInsInWindow"]</div>
+                    <div class="funnel-value" id="checkInsWindow">-</div>
+                </div>
+                <div>
+                    <div class="funnel-label">@Localizer["CompletedSessionsInWindow"]</div>
+                    <div class="funnel-value" id="completedWindow">-</div>
+                </div>
+            </div>
+            <div class="funnel-bars">
+                <div>
+                    <div class="funnel-bar-label">@Localizer["CheckInRate"]</div>
+                    <div class="funnel-bar-track"><div id="checkInRateBar" class="funnel-bar-fill"></div></div>
+                </div>
+                <div>
+                    <div class="funnel-bar-label">@Localizer["CompletionRate"]</div>
+                    <div class="funnel-bar-track"><div id="completionRateBar" class="funnel-bar-fill secondary"></div></div>
+                </div>
+            </div>
+        </article>
+
+        <article class="analytics-panel insights-panel">
+            <div class="panel-header">
+                <h2>@Localizer["SmartInsights"]</h2>
+            </div>
+            <ul id="insightsList" class="insights-list"></ul>
+        </article>
+    </section>
+
+    <div class="analytics-loading" id="analyticsLoading" hidden>
+        <div class="spinner-border" role="status" aria-label="@Localizer["Loading"]"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const overviewEndpoint = '@Url.Content("~/admin/analytics/v2/overview")';
+            const preferredTimezones = ['Africa/Cairo', 'Egypt Standard Time', 'UTC'];
+            const displayTimezone = 'Africa/Cairo';
+            const culture = 'en-US';
+
+            const strings = {
+                loading: @Html.Raw(JsonSerializer.Serialize(Localizer["Loading"].Value)),
+                loadingError: @Html.Raw(JsonSerializer.Serialize(Localizer["UnableToLoadAnalytics"].Value)),
+                generatedAt: @Html.Raw(JsonSerializer.Serialize(Localizer["GeneratedAt"].Value)),
+                window: @Html.Raw(JsonSerializer.Serialize(Localizer["Window"].Value)),
+                timezone: @Html.Raw(JsonSerializer.Serialize(Localizer["Timezone"].Value)),
+                noChartData: @Html.Raw(JsonSerializer.Serialize(Localizer["NoDataAvailable"].Value)),
+                revenueUp: @Html.Raw(JsonSerializer.Serialize(Localizer["RevenueIncreasedBy"].Value)),
+                revenueDown: @Html.Raw(JsonSerializer.Serialize(Localizer["RevenueDecreasedBy"].Value)),
+                attendanceAvg: @Html.Raw(JsonSerializer.Serialize(Localizer["AverageDailyAttendance"].Value)),
+                expiringWarn: @Html.Raw(JsonSerializer.Serialize(Localizer["SubscriptionsExpiringSoon"].Value)),
+                completionRate: @Html.Raw(JsonSerializer.Serialize(Localizer["SessionCompletionRate"].Value)),
+                checkInRate: @Html.Raw(JsonSerializer.Serialize(Localizer["CheckInRate"].Value))
+            };
+
+            const el = {
+                startDate: document.getElementById('startDateUtc'),
+                endDate: document.getElementById('endDateUtc'),
+                applyBtn: document.getElementById('applyFiltersBtn'),
+                refreshBtn: document.getElementById('refreshAnalyticsBtn'),
+                loading: document.getElementById('analyticsLoading'),
+                meta: document.getElementById('analyticsMeta')
+            };
+
+            function formatNumber(value) {
+                return new Intl.NumberFormat(culture).format(Number(value || 0));
+            }
+
+            function formatPercent(value) {
+                return `${Number(value || 0).toFixed(1)}%`;
+            }
+
+            function formatCurrency(value) {
+                return new Intl.NumberFormat(culture, {
+                    style: 'currency',
+                    currency: 'EGP',
+                    maximumFractionDigits: 2
+                }).format(Number(value || 0));
+            }
+
+            function formatDateTime(isoDate) {
+                const d = new Date(isoDate);
+                const datePart = new Intl.DateTimeFormat('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    timeZone: displayTimezone
+                }).format(d);
+                const timePart = new Intl.DateTimeFormat('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                    timeZone: displayTimezone
+                }).format(d);
+                return `${datePart}, ${timePart}`;
+            }
+
+            function formatDate(isoDate) {
+                const d = new Date(isoDate);
+                return new Intl.DateTimeFormat('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    timeZone: displayTimezone
+                }).format(d);
+            }
+
+            function setRange(days) {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - days + 1);
+
+                const toDateInput = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                el.startDate.value = toDateInput(start);
+                el.endDate.value = toDateInput(end);
+            }
+
+            function toUtcIso(dateValue, endOfDay) {
+                if (!dateValue) return null;
+                const stamp = endOfDay ? 'T23:59:59Z' : 'T00:00:00Z';
+                return new Date(`${dateValue}${stamp}`).toISOString();
+            }
+
+            function showLoading(isLoading) {
+                if (!el.loading) return;
+                el.loading.hidden = !isLoading;
+            }
+
+            async function fetchOverview(params) {
+                let payload = null;
+
+                for (const timezone of preferredTimezones) {
+                    const query = new URLSearchParams(params);
+                    query.set('timezone', timezone);
+
+                    const response = await fetch(`${overviewEndpoint}?${query.toString()}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const candidate = await response.json();
+                    const flags = candidate?.meta?.dataQualityFlags || [];
+                    payload = candidate;
+
+                    if (!flags.includes('timezone_fallback_utc') || timezone === 'UTC') {
+                        break;
+                    }
+                }
+
+                return payload;
+            }
+
+            function updateText(id, value) {
+                const target = document.getElementById(id);
+                if (target) target.textContent = value;
+            }
+
+            function drawChart(svgId, points, color) {
+                const svg = document.getElementById(svgId);
+                if (!svg) return;
+
+                svg.innerHTML = '';
+                const cleanPoints = Array.isArray(points) ? points : [];
+
+                if (!cleanPoints.length) {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', '50%');
+                    text.setAttribute('y', '50%');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', '#A0A0AB');
+                    text.textContent = strings.noChartData;
+                    svg.appendChild(text);
+                    return;
+                }
+
+                const width = 800;
+                const height = 280;
+                const padX = 44;
+                const padY = 26;
+
+                const values = cleanPoints.map(p => Number(p.value || 0));
+                const maxValue = Math.max(...values, 1);
+
+                const xStep = cleanPoints.length > 1 ? (width - (padX * 2)) / (cleanPoints.length - 1) : 0;
+
+                const coords = cleanPoints.map((point, index) => {
+                    const x = padX + (index * xStep);
+                    const y = height - padY - ((Number(point.value || 0) / maxValue) * (height - (padY * 2)));
+                    return `${x},${y}`;
+                });
+
+                const grid = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                grid.setAttribute('x1', `${padX}`);
+                grid.setAttribute('x2', `${width - padX}`);
+                grid.setAttribute('y1', `${height - padY}`);
+                grid.setAttribute('y2', `${height - padY}`);
+                grid.setAttribute('stroke', 'rgba(255,255,255,0.15)');
+                grid.setAttribute('stroke-width', '1');
+                svg.appendChild(grid);
+
+                const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                polyline.setAttribute('points', coords.join(' '));
+                polyline.setAttribute('fill', 'none');
+                polyline.setAttribute('stroke', color);
+                polyline.setAttribute('stroke-width', '4');
+                polyline.setAttribute('stroke-linecap', 'round');
+                polyline.setAttribute('stroke-linejoin', 'round');
+                svg.appendChild(polyline);
+
+                cleanPoints.forEach((point, index) => {
+                    const [x, y] = coords[index].split(',');
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', '4.5');
+                    circle.setAttribute('fill', color);
+                    svg.appendChild(circle);
+
+                    if (index === 0 || index === cleanPoints.length - 1) {
+                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        label.setAttribute('x', x);
+                        label.setAttribute('y', `${height - 6}`);
+                        label.setAttribute('text-anchor', 'middle');
+                        label.setAttribute('fill', '#A0A0AB');
+                        label.setAttribute('font-size', '11');
+                        label.textContent = formatDate(point.date);
+                        svg.appendChild(label);
+                    }
+                });
+            }
+
+            function clampPercent(value) {
+                return Math.max(0, Math.min(100, value));
+            }
+
+            function renderInsights(executive, financial, operational) {
+                const list = document.getElementById('insightsList');
+                if (!list) return;
+
+                const growth = Number(financial.revenueGrowthPercent || 0);
+                const bookings = Number(operational.bookingsInWindow || 0);
+                const checkIns = Number(operational.checkInsInWindow || 0);
+                const completed = Number(operational.completedSessionsInWindow || 0);
+                const expiring = Number(executive.expiringSubscriptionsNext7Days || 0);
+                const avgAttendance = operational.dailyAttendance?.length
+                    ? operational.dailyAttendance.reduce((sum, p) => sum + Number(p.value || 0), 0) / operational.dailyAttendance.length
+                    : 0;
+
+                const completionRate = bookings > 0 ? (completed / bookings) * 100 : 0;
+
+                const insights = [];
+                if (growth >= 0) {
+                    insights.push(`${strings.revenueUp} ${formatPercent(Math.abs(growth))}`);
+                } else {
+                    insights.push(`${strings.revenueDown} ${formatPercent(Math.abs(growth))}`);
+                }
+                insights.push(`${strings.attendanceAvg} ${formatNumber(avgAttendance)}`);
+                insights.push(`${strings.expiringWarn} ${formatNumber(expiring)}`);
+                insights.push(`${strings.completionRate} ${formatPercent(completionRate)}`);
+                insights.push(`${strings.checkInRate} ${formatPercent(bookings > 0 ? (checkIns / bookings) * 100 : 0)}`);
+
+                list.innerHTML = insights.map(item => `<li>${item}</li>`).join('');
+            }
+
+            function renderDashboard(envelope) {
+                const data = envelope?.data || {};
+                const executive = data.executive || {};
+                const financial = data.financial || {};
+                const operational = data.operational || {};
+                const meta = envelope?.meta || {};
+
+                updateText('kpiTotalMembers', formatNumber(executive.totalMembers));
+                updateText('kpiActiveSubscriptions', formatNumber(executive.activeSubscriptions));
+                updateText('kpiExpiringSoon', formatNumber(executive.expiringSubscriptionsNext7Days));
+                updateText('kpiAttendanceToday', formatNumber(executive.attendanceToday));
+                updateText('kpiRevenueWindow', formatCurrency(financial.revenueInWindow));
+                updateText('kpiRevenueGrowth', formatPercent(financial.revenueGrowthPercent));
+
+                updateText('bookingsWindow', formatNumber(operational.bookingsInWindow));
+                updateText('checkInsWindow', formatNumber(operational.checkInsInWindow));
+                updateText('completedWindow', formatNumber(operational.completedSessionsInWindow));
+
+                const checkInRate = operational.bookingsInWindow > 0
+                    ? (operational.checkInsInWindow / operational.bookingsInWindow) * 100
+                    : 0;
+                const completionRate = operational.bookingsInWindow > 0
+                    ? (operational.completedSessionsInWindow / operational.bookingsInWindow) * 100
+                    : 0;
+
+                const checkInBar = document.getElementById('checkInRateBar');
+                const completionBar = document.getElementById('completionRateBar');
+                if (checkInBar) checkInBar.style.width = `${clampPercent(checkInRate)}%`;
+                if (completionBar) completionBar.style.width = `${clampPercent(completionRate)}%`;
+
+                const generatedAt = meta.generatedAtUtc ? formatDateTime(meta.generatedAtUtc) : '-';
+                const start = meta.startDateUtc ? formatDate(meta.startDateUtc) : '-';
+                const end = meta.endDateUtc ? formatDate(meta.endDateUtc) : '-';
+                const timezone = meta.timezone || displayTimezone;
+                el.meta.textContent = `${strings.generatedAt}: ${generatedAt} | ${strings.window}: ${start} - ${end} | ${strings.timezone}: ${timezone}`;
+
+                drawChart('revenueChart', financial.dailyRevenue || [], '#d5eb45');
+                drawChart('attendanceChart', operational.dailyAttendance || [], '#6F8786');
+                renderInsights(executive, financial, operational);
+            }
+
+            async function loadDashboard() {
+                try {
+                    showLoading(true);
+                    el.meta.textContent = strings.loading;
+
+                    const params = new URLSearchParams();
+                    const startIso = toUtcIso(el.startDate.value, false);
+                    const endIso = toUtcIso(el.endDate.value, true);
+                    if (startIso) params.set('startDateUtc', startIso);
+                    if (endIso) params.set('endDateUtc', endIso);
+
+                    const envelope = await fetchOverview(params);
+                    renderDashboard(envelope);
+                } catch {
+                    el.meta.textContent = strings.loadingError;
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            document.querySelectorAll('[data-range]').forEach(button => {
+                button.addEventListener('click', function () {
+                    const days = Number(this.getAttribute('data-range'));
+                    if (days > 0) {
+                        setRange(days);
+                        loadDashboard();
+                    }
+                });
+            });
+
+            if (el.applyBtn) {
+                el.applyBtn.addEventListener('click', loadDashboard);
+            }
+
+            if (el.refreshBtn) {
+                el.refreshBtn.addEventListener('click', loadDashboard);
+            }
+
+            setRange(30);
+            loadDashboard();
+        })();
+    </script>
+}

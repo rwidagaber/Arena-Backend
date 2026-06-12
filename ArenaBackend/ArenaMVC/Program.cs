@@ -1,3 +1,4 @@
+using System.Globalization;
 using ArenaApplication;
 using ArenaApplication.IServices;
 using ArenaApplication.IServices.User;
@@ -25,18 +26,15 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
-    var supportedCultures = new[]
-    {
-        new CultureInfo("en-US"),
-        new CultureInfo("ar-EG")
-    };
+    var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ar-EG") };
     options.DefaultRequestCulture = new RequestCulture(supportedCultures[0], supportedCultures[0]);
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
     options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
 });
 
-builder.Services.AddControllersWithViews()
+builder
+    .Services.AddControllersWithViews()
     .AddViewLocalization()
     .AddDataAnnotationsLocalization(options =>
     {
@@ -49,6 +47,8 @@ builder.Services.AddApplicationServices();
 
 // User-related services
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddSingleton<IAnalyticsCacheVersionService, AnalyticsCacheVersionService>();
 
 // Booking dependencies (MVC Admin pages)
 builder.Services.AddScoped<IGenericRepository<Booking, Guid>, GenericRepository<Booking, Guid>>();
@@ -60,6 +60,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
+
 // Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
 builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
 builder.Services.AddHangfire(config =>
@@ -72,6 +73,14 @@ builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 // Booking service
 builder.Services.AddScoped<IBookingService, BookingService>();
 
+// ── Hangfire ──────────────────────────────────────────────────
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -79,6 +88,10 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ArenaInfrastructure.Data.AppDbContext>();
     await context.Database.MigrateAsync();
     await TranslationSeeder.SeedAsync(context);
+    if (app.Environment.IsDevelopment())
+    {
+        await DashboardDataSeeder.SeedAsync(context);
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -104,9 +117,9 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+app.MapControllers();
+
+app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 app.Run();

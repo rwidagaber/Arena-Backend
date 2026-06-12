@@ -1,0 +1,263 @@
+.analytics-admin-page {
+  position: relative;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.analytics-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.analytics-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--whiteout);
+}
+
+.analytics-header p {
+  margin: 0.4rem 0 0;
+  color: #a0a0ab;
+}
+
+.analytics-header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.analytics-filter-card,
+.analytics-panel,
+.kpi-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.analytics-filter-card {
+  padding: 1.25rem;
+}
+
+.analytics-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.analytics-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.btn-analytics-secondary {
+  color: #d5eb45;
+  border: 1px solid rgba(213, 235, 69, 0.45);
+  background: rgba(213, 235, 69, 0.07);
+}
+
+.btn-analytics-secondary:hover {
+  color: var(--black);
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+
+.analytics-meta {
+  margin-top: 0.9rem;
+  font-size: 0.88rem;
+  color: #a0a0ab;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  padding: 1rem;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(213, 235, 69, 0.45);
+}
+
+.kpi-label {
+  color: #8f8f98;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.kpi-value {
+  margin-top: 0.4rem;
+  color: var(--whiteout);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.analytics-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.analytics-panel {
+  padding: 1rem;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.03rem;
+  color: var(--whiteout);
+}
+
+.panel-note {
+  color: #8f8f98;
+  font-size: 0.82rem;
+}
+
+.chart-shell {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 10px;
+  padding: 0.45rem;
+}
+
+.line-chart {
+  width: 100%;
+  min-height: 250px;
+}
+
+.funnel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.funnel-label {
+  color: #8f8f98;
+  font-size: 0.82rem;
+}
+
+.funnel-value {
+  margin-top: 0.35rem;
+  color: var(--whiteout);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.funnel-bars {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.funnel-bar-label {
+  margin-bottom: 0.25rem;
+  color: #a0a0ab;
+  font-size: 0.85rem;
+}
+
+.funnel-bar-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.funnel-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d5eb45, #b7d129);
+  transition: width 0.5s ease;
+}
+
+.funnel-bar-fill.secondary {
+  background: linear-gradient(90deg, #6f8786, #8ab3b1);
+}
+
+.insights-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.insights-list li {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  color: #dadade;
+  font-size: 0.92rem;
+}
+
+.analytics-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 17, 0.55);
+  border-radius: 14px;
+  backdrop-filter: blur(2px);
+}
+
+.spinner-border {
+  color: var(--yellow);
+}
+
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+
+  .analytics-filter-grid,
+  .analytics-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-filter-actions {
+    justify-content: flex-start;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+
+  .kpi-grid,
+  .funnel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-header h1 {
+    font-size: 1.55rem;
+  }
+}
