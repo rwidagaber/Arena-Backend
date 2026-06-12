@@ -1,0 +1,114 @@
+@model ArenaMVC.Models.UserListPagedViewModel
+
+@if (Model != null && Model.Items != null && Model.Items.Any())
+{
+    @* Summary bar *@
+    <div class="usub-summary-bar">
+        <span>
+            @Localizer["Showing"]
+            <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>–<strong>@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))</strong>
+            @Localizer["Of"] <strong>@Model.TotalCount</strong> @Localizer["Records"]
+        </span>
+        <span class="usub-page-info">@Localizer["Page"] @Model.Page @Localizer["Of"] @Model.TotalPages</span>
+    </div>
+
+    <div class="user-table-wrap">
+        <div class="table-responsive">
+            <table class="subscription-table user-mgmt-table" id="usersTable" aria-label="@Localizer["UsersManagement"]">
+                <thead>
+                    <tr>
+                        <th class="col-user-name">@Localizer["FullName"]</th>
+                        <th class="col-user-contact">@Localizer["ContactInfo"]</th>
+                        <th class="col-user-account">@Localizer["AccountStatus"]</th>
+                        <th class="col-user-member">@Localizer["Member"]</th>
+                        <th class="col-user-subscription">@Localizer["SubscriptionStatus"]</th>
+                        <th class="col-user-actions">@Localizer["Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Items)
+                    {
+                        <tr class="user-row">
+                            <td data-label="@Localizer["FullName"]" class="user-name-cell">@user.FullName</td>
+                            <td data-label="@Localizer["ContactInfo"]" class="user-contact-cell">
+                                <div class="contact-info">
+                                    <a href="mailto:@user.Email">@user.Email</a>
+                                    <div class="contact-phone">@(string.IsNullOrWhiteSpace(user.PhoneNumber) ? "-" : user.PhoneNumber)</div>
+                                </div>
+                            </td>
+                            <td data-label="@Localizer["AccountStatus"]" class="user-account-cell">
+                                @if (user.IsActive)
+                                {
+                                    <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                                }
+                                else
+                                {
+                                    <span class="user-badge badge-crimson">@Localizer["Inactive"]</span>
+                                }
+                            </td>
+                            <td data-label="@Localizer["Member"]" class="user-member-cell">
+                                @if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ActiveMembership)
+                                {
+                                    <span class="user-badge badge-blue">@Localizer["ActiveMembership"]</span>
+                                }
+                                else if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ExpiredMembership)
+                                {
+                                    <span class="user-badge badge-amber-warm">@Localizer["ExpiredMembership"]</span>
+                                }
+                                else
+                                {
+                                    <span class="user-badge badge-gray">@Localizer["User"]</span>
+                                }
+                            </td>
+                            <td data-label="@Localizer["SubscriptionStatus"]" class="user-subscription-cell">
+                                @if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Active)
+                                {
+                                    <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                                }
+                                else if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
+                                {
+                                    <span class="user-badge badge-orange">@Localizer["Expired"]</span>
+                                }
+                                else
+                                {
+                                    <span class="user-badge badge-gray">@Localizer["NA"]</span>
+                                }
+                            </td>
+                            <td data-label="@Localizer["Actions"]" class="user-actions-cell">
+                                <div class="d-flex justify-content-center gap-2 align-items-center actions-cell">
+                                    <a href="@Url.Action("Details", "UserManagement", new { id = user.Id })" class="action-icon-btn btn-action-view" data-tooltip="@Localizer["ViewDetails"]">
+                                        <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
+                                    </a>
+                                    <a href="@Url.Action("Manage", "UserManagement", new { id = user.Id })" class="action-icon-btn btn-action-settings" data-tooltip="@Localizer["Manage"]">
+                                        <i data-lucide="settings" style="width: 16px; height: 16px;"></i>
+                                    </a>
+                                    <button type="button" class="action-icon-btn btn-action-delete" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" data-userid="@user.Id" data-tooltip="@Localizer["Delete"]">
+                                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @await Html.PartialAsync("_Pagination", new PaginationInfo { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, TotalPages = Model.TotalPages, HasPreviousPage = Model.HasPreviousPage, HasNextPage = Model.HasNextPage })
+    </div>
+}
+else if (Model != null && !string.IsNullOrWhiteSpace(Model.Search))
+{
+    <div class="subscription-empty-state">
+        <div class="subscription-empty-state-icon"><i data-lucide="search" style="width: 48px; height: 48px; color: var(--autonomous);"></i></div>
+        <h3>@Localizer["NoMatchingUsersFound"]</h3>
+        <p>@Localizer["NoUsersFound"]</p>
+    </div>
+}
+else
+{
+    <div class="subscription-empty-state">
+        <div class="subscription-empty-state-icon"><i data-lucide="users" style="width: 48px; height: 48px; color: var(--autonomous);"></i></div>
+        <h3>@Localizer["NoUsersFound"]</h3>
+        <p>@Localizer["NoUsersFound"]</p>
+    </div>
+}

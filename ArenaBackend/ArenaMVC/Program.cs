@@ -15,6 +15,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,12 @@ builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
 
 // Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
 builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
+builder.Services.AddHangfire(config =>
+               config.UseSqlServerStorage(
+                   builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
 // Booking service
 builder.Services.AddScoped<IBookingService, BookingService>();

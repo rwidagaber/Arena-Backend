@@ -8,7 +8,7 @@
 
 <div class="subscription-admin-container">
 	<div class="subscription-admin-header">
-		<h1>✏️ @Localizer["EditSubscriptionPlan"]</h1>
+		<h1><i data-lucide="edit-3" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["EditSubscriptionPlan"]</h1>
 		<p>@Localizer["UpdateSubscriptionPlanDetails"]</p>
 	</div>
 
@@ -109,11 +109,11 @@
 					</div>
 
 					<div style="display: flex; gap: 1rem; margin-top: 2rem;">
-						<button type="submit" class="btn btn-subscription-primary" style="flex: 1;">
-							✅ @Localizer["UpdatePlan"]
+						<button type="submit" class="btn btn-subscription-primary d-inline-flex align-items-center justify-content-center gap-1" style="flex: 1;">
+							<i data-lucide="check" style="width: 18px; height: 18px;"></i> @Localizer["UpdatePlan"]
 						</button>
-						<a href="@Url.Action("Index", "SubscriptionPlans")" class="btn btn-subscription-secondary" style="flex: 1; text-decoration: none; display: flex; align-items: center; justify-content: center;">
-							❌ @Localizer["Cancel"]
+						<a href="@Url.Action("Index", "SubscriptionPlans")" class="btn btn-subscription-secondary d-inline-flex align-items-center justify-content-center gap-1" style="flex: 1; text-decoration: none;">
+							<i data-lucide="x" style="width: 18px; height: 18px;"></i> @Localizer["Cancel"]
 						</a>
 					</div>
 				</form>
