@@ -19,18 +19,21 @@ namespace ArenaApi.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IPaymentGatewayService _gatewayService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAnalyticsCacheVersionService _analyticsCacheVersionService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
         private readonly IConfiguration _config;
 
         public PaymentsController(IPaymentService paymentService,
                 IPaymentGatewayService gatewayService,
                 ICurrentUserService currentUserService,
+                IAnalyticsCacheVersionService analyticsCacheVersionService,
                 IStringLocalizer<ArenaLocalization> localizer,
                 IConfiguration config)
         {
             _paymentService = paymentService;
             _gatewayService = gatewayService;
             _currentUserService = currentUserService;
+            _analyticsCacheVersionService = analyticsCacheVersionService;
             _localizer = localizer;
             _config = config;
         }
@@ -44,6 +47,8 @@ namespace ArenaApi.Controllers
 
             if (!result.IsSuccess)
                 return BadRequest(new { message = result.Errors });
+
+            _analyticsCacheVersionService.BumpVersion();
 
             return Ok(result.Value);
         }
@@ -87,6 +92,9 @@ namespace ArenaApi.Controllers
             {
                 return BadRequest(new { message = result.Errors });
             }
+
+            _analyticsCacheVersionService.BumpVersion();
+
             return Ok(result.Value);
         }
 
@@ -108,6 +116,8 @@ namespace ArenaApi.Controllers
 
                 if (!result.IsSuccess)
                     return BadRequest(new { message = result.Errors });
+
+                _analyticsCacheVersionService.BumpVersion();
             }
             else
             {
@@ -116,6 +126,8 @@ namespace ArenaApi.Controllers
 
                 if (!result.IsSuccess)
                     return BadRequest(new { message = result.Errors });
+
+                _analyticsCacheVersionService.BumpVersion();
             }
 
             return Ok();

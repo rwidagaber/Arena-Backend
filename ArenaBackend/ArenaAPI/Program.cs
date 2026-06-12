@@ -72,6 +72,7 @@ namespace ArenaAPI
             // ── Core Services ─────────────────────────────────────────────
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<IAnalyticsCacheVersionService, AnalyticsCacheVersionService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -79,6 +80,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
 
             builder.Services.Configure<EmailSettings>(
                 builder.Configuration.GetSection("EmailSettings"));

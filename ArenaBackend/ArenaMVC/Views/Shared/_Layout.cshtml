@@ -71,6 +71,12 @@
                         <span>@Localizer["Bookings"]</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "AdminAnalytics" && currentAction == "Dashboard" ? "active" : "")" asp-area="" asp-controller="AdminAnalytics" asp-action="Dashboard">
+                        <i data-lucide="chart-line" class="nav-icon"></i>
+                        <span>@Localizer["AnalyticsDashboard"]</span>
+                    </a>
+                </li>
             </ul>
         </nav>
     </aside>
