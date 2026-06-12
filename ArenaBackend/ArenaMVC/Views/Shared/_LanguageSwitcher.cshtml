@@ -1,0 +1,50 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.Extensions.Options
+
+@inject IOptions<RequestLocalizationOptions> LocOptions
+
+@{
+    var currentCulture = CultureInfo.CurrentUICulture;
+    var supportedCultures = LocOptions.Value.SupportedUICultures ?? new List<CultureInfo>();
+    
+    // Map cultures to flag-icons classes
+    var cultureFlags = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        { "en-US", "fi-us" },
+        { "en-GB", "fi-gb" },
+        { "ar-EG", "fi-eg" }
+    };
+    
+    var currentFlagClass = cultureFlags.GetValueOrDefault(currentCulture.Name, "fi-us");
+    
+    // Generate returnUrl for redirecting back to current page with query string
+    var returnUrl = string.IsNullOrEmpty(Context.Request.Path) ? "~/" : $"~{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<div class="lang-switcher" id="langSwitcher">
+    <button type="button" class="lang-switcher-btn" id="langSwitcherBtn" aria-haspopup="true" aria-expanded="false" title="Switch Language">
+        <span class="fi @currentFlagClass lang-flag"></span>
+        <i data-lucide="chevron-down" class="lang-arrow"></i>
+    </button>
+    <div class="lang-dropdown" id="langDropdown">
+        <form asp-controller="Home" asp-action="SetCulture" method="post" class="lang-form">
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            @foreach (var culture in supportedCultures)
+            {
+                var flagClass = cultureFlags.GetValueOrDefault(culture.Name, "fi-us");
+                var isSelected = string.Equals(currentCulture.Name, culture.Name, StringComparison.OrdinalIgnoreCase);
+                
+                <button type="submit" name="culture" value="@culture.Name" 
+                        class="lang-option @(isSelected ? "active" : "")" 
+                        title="@culture.DisplayName">
+                    <span class="fi @flagClass lang-flag"></span>
+                    @if (isSelected)
+                    {
+                        <span class="lang-indicator"></span>
+                    }
+                </button>
+            }
+        </form>
+    </div>
+</div>
