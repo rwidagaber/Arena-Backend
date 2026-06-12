@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @Localizer["Arena"]</title>
     <script type="importmap"></script>
+    <script>
+        (function () {
+            const theme = localStorage.getItem('arena-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            if (theme === 'light') {
+                document.documentElement.style.colorScheme = 'light';
+            } else {
+                document.documentElement.style.colorScheme = 'dark';
+            }
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,55 +41,76 @@
             }
             <ul class="nav-list">
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Home"]</a>
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">
+                        <i data-lucide="home" class="nav-icon"></i>
+                        <span>@Localizer["Home"]</span>
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">@Localizer["Privacy"]</a>
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
+                        <i data-lucide="shield" class="nav-icon"></i>
+                        <span>@Localizer["Privacy"]</span>
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">@Localizer["SubscriptionPlans"]</a>
+                    <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">
+                        <i data-lucide="credit-card" class="nav-icon"></i>
+                        <span>@Localizer["SubscriptionPlans"]</span>
+                    </a>
                 </li>
                 <li class="nav-item">
-                @*     <a class="nav-link @(currentController == "UserSubscriptions" ? "active" : "")" asp-area="" asp-controller="UserSubscriptions" asp-action="Index">@Localizer["UserSubscriptions"]</a>
-                </li>
-                <li class="nav-item"> *@
-                    <a class="nav-link @(currentController == "UserManagement" ? "active" : "")" asp-area="" asp-controller="UserManagement" asp-action="Index">@Localizer["UserManagement"]</a>
+                    <a class="nav-link @(currentController == "UserManagement" ? "active" : "")" asp-area="" asp-controller="UserManagement" asp-action="Index">
+                        <i data-lucide="users" class="nav-icon"></i>
+                        <span>@Localizer["UserManagement"]</span>
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">@Localizer["Bookings"]</a>
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">
+                        <i data-lucide="calendar" class="nav-icon"></i>
+                        <span>@Localizer["Bookings"]</span>
+                    </a>
                 </li>
             </ul>
         </nav>
-        <div class="sidebar-footer">
-            <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture">
-                <div class="culture-dropdown">
-                    <button type="button" class="culture-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')">
-                        <span class="flag-icon">@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "🇪🇬" : "🇺🇸")</span>
-                        <span class="dropdown-arrow">▾</span>
-                    </button>
-                    <div class="culture-dropdown-menu">
-                        <button type="submit" name="culture" value="en-US" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "selected" : "")">
-                            <span class="flag-icon">🇺🇸</span>
-                            <span>English</span>
-                        </button>
-                        <button type="submit" name="culture" value="ar-EG" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "selected" : "")">
-                            <span class="flag-icon">🇪🇬</span>
-                            <span>العربية</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
     </aside>
     <div class="main-content">
         <header class="main-header">
-            <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
-                <span class="hamburger-icon">&#9776;</span>
-            </button>
-            <div class="header-brand">
-                <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+            <div class="header-left">
+                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div class="header-brand">
+                    <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+                </div>
             </div>
-            <div style="width: 32px;"></div>
+            <div class="header-right">
+                <!-- Theme Toggle Button -->
+                <button type="button" class="theme-toggle-btn" id="themeToggle" aria-label="Toggle Theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+
+                <!-- Language Switcher Form -->
+                <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture" class="header-culture-form">
+                    <div class="culture-dropdown">
+                        <button type="button" class="culture-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')">
+                            <span class="flag-icon">@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "🇪🇬" : "🇺🇸")</span>
+                            <span class="culture-dropdown-label">@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "العربية" : "English")</span>
+                            <i data-lucide="chevron-down" class="dropdown-arrow-icon"></i>
+                        </button>
+                        <div class="culture-dropdown-menu">
+                            <button type="submit" name="culture" value="en-US" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "selected" : "")">
+                                <span class="flag-icon">🇺🇸</span>
+                                <span>English</span>
+                            </button>
+                            <button type="submit" name="culture" value="ar-EG" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "selected" : "")">
+                                <span class="flag-icon">🇪🇬</span>
+                                <span>العربية</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </header>
         <main role="main" class="pb-3">
             @RenderBody()
@@ -92,8 +124,26 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Lucide icons
+            lucide.createIcons();
+
+            // Theme toggle implementation
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function () {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('arena-theme', newTheme);
+                    document.documentElement.style.colorScheme = newTheme;
+                });
+            }
+
+            // Sidebar mobile toggle
             const toggleBtn = document.getElementById('sidebarToggle');
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.getElementById('sidebarOverlay');

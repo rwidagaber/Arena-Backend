@@ -1,7 +1,7 @@
 /* Admin Booking — matches Subscription Plans theme (subscription-admin.css) */
 
 :root {
-    --autonomous: #A0A0AB;
+    --autonomous: var(--autonomous-color);
 }
 
 .booking-admin-container {
@@ -18,7 +18,7 @@
     border-radius: 12px;
     padding: 1.75rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-shadow);
 }
 
 .booking-filters-card .form-label {
@@ -31,7 +31,7 @@
 
 .booking-filters-card select.form-select,
 .booking-filters-card input.form-control {
-    background-color: rgba(255, 255, 255, 0.03) !important;
+    background-color: var(--input-bg) !important;
     color: var(--whiteout) !important;
     border: 1px solid var(--border-color) !important;
     padding: 0.75rem !important;
@@ -42,9 +42,15 @@
 
 .booking-filters-card select.form-select:focus,
 .booking-filters-card input.form-control:focus {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: var(--yellow) !important;
+    background-color: var(--input-bg-focus) !important;
+    border-color: var(--accent-color) !important;
     outline: none;
+    box-shadow: 0 0 0 3px rgba(54, 127, 221, 0.15) !important;
+}
+
+html:not([data-theme="light"]) .booking-filters-card select.form-select:focus,
+html:not([data-theme="light"]) .booking-filters-card input.form-control:focus {
+    border-color: var(--yellow) !important;
     box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15) !important;
 }
 
@@ -68,7 +74,7 @@
     border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-shadow);
 }
 
 .booking-table {
@@ -79,7 +85,7 @@
 }
 
 .booking-table thead {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--table-header-bg);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -165,12 +171,15 @@
     }
 
     .booking-table tbody tr:hover td {
-        background-color: rgba(217, 237, 115, 0.02) !important;
+        background-color: var(--table-row-hover) !important;
     }
 
-    /* Warm Pastel Green for booking info columns 1-4 on hover */
-    .booking-table tbody tr:hover td:nth-child(-n+4) {
+    /* Warm Pastel Green for booking info columns 1-4 on hover (Dark Mode Only) */
+    html:not([data-theme="light"]) .booking-table tbody tr:hover td:nth-child(-n+4) {
         color: #d9ed73 !important;
+    }
+    html[data-theme="light"] .booking-table tbody tr:hover td:nth-child(-n+4) {
+        color: var(--accent-color) !important;
     }
 
     .booking-table tbody tr:hover td:first-child {
@@ -185,16 +194,12 @@
         transform: translateX(3px) !important;
     }
 
-    .booking-table tbody tr:hover td {
-        background-color: rgba(217, 237, 115, 0.02) !important;
-    }
-
-    .booking-table tbody tr:hover td:not(.booking-status-cell-wrap) {
-        color: #d9ed73 !important;
-    }
-
     .booking-table tbody tr:hover td:first-child {
         border-left-color: rgba(213, 235, 69, 0.5) !important;
+    }
+
+    html[data-theme="light"] .booking-table tbody tr:hover td:first-child {
+        border-left-color: rgba(54, 127, 221, 0.4) !important;
     }
 
     [dir="rtl"] .booking-table tbody tr td:first-child {
@@ -204,6 +209,10 @@
 
     [dir="rtl"] .booking-table tbody tr:hover td:first-child {
         border-right-color: rgba(213, 235, 69, 0.5) !important;
+    }
+
+    html[data-theme="light"][dir="rtl"] .booking-table tbody tr:hover td:first-child {
+        border-right-color: rgba(54, 127, 221, 0.4) !important;
     }
 }
 
@@ -230,33 +239,33 @@
 }
 
 .booking-badge-confirmed {
-    background-color: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    color: #10B981;
+    background-color: var(--badge-bg-confirmed);
+    border: 1px solid var(--badge-border-confirmed);
+    color: var(--badge-color-confirmed);
 }
 
 .booking-badge-cancelled {
-    background-color: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    color: #EF4444;
+    background-color: var(--badge-bg-cancelled);
+    border: 1px solid var(--badge-border-cancelled);
+    color: var(--badge-color-cancelled);
 }
 
 .booking-badge-pending {
-    background-color: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.35);
-    color: #F59E0B;
+    background-color: var(--badge-bg-pending);
+    border: 1px solid var(--badge-border-pending);
+    color: var(--badge-color-pending);
 }
 
 .booking-badge-completed {
-    background-color: rgba(20, 184, 166, 0.12);
-    border: 1px solid rgba(20, 184, 166, 0.35);
-    color: #14B8A6;
+    background-color: var(--badge-bg-completed);
+    border: 1px solid var(--badge-border-completed);
+    color: var(--badge-color-completed);
 }
 
 .booking-badge-other {
-    background-color: rgba(160, 160, 171, 0.12);
-    border: 1px solid var(--border-color);
-    color: var(--autonomous);
+    background-color: var(--badge-bg-other);
+    border: 1px solid var(--badge-border-other);
+    color: var(--badge-color-other);
 }
 
 /* ----------------------------------------------------
@@ -486,3 +495,96 @@
         display: none !important;
     }
 }
+
+/* ==========================================================================
+   LIGHT MODE CUSTOM STYLING (Booking Table)
+   ========================================================================== */
+
+/* 1. Table Headers styling in Light Mode */
+html[data-theme="light"] .booking-table thead {
+    background-color: var(--table-header-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+html[data-theme="light"] .booking-table th {
+    color: var(--accent-color) !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    padding: 1.1rem 1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-top: none !important;
+}
+
+/* 2. Table Row cells styling in Light Mode */
+html[data-theme="light"] .booking-table tbody tr td {
+    color: var(--text-primary) !important;
+    padding: 1.1rem 1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+html[data-theme="light"] .booking-table tbody tr {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* 3. Row Hover Effect & Transition (Requirement 4) */
+html[data-theme="light"] .booking-table tbody tr,
+html[data-theme="light"] .booking-table tbody tr td {
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
+}
+
+    html[data-theme="light"] .booking-table tbody tr:hover td {
+        background-color: rgba(54, 127, 221, 0.05) !important;
+        color: rgba(54, 127, 221, 0.05) !important;
+    }
+/*    html[data-theme="light"] [dir="rtl"]  .booking-table tbody tr:hover td {
+        background-color: rgba(54, 127, 221, 0.05) !important;
+        color: rgba(54, 127, 221, 0.05) !important;
+    }*/
+
+/* Specific highlights on hover */
+html[data-theme="light"] .booking-table tbody tr:hover td:first-child {
+    border-left-color: var(--accent-color) !important;
+}
+
+html[data-theme="light"][dir="rtl"] .booking-table tbody tr:hover td:first-child {
+    border-left-color: transparent !important;
+    border-right-color: var(--accent-color) !important;
+}
+
+/* Mobile & Tablet Overrides (< 1024px) */
+@media (max-width: 1024px) {
+    html[data-theme="light"] .booking-table tbody tr {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    html[data-theme="light"] .booking-table tbody tr:hover {
+        background-color: rgba(54, 127, 221, 0.05) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    html[data-theme="light"] .booking-table tbody tr td {
+        background-color: transparent !important;
+        border: none !important;
+        border-bottom: 1px dashed var(--border-color) !important;
+        padding: 0.6rem 0 !important;
+    }
+
+    html[data-theme="light"] .booking-table tbody tr td:last-child {
+        border-bottom: none !important;
+    }
+
+    html[data-theme="light"] .booking-table td::before {
+        color: var(--text-secondary) !important;
+    }
+
+    html[data-theme="light"] .booking-table .booking-member-cell {
+        color: var(--text-primary) !important;
+    }
+}
+

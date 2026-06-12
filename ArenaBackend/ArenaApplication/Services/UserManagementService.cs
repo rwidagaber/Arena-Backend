@@ -46,7 +46,9 @@ namespace ArenaApplication.Services
                 {
                     var cleanSearch = search.Trim().ToLower();
                     query = query.Where(u =>
-                        (u.FirstName + " " + u.LastName).ToLower().Contains(cleanSearch) ||
+                        (u.FirstName != null && u.FirstName.ToLower().Contains(cleanSearch)) ||
+                        (u.LastName != null && u.LastName.ToLower().Contains(cleanSearch)) ||
+                        ((u.FirstName ?? "") + " " + (u.LastName ?? "")).ToLower().Contains(cleanSearch) ||
                         (u.Email != null && u.Email.ToLower().Contains(cleanSearch))
                     );
                 }

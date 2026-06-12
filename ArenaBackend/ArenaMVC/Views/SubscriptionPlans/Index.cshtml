@@ -8,7 +8,7 @@
 
 <div class="subscription-admin-container">
 	<div class="subscription-admin-header">
-		<h1>📋 @Localizer["SubscriptionPlans"]</h1>
+		<h1><i data-lucide="clipboard-list" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["SubscriptionPlans"]</h1>
 		<p>@Localizer["SubscriptionPlans"]</p>
 	</div>
 
@@ -32,8 +32,8 @@
 				<h2 style="color: var(--yellow); margin-bottom: 1.5rem;">@Localizer["AvailablePlans"]</h2>
 			</div>
 			<div class="col-md-4 text-end">
-				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary">
-					➕ @Localizer["CreateNewPlan"]
+				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary d-inline-flex align-items-center gap-1">
+					<i data-lucide="plus" style="width: 18px; height: 18px;"></i> @Localizer["CreateNewPlan"]
 				</a>
 			</div>
 		</div>
@@ -49,11 +49,15 @@
 								<h3 class="subscription-card-title">@plan.Name</h3>
 								@if (plan.IsActive)
 								{
-									<span class="subscription-badge">✓ @Localizer["Active"]</span>
+									<span class="subscription-badge d-inline-flex align-items-center gap-1">
+										<i data-lucide="check" style="width: 14px; height: 14px;"></i> @Localizer["Active"]
+									</span>
 								}
 								else
 								{
-									<span class="subscription-badge featured">⭐ @Localizer["Inactive"]</span>
+									<span class="subscription-badge featured d-inline-flex align-items-center gap-1">
+										<i data-lucide="star" style="width: 14px; height: 14px;"></i> @Localizer["Inactive"]
+									</span>
 								}
 							</div>
 
@@ -89,12 +93,12 @@
 							</div>
 
 							<div class="subscription-actions">
-								<a href="@Url.Action("Edit", "SubscriptionPlans", new { id = plan.Id })" class="btn btn-subscription-edit">
-									✏️ @Localizer["Edit"]
+								<a href="@Url.Action("Edit", "SubscriptionPlans", new { id = plan.Id })" class="btn btn-subscription-edit d-inline-flex align-items-center justify-content-center gap-1">
+									<i data-lucide="edit-3" style="width: 14px; height: 14px;"></i> @Localizer["Edit"]
 								</a>
 								<form asp-action="Delete" asp-route-id="@plan.Id" method="post" style="flex: 1; margin: 0;" onsubmit="return confirm('@Localizer["AreYouSureDeletePlan"]');">
-									<button type="submit" class="btn btn-subscription-danger w-100">
-										🗑️ @Localizer["Delete"]
+									<button type="submit" class="btn btn-subscription-danger w-100 d-inline-flex align-items-center justify-content-center gap-1">
+										<i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> @Localizer["Delete"]
 									</button>
 								</form>
 							</div>
@@ -106,11 +110,13 @@
 		else
 		{
 			<div class="subscription-empty-state">
-				<div class="subscription-empty-state-icon">📭</div>
+				<div class="subscription-empty-state-icon">
+					<i data-lucide="inbox" style="width: 48px; height: 48px; color: var(--autonomous);"></i>
+				</div>
 				<h3>@Localizer["NoSubscriptionPlansFound"]</h3>
 				<p>@Localizer["CreateYourFirstPlanDescription"]</p>
-				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary">
-					➕ @Localizer["CreateYourFirstPlan"]
+				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary d-inline-flex align-items-center gap-1 justify-content-center">
+					<i data-lucide="plus" style="width: 18px; height: 18px;"></i> @Localizer["CreateYourFirstPlan"]
 				</a>
 			</div>
 		}
