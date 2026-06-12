@@ -1,20 +1,26 @@
 using ArenaApplication.Dtos.Dashboard.Analytics;
 using ArenaApplication.IServices;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ArenaApi.Controllers;
+namespace ArenaMVC.Controllers;
 
 [ApiController]
+[Route("admin/analytics/v2")]
 [Route("api/admin/analytics/v2")]
-//[Authorize(Roles = "Admin")]
-public class AdminAnalyticsController : ControllerBase
+public class AdminAnalyticsController : Controller
 {
   private readonly IDashboardService _dashboardService;
 
   public AdminAnalyticsController(IDashboardService dashboardService)
   {
     _dashboardService = dashboardService;
+  }
+
+  [HttpGet("/admin/dashboard")]
+  [HttpGet("/admin/analytics")]
+  public IActionResult Dashboard()
+  {
+    return View();
   }
 
   [HttpGet("overview")]
