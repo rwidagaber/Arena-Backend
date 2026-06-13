@@ -12,6 +12,7 @@ using ArenaApplication.Services;
 using ArenaApplication.Services.AI;
 using ArenaApplication.Services.Payment;
 using ArenaApplication.settings;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
@@ -152,6 +153,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
+            builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>
