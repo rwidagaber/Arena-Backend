@@ -52,17 +52,6 @@ namespace ArenaInfrastructure.AI
 
         }
 
-        //public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(
-        //    Guid memberProfileId, string userMessage)
-        //{
-        //    var profile = await _context.MemberProfiles
-        //        .FirstOrDefaultAsync(p => p.Id == memberProfileId
-        //                               || p.UserId == memberProfileId);
-
-        //    if (profile == null)
-        //        throw new Exception($"MemberProfile not found for Id: {memberProfileId}");
-
-        //    var prompt = PromptBuilder.BuildWorkoutPrompt(profile, userMessage);
 
 
         public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(
