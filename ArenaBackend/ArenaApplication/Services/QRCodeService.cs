@@ -87,7 +87,7 @@ namespace ArenaInfrastructure.Services
             };
         }
 
-        public async Task<QrScanResultDto> ScanAsync(string code, Guid scannedById)
+        public async Task<QrScanResultDto> ScanAsync(string code, Guid? scannedById)
         {
             // 1. Find QR by code
             var qrList = await _qrRepo.FindAsync(q => q.Code == code);
