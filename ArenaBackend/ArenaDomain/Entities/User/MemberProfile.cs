@@ -26,6 +26,8 @@ namespace ArenaDomain.Entities
 
         public decimal? Height { get; set; }
 
+        public decimal? MuscleMass { get; set; }
+
         public decimal? BMI { get; set; }
 
         public Gender Gender { get; set; }
