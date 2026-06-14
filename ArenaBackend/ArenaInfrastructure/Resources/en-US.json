@@ -54,6 +54,7 @@
     "SubscriptionPlanDeletedSuccessfully": "Subscription plan deleted successfully!",
     "SubscriptionPlanNotFound": "Subscription plan not found.",
     "WorkoutPlanNotFound": "Workout plan not found.",
+    "NutritionPlanNotFound": "Nutrition plan not found.",
     "UnauthorizedAccess": "Unauthorized access to this resource.",
     "AnErrorOccurredCreatingSubscriptionPlan": "An error occurred while creating the subscription plan.",
     "AnErrorOccurredUpdatingSubscriptionPlan": "An error occurred while updating the subscription plan.",
