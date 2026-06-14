@@ -6,6 +6,7 @@ using ArenaApi.Configurations.ValidatorConfig;
 using ArenaApi.Hubs;
 using ArenaApplication;
 using ArenaApplication.IServices;
+using ArenaApplication.IServices.IProgressServices;
 using ArenaApplication.IServices.Payment;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
@@ -26,6 +27,7 @@ using ArenaInfrastructure.Services;
 using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Scalar.AspNetCore;
 using System.Globalization;
@@ -138,6 +140,13 @@ namespace ArenaAPI
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
+
+
+            // ── Progress ───────────────────────────────────────────────────
+            builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
+            builder.Services.AddScoped<IProgressService, ProgressService>();
+
+
             // ── Payment ───────────────────────────────────────────────────
             builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -183,7 +192,7 @@ namespace ArenaAPI
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
                 if (app.Environment.IsDevelopment())
-                    context.Database.EnsureCreated();
+                    context.Database.Migrate();
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
             }
