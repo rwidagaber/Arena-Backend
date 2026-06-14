@@ -53,6 +53,8 @@
     "SubscriptionPlanUpdatedSuccessfully": "تم تحديث خطة الاشتراك بنجاح!",
     "SubscriptionPlanDeletedSuccessfully": "تم حذف خطة الاشتراك بنجاح!",
     "SubscriptionPlanNotFound": "خطة الاشتراك غير موجودة.",
+    "WorkoutPlanNotFound": "خطة التمرين غير موجودة.",
+    "UnauthorizedAccess": "غير مسموح بالوصول إلى هذا المصدر.",
     "AnErrorOccurredCreatingSubscriptionPlan": "حدث خطأ أثناء إنشاء خطة الاشتراك.",
     "AnErrorOccurredUpdatingSubscriptionPlan": "حدث خطأ أثناء تحديث خطة الاشتراك.",
     "AnErrorOccurredDeletingSubscriptionPlan": "حدث خطأ أثناء حذف خطة الاشتراك.",
