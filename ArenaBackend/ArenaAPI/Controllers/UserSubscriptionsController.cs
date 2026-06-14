@@ -1,4 +1,5 @@
 using ArenaApplication.Dtos.UserSubscription;
+using ArenaApplication.IServices;
 using ArenaApplication.Services.UserSubscription;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Authorization;
@@ -12,13 +13,16 @@ namespace ArenaApi.Controllers
     public class UserSubscriptionsController : ControllerBase
     {
         private readonly IUserSubscriptionService _userSubscriptionService;
+        private readonly IAnalyticsCacheVersionService _analyticsCacheVersionService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public UserSubscriptionsController(
             IUserSubscriptionService userSubscriptionService,
+            IAnalyticsCacheVersionService analyticsCacheVersionService,
             IStringLocalizer<ArenaLocalization> localizer)
         {
             _userSubscriptionService = userSubscriptionService;
+            _analyticsCacheVersionService = analyticsCacheVersionService;
             _localizer = localizer;
         }
 
@@ -89,6 +93,7 @@ namespace ArenaApi.Controllers
             try
             {
                 var subscription = await _userSubscriptionService.CreateAsync(createDto, cancellationToken);
+                _analyticsCacheVersionService.BumpVersion();
                 return CreatedAtAction(nameof(GetById), new { id = subscription.Id }, subscription);
             }
             catch (KeyNotFoundException ex)
@@ -110,6 +115,7 @@ namespace ArenaApi.Controllers
             try
             {
                 var subscription = await _userSubscriptionService.UpdateStatusAsync(id, updateDto, cancellationToken);
+                _analyticsCacheVersionService.BumpVersion();
                 return Ok(subscription);
             }
             catch (KeyNotFoundException ex)
@@ -128,6 +134,7 @@ namespace ArenaApi.Controllers
             try
             {
                 await _userSubscriptionService.DeleteAsync(id, cancellationToken);
+                _analyticsCacheVersionService.BumpVersion();
                 return NoContent();
             }
             catch (KeyNotFoundException ex)

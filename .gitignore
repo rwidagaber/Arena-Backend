@@ -5,6 +5,8 @@ bin/
 obj/
 out/
 publish/
+artifacts/
+**/artifacts/
 
 # ========================
 # IDE & Editor

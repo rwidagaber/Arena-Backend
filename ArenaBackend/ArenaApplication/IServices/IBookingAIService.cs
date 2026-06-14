@@ -11,6 +11,6 @@ namespace ArenaApplication.IServices
             Guid memberProfileId,
             IntentResult intent,
             string userMessage,
-              string memberName = "Member");
+            string memberName = "Member");
     }
 }

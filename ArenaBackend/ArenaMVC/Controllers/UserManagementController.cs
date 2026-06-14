@@ -26,6 +26,50 @@ namespace ArenaMVC.Controllers
 
         private const int DefaultPageSize = 10;
 
+        // GET: UserManagement/SearchPartial  – AJAX live-search endpoint
+        [HttpGet]
+        public async Task<IActionResult> SearchPartial(string? search, int page = 1, int pageSize = DefaultPageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
+
+            try
+            {
+                var result = await _userService.GetUsers(search, page, pageSize);
+                if (!result.IsSuccess)
+                    return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search });
+
+                var pagedResult = result.Value;
+
+                var viewModels = pagedResult.Items.Select(u => new UserListViewModel
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    RegisterDate = u.RegisterDate,
+                    IsActive = u.IsActive,
+                    IsMember = u.IsMember,
+                    SubscriptionStatus = u.SubscriptionStatus
+                }).ToList();
+
+                var viewModel = new UserListPagedViewModel
+                {
+                    Items = viewModels,
+                    TotalCount = pagedResult.TotalCount,
+                    Page = page,
+                    PageSize = pageSize,
+                    Search = search
+                };
+
+                return PartialView("_UserResults", viewModel);
+            }
+            catch (Exception)
+            {
+                return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search });
+            }
+        }
+
         // GET: UserManagement
         [HttpGet]
         public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = DefaultPageSize)
