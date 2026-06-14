@@ -9,7 +9,6 @@ namespace ArenaApplication.Dtos.ProgressLogDtos
         public decimal Weight { get; set; }
         public decimal? BodyFat { get; set; }
         public decimal? MuscleMass { get; set; }
-        public DateTime LoggedAt { get; set; }
 
     }
 }

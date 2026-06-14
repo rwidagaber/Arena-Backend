@@ -26,11 +26,7 @@ namespace ArenaApplication.Dtos.ValidatorsDto.ProgressLogDtoValidator
                 .WithMessage("Muscle mass must be greater than 0")
                 .When(x => x.MuscleMass.HasValue);
 
-            RuleFor(x => x.LoggedAt)
-                .NotEmpty()
-                .WithMessage("Log date is required")
-                .LessThanOrEqualTo(DateTime.UtcNow)
-                .WithMessage("Log date cannot be in the future");
+            
         }
     }
 }

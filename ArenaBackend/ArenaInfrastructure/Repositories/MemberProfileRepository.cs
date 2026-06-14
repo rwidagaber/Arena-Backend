@@ -21,5 +21,11 @@ namespace ArenaInfrastructure.Repositories
             return await _context.MemberProfiles
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         }
+
+        public async Task UpdateAsync(MemberProfile memberProfile)
+        {
+            _context.MemberProfiles.Update(memberProfile);
+            await _context.SaveChangesAsync();
+        }
     }
 }
