@@ -288,7 +288,10 @@ namespace ArenaInfrastructure.AI
                     MealType = meal.MealType,
                     Name = meal.Name,
                     Calories = meal.Calories,
-                    Ingredients = meal.Ingredients
+                    Ingredients = meal.Ingredients,
+                    Protein = meal.ProteinGrams,
+                    Carbs = meal.CarbsGrams,
+                    Fat = meal.FatGrams
                 };
 
                 _context.Meals.Add(mealEntity);
