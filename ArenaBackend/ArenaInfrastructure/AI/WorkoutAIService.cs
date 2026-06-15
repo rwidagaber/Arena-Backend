@@ -42,41 +42,38 @@ namespace ArenaInfrastructure.AI
         private readonly IGenericRepository<MemberProfile, Guid> _memberRepo;
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
 
-        
-        public WorkoutAIService(IOpenAIService openAI, AppDbContext context,IGenericRepository<MemberProfile, Guid> memberProfile, IGenericRepository<UserSubscription, Guid> userSubscription)
+        public WorkoutAIService(
+            IOpenAIService openAI,
+            AppDbContext context,
+            IGenericRepository<MemberProfile, Guid> memberProfile,
+            IGenericRepository<UserSubscription, Guid> userSubscription)
         {
             _openAI = openAI;
             _context = context;
             _memberRepo = memberProfile;
             _subscriptionRepo = userSubscription;
-
         }
 
-
-
-        public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(
-      Guid memberProfileId, string userMessage)
+        public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(Guid memberProfileId, string userMessage)
         {
             // ✅ Search by Id OR UserId
             var profile = await _context.MemberProfiles
-                .FirstOrDefaultAsync(p => p.Id == memberProfileId
-                                       || p.UserId == memberProfileId);
+                .FirstOrDefaultAsync(p => p.Id == memberProfileId || p.UserId == memberProfileId);
 
             if (profile == null)
                 throw new Exception($"Profile not found: {memberProfileId}");
 
-            // ✅ Log profile data to verify
+            // ✅ Debug Verification Logging
             Console.WriteLine($"=== PROFILE ===");
             Console.WriteLine($"Name: {profile.FirstName}");
             Console.WriteLine($"Goal: {profile.Goal}");
             Console.WriteLine($"Injuries: {profile.Injuries}");
             Console.WriteLine($"Experience: {profile.FitnessExperience}");
-            Console.WriteLine($"Dietary: {profile.DietaryRestrictions}");
             Console.WriteLine($"===============");
 
-            var subscription = _subscriptionRepo.GetAll()
-                .FirstOrDefault(s => s.MemberProfileId == profile.Id
-                                  && s.Status == SubscriptionStatus.Active);
+            // ✅ OPTIMIZATION: Async database lookup for active subscriptions
+            var subscription = await _subscriptionRepo.GetAll()
+                .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id && s.Status == SubscriptionStatus.Active);
 
             var userContext = UserContextBuilder.Build(profile, subscription);
 
@@ -87,33 +84,19 @@ namespace ArenaInfrastructure.AI
             if (!string.IsNullOrEmpty(profile.Injuries))
                 knowledge += GymKnowledge.GetInjuryGuide(profile.Injuries);
 
-            //var prompt = PromptBuilder.BuildWorkoutPrompt(
-            //    profile, userMessage, userContext + "\n" + knowledge);
             var prompt = PromptLoader.GetWorkoutPrompt(
-    userContext: userContext,
-    name: profile.FirstName ?? "User",
-    goal: profile.Goal ?? "General Fitness",
-    injuries: profile.Injuries ?? "None",
-    healthConditions: profile.HealthConditions ?? "None",
-    experience: profile.FitnessExperience ?? "Beginner",
-    equipment: profile.Equipment ?? "Full Gym",
-    userMessage: userMessage);
+                userContext: userContext,
+                name: profile.FirstName ?? "User",
+                goal: profile.Goal ?? "General Fitness",
+                injuries: profile.Injuries ?? "None",
+                healthConditions: profile.HealthConditions ?? "None",
+                experience: profile.FitnessExperience ?? "Beginner",
+                equipment: profile.Equipment ?? "Full Gym",
+                userMessage: userMessage);
 
-
-
-            var jsonResponse = await _openAI.GetCompletionAsync(
-                prompt, new List<ChatMessageDto>(), "Generate the plan");
-
-            Console.WriteLine("=== WORKOUT RAW ===");
-            Console.WriteLine(jsonResponse);
-            Console.WriteLine("===================");
+            var jsonResponse = await _openAI.GetCompletionAsync(prompt, new List<ChatMessageDto>(), "Generate the plan");
 
             var cleanJson = AIHelper.CleanJson(jsonResponse);
-
-            Console.WriteLine("=== WORKOUT CLEAN ===");
-            Console.WriteLine(cleanJson);
-            Console.WriteLine("=====================");
-
             var planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
                 cleanJson,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -121,36 +104,39 @@ namespace ArenaInfrastructure.AI
             if (planData == null)
                 throw new Exception("AI returned invalid workout plan JSON");
 
+            // ✅ Instantiate Core Plan Entity
             var plan = new WorkoutPlan
             {
+                Id = Guid.NewGuid(), // Explicitly setting ID to safely link children before hitting SaveChanges
                 MemberProfileId = profile.Id,
                 Name = planData.Name,
                 DurationWeeks = planData.DurationWeeks,
                 IsActive = true
             };
-
             _context.WorkoutPlans.Add(plan);
-            await _context.SaveChangesAsync();
 
             var dayDtos = new List<WorkoutDayDto>();
 
+            // Loop and build out hierarchy in EF Memory State
             foreach (var day in planData.Days ?? [])
             {
                 var workoutDay = new WorkoutDay
                 {
+                    Id = Guid.NewGuid(),
                     WorkoutPlanId = plan.Id,
                     DayName = day.DayName
                 };
                 _context.WorkoutDays.Add(workoutDay);
-                await _context.SaveChangesAsync();
 
                 var exerciseDtos = new List<WorkoutExerciseDto>();
 
                 foreach (var ex in day.Exercises ?? [])
                 {
-                    var existingExercise = await _context.Exercises
-                        .FirstOrDefaultAsync(e => e.Name == ex.Name
-                                               && e.MemberProfileId == profile.Id);
+                    // Check local change-tracker state cache first, fallback to DB execution context
+                    var existingExercise = _context.Exercises.Local
+                        .FirstOrDefault(e => e.Name == ex.Name && e.MemberProfileId == profile.Id)
+                        ?? await _context.Exercises
+                            .FirstOrDefaultAsync(e => e.Name == ex.Name && e.MemberProfileId == profile.Id);
 
                     if (existingExercise == null)
                     {
@@ -164,14 +150,13 @@ namespace ArenaInfrastructure.AI
                             MemberProfileId = profile.Id
                         };
                         _context.Exercises.Add(existingExercise);
-                        await _context.SaveChangesAsync();
                     }
 
                     _context.WorkoutExercises.Add(new WorkoutExercise
                     {
                         WorkoutDayId = workoutDay.Id,
                         ExerciseId = existingExercise.Id,
-                        ExrciseName = ex.Name,
+                        ExrciseName = ex.Name, // Match this property naming scheme exactly to your entity schema definitions
                         Sets = ex.Sets,
                         Reps = ex.Reps
                     });
@@ -184,8 +169,6 @@ namespace ArenaInfrastructure.AI
                     });
                 }
 
-                await _context.SaveChangesAsync();
-
                 dayDtos.Add(new WorkoutDayDto
                 {
                     Id = workoutDay.Id,
@@ -194,6 +177,9 @@ namespace ArenaInfrastructure.AI
                     Exercises = exerciseDtos
                 });
             }
+
+            // ✅ OPTIMIZATION: Commit all changes in a single database round-trip transaction block
+            await _context.SaveChangesAsync();
 
             return new WorkoutPlanDto
             {
@@ -204,7 +190,6 @@ namespace ArenaInfrastructure.AI
                 DurationWeeks = plan.DurationWeeks,
                 IsActive = plan.IsActive,
                 Days = dayDtos
-
             };
         }
     }

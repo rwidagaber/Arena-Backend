@@ -8,8 +8,10 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace ArenaApplication.Services.AI
 {
@@ -103,6 +105,9 @@ namespace ArenaApplication.Services.AI
             var intent = JsonSerializer.Deserialize<IntentResult>(
                 cleanIntentJson,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (TryCreatePendingBookingIntent(history, userMessage, out var pendingBookingIntent))
+                intent = pendingBookingIntent;
 
             bool isArabic = IsArabic(userMessage);
 
@@ -231,7 +236,7 @@ namespace ArenaApplication.Services.AI
                         // No time → suggest slots
                         if (intent.Time == null)
                         {
-                            var allSlots = new[] { "06:00","07:00","08:00","09:00","10:00",
+                            var allSlots = new[] { 
                                                "11:00","12:00","13:00","14:00","15:00",
                                                "16:00","17:00","18:00","19:00","20:00" };
 
@@ -241,7 +246,7 @@ namespace ArenaApplication.Services.AI
                                 var count = dayBookings.Count(b =>
                                     Math.Abs((b.StartTime - st).TotalHours) < 1);
                                 var level = count switch { < 3 => "🟢", < 7 => "🟡", _ => "🔴" };
-                                return $"  {slot} {level} ({count})";
+                                return $"  {slot} {level} ";
                             });
 
                             var dateLabel = targetDate.Date == DateTime.Today.AddDays(1)
@@ -324,6 +329,121 @@ namespace ArenaApplication.Services.AI
 
         private bool IsArabic(string text) =>
             text.Any(c => c >= 0x0600 && c <= 0x06FF);
+
+        private static bool TryCreatePendingBookingIntent(
+            List<ChatMessageDto> history,
+            string userMessage,
+            out IntentResult intent)
+        {
+            intent = new IntentResult();
+
+            var lastAssistantMessage = history
+                .LastOrDefault(m => string.Equals(m.Sender, "assistant", StringComparison.OrdinalIgnoreCase))
+                ?.MessageText;
+
+            if (!IsPendingBookingPrompt(lastAssistantMessage))
+                return false;
+
+            if (!TryExtractTime(userMessage, out var selectedTime))
+                return false;
+
+            if (!TryExtractSuggestedBookingDate(lastAssistantMessage!, out var bookingDate))
+                return false;
+
+            intent = new IntentResult
+            {
+                Intent = "booking",
+                Action = "create",
+                Date = bookingDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Time = selectedTime.ToString(@"hh\:mm", CultureInfo.InvariantCulture)
+            };
+
+            return true;
+        }
+
+        private static bool IsPendingBookingPrompt(string? message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return false;
+
+            return message.Contains("Available times", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("الأوقات المتاحة", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool TryExtractSuggestedBookingDate(string message, out DateTime date)
+        {
+            date = default;
+
+            if (message.Contains("tomorrow", StringComparison.OrdinalIgnoreCase) || message.Contains("بكرة"))
+            {
+                date = DateTime.Now.AddDays(1).Date;
+                return true;
+            }
+
+            var match = Regex.Match(
+                message,
+                @"Available times for\s+(?<date>[^:\r\n]+)",
+                RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return false;
+
+            var dateText = match.Groups["date"].Value.Trim();
+            return DateTime.TryParse(dateText, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+        }
+
+        private static bool TryExtractTime(string message, out TimeSpan time)
+        {
+            time = default;
+
+            var normalized = NormalizeDigits(message);
+            var match = Regex.Match(
+                normalized,
+                @"(?<!\d)(?<hour>\d{1,2})(?::(?<minute>\d{2}))?\s*(?<period>am|pm|a\.m\.|p\.m\.|ص|م|صباح|صباحا|مساء|المساء)?(?!\d)",
+                RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return false;
+
+            if (!int.TryParse(match.Groups["hour"].Value, out var hour))
+                return false;
+
+            var minute = 0;
+            if (match.Groups["minute"].Success && !int.TryParse(match.Groups["minute"].Value, out minute))
+                return false;
+
+            if (hour > 23 || minute > 59)
+                return false;
+
+            var period = match.Groups["period"].Value.ToLowerInvariant();
+            var isPm = period is "pm" or "p.m." or "م" or "مساء" or "المساء";
+            var isAm = period is "am" or "a.m." or "ص" or "صباح" or "صباحا";
+
+            if (isPm && hour < 12)
+                hour += 12;
+            else if (isAm && hour == 12)
+                hour = 0;
+            else if (!isAm && !isPm && hour >= 1 && hour <= 10)
+                hour += 12;
+
+            time = new TimeSpan(hour, minute, 0);
+            return true;
+        }
+
+        private static string NormalizeDigits(string value)
+        {
+            var chars = value.ToCharArray();
+
+            for (var i = 0; i < chars.Length; i++)
+            {
+                if (chars[i] >= '\u0660' && chars[i] <= '\u0669')
+                    chars[i] = (char)('0' + chars[i] - '\u0660');
+                else if (chars[i] >= '\u06F0' && chars[i] <= '\u06F9')
+                    chars[i] = (char)('0' + chars[i] - '\u06F0');
+            }
+
+            return new string(chars);
+        }
 
         // ✅ Get all conversations for member
         public async Task<List<ConversationDto>> GetConversationsAsync(Guid memberProfileId)
