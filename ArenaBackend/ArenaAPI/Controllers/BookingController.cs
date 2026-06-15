@@ -17,11 +17,16 @@ namespace ArenaApi.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
+        private readonly IAnalyticsCacheVersionService _analyticsCacheVersionService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public BookingController(IBookingService bookingService, IStringLocalizer<ArenaLocalization> localizer)
+        public BookingController(
+            IBookingService bookingService,
+            IAnalyticsCacheVersionService analyticsCacheVersionService,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _bookingService = bookingService;
+            _analyticsCacheVersionService = analyticsCacheVersionService;
             _localizer = localizer;
         }
 
@@ -35,6 +40,8 @@ namespace ArenaApi.Controllers
             {
                 return BadRequest(result.Errors);
             }
+
+            _analyticsCacheVersionService.BumpVersion();
 
             return Ok(result.Value);
         }
@@ -50,6 +57,8 @@ namespace ArenaApi.Controllers
                 return BadRequest(result.Errors);
             }
 
+            _analyticsCacheVersionService.BumpVersion();
+
             return Ok(result.Value);
         }
 
@@ -63,6 +72,8 @@ namespace ArenaApi.Controllers
             {
                 return BadRequest(result.Errors);
             }
+
+            _analyticsCacheVersionService.BumpVersion();
 
             return Ok(result.Value);
         }

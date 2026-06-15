@@ -163,6 +163,11 @@ namespace ArenaApplication.Services
                 user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
             var response = await GenerateAuthResponseAsync(user);
+
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+            response.IsSubscribed = activeSubscription is not null;
+
             return Result<AuthResponseDto>.Success(response);
         }
 
@@ -214,6 +219,7 @@ namespace ArenaApplication.Services
             var profile = new GetProfileDto
             {
                 Id = user.Id,
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email!,
@@ -394,6 +400,11 @@ namespace ArenaApplication.Services
             }
 
             var response = await GenerateAuthResponseAsync(user, isGoogleUser: false);
+
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+            response.IsSubscribed = activeSubscription is not null;
+
             return Result<AuthResponseDto>.Success(response);
         }
 

@@ -20,6 +20,7 @@
 10. Security
 11. APIs Overview
 12. AI Workflow
+13. Localization & Egypt Regionalization
 
 ---
 
@@ -159,11 +160,13 @@ The system is split into three main applications:
 
 - Used by gym staff and owners
 - Member management, attendance, analytics
+- All admin controls and admin-facing routes are implemented in this ArenaMVC project
 
 ### 3. Backend API (ASP.NET Core Web API)
 
 - Shared backend for both apps
 - Handles business logic, AI, authentication, payments
+- Provides shared/member/integration APIs and domain services; it is not the host for admin controls
 
 ---
 
@@ -269,6 +272,11 @@ All operations go through business services.
 
 ## 11. APIs Overview
 
+Admin controls policy:
+
+- Admin-facing controls and routes belong to ArenaMVC.
+- ArenaAPI is used for shared business APIs and workflow endpoints.
+
 ### Auth
 
 - POST /api/auth/register
@@ -341,4 +349,18 @@ Arena is a scalable AI-powered gym system combining:
 - OpenAI for intelligence
 
 This separation ensures scalability, maintainability, and clean architecture.
-""
+
+---
+
+## 13. Localization & Egypt Regionalization
+
+Arena is deployed for a client in Egypt, so localization is a core system requirement.
+
+- Mandatory locales across all projects: English (`en`) and Egyptian Arabic (`ar-EG`).
+- Scope includes ArenaAPI, ArenaApplication, ArenaInfrastructure, ArenaMVC, and the Angular member app.
+- Requirement is retroactive: existing/past controllers and features must be localized.
+- Requirement is proactive: every new/upcoming feature and controller must ship with both locales.
+- API and MVC controllers should honor `Accept-Language` (and optional explicit culture input) with deterministic fallback.
+- Store timestamps in UTC; render user-facing date/time using Egypt timezone (`Africa/Cairo`).
+- Use Egypt-friendly currency formatting (`EGP`) for plans, payments, and dashboard analytics.
+- Localize all user-facing messages: validation, business errors, notifications, emails, and dashboard labels.

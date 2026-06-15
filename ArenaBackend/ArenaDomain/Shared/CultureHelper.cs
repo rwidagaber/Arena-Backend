@@ -19,12 +19,12 @@ namespace ArenaDomain.Shared
 
         public static string FormatDate(DateTime date)
         {
-            return date.ToString("d", CultureInfo.CurrentUICulture);
+            return date.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
         }
 
         public static string FormatDateLong(DateTime date)
         {
-            return date.ToString("D", CultureInfo.CurrentUICulture);
+            return date.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
         }
     }
 }

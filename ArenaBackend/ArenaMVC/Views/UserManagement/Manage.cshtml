@@ -10,12 +10,12 @@
 <div class="subscription-admin-container">
     <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div>
-            <h1>⚙️ @Localizer["ManageUserStatus"]</h1>
+            <h1><i data-lucide="settings" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["ManageUserStatus"]</h1>
             <p>@Localizer["AccountStatus"]</p>
         </div>
         <div class="booking-header-actions">
-            <a class="btn btn-subscription-secondary" asp-controller="UserManagement" asp-action="Index">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>@Localizer["BackToUsers"]
+            <a class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" asp-controller="UserManagement" asp-action="Index">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>@Localizer["BackToUsers"]
             </a>
         </div>
     </div>
