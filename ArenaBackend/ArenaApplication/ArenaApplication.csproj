@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Folder Include="Dtos\ProfileDto\" />
+    <Folder Include="Dtos\UserSubscriptionDto\" />
     <Folder Include="Interfacees\" />
     <Folder Include="Mappers\" />
   </ItemGroup>
