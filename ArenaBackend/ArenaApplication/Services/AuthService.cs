@@ -219,6 +219,7 @@ namespace ArenaApplication.Services
             var profile = new GetProfileDto
             {
                 Id = user.Id,
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email!,
@@ -240,8 +241,10 @@ namespace ArenaApplication.Services
                     PlanNameAr = activeSubscription.Plan.NameAr,
                     StartDate = activeSubscription.StartDate,
                     EndDate = activeSubscription.EndDate,
-                    Status = activeSubscription.Status,
+                    Status = activeSubscription.Status.ToString(),
                     RemainingSessions = activeSubscription.RemainingSessions,
+                    TotalSessions = activeSubscription.Plan?.SessionLimit ?? 0,
+                    PaymentAmount = activeSubscription.Plan?.Price ?? 0,
                     ReminderSent = activeSubscription.ReminderSent
                 }
             };

@@ -105,5 +105,23 @@
                 .Replace("{userContext}", userContext)
                 .Replace("{name}", name);
         }
+
+
+        public static string GetFoodAnalysisPrompt(
+    string name,
+    string goal,
+    string healthConditions,
+    string dietaryRestrictions,
+    string weight,
+    string userMessage)
+        {
+            return Load("food_analysis_prompt.txt")
+                .Replace("{name}", name)
+                .Replace("{goal}", goal)
+                .Replace("{healthConditions}", healthConditions)
+                .Replace("{dietaryRestrictions}", dietaryRestrictions)
+                .Replace("{weight}", weight)
+                .Replace("{userMessage}", userMessage);
+        }
     }
 }

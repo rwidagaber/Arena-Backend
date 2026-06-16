@@ -61,36 +61,46 @@
 }
 
 .badge-emerald {
-    background-color: rgba(16, 185, 129, 0.05) !important;
-    border: 1px solid rgba(16, 185, 129, 0.25) !important;
-    color: #34d399 !important;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.06) !important;
+    background-color: var(--badge-bg-confirmed) !important;
+    border: 1px solid var(--badge-border-confirmed) !important;
+    color: var(--badge-color-confirmed) !important;
+    box-shadow: none !important;
 }
 
 .badge-crimson {
-    background-color: rgba(239, 68, 68, 0.05) !important;
-    border: 1px solid rgba(239, 68, 68, 0.25) !important;
-    color: #f87171 !important;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.06) !important;
+    background-color: var(--badge-bg-cancelled) !important;
+    border: 1px solid var(--badge-border-cancelled) !important;
+    color: var(--badge-color-cancelled) !important;
+    box-shadow: none !important;
 }
 
-.badge-orange {
-    background-color: rgba(245, 158, 11, 0.08) !important;
-    border: 1px solid rgba(245, 158, 11, 0.25) !important;
-    color: #fbbf24 !important;
-    box-shadow: 0 0 10px rgba(245, 158, 11, 0.06) !important;
-}
-
-.badge-amber {
-    background-color: rgba(251, 191, 36, 0.08) !important;
-    border: 1px solid rgba(251, 191, 36, 0.25) !important;
-    color: #fbbf24 !important;
+.badge-orange, .badge-amber {
+    background-color: var(--badge-bg-pending) !important;
+    border: 1px solid var(--badge-border-pending) !important;
+    color: var(--badge-color-pending) !important;
+    box-shadow: none !important;
 }
 
 .badge-gray {
-    background-color: rgba(160, 160, 171, 0.08) !important;
-    border: 1px solid rgba(160, 160, 171, 0.2) !important;
-    color: #a0a0ab !important;
+    background-color: var(--badge-bg-other) !important;
+    border: 1px solid var(--badge-border-other) !important;
+    color: var(--badge-color-other) !important;
+}
+
+/* Active Membership — soft blue/teal (semantic, not accent) */
+.badge-blue {
+    background-color: rgba(14, 165, 233, 0.1) !important;
+    border: 1px solid rgba(14, 165, 233, 0.25) !important;
+    color: #0284C7 !important;
+    box-shadow: none !important;
+}
+
+/* Expired Membership — soft amber/orange (semantic) */
+.badge-amber-warm {
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+    color: #D97706 !important;
+    box-shadow: none !important;
 }
 
 /* Search Input Styling */
@@ -100,14 +110,14 @@
 }
 
 .search-input-wrapper input::placeholder {
-    color: rgba(255, 255, 255, 0.45) !important;
-    opacity: 1;
+    color: var(--text-secondary) !important;
+    opacity: 0.7;
 }
 
 .search-input-wrapper input {
     height: 46px;
-    background-color: rgba(22, 22, 26, 0.5) !important;
-    border: 1px solid rgba(213, 235, 69, 0.15) !important;
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 8px !important;
     color: var(--whiteout) !important;
     padding-top: 0 !important;
@@ -115,15 +125,20 @@
     padding-inline-start: 3rem !important;
     padding-inline-end: 1rem !important;
     font-size: 0.95rem !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: var(--card-shadow) !important;
     backdrop-filter: blur(10px);
 }
 
 .search-input-wrapper input:focus {
-    border-color: rgba(213, 235, 69, 0.5) !important;
-    background-color: rgba(22, 22, 26, 0.75) !important;
-    box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border-color: var(--accent-color) !important;
+    background-color: var(--input-bg-focus) !important;
+    box-shadow: 0 0 0 3px rgba(54, 127, 221, 0.15), var(--card-shadow) !important;
     outline: none;
+}
+
+html:not([data-theme="light"]) .search-input-wrapper input:focus {
+    border-color: rgba(213, 235, 69, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(213, 235, 69, 0.15), var(--card-shadow) !important;
 }
 
 /* User Details Card Grid */
@@ -137,10 +152,10 @@
 
 .user-details-card {
     background-color: var(--card-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 2.5rem;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--card-shadow);
     display: flex;
     flex-direction: column;
 }
@@ -148,7 +163,11 @@
 .user-details-card:hover {
     transform: translateY(-3px);
     border-color: rgba(213, 235, 69, 0.3);
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--card-shadow);
+}
+
+html[data-theme="light"] .user-details-card:hover {
+    border-color: rgba(54, 127, 221, 0.25);
 }
 
 .user-details-card h3 {
@@ -156,7 +175,7 @@
     font-size: 1.35rem;
     font-weight: 700;
     margin-bottom: 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
 }
 
@@ -165,9 +184,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 1.1rem 1.25rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
     border-left: 3px solid transparent;
-    background-color: rgba(255, 255, 255, 0.01);
+    background-color: var(--input-bg);
     border-radius: 8px;
     margin-bottom: 0.75rem;
     font-size: 0.95rem;
@@ -181,8 +200,12 @@
 
 .user-detail-row:hover {
     transform: translateX(3px) !important;
-    background-color: rgba(217, 237, 115, 0.02) !important;
+    background-color: var(--table-row-hover) !important;
     border-left-color: rgba(213, 235, 69, 0.5) !important;
+}
+
+html[data-theme="light"] .user-detail-row:hover {
+    border-left-color: rgba(54, 127, 221, 0.5) !important;
 }
 
 [dir="rtl"] .user-detail-row {
@@ -193,6 +216,10 @@
 [dir="rtl"] .user-detail-row:hover {
     transform: translateX(-3px) !important;
     border-right-color: rgba(213, 235, 69, 0.5) !important;
+}
+
+html[data-theme="light"][dir="rtl"] .user-detail-row:hover {
+    border-right-color: rgba(54, 127, 221, 0.5) !important;
 }
 
 .user-detail-label {
@@ -206,6 +233,10 @@
 
 .user-detail-row:hover .user-detail-label {
     color: #cbe83e !important;
+}
+
+html[data-theme="light"] .user-detail-row:hover .user-detail-label {
+    color: #367FDD !important;
 }
 
 .user-detail-value {
@@ -224,6 +255,10 @@
     color: #d9ed73 !important;
 }
 
+html[data-theme="light"] .user-detail-row:hover .user-detail-value {
+    color: var(--text-primary) !important;
+}
+
 .details-empty-state {
     padding: 2rem 1rem;
     text-align: center;
@@ -235,15 +270,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: rgba(255, 255, 255, 0.01);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
     padding: 1.25rem;
     border-radius: 12px;
     margin-bottom: 2rem;
 }
 
 .switch-container:hover {
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(213, 235, 69, 0.3);
+}
+
+html[data-theme="light"] .switch-container:hover {
+    border-color: rgba(54, 127, 221, 0.3);
 }
 
 .switch-label-text {
@@ -317,10 +356,10 @@ input:checked+.slider:before {
 /* Manage User Card Form */
 .manage-user-card {
     background-color: var(--card-bg);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 2.5rem;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--card-shadow);
     margin: 0 auto;
     max-width: 550px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -329,14 +368,18 @@ input:checked+.slider:before {
 .manage-user-card:hover {
     transform: translateY(-5px) scale(1.01);
     border-color: rgba(213, 235, 69, 0.3);
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--card-shadow);
+}
+
+html[data-theme="light"] .manage-user-card:hover {
+    border-color: rgba(54, 127, 221, 0.25);
 }
 
 /* Read-Only Fields Visual State */
 .form-control:disabled {
-    background-color: rgba(255, 255, 255, 0.02) !important;
-    border-color: rgba(255, 255, 255, 0.05) !important;
-    color: rgba(255, 255, 255, 0.35) !important;
+    background-color: var(--input-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
     cursor: not-allowed;
     opacity: 0.65;
 }
@@ -344,8 +387,8 @@ input:checked+.slider:before {
 /* Ghost Buttons (Cancel actions) */
 .btn-ghost {
     background-color: transparent !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: var(--autonomous) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
     font-weight: 600;
     border-radius: 8px;
     padding: 0.75rem 1.5rem;
@@ -356,9 +399,9 @@ input:checked+.slider:before {
 }
 
 .btn-ghost:hover {
-    background-color: rgba(255, 255, 255, 0.03) !important;
-    color: var(--whiteout) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    background-color: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
     transform: translateY(-2px);
 }
 
@@ -470,7 +513,7 @@ input:checked+.slider:before {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-shadow);
 }
 
 /* Table Structure */
@@ -483,7 +526,7 @@ input:checked+.slider:before {
 }
 
 .user-mgmt-table thead {
-    background-color: var(--card-bg) !important;
+    background-color: var(--table-header-bg) !important;
 }
 
 .subscription-table th {
@@ -493,7 +536,7 @@ input:checked+.slider:before {
     text-transform: uppercase !important;
     letter-spacing: 1px !important;
     padding: 1rem 0.85rem !important;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 2px solid var(--border-color) !important;
     border-top: none !important;
     white-space: normal !important;
     text-align: left;
@@ -505,12 +548,12 @@ input:checked+.slider:before {
 
 .user-mgmt-table tbody tr {
     background-color: transparent !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
     transition: transform 0.25s ease, background-color 0.25s ease !important;
 }
 
 .user-mgmt-table tbody tr td {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+    border-bottom: 1px solid var(--border-color) !important;
     padding: 1rem 0.85rem !important;
     vertical-align: middle !important;
     word-break: break-word;
@@ -535,40 +578,59 @@ input:checked+.slider:before {
 }
 
 .user-mgmt-table tbody tr:hover td {
-    background-color: rgba(217, 237, 115, 0.02) !important;
+    background-color: var(--table-row-hover) !important;
 }
 
-.user-mgmt-table tbody tr:hover td:nth-child(-n+2) {
+/* Warm Pastel Green for user info on hover (Dark Mode Only) */
+html:not([data-theme="light"]) .user-mgmt-table tbody tr:hover td:nth-child(-n+2),
+html:not([data-theme="light"]) .user-mgmt-table tbody tr:hover .user-contact-cell a,
+html:not([data-theme="light"]) .user-mgmt-table tbody tr:hover .user-contact-cell .contact-phone {
     color: #d9ed73 !important;
 }
 
-.user-mgmt-table tbody tr:hover .user-contact-cell a {
-    color: #d9ed73 !important;
-}
-
-.user-mgmt-table tbody tr:hover .user-contact-cell .contact-phone {
-    color: #d9ed73 !important;
+html[data-theme="light"] .user-mgmt-table tbody tr:hover td:nth-child(-n+2),
+html[data-theme="light"] .user-mgmt-table tbody tr:hover .user-contact-cell a,
+html[data-theme="light"] .user-mgmt-table tbody tr:hover .user-contact-cell .contact-phone,
+html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:nth-child(-n+2),
+html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover .user-contact-cell a,
+html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover .user-contact-cell .contact-phone {
+    color: var(--accent-color) !important;
 }
 
 .user-mgmt-table tbody tr:hover td:first-child {
     border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
 
+html[data-theme="light"] .user-mgmt-table tbody tr:hover td:first-child {
+    border-left-color: rgba(54, 127, 221, 0.4) !important;
+}
+
 .subscription-table tbody tr:hover td {
-    background-color: rgba(217, 237, 115, 0.02) !important;
+    background-color: var(--table-row-hover) !important;
 }
 
 /* Warm Pastel Green for user info columns 1-4 on hover */
-.subscription-table tbody tr:hover td:nth-child(-n+4) {
+html:not([data-theme="light"]) .subscription-table tbody tr:hover td:nth-child(-n+4) {
     color: #d9ed73 !important;
+}
+html[data-theme="light"] .subscription-table tbody tr:hover td:nth-child(-n+4) {
+    color: var(--accent-color) !important;
 }
 
 .subscription-table tbody tr:hover td:first-child {
     border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
 
+html[data-theme="light"] .subscription-table tbody tr:hover td:first-child {
+    border-left-color: rgba(54, 127, 221, 0.4) !important;
+}
+
 [dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child {
     border-right-color: rgba(213, 235, 69, 0.5) !important;
+}
+
+html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child {
+    border-right-color: rgba(54, 127, 221, 0.4) !important;
 }
 
 /* Desktop column widths */
@@ -796,7 +858,7 @@ input:checked+.slider:before {
     /* Contact cell as block */
     .user-mgmt-table .user-contact-cell {
         display: block !important;
-        border-bottom: 1px dashed rgba(255, 255, 255, 0.08) !important;
+        border-bottom: 1px dashed var(--border-color) !important;
         padding-bottom: 0.6rem !important;
     }
 
@@ -1000,6 +1062,11 @@ input:checked+.slider:before {
     color: #d9ed73 !important;
 }
 
+html[data-theme="light"] .user-history-table tbody tr:hover td {
+    background-color: rgba(54, 127, 221, 0.05) !important;
+    color: var(--accent-color) !important;
+}
+
 .user-history-table tbody tr td:first-child {
     border-left: 3px solid transparent !important;
     transition: border-color 0.25s ease !important;
@@ -1022,8 +1089,16 @@ input:checked+.slider:before {
     border-left-color: rgba(213, 235, 69, 0.5) !important;
 }
 
+html[data-theme="light"] .user-history-table tbody tr:hover td:first-child {
+    border-left-color: rgba(54, 127, 221, 0.4) !important;
+}
+
 [dir="rtl"] .user-history-table tbody tr:hover td:first-child {
     border-right-color: rgba(213, 235, 69, 0.5) !important;
+}
+
+html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-child {
+    border-right-color: rgba(54, 127, 221, 0.4) !important;
 }
 
 /* Desktop styles for subscription history table */
@@ -1054,21 +1129,21 @@ input:checked+.slider:before {
 /* Dark Confirmation Modal — SaaS-style */
 .modal-dark .modal-content {
     background-color: var(--card-bg) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 16px !important;
-    color: var(--whiteout) !important;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--card-shadow) !important;
     overflow: hidden;
 }
 
 .modal-dark .modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-bottom: 1px solid var(--border-color) !important;
     padding: 1.75rem 2rem 1.5rem !important;
     background-color: rgba(239, 68, 68, 0.03);
 }
 
 .modal-dark .modal-title {
-    color: #fca5a5 !important;
+    color: #ef4444 !important;
     font-weight: 700 !important;
     font-size: 1.15rem !important;
     letter-spacing: -0.01em;
@@ -1077,22 +1152,25 @@ input:checked+.slider:before {
 .modal-dark .modal-body {
     padding: 2rem !important;
     font-size: 1rem !important;
-    color: rgba(255, 255, 255, 0.75) !important;
+    color: var(--text-primary) !important;
     line-height: 1.65;
 }
 
 .modal-dark .modal-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-top: 1px solid var(--border-color) !important;
     padding: 1.25rem 2rem 1.75rem !important;
     gap: 0.75rem;
     display: flex;
     justify-content: flex-end;
 }
 
-.modal-dark .btn-close {
+html:not([data-theme="light"]) .modal-dark .btn-close {
     filter: invert(1) !important;
     opacity: 0.5;
-    transition: opacity 0.2s ease;
+}
+html[data-theme="light"] .modal-dark .btn-close {
+    filter: none !important;
+    opacity: 0.5;
 }
 
 .modal-dark .btn-close:hover {
@@ -1102,8 +1180,8 @@ input:checked+.slider:before {
 /* Modal Cancel Button */
 .modal-dark .btn-ghost {
     background-color: transparent !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    color: rgba(255, 255, 255, 0.65) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
     padding: 0.6rem 1.4rem;
     border-radius: 8px;
     font-weight: 600;
@@ -1112,9 +1190,9 @@ input:checked+.slider:before {
 }
 
 .modal-dark .btn-ghost:hover {
-    background-color: rgba(255, 255, 255, 0.04) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-    color: var(--whiteout) !important;
+    background-color: var(--hover-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
 }
 
 .modal-dark .btn-ghost:focus-visible {
@@ -1150,4 +1228,133 @@ input:checked+.slider:before {
 
 .modal-dark .btn-subscription-danger:active {
     transform: scale(0.98);
+}
+
+/* ==========================================================================
+   LIGHT MODE CUSTOM STYLING (User Management & Details Tables)
+   ========================================================================== */
+
+/* 1. Table Headers styling for both tables in Light Mode */
+html[data-theme="light"] .user-mgmt-table thead,
+html[data-theme="light"] .user-history-table thead {
+    background-color: var(--table-header-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+html[data-theme="light"] .user-mgmt-table th,
+html[data-theme="light"] .user-history-table th,
+html[data-theme="light"] .subscription-table th {
+    color: var(--accent-color) !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    padding: 1.1rem 1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-top: none !important;
+}
+
+/* 2. Table Row cells styling in Light Mode */
+html[data-theme="light"] .user-mgmt-table tbody tr td,
+html[data-theme="light"] .user-history-table tbody tr td,
+html[data-theme="light"] .user-history-table td {
+    color: var(--text-primary) !important;
+    padding: 1.1rem 1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+html[data-theme="light"] .user-mgmt-table tbody tr,
+html[data-theme="light"] .user-history-table tbody tr {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* 3. Contact Info styling for Light Mode (Requirement 2) */
+html[data-theme="light"] .user-contact-cell a {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+html[data-theme="light"] .user-contact-cell a:hover {
+    color: var(--accent-color) !important;
+    text-decoration: underline !important;
+}
+
+html[data-theme="light"] .user-contact-cell .contact-phone {
+    color: var(--text-secondary) !important;
+}
+
+/* 4. Row Hover Effect & Transition in Light Mode (Requirement 4) */
+html[data-theme="light"] .user-mgmt-table tbody tr,
+html[data-theme="light"] .user-mgmt-table tbody tr td,
+html[data-theme="light"] .user-history-table tbody tr,
+html[data-theme="light"] .user-history-table tbody tr td {
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
+}
+
+html[data-theme="light"] .user-mgmt-table tbody tr:hover td,
+html[data-theme="light"] .user-history-table tbody tr:hover td {
+    background-color: rgba(54, 127, 221, 0.05) !important;
+    color: var(--accent-color) !important;
+}
+
+/* Specific highlights on hover matching booking style */
+html[data-theme="light"] .user-mgmt-table tbody tr:hover td:first-child,
+html[data-theme="light"] .user-history-table tbody tr:hover td:first-child {
+    border-left-color: var(--accent-color) !important;
+}
+
+html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child,
+html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-child {
+    border-left-color: transparent !important;
+    border-right-color: var(--accent-color) !important;
+}
+
+/* Mobile & Tablet Overrides for Light Mode Tables (< 768px) */
+@media (max-width: 767.98px) {
+    html[data-theme="light"] .user-mgmt-table tbody tr,
+    html[data-theme="light"] .user-history-table tbody tr {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    html[data-theme="light"] .user-mgmt-table tbody tr:hover,
+    html[data-theme="light"] .user-history-table tbody tr:hover {
+        background-color: rgba(54, 127, 221, 0.05) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    html[data-theme="light"] .user-mgmt-table tbody tr td,
+    html[data-theme="light"] .user-history-table tbody tr td {
+        background-color: transparent !important;
+        border: none !important;
+        border-bottom: 1px dashed var(--border-color) !important;
+        padding: 0.6rem 0 !important;
+    }
+
+    html[data-theme="light"] .user-mgmt-table tbody tr td:last-child,
+    html[data-theme="light"] .user-history-table tbody tr td:last-child {
+        border-bottom: none !important;
+    }
+
+    html[data-theme="light"] .user-mgmt-table td::before,
+    html[data-theme="light"] .user-history-table td::before {
+        color: var(--text-secondary) !important;
+    }
+
+    html[data-theme="light"] .user-history-table .history-plan-cell {
+        color: var(--text-primary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+}
+
+/* 5. Tooltip system overrides for Light Mode */
+html[data-theme="light"] [data-tooltip]::after {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(54, 127, 221, 0.5) !important;
+    color: rgb(54, 126, 221) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }

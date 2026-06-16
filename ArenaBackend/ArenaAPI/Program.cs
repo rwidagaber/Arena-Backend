@@ -13,6 +13,7 @@ using ArenaApplication.Services;
 using ArenaApplication.Services.AI;
 using ArenaApplication.Services.Payment;
 using ArenaApplication.settings;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
@@ -74,6 +75,7 @@ namespace ArenaAPI
             // ── Core Services ─────────────────────────────────────────────
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<IAnalyticsCacheVersionService, AnalyticsCacheVersionService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -81,6 +83,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
 
             builder.Services.Configure<EmailSettings>(
                 builder.Configuration.GetSection("EmailSettings"));
@@ -159,6 +162,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
+            builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>

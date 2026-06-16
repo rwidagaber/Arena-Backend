@@ -10,12 +10,12 @@
 <div class="subscription-admin-container">
     <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div>
-            <h1>ℹ️ @Localizer["UserDetails"]</h1>
+            <h1><i data-lucide="info" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["UserDetails"]</h1>
             <p>@Localizer["ProfileInformation"]</p>
         </div>
         <div class="booking-header-actions">
-            <a class="btn btn-subscription-secondary" asp-controller="UserManagement" asp-action="Index">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>@Localizer["BackToUsers"]
+            <a class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" asp-controller="UserManagement" asp-action="Index">
+                <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>@Localizer["BackToUsers"]
             </a>
         </div>
     </div>
@@ -25,7 +25,7 @@
         <div class="user-details-grid">
             <!-- Profile Information Card -->
             <div class="user-details-card">
-                <h3>👤 @Localizer["ProfileInformation"]</h3>
+                <h3 class="d-inline-flex align-items-center gap-2"><i data-lucide="user" style="width: 20px; height: 20px; color: var(--yellow);"></i> @Localizer["ProfileInformation"]</h3>
                 <div class="user-detail-row">
                     <span class="user-detail-label">@Localizer["FullName"]</span>
                     <span class="user-detail-value">@Model.FullName</span>
@@ -42,7 +42,7 @@
 
             <!-- Account Information Card -->
             <div class="user-details-card">
-                <h3>🛡️ @Localizer["AccountInformation"]</h3>
+                <h3 class="d-inline-flex align-items-center gap-2"><i data-lucide="shield" style="width: 20px; height: 20px; color: var(--yellow);"></i> @Localizer["AccountInformation"]</h3>
                 <div class="user-detail-row">
                     <span class="user-detail-label">@Localizer["AccountStatus"]</span>
                     <span class="user-detail-value">
@@ -71,7 +71,7 @@
         <div class="user-details-grid">
             <!-- SECTION 1: Membership Summary Card -->
             <div class="user-details-card">
-                <h3>🏅 @Localizer["MembershipInformation"]</h3>
+                <h3 class="d-inline-flex align-items-center gap-2"><i data-lucide="award" style="width: 20px; height: 20px; color: var(--yellow);"></i> @Localizer["MembershipInformation"]</h3>
 
                 <!-- Membership Status Badge -->
                 <div class="user-detail-row">
@@ -79,11 +79,11 @@
                     <span class="user-detail-value">
                         @if (Model.MembershipStatus == ArenaDomain.Enums.MembershipStatus.ActiveMembership)
                         {
-                            <span class="user-badge badge-emerald">@Localizer["ActiveMembership"]</span>
+                            <span class="user-badge badge-blue">@Localizer["ActiveMembership"]</span>
                         }
                         else if (Model.MembershipStatus == ArenaDomain.Enums.MembershipStatus.ExpiredMembership)
                         {
-                            <span class="user-badge badge-orange">@Localizer["ExpiredMembership"]</span>
+                            <span class="user-badge badge-amber-warm">@Localizer["ExpiredMembership"]</span>
                         }
                         else
                         {
@@ -108,7 +108,7 @@
                         }
                         else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
                         {
-                            <span class="user-badge badge-orange">@Localizer["Expired"]</span>
+                            <span class="user-badge badge-amber-warm">@Localizer["Expired"]</span>
                         }
                         else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Cancelled)
                         {
@@ -137,7 +137,7 @@
 
             <!-- SECTION 2: Current Subscription Card -->
             <div class="user-details-card">
-                <h3>📋 @Localizer["CurrentSubscription"]</h3>
+                <h3 class="d-inline-flex align-items-center gap-2"><i data-lucide="clipboard-list" style="width: 20px; height: 20px; color: var(--yellow);"></i> @Localizer["CurrentSubscription"]</h3>
                 @if (Model.CurrentSubscription != null)
                 {
                     <div class="user-detail-row">
@@ -178,7 +178,7 @@
 
         <!-- Row 3: SECTION 3 - Subscription History (Full Width) -->
         <div class="user-details-card" style="margin-bottom: 2.5rem;">
-            <h3>📜 @Localizer["SubscriptionHistory"]</h3>
+            <h3 class="d-inline-flex align-items-center gap-2"><i data-lucide="history" style="width: 20px; height: 20px; color: var(--yellow);"></i> @Localizer["SubscriptionHistory"]</h3>
             @if (Model.SubscriptionHistory != null && Model.SubscriptionHistory.Any())
             {
                 <div class="table-responsive">
@@ -207,7 +207,7 @@
                                         }
                                         else if (sub.Status == "Expired")
                                         {
-                                            <span class="user-badge badge-orange">@Localizer["Expired"]</span>
+                                            <span class="user-badge badge-amber-warm">@Localizer["Expired"]</span>
                                         }
                                         else if (sub.Status == "Cancelled")
                                         {

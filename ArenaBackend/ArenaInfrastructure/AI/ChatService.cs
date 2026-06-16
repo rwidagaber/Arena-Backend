@@ -1,331 +1,4 @@
-﻿//using ArenaApplication.AI;
-//using ArenaApplication.AI.ArenaApplication.AI;
-//using ArenaApplication.Dtos.ChatDtos;
-//using ArenaApplication.IServices;
-//using ArenaDomain.Entities.Bookings;
-//using ArenaDomain.Enums;
-//using ArenaDomain.Interfaces;
-//using ArenaInfrastructure.Data;
-//using Microsoft.EntityFrameworkCore;
-//using System.Text;
-//using System.Text.Json;
-
-//namespace ArenaApplication.Services.AI
-//{
-//    public class ChatService : IChatService
-//    {
-//        private readonly IOpenAIService _openAI;
-//        private readonly IWorkoutAIService _workoutAI;
-//        private readonly INutritionAIService _nutritionAI;
-//        private readonly IBookingAIService _bookingAI;
-//        private readonly AppDbContext _context;
-//        private readonly IGenericRepository<Booking, Guid> _bookingRepo;
-
-//        public ChatService(
-//            IOpenAIService openAI,
-//            IWorkoutAIService workoutAI,
-//            INutritionAIService nutritionAI,
-//            IBookingAIService bookingAI, 
-//            AppDbContext context,
-//            IGenericRepository<Booking,Guid>bookingRepo)
-//        {
-//            _openAI = openAI;
-//            _workoutAI = workoutAI;
-//            _nutritionAI = nutritionAI;
-//            _bookingAI = bookingAI; 
-//            _context = context;
-//            _bookingRepo = bookingRepo;
-//        }
-//        public async Task<string> SendMessageAsync(Guid memberProfileId, string userMessage)
-//        {
-//            try
-//            {
-//            var profile = await _context.MemberProfiles
-//                .FirstOrDefaultAsync(p => p.Id == memberProfileId || p.UserId == memberProfileId);
-
-//            if (profile == null)
-//                return "❌ Profile not found. Please complete your profile first.";
-
-//            // =========================
-//            // 1. INTENT DETECTION
-//            // =========================
-
-
-//            var intentJson = await _openAI.GetCompletionAsync(
-//    PromptLoader.GetIntentDetectionPrompt(),
-//    new List<ChatMessageDto>(),
-//    userMessage);
-
-//            var cleanIntentJson = AIHelper.CleanJson(intentJson);
-
-//            var intent = JsonSerializer.Deserialize<IntentResult>(
-//                cleanIntentJson,
-//                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-//            // =========================
-//            // 2. LANGUAGE DETECTION
-//            // =========================
-//            bool isArabic = IsArabic(userMessage);
-
-//            // =========================
-//            // 3. ROUTING
-//            // =========================
-//            switch (intent?.Intent)
-//            {
-//                case "workout":
-//                    {
-//                        var workoutPlan = await _workoutAI
-//                            .GenerateWorkoutPlanAsync(profile.Id, userMessage);
-
-//                        var sb = new StringBuilder();
-
-//                        if (isArabic)
-//                        {
-//                            sb.AppendLine($"✅ تم إنشاء خطة التمرين الخاصة بك '{workoutPlan.Name}'!");
-//                            sb.AppendLine($"📅 المدة: {workoutPlan.DurationWeeks} أسابيع\n");
-//                        }
-//                        else
-//                        {
-//                            sb.AppendLine($"✅ Your workout plan '{workoutPlan.Name}' has been generated!");
-//                            sb.AppendLine($"📅 Duration: {workoutPlan.DurationWeeks} weeks\n");
-//                        }
-
-//                        foreach (var day in workoutPlan.Days)
-//                        {
-//                            sb.AppendLine(isArabic ? $"🏋️ {day.DayName}:" : $"🏋️ {day.DayName}:");
-
-//                            foreach (var ex in day.Exercises)
-//                            {
-//                                if (ex.Name.ToLower().Contains("rest"))
-//                                {
-//                                    sb.AppendLine(isArabic
-//                                        ? $"   • {ex.Name} 😴"
-//                                        : $"   • {ex.Name} 😴");
-//                                }
-//                                else if (ex.Sets <= 1 && ex.Reps >= 20)
-//                                {
-//                                    sb.AppendLine(isArabic
-//                                        ? $"   • {ex.Name} — {ex.Reps} دقيقة"
-//                                        : $"   • {ex.Name} — {ex.Reps} minutes");
-//                                }
-//                                else
-//                                {
-//                                    sb.AppendLine(isArabic
-//                                        ? $"   • {ex.Name} — {ex.Sets} مجموعات × {ex.Reps}"
-//                                        : $"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
-//                                }
-//                            }
-
-//                            sb.AppendLine();
-//                        }
-
-//                        sb.AppendLine(isArabic
-//                            ? "💡 هل تريد خطة تغذية أيضاً؟ قل: اعمل لي نظام غذائي"
-//                            : "💡 Want a nutrition plan too? Just say 'Generate a nutrition plan for me'");
-
-//                        return sb.ToString();
-//                    }
-
-//                case "nutrition":
-//                    {
-//                        var nutritionPlan = await _nutritionAI
-//                            .GenerateNutritionPlanAsync(profile.Id, userMessage);
-
-//                        var nb = new StringBuilder();
-
-//                        if (isArabic)
-//                        {
-//                            nb.AppendLine($"✅ تم إعداد خطة التغذية الخاصة بك، {profile.FirstName}!");
-//                            nb.AppendLine($"🔥 السعرات اليومية: {nutritionPlan.DailyCalories}");
-//                            nb.AppendLine($"💪 البروتين: {nutritionPlan.ProteinGrams}g");
-//                            nb.AppendLine($"🍚 الكربوهيدرات: {nutritionPlan.CarbsGrams}g");
-//                            nb.AppendLine($"🥑 الدهون: {nutritionPlan.FatGrams}g\n");
-//                        }
-//                        else
-//                        {
-//                            nb.AppendLine($"✅ Your nutrition plan is ready, {profile.FirstName}!");
-//                            nb.AppendLine($"🔥 Daily Calories: {nutritionPlan.DailyCalories} kcal");
-//                            nb.AppendLine($"💪 Protein: {nutritionPlan.ProteinGrams}g");
-//                            nb.AppendLine($"🍚 Carbs: {nutritionPlan.CarbsGrams}g");
-//                            nb.AppendLine($"🥑 Fat: {nutritionPlan.FatGrams}g\n");
-//                        }
-
-//                        foreach (var meal in nutritionPlan.Meals)
-//                        {
-//                            if (isArabic)
-//                            {
-//                                nb.AppendLine($"🍽️ {meal.MealType} — {meal.Name}");
-//                                nb.AppendLine($"   السعرات: {meal.Calories} | بروتين: {meal.ProteinGrams} | كارب: {meal.CarbsGrams} | دهون: {meal.FatGrams}");
-//                                nb.AppendLine($"   المكونات: {meal.Ingredients}");
-//                            }
-//                            else
-//                            {
-//                                nb.AppendLine($"🍽️ {meal.MealType} — {meal.Name}");
-//                                nb.AppendLine($"   Calories: {meal.Calories} kcal | P: {meal.ProteinGrams}g | C: {meal.CarbsGrams}g | F: {meal.FatGrams}g");
-//                                nb.AppendLine($"   Ingredients: {meal.Ingredients}");
-//                            }
-
-//                            nb.AppendLine();
-//                        }
-
-//                        nb.AppendLine(isArabic
-//                            ? "💡 تريد خطة تمرين أيضاً؟ قل: اعمل لي خطة تمرين"
-//                            : "💡 Want a workout plan too? Just say 'Generate a workout plan for me'");
-
-//                        return nb.ToString();
-//                    }
-
-
-//                case "booking":
-//                    var targetDate = intent.Date != null
-//                        ? DateTime.Parse(intent.Date)
-//                        : DateTime.Now.AddDays(1);
-
-//                    var targetTime = intent.Time != null
-//                        ? TimeSpan.Parse(intent.Time)
-//                        : TimeSpan.Zero;
-
-//                    var todayBookings = _bookingRepo.GetAll()
-//                        .Where(b => b.BookingDate.Date == targetDate.Date)
-//                        .ToList();
-
-
-//                    if (intent.Action == "cancel" || intent.Action == "reschedule")
-//                    {
-//                        return await _bookingAI
-//                            .HandleBookingRequestAsync(profile.Id, intent, userMessage);
-//                    }
-
-
-//                    if (intent.Time == null)
-//                    {
-//                        var allSlots = new[] { "06:00", "07:00", "08:00", "09:00", "10:00",
-//                               "11:00", "12:00", "13:00", "14:00", "15:00",
-//                               "16:00", "17:00", "18:00", "19:00", "20:00" };
-
-//                        var slotCrowds = allSlots.Select(slot =>
-//                        {
-//                            var slotTime = TimeSpan.Parse(slot);
-//                            var count = todayBookings
-//                                .Count(b => Math.Abs((b.StartTime - slotTime).TotalHours) < 1);
-//                            var level = count switch
-//                            {
-//                                < 3 => "🟢 Quiet",
-//                                < 7 => "🟡 Moderate",
-//                                _ => "🔴 Busy"
-//                            };
-//                            return $"  {slot} → {level} ({count} bookings)";
-//                        }).ToList();
-
-//                        var dateLabel = targetDate.Date == DateTime.Today.AddDays(1)
-//                            ? "tomorrow"
-//                            : targetDate.ToString("dddd, MMMM dd");
-
-//                        return isArabic
-//                            ? $"""
-//                📅 الأوقات المتاحة {dateLabel}:
-
-//                {string.Join("\n", slotCrowds)}
-
-//                قولي الوقت اللي يناسبك وهحجزلك فوراً! 💪
-//                """
-//                            : $"""
-//                📅 Available times for {dateLabel}:
-
-//                {string.Join("\n", slotCrowds)}
-
-//                Tell me your preferred time and I'll book it for you! 💪
-//                """;
-//                    }
-
-//                    // ✅ عنده date و time → اعرض crowd ثم اعمل booking
-//                    var sameTimeBookings = todayBookings
-//                        .Count(b => Math.Abs((b.StartTime - targetTime).TotalHours) < 1);
-
-//                    string crowdMessage;
-//                    if (sameTimeBookings < 3)
-//                        crowdMessage = isArabic
-//                            ? "🟢 الجيم هيكون هادي في الوقت ده."
-//                            : "🟢 The gym will be quiet at this time.";
-//                    else if (sameTimeBookings < 7)
-//                        crowdMessage = isArabic
-//                            ? "🟡 في ناس شوية بس مش زحمة."
-//                            : "🟡 Moderate crowd expected, should be fine.";
-//                    else
-//                    {
-//                        var quietSlots = new[] { "6:00", "7:00", "13:00", "14:00", "20:00" }
-//                            .Where(slot =>
-//                            {
-//                                var st = TimeSpan.Parse(slot);
-//                                return todayBookings
-//                                    .Count(b => Math.Abs((b.StartTime - st).TotalHours) < 1) < 3;
-//                            })
-//                            .Take(3)
-//                            .ToList();
-
-//                        crowdMessage = isArabic
-//                            ? $"🔴 الجيم هيكون زحمة الساعة {intent.Time}."
-//                            : $"🔴 The gym will be busy at {intent.Time}.";
-
-//                        if (quietSlots.Any())
-//                            crowdMessage += isArabic
-//                                ? $"\n💡 أوقات أهدى: {string.Join(", ", quietSlots)}"
-//                                : $"\n💡 Quieter times: {string.Join(", ", quietSlots)}";
-//                    }
-
-//                    var bookingReply = await _bookingAI
-//                        .HandleBookingRequestAsync(profile.Id, intent, userMessage, profile.FirstName ?? "Member");
-
-//                    return crowdMessage + "\n\n" + bookingReply;
-//                default:
-//                    {
-
-//                        var userContext = UserContextBuilder.Build(profile);
-
-//                        // Intent detection
-//                        var intentPrompt = PromptLoader.GetIntentDetectionPrompt();
-
-//                        // Chat
-//                        var systemPrompt = PromptLoader.GetChatSystemPrompt(
-//                            userContext: userContext,
-//                            name: profile.FirstName ?? "User");
-
-
-//                        //var systemPrompt = PromptBuilder.BuildChatSystemPrompt(profile, userContext);
-
-//                        var reply = await _openAI.GetCompletionAsync(
-//                            systemPrompt,
-//                            new List<ChatMessageDto>(),
-//                            userMessage);
-
-//                        return reply;
-//                    }
-//            }
-//            }
-//            catch (Exception)
-//            {
-//                if (IsArabic(userMessage))
-//                    return "❌ عذراً، حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.";
-//                return "❌ Sorry, something went wrong while processing your request. Please try again.";
-//            }
-//        }
-
-//        private bool IsArabic(string text)
-//        {
-//            return text.Any(c => c >= 0x0600 && c <= 0x06FF);
-//        }
-
-//        public Task<List<ChatMessageDto>> GetHistoryAsync(Guid memberProfileId)
-//        {
-//            return Task.FromResult(new List<ChatMessageDto>());
-//        }
-//    }
-//
-//}
-
-
-
-using ArenaApplication.AI;
+﻿using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.IServices;
@@ -335,8 +8,10 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace ArenaApplication.Services.AI
 {
@@ -430,6 +105,9 @@ namespace ArenaApplication.Services.AI
             var intent = JsonSerializer.Deserialize<IntentResult>(
                 cleanIntentJson,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (TryCreatePendingBookingIntent(history, userMessage, out var pendingBookingIntent))
+                intent = pendingBookingIntent;
 
             bool isArabic = IsArabic(userMessage);
 
@@ -558,7 +236,7 @@ namespace ArenaApplication.Services.AI
                         // No time → suggest slots
                         if (intent.Time == null)
                         {
-                            var allSlots = new[] { "06:00","07:00","08:00","09:00","10:00",
+                            var allSlots = new[] { 
                                                "11:00","12:00","13:00","14:00","15:00",
                                                "16:00","17:00","18:00","19:00","20:00" };
 
@@ -568,7 +246,7 @@ namespace ArenaApplication.Services.AI
                                 var count = dayBookings.Count(b =>
                                     Math.Abs((b.StartTime - st).TotalHours) < 1);
                                 var level = count switch { < 3 => "🟢", < 7 => "🟡", _ => "🔴" };
-                                return $"  {slot} {level} ({count})";
+                                return $"  {slot} {level} ";
                             });
 
                             var dateLabel = targetDate.Date == DateTime.Today.AddDays(1)
@@ -595,6 +273,22 @@ namespace ArenaApplication.Services.AI
                             profile.Id, intent, userMessage, profile.FirstName ?? "Member");
 
                         return $"{crowd}\n\n{bookingReply}";
+                    }
+
+                case "food_analysis":
+                    {
+                        var foodPrompt = PromptLoader.GetFoodAnalysisPrompt(
+                            name: string.IsNullOrEmpty(profile.FirstName) ? "there" : profile.FirstName,
+                            goal: profile.Goal ?? "General Fitness",
+                            healthConditions: profile.HealthConditions ?? "None",
+                            dietaryRestrictions: profile.DietaryRestrictions ?? "None",
+                            weight: (profile.Weight ?? 70).ToString(),
+                            userMessage: userMessage);
+
+                        return await _openAI.GetCompletionAsync(
+                            foodPrompt,
+                            history,
+                            userMessage);
                     }
 
                 default:
@@ -635,6 +329,121 @@ namespace ArenaApplication.Services.AI
 
         private bool IsArabic(string text) =>
             text.Any(c => c >= 0x0600 && c <= 0x06FF);
+
+        private static bool TryCreatePendingBookingIntent(
+            List<ChatMessageDto> history,
+            string userMessage,
+            out IntentResult intent)
+        {
+            intent = new IntentResult();
+
+            var lastAssistantMessage = history
+                .LastOrDefault(m => string.Equals(m.Sender, "assistant", StringComparison.OrdinalIgnoreCase))
+                ?.MessageText;
+
+            if (!IsPendingBookingPrompt(lastAssistantMessage))
+                return false;
+
+            if (!TryExtractTime(userMessage, out var selectedTime))
+                return false;
+
+            if (!TryExtractSuggestedBookingDate(lastAssistantMessage!, out var bookingDate))
+                return false;
+
+            intent = new IntentResult
+            {
+                Intent = "booking",
+                Action = "create",
+                Date = bookingDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Time = selectedTime.ToString(@"hh\:mm", CultureInfo.InvariantCulture)
+            };
+
+            return true;
+        }
+
+        private static bool IsPendingBookingPrompt(string? message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return false;
+
+            return message.Contains("Available times", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("الأوقات المتاحة", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool TryExtractSuggestedBookingDate(string message, out DateTime date)
+        {
+            date = default;
+
+            if (message.Contains("tomorrow", StringComparison.OrdinalIgnoreCase) || message.Contains("بكرة"))
+            {
+                date = DateTime.Now.AddDays(1).Date;
+                return true;
+            }
+
+            var match = Regex.Match(
+                message,
+                @"Available times for\s+(?<date>[^:\r\n]+)",
+                RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return false;
+
+            var dateText = match.Groups["date"].Value.Trim();
+            return DateTime.TryParse(dateText, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+        }
+
+        private static bool TryExtractTime(string message, out TimeSpan time)
+        {
+            time = default;
+
+            var normalized = NormalizeDigits(message);
+            var match = Regex.Match(
+                normalized,
+                @"(?<!\d)(?<hour>\d{1,2})(?::(?<minute>\d{2}))?\s*(?<period>am|pm|a\.m\.|p\.m\.|ص|م|صباح|صباحا|مساء|المساء)?(?!\d)",
+                RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return false;
+
+            if (!int.TryParse(match.Groups["hour"].Value, out var hour))
+                return false;
+
+            var minute = 0;
+            if (match.Groups["minute"].Success && !int.TryParse(match.Groups["minute"].Value, out minute))
+                return false;
+
+            if (hour > 23 || minute > 59)
+                return false;
+
+            var period = match.Groups["period"].Value.ToLowerInvariant();
+            var isPm = period is "pm" or "p.m." or "م" or "مساء" or "المساء";
+            var isAm = period is "am" or "a.m." or "ص" or "صباح" or "صباحا";
+
+            if (isPm && hour < 12)
+                hour += 12;
+            else if (isAm && hour == 12)
+                hour = 0;
+            else if (!isAm && !isPm && hour >= 1 && hour <= 10)
+                hour += 12;
+
+            time = new TimeSpan(hour, minute, 0);
+            return true;
+        }
+
+        private static string NormalizeDigits(string value)
+        {
+            var chars = value.ToCharArray();
+
+            for (var i = 0; i < chars.Length; i++)
+            {
+                if (chars[i] >= '\u0660' && chars[i] <= '\u0669')
+                    chars[i] = (char)('0' + chars[i] - '\u0660');
+                else if (chars[i] >= '\u06F0' && chars[i] <= '\u06F9')
+                    chars[i] = (char)('0' + chars[i] - '\u06F0');
+            }
+
+            return new string(chars);
+        }
 
         // ✅ Get all conversations for member
         public async Task<List<ConversationDto>> GetConversationsAsync(Guid memberProfileId)

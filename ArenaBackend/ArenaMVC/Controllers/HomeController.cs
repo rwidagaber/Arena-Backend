@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ArenaMVC.Models;
-using ArenaApplication.Services.SubscriptionPlan;
+using ArenaApplication.IServices;
 using ArenaDomain.Shared;
 using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Localization;
@@ -10,12 +10,12 @@ namespace ArenaMVC.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ISubscriptionPlanService _subscriptionPlanService;
+    private readonly IDashboardService _dashboardService;
     private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-    public HomeController(ISubscriptionPlanService subscriptionPlanService, IStringLocalizer<ArenaLocalization> localizer)
+    public HomeController(IDashboardService dashboardService, IStringLocalizer<ArenaLocalization> localizer)
     {
-        _subscriptionPlanService = subscriptionPlanService;
+        _dashboardService = dashboardService;
         _localizer = localizer;
     }
 
@@ -35,18 +35,19 @@ public class HomeController : Controller
     {
         try
         {
-            var plans = await _subscriptionPlanService.GetAllAsync(cancellationToken);
-            var plansList = plans.ToList();
-            ViewBag.TotalPlans = plansList.Count;
-            ViewBag.ActivePlans = plansList.Count(p => p.IsActive);
+            var dashboard = await _dashboardService.GetDashboardDataAsync(cancellationToken);
+            return View(dashboard);
         }
-        catch
+        catch (Exception ex)
         {
-            ViewBag.TotalPlans = 0;
-            ViewBag.ActivePlans = 0;
+            try
+            {
+                System.IO.File.WriteAllText("dashboard_error.log", ex.ToString());
+            }
+            catch {}
+            // Return an empty dashboard DTO so the view doesn't break
+            return View(new ArenaApplication.Dtos.Dashboard.AdminDashboardDto());
         }
-
-        return View();
     }
 
     public IActionResult Privacy()

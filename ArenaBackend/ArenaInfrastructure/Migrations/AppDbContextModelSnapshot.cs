@@ -63,7 +63,9 @@ namespace ArenaInfrastructure.Migrations
                     b.HasIndex("BookingId")
                         .IsUnique();
 
-                    b.HasIndex("MemberProfileId");
+                    b.HasIndex("CheckInTime");
+
+                    b.HasIndex("MemberProfileId", "CheckInTime");
 
                     b.ToTable("Attendances", (string)null);
                 });
@@ -111,7 +113,11 @@ namespace ArenaInfrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BookingDate");
+
                     b.HasIndex("MemberProfileId");
+
+                    b.HasIndex("BookingDate", "Status");
 
                     b.ToTable("Bookings", (string)null);
                 });
@@ -412,6 +418,9 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<decimal?>("MuscleMass")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(500)
@@ -739,6 +748,8 @@ namespace ArenaInfrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PaymentDate");
+
                     b.HasIndex("TransactionId")
                         .IsUnique()
                         .HasFilter("[TransactionId] IS NOT NULL");
@@ -746,6 +757,8 @@ namespace ArenaInfrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("UserSubscriptionId");
+
+                    b.HasIndex("Status", "PaymentDate");
 
                     b.ToTable("Payments", (string)null);
                 });
@@ -905,9 +918,13 @@ namespace ArenaInfrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("MemberProfileId");
 
                     b.HasIndex("PlanId");
+
+                    b.HasIndex("Status", "EndDate");
 
                     b.ToTable("UserSubscriptions", (string)null);
                 });
