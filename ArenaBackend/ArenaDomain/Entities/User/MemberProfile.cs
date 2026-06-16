@@ -10,6 +10,7 @@ using ArenaDomain.Enums;
 using ArenaDomain.Shared;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace ArenaDomain.Entities
@@ -26,6 +27,9 @@ namespace ArenaDomain.Entities
 
         public decimal? Height { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? MuscleMass { get; set; }
+
         public decimal? BMI { get; set; }
 
         public Gender Gender { get; set; }
@@ -37,6 +41,9 @@ namespace ArenaDomain.Entities
 
         public string? Goal { get; set; }
         // "WeightLoss" | "MuscleGain" | "Endurance" | "GeneralFitness"
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetWeight { get; set; }
 
         public string? ActivityLevel { get; set; }
         // "Sedentary" | "Light" | "Moderate" | "Active" | "VeryActive"

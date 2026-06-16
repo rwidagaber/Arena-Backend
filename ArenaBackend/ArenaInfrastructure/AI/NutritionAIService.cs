@@ -1,4 +1,4 @@
-﻿using ArenaApplication.AI;
+using ArenaApplication.AI;
 
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.Nutrition;
@@ -36,11 +36,11 @@ namespace ArenaInfrastructure.AI
         private readonly IOpenAIService _openAI;
         private readonly AppDbContext _context;
 
-        //public NutritionAIService(IOpenAIService openAI, AppDbContext context)
-        //{
-        //    _openAI = openAI;
-        //    _context = context;
-        //}
+        public NutritionAIService(IOpenAIService openAI, AppDbContext context)
+        {
+            _openAI = openAI;
+            _context = context;
+        }
 
         public async Task<NutritionPlanResponseDto> GenerateNutritionPlanAsync(
     Guid memberProfileId, string userMessage)
@@ -111,7 +111,10 @@ namespace ArenaInfrastructure.AI
                     MealType = meal.MealType,
                     Name = meal.Name,
                     Calories = meal.Calories,
-                    Ingredients = meal.Ingredients
+                    Ingredients = meal.Ingredients,
+                    Protein = meal.ProteinGrams,
+                    Carbs = meal.CarbsGrams,
+                    Fat = meal.FatGrams
                 };
 
                 _context.Meals.Add(mealEntity);
