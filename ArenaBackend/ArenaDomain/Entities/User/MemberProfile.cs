@@ -42,6 +42,9 @@ namespace ArenaDomain.Entities
         public string? Goal { get; set; }
         // "WeightLoss" | "MuscleGain" | "Endurance" | "GeneralFitness"
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetWeight { get; set; }
+
         public string? ActivityLevel { get; set; }
         // "Sedentary" | "Light" | "Moderate" | "Active" | "VeryActive"
 

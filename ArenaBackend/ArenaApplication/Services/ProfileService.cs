@@ -55,6 +55,8 @@ namespace ArenaApplication.Services
                 BMI = isSubscribed ? user.MemberProfile?.BMI : null,
                 Gender = isSubscribed ? user.MemberProfile?.Gender.ToString() : null,
                 ProfileImage = isSubscribed ? user.MemberProfile?.ProfileImageUrl : null,
+                Goal = isSubscribed ? user.MemberProfile?.Goal : null,
+                TargetWeight = isSubscribed ? user.MemberProfile?.TargetWeight : null,
                 Birthday = isSubscribed && user.MemberProfile?.DateOfBirth != null
                                     ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
                                     : null,
@@ -123,6 +125,12 @@ namespace ArenaApplication.Services
                 if (dto.Birthday is not null)
                     user.MemberProfile.DateOfBirth = dto.Birthday.Value.ToDateTime(TimeOnly.MinValue);
 
+                if (dto.Goal is not null)
+                    user.MemberProfile.Goal = dto.Goal;
+
+                if (dto.TargetWeight is not null)
+                    user.MemberProfile.TargetWeight = dto.TargetWeight;
+
                 if (dto.Weight is not null || dto.Height is not null)
                 {
                     var weight = user.MemberProfile.Weight;
@@ -151,6 +159,8 @@ namespace ArenaApplication.Services
                 BMI = user.MemberProfile?.BMI,
                 Gender = user.MemberProfile?.Gender.ToString(),
                 ProfileImage = user.MemberProfile?.ProfileImageUrl,
+                Goal = user.MemberProfile?.Goal,
+                TargetWeight = user.MemberProfile?.TargetWeight,
                 Birthday = user.MemberProfile?.DateOfBirth != null
                                 ? DateOnly.FromDateTime(user.MemberProfile.DateOfBirth)
                                 : null
