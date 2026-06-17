@@ -10,9 +10,9 @@ using ArenaApplication.IServices.IProgressServices;
 using ArenaApplication.IServices.Payment;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
-using ArenaApplication.Services.AI;
+
 using ArenaApplication.Services.Payment;
-using ArenaApplication.settings;
+
 using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
@@ -156,13 +156,17 @@ namespace ArenaAPI
             builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
 
             // ── AI / Chatbot Features ─────────────────────────────────────
-            builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAISettings"));
-            builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
+
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
             builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
+            builder.Services.AddScoped<IRAGService, SimpleRAGService>();
+            builder.Services.Configure<GeminiSettings>(
+                builder.Configuration.GetSection("GeminiSettings"));
+
+            builder.Services.AddHttpClient<IGeminiCompletionService, GeminiService>();
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>

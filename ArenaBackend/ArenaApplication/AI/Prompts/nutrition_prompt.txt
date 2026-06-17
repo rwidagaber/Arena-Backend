@@ -27,6 +27,10 @@ If member has diabetes:
 {userMessage}
 
 Return ONLY valid JSON, no markdown:
+Numeric fields must be JSON numbers only. Do not use strings, ranges, units, or words for numeric fields.
+Required numeric fields:
+- dailyCalories, proteinGrams, carbsGrams, fatGrams, waterLiters, mealsPerDay, calories
+
 {
   "dailyCalories": 2400,
   "proteinGrams": 180,

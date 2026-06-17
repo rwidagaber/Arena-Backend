@@ -36,6 +36,11 @@ Replace with: Seated Leg Curl, Hip Thrust, Upper body focus
 {userMessage}
 
 Return ONLY valid JSON, no markdown:
+Numeric fields must be JSON numbers only. Do not use strings, ranges, units, or words for numeric fields.
+For timed exercises, put the minute count as the numeric "reps" value and explain timing in "formTip".
+Required numeric fields:
+- durationWeeks, weeklyFrequency, estimatedCaloriesBurnPerSession, sets, reps, restSeconds
+
 {
   "name": "...",
   "durationWeeks": 4,
