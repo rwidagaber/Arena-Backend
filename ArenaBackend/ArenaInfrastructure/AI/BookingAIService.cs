@@ -25,14 +25,14 @@ namespace ArenaInfrastructure.AI
             IQRCodeService qrService,
             IGenericRepository<UserSubscription, Guid> subscriptionRepo,
             IGenericRepository<Booking, Guid> bookingRepo,
-            IGenericRepository<MemberProfile, Guid> memberRepo, 
+            IGenericRepository<MemberProfile, Guid> memberRepo,
             IUnitOfWork unitOfWork)
         {
             _bookingService = bookingService;
             _qrService = qrService;
             _subscriptionRepo = subscriptionRepo;
             _bookingRepo = bookingRepo;
-            _memberRepo = memberRepo; 
+            _memberRepo = memberRepo;
             _unitOfWork = unitOfWork;
         }
 
@@ -67,8 +67,8 @@ namespace ArenaInfrastructure.AI
             return await HandleCreateAsync(memberProfileId, intent, isArabic, subscription, name);
         }
 
-  
-        
+
+
 
         private async Task<string> HandleCancelAsync(
             Guid memberProfileId,
@@ -111,7 +111,7 @@ namespace ArenaInfrastructure.AI
             // ✅ Refund session
             if (subscription != null)
             {
-               
+
                 await _subscriptionRepo.UpdateAsync(subscription);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -135,7 +135,7 @@ namespace ArenaInfrastructure.AI
             bool isArabic,
             string memberName = "Member")
         {
-           
+
             return isArabic
                 ? "عشان تغير الحجز، قولي الغي الحجز القديم وبعدين احجز وقت جديد."
                 : "To reschedule, please cancel your existing booking first, then book a new time.";
@@ -200,7 +200,7 @@ namespace ArenaInfrastructure.AI
 
             var qr = await _qrService.GenerateAsync(result.Value.Id);
 
-           
+
             await _subscriptionRepo.UpdateAsync(subscription);
             await _unitOfWork.SaveChangesAsync();
 

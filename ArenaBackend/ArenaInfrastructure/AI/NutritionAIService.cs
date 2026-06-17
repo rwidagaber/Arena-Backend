@@ -33,12 +33,12 @@ namespace ArenaInfrastructure.AI
 
     public class NutritionAIService : INutritionAIService
     {
-        private readonly IOpenAIService _openAI;
+        private readonly IGeminiCompletionService _gemini;
         private readonly AppDbContext _context;
 
-        public NutritionAIService(IOpenAIService openAI, AppDbContext context)
+        public NutritionAIService(IGeminiCompletionService gemini, AppDbContext context)
         {
-            _openAI = openAI;
+            _gemini = gemini;
             _context = context;
         }
 
@@ -72,21 +72,23 @@ namespace ArenaInfrastructure.AI
     healthConditions: profile.HealthConditions ?? "None",
     userMessage: userMessage);
 
-            var jsonResponse = await _openAI.GetCompletionAsync(
-                prompt, new List<ChatMessageDto>(), "Generate the plan");
+            NutritionPlanAIResponse planData;
+            try
+            {
+                var jsonResponse = await _gemini.GetCompletionAsync(
+                    prompt, new List<ChatMessageDto>(), "Generate the plan");
 
-            Console.WriteLine("=== NUTRITION RAW ===");
-            Console.WriteLine(jsonResponse);
-            Console.WriteLine("=====================");
+                var cleanJson = AIHelper.CleanJson(jsonResponse);
+                planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
+                    cleanJson,
+                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile);
+            }
+            catch
+            {
+                planData = CreateFallbackPlanData(profile);
+            }
 
-            var cleanJson = AIHelper.CleanJson(jsonResponse);
-
-            var planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
-                cleanJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (planData == null)
-                throw new Exception("AI returned invalid nutrition plan JSON");
+            NormalizeNutritionPlan(planData);
 
             var plan = new NutritionPlan
             {
@@ -143,6 +145,119 @@ namespace ArenaInfrastructure.AI
                 IsActive = plan.IsActive,
                 Meals = mealDtos
             };
+        }
+
+        private static JsonSerializerOptions CreateJsonOptions()
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            options.Converters.Add(new FlexibleDecimalConverter());
+            return options;
+        }
+
+        private static void NormalizeNutritionPlan(NutritionPlanAIResponse planData)
+        {
+            if (planData.DailyCalories <= 0)
+                planData.DailyCalories = 2000;
+
+            if (planData.ProteinGrams <= 0)
+                planData.ProteinGrams = 120;
+
+            if (planData.CarbsGrams <= 0)
+                planData.CarbsGrams = 220;
+
+            if (planData.FatGrams <= 0)
+                planData.FatGrams = 65;
+
+            planData.Meals ??= [];
+
+            foreach (var meal in planData.Meals)
+            {
+                if (string.IsNullOrWhiteSpace(meal.MealType))
+                    meal.MealType = "Meal";
+
+                if (string.IsNullOrWhiteSpace(meal.Name))
+                    meal.Name = "Balanced meal";
+
+                if (meal.Calories <= 0)
+                    meal.Calories = 400;
+
+                if (meal.ProteinGrams <= 0)
+                    meal.ProteinGrams = 25;
+
+                if (meal.CarbsGrams <= 0)
+                    meal.CarbsGrams = 40;
+
+                if (meal.FatGrams <= 0)
+                    meal.FatGrams = 12;
+
+                if (string.IsNullOrWhiteSpace(meal.Ingredients))
+                    meal.Ingredients = "Lean protein, complex carbohydrates, vegetables, healthy fats";
+            }
+        }
+
+        private static NutritionPlanAIResponse CreateFallbackPlanData(ArenaDomain.Entities.MemberProfile profile)
+        {
+            var isWeightLoss = ContainsAny(profile.Goal, "loss", "lose", "cut", "اخس", "تنشيف");
+            var calories = isWeightLoss ? 1900 : 2400;
+
+            return new NutritionPlanAIResponse
+            {
+                DailyCalories = calories,
+                ProteinGrams = isWeightLoss ? 140 : 170,
+                CarbsGrams = isWeightLoss ? 180 : 260,
+                FatGrams = isWeightLoss ? 60 : 75,
+                Meals =
+                [
+                    new MealAIResponse
+                    {
+                        MealType = "Breakfast",
+                        Name = "Oats with Greek yogurt",
+                        Calories = 450,
+                        ProteinGrams = 35,
+                        CarbsGrams = 55,
+                        FatGrams = 12,
+                        Ingredients = "Oats, Greek yogurt, berries, chia seeds"
+                    },
+                    new MealAIResponse
+                    {
+                        MealType = "Lunch",
+                        Name = "Chicken rice bowl",
+                        Calories = 650,
+                        ProteinGrams = 50,
+                        CarbsGrams = 70,
+                        FatGrams = 18,
+                        Ingredients = "Grilled chicken, brown rice, vegetables, olive oil"
+                    },
+                    new MealAIResponse
+                    {
+                        MealType = "Dinner",
+                        Name = "Salmon and sweet potato",
+                        Calories = 600,
+                        ProteinGrams = 45,
+                        CarbsGrams = 50,
+                        FatGrams = 24,
+                        Ingredients = "Salmon, sweet potato, salad, avocado"
+                    },
+                    new MealAIResponse
+                    {
+                        MealType = "Snack",
+                        Name = "Protein snack",
+                        Calories = 250,
+                        ProteinGrams = 25,
+                        CarbsGrams = 20,
+                        FatGrams = 8,
+                        Ingredients = "Protein shake or cottage cheese with fruit"
+                    }
+                ]
+            };
+        }
+
+        private static bool ContainsAny(string? text, params string[] values)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

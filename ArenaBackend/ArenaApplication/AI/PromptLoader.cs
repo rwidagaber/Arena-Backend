@@ -99,11 +99,12 @@
                 .Replace("{afterTomorrow}", afterTomorrow);
         }
 
-        public static string GetChatSystemPrompt(string userContext, string name)
+        public static string GetChatSystemPrompt(string userContext, string name, string languageInstruction)
         {
             return Load("chat_system_prompt.txt")
                 .Replace("{userContext}", userContext)
-                .Replace("{name}", name);
+                .Replace("{name}", name)
+                .Replace("{languageInstruction}", languageInstruction);
         }
 
 

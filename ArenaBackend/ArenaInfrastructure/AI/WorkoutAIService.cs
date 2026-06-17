@@ -37,18 +37,18 @@ namespace ArenaInfrastructure.AI
 
     public class WorkoutAIService : IWorkoutAIService
     {
-        private readonly IOpenAIService _openAI;
+        private readonly IGeminiCompletionService _gemini;
         private readonly AppDbContext _context;
         private readonly IGenericRepository<MemberProfile, Guid> _memberRepo;
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
 
         public WorkoutAIService(
-            IOpenAIService openAI,
+            IGeminiCompletionService gemini,
             AppDbContext context,
             IGenericRepository<MemberProfile, Guid> memberProfile,
             IGenericRepository<UserSubscription, Guid> userSubscription)
         {
-            _openAI = openAI;
+            _gemini = gemini;
             _context = context;
             _memberRepo = memberProfile;
             _subscriptionRepo = userSubscription;
@@ -94,15 +94,21 @@ namespace ArenaInfrastructure.AI
                 equipment: profile.Equipment ?? "Full Gym",
                 userMessage: userMessage);
 
-            var jsonResponse = await _openAI.GetCompletionAsync(prompt, new List<ChatMessageDto>(), "Generate the plan");
+            WorkoutPlanAIResponse planData;
+            try
+            {
+                var jsonResponse = await _gemini.GetCompletionAsync(prompt, new List<ChatMessageDto>(), "Generate the plan");
+                var cleanJson = AIHelper.CleanJson(jsonResponse);
+                planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
+                    cleanJson,
+                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile);
+            }
+            catch
+            {
+                planData = CreateFallbackPlanData(profile);
+            }
 
-            var cleanJson = AIHelper.CleanJson(jsonResponse);
-            var planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
-                cleanJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (planData == null)
-                throw new Exception("AI returned invalid workout plan JSON");
+            NormalizeWorkoutPlan(planData, profile.FirstName ?? "Member");
 
             // ✅ Instantiate Core Plan Entity
             var plan = new WorkoutPlan
@@ -191,6 +197,115 @@ namespace ArenaInfrastructure.AI
                 IsActive = plan.IsActive,
                 Days = dayDtos
             };
+        }
+
+        private static JsonSerializerOptions CreateJsonOptions()
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            options.Converters.Add(new FlexibleIntConverter());
+            return options;
+        }
+
+        private static void NormalizeWorkoutPlan(WorkoutPlanAIResponse planData, string memberName)
+        {
+            if (string.IsNullOrWhiteSpace(planData.Name))
+                planData.Name = $"{memberName} Workout Plan";
+
+            if (planData.DurationWeeks <= 0)
+                planData.DurationWeeks = 4;
+
+            planData.Days ??= [];
+
+            foreach (var day in planData.Days)
+            {
+                if (string.IsNullOrWhiteSpace(day.DayName))
+                    day.DayName = "Workout Day";
+
+                day.Exercises ??= [];
+
+                foreach (var exercise in day.Exercises)
+                {
+                    if (string.IsNullOrWhiteSpace(exercise.Name))
+                        exercise.Name = "Exercise";
+
+                    if (exercise.Sets <= 0)
+                        exercise.Sets = 3;
+
+                    if (exercise.Reps <= 0)
+                        exercise.Reps = 10;
+
+                    if (string.IsNullOrWhiteSpace(exercise.MuscleGroup))
+                        exercise.MuscleGroup = "General";
+                }
+            }
+        }
+
+        private static WorkoutPlanAIResponse CreateFallbackPlanData(MemberProfile profile)
+        {
+            var memberName = string.IsNullOrWhiteSpace(profile.FirstName) ? "Member" : profile.FirstName;
+            var goal = string.IsNullOrWhiteSpace(profile.Goal) ? "General Fitness" : profile.Goal;
+            var avoidKneeStress = ContainsAny(profile.Injuries, "knee", "ركبة");
+
+            return new WorkoutPlanAIResponse
+            {
+                Name = $"{memberName} {goal} Workout Plan",
+                DurationWeeks = 4,
+                Days =
+                [
+                    new WorkoutDayAIResponse
+                    {
+                        DayName = "Day 1 - Upper Body",
+                        Exercises =
+                        [
+                            new WorkoutExerciseAIResponse { Name = "Chest Press Machine", Sets = 3, Reps = 10, MuscleGroup = "Chest" },
+                            new WorkoutExerciseAIResponse { Name = "Lat Pulldown", Sets = 3, Reps = 12, MuscleGroup = "Back" },
+                            new WorkoutExerciseAIResponse { Name = "Seated Shoulder Press", Sets = 3, Reps = 10, MuscleGroup = "Shoulders" },
+                            new WorkoutExerciseAIResponse { Name = "Cable Row", Sets = 3, Reps = 12, MuscleGroup = "Back" },
+                            new WorkoutExerciseAIResponse { Name = "Biceps Curl", Sets = 3, Reps = 12, MuscleGroup = "Arms" },
+                            new WorkoutExerciseAIResponse { Name = "Triceps Pushdown", Sets = 3, Reps = 12, MuscleGroup = "Arms" }
+                        ]
+                    },
+                    new WorkoutDayAIResponse
+                    {
+                        DayName = "Day 2 - Lower Body and Core",
+                        Exercises = avoidKneeStress
+                            ?
+                            [
+                                new WorkoutExerciseAIResponse { Name = "Hip Thrust", Sets = 3, Reps = 12, MuscleGroup = "Glutes" },
+                                new WorkoutExerciseAIResponse { Name = "Seated Leg Curl", Sets = 3, Reps = 12, MuscleGroup = "Hamstrings" },
+                                new WorkoutExerciseAIResponse { Name = "Glute Bridge", Sets = 3, Reps = 15, MuscleGroup = "Glutes" },
+                                new WorkoutExerciseAIResponse { Name = "Plank", Sets = 3, Reps = 30, MuscleGroup = "Core" }
+                            ]
+                            :
+                            [
+                                new WorkoutExerciseAIResponse { Name = "Leg Press", Sets = 3, Reps = 12, MuscleGroup = "Legs" },
+                                new WorkoutExerciseAIResponse { Name = "Romanian Deadlift", Sets = 3, Reps = 10, MuscleGroup = "Hamstrings" },
+                                new WorkoutExerciseAIResponse { Name = "Leg Curl", Sets = 3, Reps = 12, MuscleGroup = "Hamstrings" },
+                                new WorkoutExerciseAIResponse { Name = "Calf Raise", Sets = 3, Reps = 15, MuscleGroup = "Calves" },
+                                new WorkoutExerciseAIResponse { Name = "Plank", Sets = 3, Reps = 30, MuscleGroup = "Core" }
+                            ]
+                    },
+                    new WorkoutDayAIResponse
+                    {
+                        DayName = "Day 3 - Full Body",
+                        Exercises =
+                        [
+                            new WorkoutExerciseAIResponse { Name = "Dumbbell Bench Press", Sets = 3, Reps = 10, MuscleGroup = "Chest" },
+                            new WorkoutExerciseAIResponse { Name = "Assisted Pull-up", Sets = 3, Reps = 8, MuscleGroup = "Back" },
+                            new WorkoutExerciseAIResponse { Name = "Cable Face Pull", Sets = 3, Reps = 15, MuscleGroup = "Shoulders" },
+                            new WorkoutExerciseAIResponse { Name = "Farmer Carry", Sets = 3, Reps = 30, MuscleGroup = "Full Body" }
+                        ]
+                    }
+                ]
+            };
+        }
+
+        private static bool ContainsAny(string? text, params string[] values)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

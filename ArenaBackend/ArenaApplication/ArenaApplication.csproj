@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -30,6 +30,15 @@
 		<Content Include="AI\Prompts\*.txt">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Remove="AI\Prompts\booking_agent_prompt.txt" />
+	  <Content Remove="AI\Prompts\chat_system_prompt.txt" />
+	  <Content Remove="AI\Prompts\food_analysis_prompt.txt" />
+	  <Content Remove="AI\Prompts\intent_detection_prompt.txt" />
+	  <Content Remove="AI\Prompts\nutrition_prompt.txt" />
+	  <Content Remove="AI\Prompts\workout_prompt.txt" />
 	</ItemGroup>
 
   <ItemGroup>
