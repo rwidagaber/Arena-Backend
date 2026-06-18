@@ -43,6 +43,8 @@ builder
     });
 
 builder.Services.ConfigureDbContext(builder.Configuration);
+// register Mapster IMapper and config
+builder.Services.AddMapsterConfiguration();
 builder.Services.AddApplicationServices();
 
 // User-related services
