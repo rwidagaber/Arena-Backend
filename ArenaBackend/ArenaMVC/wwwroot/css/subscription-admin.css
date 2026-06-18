@@ -57,8 +57,8 @@
 }
 
 html[data-theme="light"] .subscription-card:hover {
-    border-color: rgba(54, 127, 221, 0.3);
-    box-shadow: 0 8px 24px rgba(54, 127, 221, 0.08);
+    border-color: rgba(198, 239, 46, 0.45);
+    box-shadow: 0 8px 24px rgba(198, 239, 46, 0.15);
 }
 
 .subscription-card-header {
@@ -139,7 +139,7 @@ html[data-theme="light"] .subscription-card:hover {
     background-color: var(--input-bg-focus);
     border-color: var(--accent-color);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(54, 127, 221, 0.15);
+    box-shadow: 0 0 0 3px rgba(198, 239, 46, 0.18);
 }
 
 html:not([data-theme="light"]) .subscription-form-group input:focus,
@@ -174,8 +174,8 @@ html:not([data-theme="light"]) .subscription-form-group select:focus {
 }
 
 html[data-theme="light"] .btn-subscription-primary:hover {
-    background-color: #2563EB;
-    box-shadow: 0 6px 16px rgba(54, 127, 221, 0.25);
+    background-color: var(--accent-hover);
+    box-shadow: 0 6px 16px rgba(198, 239, 46, 0.30);
 }
 
 .btn-subscription-secondary {
