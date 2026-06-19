@@ -114,6 +114,97 @@ namespace ArenaInfrastructure.AI
                 $". Last error: {lastException?.Message}");
         }
 
+        public async Task<string> TranscribeAudioAsync(
+            string audioMimeType,
+            string audioBase64)
+        {
+            var apiKey = GetConfiguredApiKey();
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new InvalidOperationException("Gemini API key is not configured. Set GeminiSettings:ApiKey or GEMINI_API_KEY.");
+
+            if (string.IsNullOrWhiteSpace(audioMimeType) || string.IsNullOrWhiteSpace(audioBase64))
+                throw new ArgumentException("Audio MIME type and content are required.");
+
+            var baseUrl = string.IsNullOrWhiteSpace(_settings.BaseUrl)
+                ? "https://generativelanguage.googleapis.com/v1beta/models"
+                : _settings.BaseUrl.TrimEnd('/');
+
+            var body = BuildAudioTranscriptionBody(audioMimeType, audioBase64);
+            var models = GetModelsToTry().ToList();
+            Exception? lastException = null;
+
+            foreach (var model in models)
+            {
+                for (var attempt = 1; attempt <= 2; attempt++)
+                {
+                    try
+                    {
+                        return await SendCompletionRequestAsync(baseUrl, apiKey, model, body);
+                    }
+                    catch (Exception ex) when (IsRetryableGeminiError(ex))
+                    {
+                        lastException = ex;
+
+                        if (attempt < 2)
+                            await Task.Delay(TimeSpan.FromMilliseconds(700 * attempt));
+                    }
+                    catch (Exception ex)
+                    {
+                        lastException = ex;
+                        throw;
+                    }
+                }
+            }
+
+            throw new Exception(
+                "Gemini audio models are temporarily busy or rate limited. Tried: " +
+                string.Join(", ", models) +
+                $". Last error: {lastException?.Message}");
+        }
+
+        private static object BuildAudioTranscriptionBody(
+            string audioMimeType,
+            string audioBase64)
+        {
+            const string transcriptionInstruction =
+                "You are a speech-to-text engine. Transcribe the user's audio verbatim. " +
+                "Automatically detect the spoken language (English or Arabic) and transcribe in that language. " +
+                "Return ONLY the transcribed text with no commentary, labels, or quotation marks. " +
+                "If there is no intelligible speech, return an empty string.";
+
+            return new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        role = "user",
+                        parts = new object[]
+                        {
+                            new { text = "Transcribe this audio." },
+                            new
+                            {
+                                inline_data = new
+                                {
+                                    mime_type = audioMimeType,
+                                    data = audioBase64
+                                }
+                            }
+                        }
+                    }
+                },
+                systemInstruction = new
+                {
+                    parts = new[] { new { text = transcriptionInstruction } }
+                },
+                generationConfig = new
+                {
+                    temperature = 0.0,
+                    maxOutputTokens = 1024
+                }
+            };
+        }
+
         private static object BuildRequestBody(
             string systemPrompt,
             List<ChatMessageDto> history,

@@ -14,5 +14,10 @@ namespace ArenaApplication.IServices
             string userMessage,
             string imageMimeType,
             string imageBase64);
+
+        // Transcribe spoken audio to text using Gemini's native audio understanding.
+        Task<string> TranscribeAudioAsync(
+            string audioMimeType,
+            string audioBase64);
     }
 }

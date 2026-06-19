@@ -164,6 +164,57 @@ namespace ArenaInfrastructure.AI
             };
         }
 
+        public async Task<VoiceChatResponseDto> SendVoiceMessageAsync(
+            Guid memberProfileId,
+            Guid? conversationId,
+            Stream audio,
+            string audioContentType)
+        {
+            // ✅ Step 1 — Read the uploaded clip and transcribe it with Gemini
+            using var memory = new MemoryStream();
+            await audio.CopyToAsync(memory);
+            var audioBase64 = Convert.ToBase64String(memory.ToArray());
+
+            var mimeType = string.IsNullOrWhiteSpace(audioContentType)
+                ? "audio/webm"
+                : audioContentType;
+
+            string transcript;
+            try
+            {
+                transcript = (await _gemini.TranscribeAudioAsync(mimeType, audioBase64))?.Trim() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Voice transcription failed for member profile {MemberProfileId}", memberProfileId);
+                return new VoiceChatResponseDto
+                {
+                    Transcript = string.Empty,
+                    Reply = "❌ Sorry, I couldn't process your voice note. Please try again.",
+                    ConversationId = conversationId ?? Guid.Empty
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(transcript))
+                return new VoiceChatResponseDto
+                {
+                    Transcript = string.Empty,
+                    Reply = "❌ Sorry, I couldn't understand the voice note. Please try again.",
+                    ConversationId = conversationId ?? Guid.Empty
+                };
+
+            // ✅ Step 2 — Feed the transcript into the existing text pipeline
+            var result = await SendMessageAsync(memberProfileId, conversationId, transcript);
+
+            return new VoiceChatResponseDto
+            {
+                Transcript = transcript,
+                ConversationId = result.ConversationId,
+                Reply = result.Reply,
+                Timestamp = result.Timestamp
+            };
+        }
+
         private async Task<IntentResult> DetectIntentAsync(string userMessage)
         {
             try
