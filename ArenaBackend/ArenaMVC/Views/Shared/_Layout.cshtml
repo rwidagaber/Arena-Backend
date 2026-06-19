@@ -24,6 +24,7 @@
     {
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
     }
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/StyleSheet.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ArenaMVC.styles.css?v=@DateTime.UtcNow.Ticks" asp-append-version="true" />
@@ -96,26 +97,8 @@
                     <i data-lucide="moon" class="moon-icon"></i>
                 </button>
 
-                <!-- Language Switcher Form -->
-                <form id="culture-form" method="post" asp-controller="Home" asp-action="SetCulture" class="header-culture-form">
-                    <div class="culture-dropdown">
-                        <button type="button" class="culture-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')">
-                            <span class="flag-icon">@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "🇪🇬" : "🇺🇸")</span>
-                            <span class="culture-dropdown-label">@(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "العربية" : "English")</span>
-                            <i data-lucide="chevron-down" class="dropdown-arrow-icon"></i>
-                        </button>
-                        <div class="culture-dropdown-menu">
-                            <button type="submit" name="culture" value="en-US" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" ? "selected" : "")">
-                                <span class="flag-icon">🇺🇸</span>
-                                <span>English</span>
-                            </button>
-                            <button type="submit" name="culture" value="ar-EG" class="culture-option @(System.Globalization.CultureInfo.CurrentUICulture.Name == "ar-EG" ? "selected" : "")">
-                                <span class="flag-icon">🇪🇬</span>
-                                <span>العربية</span>
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                <!-- Modern Language Switcher -->
+                <partial name="_LanguageSwitcher" />
             </div>
         </header>
         <main role="main" class="pb-3">

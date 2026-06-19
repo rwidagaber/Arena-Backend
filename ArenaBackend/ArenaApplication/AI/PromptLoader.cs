@@ -99,11 +99,30 @@
                 .Replace("{afterTomorrow}", afterTomorrow);
         }
 
-        public static string GetChatSystemPrompt(string userContext, string name)
+        public static string GetChatSystemPrompt(string userContext, string name, string languageInstruction)
         {
             return Load("chat_system_prompt.txt")
                 .Replace("{userContext}", userContext)
-                .Replace("{name}", name);
+                .Replace("{name}", name)
+                .Replace("{languageInstruction}", languageInstruction);
+        }
+
+
+        public static string GetFoodAnalysisPrompt(
+    string name,
+    string goal,
+    string healthConditions,
+    string dietaryRestrictions,
+    string weight,
+    string userMessage)
+        {
+            return Load("food_analysis_prompt.txt")
+                .Replace("{name}", name)
+                .Replace("{goal}", goal)
+                .Replace("{healthConditions}", healthConditions)
+                .Replace("{dietaryRestrictions}", dietaryRestrictions)
+                .Replace("{weight}", weight)
+                .Replace("{userMessage}", userMessage);
         }
     }
 }

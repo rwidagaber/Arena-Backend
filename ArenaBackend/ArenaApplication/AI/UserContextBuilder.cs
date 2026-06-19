@@ -1,12 +1,14 @@
 ﻿using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Subscription;
+using ArenaDomain.Entities.User;
 
 namespace ArenaApplication.AI
 {
     public static class UserContextBuilder
     {
         public static string Build(
+
             MemberProfile profile,
             UserSubscription? subscription = null,
             List<Booking>? todayBookings = null,
@@ -15,10 +17,20 @@ namespace ArenaApplication.AI
         {
             var age = DateTime.UtcNow.Year - profile.DateOfBirth.Year;
             var bmi = profile.BMI ?? CalculateBMI(profile.Weight, profile.Height);
+            var firstName = string.IsNullOrWhiteSpace(profile.User?.FirstName)
+                ? profile.FirstName
+                : profile.User.FirstName;
+            var fullName = string.Join(" ", new[]
+            {
+                profile.User?.FirstName,
+                profile.User?.LastName
+            }.Where(value => !string.IsNullOrWhiteSpace(value)));
 
             var context = $"""
                 === MEMBER PROFILE ===
-                Name: {profile.FirstName}
+                Application First Name: {firstName ?? "Member"}
+                Application Full Name: {(string.IsNullOrWhiteSpace(fullName) ? firstName ?? "Member" : fullName)}
+                Preferred Language: {profile.User?.PreferredLanguage ?? "Not set"}
                 Age: {age}
                 Gender: {profile.Gender}
                 Weight: {profile.Weight ?? 0}kg

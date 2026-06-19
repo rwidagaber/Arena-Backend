@@ -6,12 +6,14 @@ using ArenaApi.Configurations.ValidatorConfig;
 using ArenaApi.Hubs;
 using ArenaApplication;
 using ArenaApplication.IServices;
+using ArenaApplication.IServices.IProgressServices;
 using ArenaApplication.IServices.Payment;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
-using ArenaApplication.Services.AI;
+
 using ArenaApplication.Services.Payment;
-using ArenaApplication.settings;
+
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
@@ -26,6 +28,7 @@ using ArenaInfrastructure.Services;
 using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Scalar.AspNetCore;
 using System.Globalization;
@@ -140,18 +143,30 @@ namespace ArenaAPI
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
+
+
+            // ── Progress ───────────────────────────────────────────────────
+            builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
+            builder.Services.AddScoped<IProgressService, ProgressService>();
+
+
             // ── Payment ───────────────────────────────────────────────────
             builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
 
             // ── AI / Chatbot Features ─────────────────────────────────────
-            builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAISettings"));
-            builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
+
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
+            builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
+            builder.Services.AddScoped<IRAGService, SimpleRAGService>();
+            builder.Services.Configure<GeminiSettings>(
+                builder.Configuration.GetSection("GeminiSettings"));
+
+            builder.Services.AddHttpClient<IGeminiCompletionService, GeminiService>();
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>
@@ -185,7 +200,7 @@ namespace ArenaAPI
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
                 if (app.Environment.IsDevelopment())
-                    context.Database.EnsureCreated();
+                    context.Database.Migrate();
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
             }
