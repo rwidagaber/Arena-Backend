@@ -1,5 +1,6 @@
 using ArenaApplication.Dtos.Dashboard.Analytics;
 using ArenaApplication.IServices;
+using ArenaMVC.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArenaMVC.Controllers;
@@ -10,10 +11,17 @@ namespace ArenaMVC.Controllers;
 public class AdminAnalyticsController : Controller
 {
   private readonly IDashboardService _dashboardService;
+  private readonly IDashboardDataSeeder _seeder;
+  private readonly IAnalyticsCacheVersionService _cacheVersion;
 
-  public AdminAnalyticsController(IDashboardService dashboardService)
+  public AdminAnalyticsController(
+      IDashboardService dashboardService,
+      IDashboardDataSeeder seeder,
+      IAnalyticsCacheVersionService cacheVersion)
   {
     _dashboardService = dashboardService;
+    _seeder = seeder;
+    _cacheVersion = cacheVersion;
   }
 
   [HttpGet("/admin/dashboard")]
@@ -21,6 +29,15 @@ public class AdminAnalyticsController : Controller
   public IActionResult Dashboard()
   {
     return View();
+  }
+
+  [HttpPost("/admin/analytics/generate-demo-data")]
+  public async Task<IActionResult> GenerateDemoData()
+  {
+    await _seeder.SeedAsync(forceReseed: true);
+    _cacheVersion.BumpVersion();   // invalidate all cached analytics immediately
+    TempData["DemoDataSuccess"] = "Dashboard demo data generated successfully.";
+    return Redirect("/admin/dashboard");
   }
 
   [HttpGet("overview")]
