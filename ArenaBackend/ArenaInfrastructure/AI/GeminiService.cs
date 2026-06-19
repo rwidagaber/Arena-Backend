@@ -64,6 +64,56 @@ namespace ArenaInfrastructure.AI
                 $". Last error: {lastException?.Message}");
         }
 
+        public async Task<string> GetVisionCompletionAsync(
+            string systemPrompt,
+            string userMessage,
+            string imageMimeType,
+            string imageBase64)
+        {
+            var apiKey = GetConfiguredApiKey();
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new InvalidOperationException("Gemini API key is not configured. Set GeminiSettings:ApiKey or GEMINI_API_KEY.");
+
+            if (string.IsNullOrWhiteSpace(imageMimeType) || string.IsNullOrWhiteSpace(imageBase64))
+                throw new ArgumentException("Image MIME type and content are required.");
+
+            var baseUrl = string.IsNullOrWhiteSpace(_settings.BaseUrl)
+                ? "https://generativelanguage.googleapis.com/v1beta/models"
+                : _settings.BaseUrl.TrimEnd('/');
+
+            var body = BuildVisionRequestBody(systemPrompt, userMessage, imageMimeType, imageBase64);
+            var models = GetModelsToTry().ToList();
+            Exception? lastException = null;
+
+            foreach (var model in models)
+            {
+                for (var attempt = 1; attempt <= 2; attempt++)
+                {
+                    try
+                    {
+                        return await SendCompletionRequestAsync(baseUrl, apiKey, model, body);
+                    }
+                    catch (Exception ex) when (IsRetryableGeminiError(ex))
+                    {
+                        lastException = ex;
+
+                        if (attempt < 2)
+                            await Task.Delay(TimeSpan.FromMilliseconds(700 * attempt));
+                    }
+                    catch (Exception ex)
+                    {
+                        lastException = ex;
+                        throw;
+                    }
+                }
+            }
+
+            throw new Exception(
+                "Gemini vision models are temporarily busy or rate limited. Tried: " +
+                string.Join(", ", models) +
+                $". Last error: {lastException?.Message}");
+        }
+
         private static object BuildRequestBody(
             string systemPrompt,
             List<ChatMessageDto> history,
@@ -97,6 +147,45 @@ namespace ArenaInfrastructure.AI
                 {
                     temperature = 0.7,
                     maxOutputTokens = 2048
+                }
+            };
+        }
+
+        private static object BuildVisionRequestBody(
+            string systemPrompt,
+            string userMessage,
+            string imageMimeType,
+            string imageBase64)
+        {
+            return new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        role = "user",
+                        parts = new object[]
+                        {
+                            new { text = userMessage },
+                            new
+                            {
+                                inline_data = new
+                                {
+                                    mime_type = imageMimeType,
+                                    data = imageBase64
+                                }
+                            }
+                        }
+                    }
+                },
+                systemInstruction = string.IsNullOrWhiteSpace(systemPrompt) ? null : new
+                {
+                    parts = new[] { new { text = systemPrompt } }
+                },
+                generationConfig = new
+                {
+                    temperature = 0.2,
+                    maxOutputTokens = 1024
                 }
             };
         }
