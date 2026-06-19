@@ -48,6 +48,7 @@ builder.Services.AddApplicationServices();
 // User-related services
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<ArenaMVC.Services.IDashboardDataSeeder, ArenaMVC.Services.DashboardDataSeederService>();
 builder.Services.AddSingleton<IAnalyticsCacheVersionService, AnalyticsCacheVersionService>();
 
 // Booking dependencies (MVC Admin pages)
@@ -88,10 +89,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ArenaInfrastructure.Data.AppDbContext>();
     await context.Database.MigrateAsync();
     await TranslationSeeder.SeedAsync(context);
-    if (app.Environment.IsDevelopment())
-    {
-        await DashboardDataSeeder.SeedAsync(context);
-    }
+    // Dashboard demo data is now seeded on-demand via Admin Dashboard > Generate Demo Data
 }
 
 // Configure the HTTP request pipeline.
