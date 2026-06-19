@@ -26,6 +26,27 @@ public class ChatController : ControllerBase
         return Ok(result);
     }
 
+    // Send a voice note (recorded on device, uploaded on Send) — Gemini transcribes it
+    [HttpPost("voice")]
+    [RequestSizeLimit(20 * 1024 * 1024)]
+    public async Task<IActionResult> SendVoiceMessage(
+        [FromForm] IFormFile audio,
+        [FromForm] Guid memberProfileId,
+        [FromForm] Guid? conversationId)
+    {
+        if (audio is null || audio.Length == 0)
+            return BadRequest("No audio file provided.");
+
+        await using var stream = audio.OpenReadStream();
+        var result = await _chatService.SendVoiceMessageAsync(
+            memberProfileId,
+            conversationId,
+            stream,
+            audio.ContentType);
+
+        return Ok(result);
+    }
+
     // Get all conversations
     [HttpGet("conversations/{memberProfileId}")]
     public async Task<IActionResult> GetConversations(Guid memberProfileId)
