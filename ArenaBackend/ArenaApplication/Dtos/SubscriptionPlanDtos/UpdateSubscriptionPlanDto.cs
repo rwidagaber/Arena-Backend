@@ -1,4 +1,4 @@
-﻿namespace ArenaApplication.Dtos.SubscriptionPlanDtos
+namespace ArenaApplication.Dtos.SubscriptionPlanDtos
 {
     public class UpdateSubscriptionPlanDto
     {
@@ -11,5 +11,6 @@
         public decimal? Price { get; set; }
         public int? SessionLimit { get; set; }
         public bool? IsActive { get; set; }
+        public bool? HasAI { get; set; }
     }
 }

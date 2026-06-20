@@ -4,6 +4,7 @@ using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArenaInfrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260619222025_AddHasAIPropertyToPlans")]
+    partial class AddHasAIPropertyToPlans
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -845,7 +848,7 @@ namespace ArenaInfrastructure.Migrations
                             NameAr = "أساسي",
                             NameEn = "Basic",
                             Price = 400.00m,
-                            SessionLimit = 24
+                            SessionLimit = 4
                         },
                         new
                         {
@@ -860,7 +863,7 @@ namespace ArenaInfrastructure.Migrations
                             NameAr = "برو",
                             NameEn = "Pro",
                             Price = 1000.00m,
-                            SessionLimit = 72
+                            SessionLimit = 12
                         },
                         new
                         {
@@ -875,7 +878,7 @@ namespace ArenaInfrastructure.Migrations
                             NameAr = "بريميوم",
                             NameEn = "Premium",
                             Price = 1800.00m,
-                            SessionLimit = 144
+                            SessionLimit = 24
                         },
                         new
                         {
@@ -889,8 +892,7 @@ namespace ArenaInfrastructure.Migrations
                             IsDeleted = false,
                             NameAr = "ماكس",
                             NameEn = "Max",
-                            Price = 3000.00m,
-                            SessionLimit = 288
+                            Price = 3000.00m
                         },
                         new
                         {
@@ -904,8 +906,8 @@ namespace ArenaInfrastructure.Migrations
                             IsDeleted = false,
                             NameAr = "أساسي ذكي",
                             NameEn = "Basic AI",
-                            Price = 500.00m,
-                            SessionLimit = 24
+                            Price = 700.00m,
+                            SessionLimit = 4
                         },
                         new
                         {
@@ -919,8 +921,8 @@ namespace ArenaInfrastructure.Migrations
                             IsDeleted = false,
                             NameAr = "برو ذكي",
                             NameEn = "Pro AI",
-                            Price = 1100.00m,
-                            SessionLimit = 72
+                            Price = 1800.00m,
+                            SessionLimit = 12
                         },
                         new
                         {
@@ -934,8 +936,8 @@ namespace ArenaInfrastructure.Migrations
                             IsDeleted = false,
                             NameAr = "بريميوم ذكي",
                             NameEn = "Premium AI",
-                            Price = 1900.00m,
-                            SessionLimit = 144
+                            Price = 3200.00m,
+                            SessionLimit = 24
                         },
                         new
                         {
@@ -949,8 +951,7 @@ namespace ArenaInfrastructure.Migrations
                             IsDeleted = false,
                             NameAr = "ماكس ذكي",
                             NameEn = "Max AI",
-                            Price = 3100.00m,
-                            SessionLimit = 288
+                            Price = 5500.00m
                         });
                 });
 

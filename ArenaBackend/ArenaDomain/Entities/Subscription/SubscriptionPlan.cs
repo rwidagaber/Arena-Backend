@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Shared;
+using ArenaDomain.Shared;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,6 +18,7 @@ namespace ArenaDomain.Entities.Subscription
         public int? SessionLimit { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public bool HasAI { get; set; }
 
         public virtual ICollection<UserSubscription> UserSubscriptions { get; set; } = [];
     }

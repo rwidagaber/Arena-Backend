@@ -171,7 +171,6 @@ namespace ArenaApplication.Services
             return Result<AuthResponseDto>.Success(response);
         }
 
-
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
@@ -245,7 +244,8 @@ namespace ArenaApplication.Services
                     RemainingSessions = activeSubscription.RemainingSessions,
                     TotalSessions = activeSubscription.Plan?.SessionLimit ?? 0,
                     PaymentAmount = activeSubscription.Plan?.Price ?? 0,
-                    ReminderSent = activeSubscription.ReminderSent
+                    ReminderSent = activeSubscription.ReminderSent,
+                    HasAI = activeSubscription.Plan?.HasAI ?? false
                 }
             };
 
