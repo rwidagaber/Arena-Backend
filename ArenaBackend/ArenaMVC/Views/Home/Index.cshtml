@@ -1,0 +1,668 @@
+@using ArenaApplication.Dtos.Dashboard
+@using System.Globalization
+@using System.Text.Json
+@model AdminDashboardDto
+@{
+    ViewData["Title"] = Localizer["Arena"];
+
+    // Pre-calculate chart dimensions for the SVG
+    var maxAttendance = Model.WeeklyAttendance.Any() ? Model.WeeklyAttendance.Max(a => a.Count) : 1;
+    if (maxAttendance == 0) maxAttendance = 1;
+    var chartWidth = 480;
+    var chartHeight = 170;
+    var chartPadding = 20;
+    var usableWidth = chartWidth - (chartPadding * 2);
+    var dayCount = Model.WeeklyAttendance.Count;
+    var daySpacing = dayCount > 1 ? usableWidth / (dayCount - 1) : 0;
+
+    string GetTimeAgo(DateTime checkInTime)
+    {
+        var diff = DateTime.UtcNow - checkInTime;
+
+        if (diff.TotalMinutes < 1)
+            return Localizer["JustNow"].Value;
+        if (diff.TotalMinutes < 60)
+            return string.Format(Localizer["MinsAgo"].Value, ((int)diff.TotalMinutes).ToString(CultureInfo.InvariantCulture));
+        if (diff.TotalHours < 24)
+            return string.Format(Localizer["HrsAgo"].Value, ((int)diff.TotalHours).ToString(CultureInfo.InvariantCulture));
+
+        return string.Format(Localizer["DaysAgo"].Value, ((int)diff.TotalDays).ToString(CultureInfo.InvariantCulture));
+    }
+}
+
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--whiteout);
+        margin-bottom: 0.25rem;
+    }
+    
+    .dashboard-header p {
+        color: #A0A0AB;
+        font-size: 1rem;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .metric-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        border-color: var(--yellow);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    html[data-theme="light"] .metric-card {
+        background: linear-gradient( 180deg, #ffffff 0%, #f6faf1 100%);
+    }
+    html[data-theme="light"] .metric-card:hover {
+        border-color: var(--yellow);
+    }
+
+    .metric-icon {
+        width: 48px;
+        height: 48px;
+        background-color: var(--yellow);
+        border: 1px solid var(--active-bg);
+        color: #181818;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .metric-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-label {
+        font-size: 0.85rem;
+        color: #71717A;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--whiteout);
+        line-height: 1.2;
+        margin: 2px 0;
+    }
+
+    .metric-change {
+        font-size: 0.8rem;
+        color: #10B981;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .metric-change.negative {
+        color: #EF4444;
+    }
+
+    .dashboard-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-card {
+        min-height: 350px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--whiteout);
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 12px;
+        font-size: 0.8rem;
+        color: #A0A0AB;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .legend-color {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .mock-chart-container {
+        width: 100%;
+        height: 220px;
+        position: relative;
+    }
+
+    .mock-chart-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .recent-checkins-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .checkin-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex: 1;
+    }
+
+    .checkin-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .checkin-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .avatar {
+        width: 38px;
+        height: 38px;
+        background-color: var(--teal);
+        color: var(--whiteout);
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+    }
+
+    .checkin-details {
+        flex: 1;
+    }
+
+    .member-name {
+        font-weight: 600;
+        color: var(--whiteout);
+        font-size: 0.95rem;
+    }
+
+    .plan-badge {
+        font-size: 0.75rem;
+        background-color: rgba(111, 135, 134, 0.15);
+        color: var(--teal);
+        padding: 2px 8px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 2px;
+    }
+
+    .checkin-time {
+        font-size: 0.8rem;
+        color: #71717A;
+    }
+
+    .shortcuts-card {
+        margin-bottom: 1.5rem;
+    }
+
+    .shortcuts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 1rem;
+    }
+
+    html[data-theme="light"] .shortcut-btn {
+		background: linear-gradient(180deg, #ffffff 0%, #f6faf1 100%);
+    }
+    .shortcut-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+        background-color: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--whiteout);
+        font-weight: 500;
+        font-size: 0.9rem;
+        gap: 8px;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+
+
+    .shortcut-btn:hover {
+        background-color: var(--hover-bg);
+        border-color: var(--yellow);
+        color: var(--yellow);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .shortcut-icon {
+        background-color: var(--yellow);
+        border: 1px solid var(--active-bg);
+        color: #181818;
+        border-radius: 10px;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+    }
+
+    .empty-checkins {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: #71717A;
+        font-size: 0.9rem;
+        text-align: center;
+        flex: 1;
+    }
+
+    .empty-checkins-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="dashboard-header">
+    <h1>@Localizer["Welcome1"]</h1>
+    <p>@Localizer["subWelcom"]</p>
+</div>
+
+<!-- Metrics Dashboard Grid -->
+<div class="metrics-grid">
+    <!-- Total Members -->
+    <div class="metric-card">
+        <div class="metric-icon"><i data-lucide="users"></i></div>
+        <div class="metric-info">
+            <span class="metric-label">@Localizer["TotalMembers"]</span>
+            <span class="metric-value">@Model.TotalMembers.ToString("N0", CultureInfo.InvariantCulture)</span>
+            <span class="metric-change @(Model.MemberGrowthPercent < 0 ? "negative" : "")">
+                @(Model.MemberGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.MemberGrowthPercent).ToString("0.##", CultureInfo.InvariantCulture)% @Localizer["ThisMonth"]
+            </span>
+        </div>
+    </div>
+    
+    <!-- Active Subscriptions -->
+    <div class="metric-card">
+        <div class="metric-icon"><i data-lucide="trending-up"></i></div>
+        <div class="metric-info">
+            <span class="metric-label">@Localizer["ActiveSubscriptions"]</span>
+            <span class="metric-value">@Model.ActiveSubscriptions.ToString("N0", CultureInfo.InvariantCulture)</span>
+            <span class="metric-change @(Model.SubscriptionGrowthPercent < 0 ? "negative" : "")">
+                @(Model.SubscriptionGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.SubscriptionGrowthPercent).ToString("0.##", CultureInfo.InvariantCulture)% @Localizer["ThisMonth"]
+            </span>
+        </div>
+    </div>
+    
+    <!-- Monthly Revenue -->
+    <div class="metric-card">
+        <div class="metric-icon"><i data-lucide="dollar-sign"></i></div>
+        <div class="metric-info">
+            <span class="metric-label">@Localizer["MonthlyRevenue"]</span>
+            <span class="metric-value">@Model.MonthlyRevenue.ToString("N0", CultureInfo.InvariantCulture) @Localizer["Currency"]</span>
+            <span class="metric-change @(Model.RevenueGrowthPercent < 0 ? "negative" : "")">
+                @(Model.RevenueGrowthPercent >= 0 ? "▲" : "▼") @Math.Abs(Model.RevenueGrowthPercent).ToString("0.##", CultureInfo.InvariantCulture)% @Localizer["VsLastMonth"]
+            </span>
+        </div>
+    </div>
+    
+    <!-- Active Plans -->
+    <div class="metric-card">
+        <div class="metric-icon"><i data-lucide="key"></i></div>
+        <div class="metric-info">
+            <span class="metric-label">@Localizer["ActivePlans"]</span>
+            <span class="metric-value">@Model.ActivePlans.ToString(CultureInfo.InvariantCulture) @Localizer["Plans1"]</span>
+            <span class="metric-change">@Model.TotalPlans.ToString(CultureInfo.InvariantCulture) @Localizer["TotalPlans"]</span>
+        </div>
+    </div>
+
+    <!-- Expiring Subscriptions -->
+    <div class="metric-card">
+        <div class="metric-icon">⏳</div>
+        <div class="metric-info">
+            <span class="metric-label">@Localizer["ExpiringSoon"]</span>
+            <span class="metric-value">@Model.ExpiringSubscriptions.ToString(CultureInfo.InvariantCulture)</span>
+            <span class="metric-change @(Model.ExpiringSubscriptions > 0 ? "negative" : "")">
+                @(Model.ExpiringSubscriptions > 0 ? "⚠" : "✓") @Localizer["Within7Days"]
+            </span>
+        </div>
+    </div>
+
+    <!-- Today's Attendance -->
+    <div class="metric-card">
+        <div class="metric-icon">🏋️</div>
+        <div class="metric-info">
+            <span class="metric-label">@Localizer["AttendanceToday"]</span>
+            <span class="metric-value">@Model.TodayAttendance.ToString(CultureInfo.InvariantCulture)</span>
+            <span class="metric-change">@Localizer["CheckInsToday"]</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Layout Grid -->
+<div class="dashboard-layout">
+    <!-- Line Chart Component -->
+    <div class="dashboard-card chart-card">
+        <div class="chart-header">
+            <h2 class="chart-title">@Localizer["WeeklyAttendanceAndCheckins"]</h2>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: var(--yellow);"></span>
+                    <span>@Localizer["CheckIns"]</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mock-chart-container">
+            <div class="chart-tooltip" id="homeChartTooltip"></div>
+            <svg class="mock-chart-svg" viewBox="0 0 520 220" preserveAspectRatio="none">
+                <!-- Grid Lines -->
+                <line x1="0" y1="50" x2="500" y2="50" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
+                <line x1="0" y1="100" x2="500" y2="100" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
+                <line x1="0" y1="150" x2="500" y2="150" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
+                
+                <!-- SVG Area Gradients -->
+                <defs>
+                    <linearGradient id="yellowGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="var(--yellow)" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="var(--yellow)" stop-opacity="0.0"/>
+                    </linearGradient>
+                </defs>
+                
+                @if (Model.WeeklyAttendance.Any(a => a.Count > 0))
+                {
+                    // Calculate Y positions for each day
+                    var points = new List<(int X, int Y)>();
+                    for (int i = 0; i < dayCount; i++)
+                    {
+                        var x = chartPadding + (i * daySpacing);
+                        var ratio = (double)Model.WeeklyAttendance[i].Count / maxAttendance;
+                        var y = (int)(chartHeight - (ratio * (chartHeight - 30)) + 10);
+                        points.Add((x, y));
+                    }
+
+                    // Build SVG path
+                    var pathPoints = string.Join(" L ", points.Select(p => $"{p.X} {p.Y}"));
+                    var linePath = $"M {pathPoints}";
+                    var areaPath = $"M {pathPoints} L {points.Last().X} 200 L {points.First().X} 200 Z";
+
+                    <!-- Area Fill -->
+                    <path d="@areaPath" fill="url(#yellowGradient)" />
+                    <!-- Line -->
+                    <path d="@linePath" fill="none" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+                    // Data point circles
+                    var dayOfWeekOrder = new[]
+                    {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+                    };
+
+                    for (int i = 0; i < points.Count; i++)
+                    {
+                        var point = points[i];
+                        var rawCount = Model.WeeklyAttendance[i].Count;
+                        var dow = dayOfWeekOrder[i];
+                        var localizedDay = CultureInfo.CurrentUICulture.DateTimeFormat.GetDayName(dow);
+
+                        <!-- Hit Area Circle for Hover -->
+                        <circle cx="@point.X" cy="@point.Y" r="12" fill="transparent" style="cursor: pointer;" class="chart-point-hitarea" data-index="@i" data-day="@localizedDay" data-count="@rawCount" />
+
+                        <!-- Visible Circle -->
+                        <circle id="point-circle-@i" cx="@point.X" cy="@point.Y" r="5" fill="var(--yellow)" stroke="#16161A" stroke-width="2" class="chart-point" data-index="@i" />
+                    }
+                }
+                else
+                {
+                    <!-- Flat line when no data -->
+                    <line x1="@chartPadding" y1="170" x2="@(chartPadding + usableWidth)" y2="170" stroke="var(--yellow)" stroke-width="2" stroke-opacity="0.3" />
+                }
+                
+                <!-- X-Axis Labels -->
+                @{
+                    var dayOfWeekOrderForLabels = new[]
+                    {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+                    };
+                }
+                @for (int i = 0; i < Model.WeeklyAttendance.Count; i++)
+                {
+                    var xPos = chartPadding + (i * daySpacing);
+                    var dow = dayOfWeekOrderForLabels[i];
+                    var localizedAbbr = CultureInfo.CurrentUICulture.DateTimeFormat.GetAbbreviatedDayName(dow);
+                    @Html.Raw($"<text x=\"{xPos}\" y=\"210\" fill=\"#71717A\" font-size=\"11\" font-family=\"Outfit\" text-anchor=\"middle\">{localizedAbbr}</text>")
+                }
+                <!-- Area path underneath line -->
+                @* <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40 L 480 200 L 0 200 Z" fill="url(#yellowGradient)" />
+                
+                <!-- Glow Line Chart -->
+                <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40" fill="none" stroke="var(--yellow)" stroke-width="4" stroke-linecap="round" />
+                
+                <!-- Data Points -->
+                <circle cx="80" cy="115" r="5" fill="var(--yellow)" stroke="var(--card-bg)" stroke-width="2" />
+                <circle cx="160" cy="110" r="5" fill="var(--yellow)" stroke="var(--card-bg)" stroke-width="2" />
+                <circle cx="240" cy="85" r="5" fill="var(--yellow)" stroke="var(--card-bg)" stroke-width="2" />
+                <circle cx="320" cy="60" r="5" fill="var(--yellow)" stroke="var(--card-bg)" stroke-width="2" />
+                <circle cx="400" cy="50" r="5" fill="var(--yellow)" stroke="var(--card-bg)" stroke-width="2" />
+                <circle cx="480" cy="40" r="5" fill="var(--yellow)" stroke="var(--card-bg)" stroke-width="2" />
+                
+                <!-- X-Axis Labels -->
+                <text x="5" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Mon</text>
+                <text x="85" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Tue</text>
+                <text x="165" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Wed</text>
+                <text x="245" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Thu</text>
+                <text x="325" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Fri</text>
+                <text x="405" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Sat</text>
+                <text x="465" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Sun</text> *@
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Sidebar column: Quick Actions & Live feed -->
+    <div>
+        <!-- Quick shortcuts -->
+    <div>
+        <div class="dashboard-card shortcuts-card">
+            <h3 class="chart-title">@Localizer["QuickAdministration"]</h3>
+            <div class="shortcuts-grid">
+                <a href="@Url.Action("Create", "SubscriptionPlans")" class="shortcut-btn">
+                    <i data-lucide="plus" class="shortcut-icon"></i>
+                    <span>@Localizer["CreateSubscriptionPlan"]</span>
+                </a>
+                <a href="@Url.Action("Index", "SubscriptionPlans")" class="shortcut-btn">
+                    <i data-lucide="clipboard-list" class="shortcut-icon"></i>
+                    <span>@Localizer["SubscriptionPlans"]</span>
+                </a>
+                <a href="@Url.Action("Privacy", "Home")" class="shortcut-btn" style="grid-column: span 2;">
+                    <i data-lucide="shield" class="shortcut-icon"></i>
+                    <span>@Localizer["Privacy"]</span>
+                </a>
+            </div>
+        </div>
+
+        
+        <!-- Recent Check-ins -->
+        <div class="dashboard-card recent-checkins-card">
+            <h3 class="chart-title">@Localizer["LiveGymCheckins"]</h3>
+            @if (Model.RecentCheckIns.Any())
+            {
+                <div class="checkin-list">
+                    @foreach (var checkIn in Model.RecentCheckIns)
+                    {
+                        <div class="checkin-item">
+                            <div class="avatar" style="background-color: @checkIn.AvatarColor;">@checkIn.Initials</div>
+                            <div class="checkin-details">
+                                <div class="member-name">@checkIn.MemberName</div>
+                                <div class="plan-badge">@checkIn.PlanName</div>
+                            </div>
+                            <div class="checkin-time">@GetTimeAgo(checkIn.CheckInTime)</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-checkins">
+                    <div class="empty-checkins-icon">🏋️</div>
+                    <span>@Localizer["NoCheckInsYetToday"]</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const container = document.querySelector('.mock-chart-container');
+            if (!container) return;
+
+            const svg = container.querySelector('.mock-chart-svg');
+            const tip = document.getElementById('homeChartTooltip');
+            const hitAreas = container.querySelectorAll('.chart-point-hitarea');
+
+            hitAreas.forEach(hitArea => {
+                const index = hitArea.getAttribute('data-index');
+                const day = hitArea.getAttribute('data-day');
+                const count = hitArea.getAttribute('data-count');
+                const circle = document.getElementById(`point-circle-${index}`);
+
+                const enterHandler = () => {
+                    if (circle) {
+                        circle.setAttribute('r', '7');
+                    }
+
+                    const labelText = @Html.Raw(JsonSerializer.Serialize(Localizer["CheckIns"].Value));
+                    const dateLabelText = @Html.Raw(JsonSerializer.Serialize(Localizer["Date"].Value));
+
+                    tip.innerHTML = `
+                        <div class="chart-tooltip-row">
+                            <span class="chart-tooltip-dot" style="background: var(--yellow)"></span>
+                            <span class="chart-tooltip-label">${labelText}</span>
+                        </div>
+                        <div class="chart-tooltip-value">${count}</div>
+                        <div class="chart-tooltip-divider"></div>
+                        <div class="chart-tooltip-label">${dateLabelText}: ${day}</div>
+                    `;
+
+                    tip.style.display = 'flex';
+                    tip.style.opacity = '0';
+
+                    const svgRect = svg.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+
+                    const cx = parseFloat(hitArea.getAttribute('cx'));
+                    const cy = parseFloat(hitArea.getAttribute('cy'));
+
+                    // SVG viewBox width is 520, height is 220
+                    const scaleX = svgRect.width / 520;
+                    const scaleY = svgRect.height / 220;
+
+                    const pixCx = cx * scaleX + (svgRect.left - containerRect.left);
+                    const pixCy = cy * scaleY + (svgRect.top - containerRect.top);
+
+                    const tipW = tip.offsetWidth;
+                    const tipH = tip.offsetHeight;
+
+                    const isRtl = document.documentElement.dir === 'rtl';
+                    let left = isRtl ? pixCx - tipW - 8 : pixCx + 8;
+                    let top = pixCy - tipH - 10;
+
+                    // Clamp within container boundaries
+                    const containerW = containerRect.width;
+                    if (left + tipW > containerW - 4) left = containerW - tipW - 4;
+                    if (left < 4) left = 4;
+                    if (top < 4) top = pixCy + 18;
+
+                    tip.style.left = `${left}px`;
+                    tip.style.top = `${top}px`;
+
+                    // Trigger reflow
+                    void tip.offsetWidth;
+                    tip.classList.add('visible');
+                    tip.style.opacity = '';
+                };
+
+                const leaveHandler = () => {
+                    if (circle) {
+                        circle.setAttribute('r', '5');
+                    }
+                    tip.classList.remove('visible');
+                    // Wait for transition to complete
+                    setTimeout(() => {
+                        if (!tip.classList.contains('visible')) {
+                            tip.style.display = 'none';
+                        }
+                    }, 160);
+                };
+
+                hitArea.addEventListener('mouseenter', enterHandler);
+                hitArea.addEventListener('mouseleave', leaveHandler);
+                if (circle) {
+                    circle.addEventListener('mouseenter', enterHandler);
+                    circle.addEventListener('mouseleave', leaveHandler);
+                }
+            });
+        })();
+    </script>
+}

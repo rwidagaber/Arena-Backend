@@ -1,0 +1,180 @@
+﻿CATEGORY: Exercise - Knee Injury
+Safe exercises for knee injury:
+- Seated leg curl: targets hamstrings, no knee stress
+- Hip thrust: glutes activation, knee-friendly
+- Swimming: zero impact, full body
+- Upper body focus: chest press, rows, shoulder press
+- Resistance band exercises: light, controlled movement
+Avoid: Squats, Lunges, Leg Press, Running, Jumping
+Recovery tip: Ice knee after workout for 15 minutes
+---
+CATEGORY: Exercise - Lower Back
+Safe exercises for lower back pain:
+- Bird dog: core stability
+- Dead bug: back-friendly core work
+- Plank variations: builds core without back stress
+- Light swimming: decompresses spine
+Avoid: Deadlifts, Sit-ups, Heavy Squats, Bent-over rows
+---
+CATEGORY: Nutrition - Pre Workout
+Best pre-workout foods (1-2 hours before):
+- Banana + peanut butter: 40g carbs, sustained energy
+- Oats with honey: slow release carbs
+- Rice cakes: light, easy to digest
+- Greek yogurt + berries: protein + carbs
+- Avoid: Heavy fats, fried food, large portions
+Timing: Eat 1-2 hours before training
+---
+CATEGORY: Nutrition - Post Workout
+Best post-workout foods (within 30 minutes):
+- Protein shake + banana: fast protein + carbs
+- Chicken breast + white rice: complete meal
+- Eggs + toast: affordable, effective
+- Chocolate milk: research-backed recovery drink
+Protein target: 25-40g within 30 min
+---
+CATEGORY: Nutrition - Muscle Gain
+Nutrition rules for muscle gain:
+- Caloric surplus: 300-500 calories above maintenance
+- Protein: 1.6-2.2g per kg bodyweight daily
+- Carbs: 4-7g per kg for energy
+- Meal timing: Every 3-4 hours
+- Pre-sleep protein: casein or cottage cheese
+---
+CATEGORY: Nutrition - Weight Loss
+Nutrition rules for weight loss:
+- Caloric deficit: 400-500 calories below maintenance
+- High protein: 2g per kg to preserve muscle
+- Fiber: 25-35g daily for satiety
+- Water: minimum 2.5L daily
+- Avoid: Liquid calories, refined sugar, processed food
+---
+CATEGORY: Nutrition - Diabetes
+Nutrition for diabetic gym members:
+- Check blood sugar before and after training
+- Eat complex carbs: sweet potato, brown rice, oats
+- Avoid: White bread, sugary drinks, simple sugars
+- Pre-workout snack: small, low-glycemic
+- Keep glucose tablets nearby during training
+---
+CATEGORY: Health - Heart Rate Zones
+Heart rate training zones:
+- Zone 1 (50-60%): Recovery, warm-up
+- Zone 2 (60-70%): Fat burning, aerobic base
+- Zone 3 (70-80%): Aerobic, cardio improvement
+- Zone 4 (80-90%): Anaerobic, performance
+- Zone 5 (90-100%): Maximum, sprints only
+Max heart rate formula: 220 - age
+---
+CATEGORY: Recovery
+Recovery guidelines:
+- Sleep: 7-9 hours for muscle repair
+- Rest days: minimum 1-2 per week
+- Signs of overtraining: fatigue, poor sleep, irritability
+- Active recovery: light walking, stretching, swimming
+- Protein before sleep: 30-40g casein for overnight repair
+---
+CATEGORY: Beginner Training
+Guidelines for beginner gym members:
+- Start with 3 days per week
+- Focus on form before weight
+- Compound movements first: squat, bench, deadlift
+- Progressive overload: add 2.5-5kg every 2 weeks
+- Rest between sets: 60-90 seconds
+- Full body workouts recommended for first 3 months
+---
+CATEGORY: Training - Hypertrophy
+Hypertrophy training guidelines:
+- Weekly volume: 10-20 hard sets per muscle group
+- Rep ranges: mostly 6-12 reps for compounds, 10-20 reps for isolation
+- Intensity: finish most sets with 1-3 reps in reserve
+- Rest: 2-3 minutes for heavy compounds, 60-90 seconds for isolation
+- Progression: add reps first, then add small weight when top of rep range is reached
+- Technique: controlled eccentric, full comfortable range of motion, stable joints
+---
+CATEGORY: Training - Fat Loss
+Training for fat loss:
+- Strength train 3-4 days per week to preserve muscle
+- Add 2-4 cardio sessions per week depending on recovery
+- Zone 2 cardio: 25-45 minutes at conversational pace
+- Steps: aim for 7,000-10,000 daily steps when appropriate
+- Do not replace resistance training with excessive cardio
+- Keep protein high and use a moderate calorie deficit
+---
+CATEGORY: Nutrition - Protein Targets
+Protein guidelines:
+- General fitness: 1.6-2.0g protein per kg bodyweight daily
+- Muscle gain: 1.6-2.2g/kg daily
+- Fat loss: 1.8-2.4g/kg daily to preserve lean mass
+- Per meal target: 25-45g protein, 3-5 meals per day
+- Good sources: chicken, tuna, eggs, Greek yogurt, lean beef, lentils, beans, whey
+- Spread protein across the day instead of eating most of it at night
+---
+CATEGORY: Nutrition - Hydration
+Hydration guidelines:
+- Baseline water: 30-40ml per kg bodyweight daily
+- Add 500-1000ml around training depending on sweat and heat
+- Urine color should usually be pale yellow
+- For long or very sweaty sessions, include sodium/electrolytes
+- Dehydration signs: headache, dizziness, low performance, dark urine
+---
+CATEGORY: Safety - Red Flags
+Exercise red flags:
+- Chest pain, fainting, severe shortness of breath, sudden weakness, or severe dizziness require urgent medical help
+- Sharp joint pain, swelling, numbness, or pain that worsens during exercise means stop that movement
+- For diabetes: monitor blood glucose around exercise and keep fast carbs available
+- For uncontrolled blood pressure or heart disease: get clinician clearance before intense training
+---
+CATEGORY: Coaching - Professional Answer Structure
+Professional trainer reply pattern:
+- Start with the user's first name when natural
+- Give the direct answer first
+- Give exact action steps: sets, reps, rest, RPE, grams, calories, liters, or timing
+- Explain one short reason behind the recommendation
+- Ask only one follow-up question if needed
+- Match the user's language exactly: Arabic user message gets Arabic coaching; English user message gets English coaching
+---
+CATEGORY: Training - Progressive Overload
+Progressive overload rules:
+- Keep 1-3 reps in reserve for most working sets
+- Add reps before adding weight when technique is still developing
+- Increase weight by the smallest available jump after reaching the top of the target rep range
+- Deload or reduce volume if performance drops for two sessions, sleep is poor, or joint pain increases
+- Track exercises, sets, reps, load, and RPE every session
+---
+CATEGORY: Training - Warmup and Mobility
+Warmup guidelines:
+- Start with 5-8 minutes light cardio or dynamic movement
+- Do 1-3 ramp-up sets before heavy compound exercises
+- Warmups should prepare joints and raise temperature, not fatigue the member
+- For shoulders: include band pull-aparts, face pulls, and external rotations
+- For hips: include glute bridges, bodyweight hinges, and hip openers
+---
+CATEGORY: Training - Shoulder Pain
+Shoulder-friendly training:
+- Prefer neutral-grip dumbbell press, cable rows, face pulls, landmine press, and controlled lateral raises
+- Avoid painful overhead pressing, deep dips, behind-the-neck movements, and aggressive upright rows
+- Keep elbows 30-45 degrees from the torso on pressing
+- Use lighter loads, slower tempo, and stop if pain is sharp or worsening
+---
+CATEGORY: Nutrition - Egyptian Food Swaps
+Simple local food swaps:
+- Protein: eggs, chicken breast, tuna, lean kofta, cottage cheese, Greek yogurt, lentils, beans, fava beans
+- Carbs: rice, potatoes, sweet potatoes, oats, baladi bread, fruit
+- Healthy fats: olive oil, tahini in controlled portions, nuts, avocado
+- Fat loss plate: half vegetables, quarter lean protein, quarter carbs
+- Muscle gain plate: protein serving plus larger carb serving around training
+---
+CATEGORY: Nutrition - Meal Timing
+Meal timing:
+- Pre-workout 60-120 minutes: carbs plus lean protein, low fat if digestion is sensitive
+- Post-workout within 2 hours: 25-45g protein plus carbs if the session was hard
+- Before sleep: slow protein such as Greek yogurt, cottage cheese, eggs, or casein can help daily protein targets
+- Total daily calories and protein matter more than perfect timing
+---
+CATEGORY: Recovery - Soreness
+Soreness guidance:
+- Mild soreness for 24-72 hours is common after new training
+- Keep moving with light cardio, mobility, and easy sets
+- Do not train through sharp joint pain, swelling, numbness, or pain that changes technique
+- Prioritize sleep, hydration, protein, and gradual progression

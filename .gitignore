@@ -1,0 +1,43 @@
+# ========================
+# Build Output
+# ========================
+bin/
+obj/
+out/
+publish/
+artifacts/
+**/artifacts/
+
+# ========================
+# IDE & Editor
+# ========================
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln.docstates
+*.VC.db
+*.VC.opendb
+
+# ========================
+# Secrets & Environment
+# ========================
+.env
+.env.*
+appsettings.Development.json
+
+*.pfx
+*.p12
+secrets.json
+
+# ========================
+# Logs & Temp Files
+# ========================
+*.log
+*.tmp
+*.cache
+Logs/
+TestResults/
+
+

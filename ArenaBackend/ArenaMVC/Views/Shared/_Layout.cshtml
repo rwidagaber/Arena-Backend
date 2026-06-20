@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name" dir="@(System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @Localizer["Arena"]</title>
+    <script type="importmap"></script>
+    <script>
+        (function () {
+            const theme = localStorage.getItem('arena-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            if (theme === 'light') {
+                document.documentElement.style.colorScheme = 'light';
+            } else {
+                document.documentElement.style.colorScheme = 'dark';
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @if (System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft)
+    {
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    }
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/StyleSheet.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ArenaMVC.styles.css?v=@DateTime.UtcNow.Ticks" asp-append-version="true" />
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+        </div>
+        <nav class="sidebar-nav">
+            @{
+                var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+            }
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">
+                        <i data-lucide="home" class="nav-icon"></i>
+                        <span>@Localizer["Home"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
+                        <i data-lucide="shield" class="nav-icon"></i>
+                        <span>@Localizer["Privacy"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "SubscriptionPlans" ? "active" : "")" asp-area="" asp-controller="SubscriptionPlans" asp-action="Index">
+                        <i data-lucide="credit-card" class="nav-icon"></i>
+                        <span>@Localizer["SubscriptionPlans"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "UserManagement" ? "active" : "")" asp-area="" asp-controller="UserManagement" asp-action="Index">
+                        <i data-lucide="users" class="nav-icon"></i>
+                        <span>@Localizer["UserManagement"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "AdminBooking" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="AdminBooking" asp-action="Index">
+                        <i data-lucide="calendar" class="nav-icon"></i>
+                        <span>@Localizer["Bookings"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "AdminAnalytics" && currentAction == "Dashboard" ? "active" : "")" asp-area="" asp-controller="AdminAnalytics" asp-action="Dashboard">
+                        <i data-lucide="chart-line" class="nav-icon"></i>
+                        <span>@Localizer["AnalyticsDashboard"]</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    <div class="main-content">
+        <header class="main-header">
+            <div class="header-left">
+                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div class="header-brand">
+                    <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+                </div>
+            </div>
+            <div class="header-right">
+                <!-- Theme Toggle Button -->
+                <button type="button" class="theme-toggle-btn" id="themeToggle" aria-label="Toggle Theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+
+                <!-- Modern Language Switcher -->
+                <partial name="_LanguageSwitcher" />
+            </div>
+        </header>
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+        <footer class="border-top footer text-muted">
+            <div class="container">
+                &copy; 2026 - @Localizer["Arena"] - <a asp-area="" asp-controller="Home" asp-action="Privacy">@Localizer["Privacy"]</a>
+            </div>
+        </footer>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Lucide icons
+            lucide.createIcons();
+
+            // Theme toggle implementation
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function () {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('arena-theme', newTheme);
+                    document.documentElement.style.colorScheme = newTheme;
+                });
+            }
+
+            // Sidebar mobile toggle
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+                
+                overlay.addEventListener('click', function () {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.culture-dropdown.open').forEach(function (dd) {
+                if (!dd.contains(e.target)) {
+                    dd.classList.remove('open');
+                }
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

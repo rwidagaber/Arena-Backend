@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="ArenaApi/ArenaApi.csproj" Id="38c6532d-ddc4-49b5-b100-93c7813f10bf" />
+  <Project Path="ArenaApplication/ArenaApplication.csproj" />
+  <Project Path="ArenaDomain/ArenaDomain.csproj" />
+  <Project Path="ArenaInfrastructure/ArenaInfrastructure.csproj" />
+  <Project Path="ArenaMVC/ArenaMVC.csproj" />
+</Solution>

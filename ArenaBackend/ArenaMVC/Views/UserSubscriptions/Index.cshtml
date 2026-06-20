@@ -1,0 +1,221 @@
+@* @model ArenaMVC.Models.UserSubscriptionViewModel
+
+@{
+    ViewData["Title"] = Localizer["UserSubscriptions"];
+    var statuses = new[] { "Active", "Expired", "Cancelled", "Suspended" };
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1>🪪 @Localizer["UserSubscriptions"]</h1>
+            <p>@Localizer["ManageUserSubscriptions"]</p>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="subscription-alert success">
+                <strong>@Localizer["Success"]</strong> @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+
+        {{!-- Filters --}}
+        <div class="booking-filters-card mb-4">
+            <form method="get" id="subscriptionFiltersForm" class="row g-3 align-items-end">
+                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="statusSelect">@Localizer["Status"]</label>
+                    <select class="form-select" id="statusSelect" name="status">
+                        <option value="">@Localizer["All"]</option>
+                        @foreach (var s in statuses)
+                        {
+                            <option value="@s" selected="@(Model.StatusFilter == s ? "selected" : null)">
+                                @Localizer[s]
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="pageSizeSelect">@Localizer["RowsPerPage"]</label>
+                    <select class="form-select" id="pageSizeSelect" name="pageSize">
+                        @foreach (var size in new[] { 5, 10, 25, 50 })
+                        {
+                            <option value="@size" selected="@(Model.PageSize == size ? "selected" : null)">@size</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-5 d-flex gap-2 justify-content-md-end align-items-end">
+                    <button type="submit" class="btn btn-subscription-primary">🔍 @Localizer["Filter"]</button>
+                    <a class="btn btn-subscription-secondary" asp-controller="UserSubscriptions" asp-action="Index">@Localizer["Reset"]</a>
+                </div>
+            </form>
+        </div>
+
+        {{!-- Summary bar --}}
+        <div class="usub-summary-bar">
+            <span>
+                @Localizer["Showing"]
+                <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>–<strong>@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))</strong>
+                @Localizer["Of"] <strong>@Model.TotalCount</strong> @Localizer["Records"]
+            </span>
+            <span class="usub-page-info">@Localizer["Page"] @Model.Page @Localizer["Of"] @Model.TotalPages</span>
+        </div>
+
+        @if (Model.Items != null && Model.Items.Any())
+        {
+            <div class="table-responsive">
+                <table class="subscription-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["MemberName"]</th>
+                            <th>@Localizer["Plan"]</th>
+                            <th>@Localizer["Price"]</th>
+                            <th>@Localizer["StartDate"]</th>
+                            <th>@Localizer["EndDate"]</th>
+                            <th>@Localizer["Status"]</th>
+                            <th>@Localizer["RemainingSessions"]</th>
+                            <th>@Localizer["ReminderSent"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sub in Model.Items)
+                        {
+                            var statusClass = sub.Status switch
+                            {
+                                "Active"    => "usub-badge usub-badge-active",
+                                "Expired"   => "usub-badge usub-badge-expired",
+                                "Cancelled" => "usub-badge usub-badge-cancelled",
+                                _           => "usub-badge usub-badge-other"
+                            };
+                            <tr>
+                                <td>@sub.MemberName</td>
+                                <td>@sub.PlanName</td>
+                                <td>@CultureHelper.FormatCurrency(sub.PlanPrice)</td>
+                                <td>@CultureHelper.FormatDate(sub.StartDate)</td>
+                                <td>@CultureHelper.FormatDate(sub.EndDate)</td>
+                                <td><span class="@statusClass">@Localizer[sub.Status]</span></td>
+                                <td>@sub.RemainingSessions</td>
+                                <td>
+                                    @if (sub.ReminderSent)
+                                    {
+                                        <span class="usub-badge usub-badge-active">✓ @Localizer["Sent"]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="usub-badge usub-badge-other">— @Localizer["Pending"]</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div> *@
+
+            @* {{!-- Pagination controls --}} *@
+@*             @if (Model.TotalPages > 1)
+            {
+                <nav class="usub-pagination" aria-label="Subscription pages">
+
+                    {{!-- Previous --}}
+                    @if (Model.HasPreviousPage)
+                    {
+                        <a class="usub-page-btn"
+                           href="@Url.Action("Index","UserSubscriptions", new { page = Model.Page - 1, pageSize = Model.PageSize, status = Model.StatusFilter })">
+                            ‹ @Localizer["Previous"]
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="usub-page-btn disabled">‹ @Localizer["Previous"]</span>
+                    }
+
+                    {{!-- Page numbers --}}
+                    @{
+                        int startPage = Math.Max(1, Model.Page - 2);
+                        int endPage   = Math.Min(Model.TotalPages, startPage + 4);
+                        if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                    }
+
+                    @if (startPage > 1)
+                    {
+                        <a class="usub-page-btn"
+                           href="@Url.Action("Index","UserSubscriptions", new { page = 1, pageSize = Model.PageSize, status = Model.StatusFilter })">1</a>
+                        if (startPage > 2) { <span class="usub-page-ellipsis">…</span> }
+                    }
+
+                    @for (int p = startPage; p <= endPage; p++)
+                    {
+                        if (p == Model.Page)
+                        {
+                            <span class="usub-page-btn active">@p</span>
+                        }
+                        else
+                        {
+                            <a class="usub-page-btn"
+                               href="@Url.Action("Index","UserSubscriptions", new { page = p, pageSize = Model.PageSize, status = Model.StatusFilter })">@p</a>
+                        }
+                    }
+
+                    @if (endPage < Model.TotalPages)
+                    {
+                        if (endPage < Model.TotalPages - 1) { <span class="usub-page-ellipsis">…</span> }
+                        <a class="usub-page-btn"
+                           href="@Url.Action("Index","UserSubscriptions", new { page = Model.TotalPages, pageSize = Model.PageSize, status = Model.StatusFilter })">@Model.TotalPages</a>
+                    }
+
+                    {{!-- Next --}}
+                    @if (Model.HasNextPage)
+                    {
+                        <a class="usub-page-btn"
+                           href="@Url.Action("Index","UserSubscriptions", new { page = Model.Page + 1, pageSize = Model.PageSize, status = Model.StatusFilter })">
+                            @Localizer["Next"] ›
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="usub-page-btn disabled">@Localizer["Next"] ›</span>
+                    }
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="subscription-empty-state">
+                <div class="subscription-empty-state-icon">📭</div>
+                <h3>@Localizer["NoUserSubscriptionsFound"]</h3>
+                <p>@Localizer["NoUserSubscriptionsDescription"]</p>
+            </div>
+        }
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const statusSel   = document.getElementById('statusSelect');
+            const pageSizeSel = document.getElementById('pageSizeSelect');
+            const form        = document.getElementById('subscriptionFiltersForm');
+            if (!form) return;
+
+            [statusSel, pageSizeSel].forEach(function (el) {
+                if (el) el.addEventListener('change', function () { form.submit(); });
+            });
+        })();
+    </script>
+} *@

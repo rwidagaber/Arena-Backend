@@ -1,0 +1,96 @@
+@model ArenaMVC.Models.PaginationInfo
+
+@if (Model.TotalPages > 1)
+{
+    var routeData = new Dictionary<string, string>();
+    foreach (var query in ViewContext.HttpContext.Request.Query)
+    {
+        if (query.Key != "page")
+        {
+            routeData[query.Key] = query.Value.ToString() ?? "";
+        }
+    }
+
+    <nav class="usub-pagination" aria-label="Page navigation">
+        @* Previous Button *@
+        @if (Model.HasPreviousPage)
+        {
+            var prevRoute = new Dictionary<string, string>(routeData);
+            prevRoute["page"] = (Model.Page - 1).ToString();
+            prevRoute["pageSize"] = Model.PageSize.ToString();
+            <a class="usub-page-btn" asp-all-route-data="prevRoute">
+                <span class="usub-arrow-prev">&lsaquo;</span> @Localizer["Previous"]
+            </a>
+        }
+        else
+        {
+            <span class="usub-page-btn disabled">
+                <span class="usub-arrow-prev">&lsaquo;</span> @Localizer["Previous"]
+            </span>
+        }
+
+        @* Page Numbers *@
+        @{
+            int startPage = Math.Max(1, Model.Page - 2);
+            int endPage = Math.Min(Model.TotalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+        }
+
+        @if (startPage > 1)
+        {
+            var firstRoute = new Dictionary<string, string>(routeData);
+            firstRoute["page"] = "1";
+            firstRoute["pageSize"] = Model.PageSize.ToString();
+            <a class="usub-page-btn" asp-all-route-data="firstRoute">1</a>
+            if (startPage > 2)
+            {
+                <span class="usub-page-ellipsis">…</span>
+            }
+        }
+
+        @for (int p = startPage; p <= endPage; p++)
+        {
+            if (p == Model.Page)
+            {
+                <span class="usub-page-btn active">@p</span>
+            }
+            else
+            {
+                var pageRoute = new Dictionary<string, string>(routeData);
+                pageRoute["page"] = p.ToString();
+                pageRoute["pageSize"] = Model.PageSize.ToString();
+                <a class="usub-page-btn" asp-all-route-data="pageRoute">@p</a>
+            }
+        }
+
+        @if (endPage < Model.TotalPages)
+        {
+            if (endPage < Model.TotalPages - 1)
+            {
+                <span class="usub-page-ellipsis">…</span>
+            }
+            var lastRoute = new Dictionary<string, string>(routeData);
+            lastRoute["page"] = Model.TotalPages.ToString();
+            lastRoute["pageSize"] = Model.PageSize.ToString();
+            <a class="usub-page-btn" asp-all-route-data="lastRoute">@Model.TotalPages</a>
+        }
+
+        @* Next Button *@
+        @if (Model.HasNextPage)
+        {
+            var nextRoute = new Dictionary<string, string>(routeData);
+            nextRoute["page"] = (Model.Page + 1).ToString();
+            nextRoute["pageSize"] = Model.PageSize.ToString();
+            <a class="usub-page-btn" asp-all-route-data="nextRoute">
+                @Localizer["Next"] <span class="usub-arrow-next">&rsaquo;</span>
+            </a>
+        }
+        else
+        {
+            <span class="usub-page-btn disabled">
+                @Localizer["Next"] <span class="usub-arrow-next">&rsaquo;</span>
+            </span>
+        }
+    </nav>
+}
+
