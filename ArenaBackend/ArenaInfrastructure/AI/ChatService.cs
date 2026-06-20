@@ -120,8 +120,8 @@ namespace ArenaInfrastructure.AI
                 .ToListAsync();
 
             // Fetch upcoming bookings for context
-            var upcomingBookings = await _bookingRepo.FindAsync(b => 
-                b.MemberProfileId == profile.Id && 
+            var upcomingBookings = await _bookingRepo.FindAsync(b =>
+                b.MemberProfileId == profile.Id &&
                 b.BookingDate.Date >= DateTime.UtcNow.Date &&
                 b.Status != BookingStatus.Cancelled);
 
@@ -296,7 +296,7 @@ namespace ArenaInfrastructure.AI
                     {
                         var targetDate = intent.Date != null
                             ? DateTime.Parse(intent.Date)
-                            : DateTime.Today;
+                            : DateTime.UtcNow.AddHours(3).Date; // Use Egypt time (UTC+3) not server local
 
                         var targetTime = intent.Time != null
                             ? TimeSpan.Parse(intent.Time)
@@ -332,12 +332,14 @@ namespace ArenaInfrastructure.AI
                                                "11:00","12:00","13:00","14:00","15:00",
                                                "16:00","17:00","18:00","19:00","20:00" };
 
+                            // Use Egypt time (UTC+3) throughout to avoid midnight date-boundary issues
+                            var egyptNow = DateTime.UtcNow.AddHours(3);
+                            var egyptToday = egyptNow.Date;
+
                             IEnumerable<string> slotsToShow = allSlots;
-                            if (targetDate.Date == DateTime.Today)
+                            if (targetDate.Date == egyptToday)
                             {
-                                // We add 3 hours to UTC for standard Middle East time zone alignment if needed, 
-                                // but we'll use DateTime.Now assuming the server's local time matches the gym.
-                                var currentTime = DateTime.Now.TimeOfDay;
+                                var currentTime = egyptNow.TimeOfDay;
                                 slotsToShow = allSlots.Where(s => TimeSpan.Parse(s) > currentTime);
                             }
 
@@ -357,9 +359,9 @@ namespace ArenaInfrastructure.AI
                                 return $"  {slot} {level} ";
                             });
 
-                            var dateLabel = targetDate.Date == DateTime.Today.AddDays(1)
+                            var dateLabel = targetDate.Date == egyptToday.AddDays(1)
                                 ? (isArabic ? "بكرة" : "tomorrow")
-                                : targetDate.Date == DateTime.Today
+                                : targetDate.Date == egyptToday
                                 ? (isArabic ? "النهارده" : "today")
                                 : targetDate.ToString("dddd, MMMM dd");
 
@@ -539,10 +541,11 @@ namespace ArenaInfrastructure.AI
             var recentAssistantMessage = history
                 .Where(m => m.Sender == "assistant")
                 .Reverse()
-                .Take(3)
+                .Take(5)
                 .Select(m => m.MessageText.ToLowerInvariant())
                 .FirstOrDefault(text => ContainsAny(text,
-                    "available times", "tell me your preferred time", "الأوقات المتاحة", "قولي الوقت", "هحجزلك",
+                    "available times", "tell me your preferred time", "preferred time",
+                    "الأوقات المتاحة", "قولي الوقت", "هحجزلك", "اختار وقت",
                     "date and time of the booking you want to cancel", "تاريخ ووقت الحجز اللي عايز تلغيه",
                     "booking date and the new time", "تاريخ الحجز والوقت الجديد"));
 
@@ -636,16 +639,21 @@ namespace ArenaInfrastructure.AI
                 "booking",
                 "reserve",
                 "schedule",
+                "session",
                 "احجز",
                 "حجز",
                 "عايز اجي",
-                "موعد");
+                "عايز أجي",
+                "موعد",
+                "اجي",
+                "أجي");
         }
 
         private static bool TryParseBookingDate(string text, out DateTime date)
         {
             var normalized = text.ToLowerInvariant();
-            var today = DateTime.Today;
+            // Use Egypt time (UTC+3) as "today" reference to avoid midnight boundary issues
+            var today = DateTime.UtcNow.AddHours(3).Date;
 
             if (ContainsAny(normalized, "tomorrow", "بكرة", "بكره"))
             {
@@ -692,15 +700,80 @@ namespace ArenaInfrastructure.AI
             if (lastSlotReply == null)
                 return null;
 
+            // Use Egypt time (UTC+3) as "today" reference
+            var egyptToday = DateTime.UtcNow.AddHours(3).Date;
+
+            var slotReplyText = lastSlotReply.MessageText.ToLowerInvariant();
+            var dateFromLabel = TryParseDateFromSlotLabel(slotReplyText, egyptToday);
+            if (dateFromLabel.HasValue)
+                return dateFromLabel.Value;
+            if (ContainsAny(slotReplyText, "after tomorrow", "Ø¨Ø¹Ø¯ Ø¨ÙƒØ±Ø©", "Ø¨Ø¹Ø¯ Ø¨ÙƒØ±Ù‡"))
+                return egyptToday.AddDays(2);
+
+            if (ContainsAny(slotReplyText, "tomorrow", "Ø¨ÙƒØ±Ø©", "Ø¨ÙƒØ±Ù‡"))
+                return egyptToday.AddDays(1);
+
+            if (ContainsAny(slotReplyText, "today", "Ø§Ù„Ù†Ù‡Ø§Ø±Ø¯Ù‡", "Ø§Ù„Ù†Ù‡Ø§Ø±Ø¯Ø©", "Ø§Ù„ÙŠÙˆÙ…"))
+                return egyptToday;
+
             var weekday = DetectWeekday(lastSlotReply.MessageText.ToLowerInvariant());
             if (weekday.HasValue)
-                return NextOrSameWeekday(DateTime.Today, weekday.Value);
+                return NextOrSameWeekday(egyptToday, weekday.Value);
 
             if (ContainsAny(lastSlotReply.MessageText.ToLowerInvariant(), "today", "النهارده", "النهاردة", "اليوم"))
-                return DateTime.Today;
+                return egyptToday;
 
             if (ContainsAny(lastSlotReply.MessageText.ToLowerInvariant(), "tomorrow", "بكرة", "بكره"))
-                return DateTime.Today.AddDays(1);
+                return egyptToday.AddDays(1);
+
+            if (ContainsAny(lastSlotReply.MessageText.ToLowerInvariant(), "after tomorrow", "بعد بكرة", "بعد بكره"))
+                return egyptToday.AddDays(2);
+
+            return null;
+        }
+
+        private static DateTime? TryParseDateFromSlotLabel(string text, DateTime today)
+        {
+            var month = DetectMonth(text);
+            if (!month.HasValue)
+                return null;
+
+            var dayMatches = Regex.Matches(text, @"\b(?<day>\d{1,2})\b");
+            foreach (Match match in dayMatches)
+            {
+                if (!int.TryParse(match.Groups["day"].Value, out var day))
+                    continue;
+
+                try
+                {
+                    var date = new DateTime(today.Year, month.Value, day);
+                    if (date.Date < today.Date.AddDays(-1))
+                        date = date.AddYears(1);
+
+                    return date.Date;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                }
+            }
+
+            return null;
+        }
+
+        private static int? DetectMonth(string text)
+        {
+            if (ContainsAny(text, "january", "\u064a\u0646\u0627\u064a\u0631")) return 1;
+            if (ContainsAny(text, "february", "\u0641\u0628\u0631\u0627\u064a\u0631")) return 2;
+            if (ContainsAny(text, "march", "\u0645\u0627\u0631\u0633")) return 3;
+            if (ContainsAny(text, "april", "\u0623\u0628\u0631\u064a\u0644", "\u0627\u0628\u0631\u064a\u0644")) return 4;
+            if (ContainsAny(text, "may", "\u0645\u0627\u064a\u0648")) return 5;
+            if (ContainsAny(text, "june", "\u064a\u0648\u0646\u064a\u0648")) return 6;
+            if (ContainsAny(text, "july", "\u064a\u0648\u0644\u064a\u0648")) return 7;
+            if (ContainsAny(text, "august", "\u0623\u063a\u0633\u0637\u0633", "\u0627\u063a\u0633\u0637\u0633")) return 8;
+            if (ContainsAny(text, "september", "\u0633\u0628\u062a\u0645\u0628\u0631")) return 9;
+            if (ContainsAny(text, "october", "\u0623\u0643\u062a\u0648\u0628\u0631", "\u0627\u0643\u062a\u0648\u0628\u0631")) return 10;
+            if (ContainsAny(text, "november", "\u0646\u0648\u0641\u0645\u0628\u0631")) return 11;
+            if (ContainsAny(text, "december", "\u062f\u064a\u0633\u0645\u0628\u0631")) return 12;
 
             return null;
         }

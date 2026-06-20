@@ -1,4 +1,4 @@
-﻿namespace ArenaApplication.AI
+namespace ArenaApplication.AI
 {
     public static class PromptLoader
     {
@@ -73,9 +73,11 @@
     int remainingSessions,
     string subscriptionExpiry)
         {
-            var today = DateTime.Now.ToString("yyyy-MM-dd");
-            var tomorrow = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
-            var afterTomorrow = DateTime.Now.AddDays(2).ToString("yyyy-MM-dd");
+            // Use Egypt time (UTC+3) so dates are correct for Egyptian users near midnight
+            var egyptNow = DateTime.UtcNow.AddHours(3);
+            var today = egyptNow.ToString("yyyy-MM-dd");
+            var tomorrow = egyptNow.AddDays(1).ToString("yyyy-MM-dd");
+            var afterTomorrow = egyptNow.AddDays(2).ToString("yyyy-MM-dd");
 
             return Load("booking_agent_prompt.txt")
                 .Replace("{name}", name)
@@ -89,9 +91,11 @@
 
         public static string GetIntentDetectionPrompt()
         {
-            var today = DateTime.Now.ToString("yyyy-MM-dd");
-            var tomorrow = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
-            var afterTomorrow = DateTime.Now.AddDays(2).ToString("yyyy-MM-dd");
+            // Use Egypt time (UTC+3) so dates are correct for Egyptian users near midnight
+            var egyptNow = DateTime.UtcNow.AddHours(3);
+            var today = egyptNow.ToString("yyyy-MM-dd");
+            var tomorrow = egyptNow.AddDays(1).ToString("yyyy-MM-dd");
+            var afterTomorrow = egyptNow.AddDays(2).ToString("yyyy-MM-dd");
 
             return Load("intent_detection_prompt.txt")
                 .Replace("{today}", today)

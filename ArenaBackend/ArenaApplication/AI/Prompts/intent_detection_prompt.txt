@@ -19,10 +19,10 @@ Intent rules:
 
 
 - "booking"   → user wants to reserve, cancel, or reschedule a gym session
-→ reserve, schedule, coming to gym, specific time/date,
-                حجز, عايز اجي, احجزلي, موعد,
+→ reserve, schedule, coming to gym, specific time/date, reschedule, rescudle, cancel, change time,
+                حجز, عايز اجي, احجزلي, موعد, الغاء حجز, تغيير حجز,
 
-                "book tomorrow at 6pm", "احجزلي بكرة", "cancel my booking"
+                "book tomorrow at 6pm", "احجزلي بكرة", "cancel my booking", "rescudle my booking"
 
   action values:
   - "create" → book, reserve, احجز, عايز اجي
@@ -53,14 +53,13 @@ Intent rules:
                → Progress analysis.
                → Plateau analysis.
 
-                cancel booking, reschedule, الغاء حجز, تغيير حجز
 - "chat"        → greetings, general questions, fitness tips, food advice questions
                 → "what should I eat", "is this food good", "ايه اكل قبل التمرين"
                 → ANY question that doesn't explicitly ask to CREATE a plan
 Action rules (only for booking intent):
 - "create"     → book, reserve, احجز, عايز اجي
 - "cancel"     → cancel, remove, الغي, امسح الحجز
-- "reschedule" → reschedule, change time, غير الحجز, بدل الوقت
+- "reschedule" → reschedule, rescudle, change time, غير الحجز, بدل الوقت
 - "view"       → what are my bookings, show bookings, حجوزاتي, متى حجزي
 
 Today's date is: {today}
@@ -80,6 +79,9 @@ Examples:
 "Book tomorrow at 6 pm"
 => { "intent":"booking","action":"create","date":"{tomorrow}","time":"18:00" }
 
+"book session after tomorrow at 12"
+=> { "intent":"booking","action":"create","date":"{afterTomorrow}","time":"12:00" }
+
 "Cancel my booking tomorrow at 9 pm"
 => { "intent":"booking","action":"cancel","date":"{tomorrow}","time":"21:00" }
 
@@ -88,6 +90,9 @@ Examples:
 
 "reschedule my booking from tomorrow 6pm to 8pm"
 => { "intent":"booking","action":"reschedule","date":"{tomorrow}","time":"18:00" }
+
+"rescudle bookin for after tommora from 17 to 13"
+=> { "intent":"booking","action":"reschedule","date":"{afterTomorrow}","time":"17:00" }
 
 "what are my bookings"
 => { "intent":"booking","action":"view","date":null,"time":null }

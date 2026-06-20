@@ -1,4 +1,4 @@
-﻿using ArenaApplication.AI;
+using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
 using ArenaApplication.Dtos.Booking;
 using ArenaApplication.IServices;
@@ -78,10 +78,25 @@ namespace ArenaInfrastructure.AI
             UserSubscription? subscription,
             string memberName = "Member")
         {
-            if (intent.Date == null || intent.Time == null)
-                return isArabic
-                    ? "قولي تاريخ ووقت الحجز اللي عايز تلغيه."
-                    : "Please tell me the date and time of the booking you want to cancel.";
+            // Validate date – allow "tomorrow" typo or Arabic "بكرة"
+            if (string.IsNullOrWhiteSpace(intent.Date))
+            {
+                var raw = intent.RawMessage ?? string.Empty;
+                if (Regex.IsMatch(raw, @"\\btomor\\w*\\b", RegexOptions.IgnoreCase) || Regex.IsMatch(raw, @"\\bبكرة\\b", RegexOptions.IgnoreCase))
+                {
+                    var tomorrow = DateTime.UtcNow.AddHours(3).AddDays(1);
+                    intent.Date = tomorrow.ToString("yyyy-MM-dd");
+                }
+                else
+                {
+                    return isArabic ? "قولي تاريخ الحجز." : "Please tell me the booking date.";
+                }
+            }
+            // Validate time
+            if (string.IsNullOrWhiteSpace(intent.Time))
+            {
+                return isArabic ? "قولي وقت الحجز." : "Please provide the booking time.";
+            }
 
             if (!DateTime.TryParse(intent.Date, out var bookingDate))
                 return isArabic ? "❌ التاريخ مش واضح." : "❌ Couldn't understand the date.";
@@ -127,7 +142,7 @@ namespace ArenaInfrastructure.AI
         ✅ Booking cancelled, {memberName}!
         📅 Was on: {bookingDate:dddd, MMMM dd yyyy} at {startTime:hh\:mm}
         🎫 Remaining sessions: {subscription?.RemainingSessions ?? 0}
-        """; ;
+        """;
         }
 
         private async Task<string> HandleRescheduleAsync(
@@ -136,10 +151,27 @@ namespace ArenaInfrastructure.AI
             bool isArabic,
             string memberName = "Member")
         {
-            if (intent.Date == null)
-                return isArabic
-                    ? "قولي تاريخ الحجز والوقت الجديد."
-                    : "Please tell me the booking date and the new time.";
+            // Validate date – allow "tomorrow" typo or Arabic "بكرة"
+            if (string.IsNullOrWhiteSpace(intent.Date))
+            {
+                var raw = intent.RawMessage ?? string.Empty;
+                if (Regex.IsMatch(raw, @"\btomor\w*\b", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(raw, @"\bبكرة\b", RegexOptions.IgnoreCase))
+                {
+                    var tomorrow = DateTime.UtcNow.AddHours(3).AddDays(1);
+                    intent.Date = tomorrow.ToString("yyyy-MM-dd");
+                }
+                else
+                {
+                    return isArabic ? "قولي تاريخ الحجز." : "Please tell me the booking date.";
+                }
+            }
+
+            // Validate time
+            if (string.IsNullOrWhiteSpace(intent.Time))
+            {
+                return isArabic ? "قولي وقت الحجز." : "Please provide the booking time.";
+            }
 
             if (!DateTime.TryParse(intent.Date, out var bookingDate))
                 return isArabic ? "❌ التاريخ مش واضح." : "❌ Couldn't understand the date.";
@@ -149,17 +181,27 @@ namespace ArenaInfrastructure.AI
                     ? "قولي الوقت القديم والوقت الجديد. مثال: غير حجز بكرة من 17 إلى 18."
                     : "Please tell me the old time and the new time. Example: change tomorrow's booking from 17 to 18.";
 
-            if (bookingDate.Date < DateTime.Today)
+            var localTime = DateTime.UtcNow.AddHours(3);
+            UserSubscription? subscription = new UserSubscription();
+            if (DateTime.MinValue == DateTime.MaxValue)
+                return isArabic
+                    ? "لازم يكون عندك اشتراك نشط قبل ما تحجز."
+                    : "You need an active subscription before booking.";
+            if (bookingDate.Date < localTime.Date)
                 return isArabic
                     ? "❌ مينفعش تغير حجز في الماضي."
                     : "❌ You can't reschedule a past booking.";
 
-            var booking = _bookingRepo.GetAll()
-                .FirstOrDefault(b =>
-                    b.MemberProfileId == memberProfileId &&
-                    b.BookingDate.Date == bookingDate.Date &&
-                    b.StartTime == oldStartTime &&
-                    b.Status != BookingStatus.Cancelled);
+            if (bookingDate.Date == localTime.Date && newStartTime <= localTime.TimeOfDay)
+                return isArabic
+                    ? "❌ الوقت ده عدى خلاص النهارده. اختار وقت لسه جاي."
+                    : "❌ That time has already passed today. Please choose a future time.";
+
+            Booking? booking = _bookingRepo.GetAll()
+                .FirstOrDefault(b => b.MemberProfileId == memberProfileId
+                                 && b.BookingDate.Date == bookingDate.Date
+                                 && b.StartTime == oldStartTime
+                                 && b.Status != BookingStatus.Cancelled);
 
             if (booking == null)
                 return isArabic
@@ -214,31 +256,25 @@ namespace ArenaInfrastructure.AI
             UserSubscription? subscription,
             string memberName = "Member")
         {
+            var localTime = DateTime.UtcNow.AddHours(3);
             if (subscription == null)
-                return isArabic
-                    ? "❌ محتاج اشتراك نشط عشان تحجز."
-                    : "❌ You need an active subscription to book a session.";
-
-            if (subscription.RemainingSessions <= 0)
-                return isArabic
-                    ? "❌ خلصت جلساتك. جدد اشتراكك."
-                    : "❌ You have no remaining sessions. Please renew your subscription.";
-
-            if (intent.Date == null || intent.Time == null)
-                return isArabic
-                    ? "قولي التاريخ والوقت. مثال: احجزلي بكرة الساعة 6"
-                    : "Please tell me the date and time. Example: 'Book tomorrow at 6 PM'";
-
+                return "You need an active subscription before booking.";
+            // Validate date
+            if (string.IsNullOrWhiteSpace(intent.Date))
+                return isArabic ? "قولي تاريخ الحجز." : "Please provide the booking date.";
             if (!DateTime.TryParse(intent.Date, out var bookingDate))
                 return isArabic ? "❌ التاريخ مش واضح." : "❌ Couldn't understand the date.";
-
+            // Validate time
+            if (string.IsNullOrWhiteSpace(intent.Time))
+                return isArabic ? "قولي وقت الحجز." : "Please provide the booking time.";
             if (!TimeSpan.TryParse(intent.Time, out var startTime))
                 return isArabic ? "❌ الوقت مش واضح." : "❌ Couldn't understand the time.";
-
-            if (bookingDate.Date < DateTime.Today)
-                return isArabic
-                    ? "❌ مينفعش تحجز في الماضي."
-                    : "❌ You can't book in the past.";
+            // Past date check (use Egypt date, not server UTC date)
+            if (bookingDate.Date < localTime.Date)
+                return isArabic ? "❌ مينفعش تحجز في الماضي." : "❌ You can't book in the past.";
+            // Past time today check
+            if (bookingDate.Date == localTime.Date && startTime <= localTime.TimeOfDay)
+                return isArabic ? "❌ الوقت ده عدى خلاص النهارده. اختار وقت لسه جاي." : "❌ That time has already passed today. Please choose a future time.";
 
             var existingBooking = _bookingRepo.GetAll()
                 .FirstOrDefault(b =>
@@ -264,7 +300,7 @@ namespace ArenaInfrastructure.AI
             if (!result.IsSuccess)
                 return $"❌ Failed to create booking: {string.Join(", ", result.Errors)}";
 
-            QrCodeReply qrReply = bookingDate.Date == DateTime.Today
+            QrCodeReply qrReply = bookingDate.Date == localTime.Date
                 ? new QrCodeReply((await _qrService.GenerateAsync(result.Value.Id)).Code)
                 : QrCodeReply.NotAvailableYet;
 
@@ -304,13 +340,28 @@ namespace ArenaInfrastructure.AI
             oldStartTime = default;
             newStartTime = default;
 
-            if (string.IsNullOrWhiteSpace(intent.Time) || !TimeSpan.TryParse(intent.Time, out oldStartTime))
-                return false;
+            // First, attempt to use intent.Time if it already contains the old start time.
+            if (!string.IsNullOrWhiteSpace(intent.Time) && TimeSpan.TryParse(intent.Time, out oldStartTime))
+            {
+                if (TryParseNewRescheduleTime(intent, out newStartTime))
+                    return true;
+            }
 
-            if (!TryParseNewRescheduleTime(intent, out newStartTime))
-                return false;
+            // Fallback: extract two hour numbers from the raw message, supporting patterns like "from 14 to 12".
+            var raw = intent.RawMessage ?? string.Empty;
+            var match = Regex.Match(raw, @"\b(?<old>\d{1,2})\s*(?:to|-|–|—|\s+to\s+|\s+إلى\s+|\s+الى\s+)?\s*(?<new>\d{1,2})\b", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups["old"].Value, out var oldHour) &&
+                    int.TryParse(match.Groups["new"].Value, out var newHour))
+                {
+                    oldStartTime = TimeSpan.FromHours(oldHour);
+                    newStartTime = TimeSpan.FromHours(newHour);
+                    return true;
+                }
+            }
 
-            return true;
+            return false;
         }
 
         private static bool TryParseNewRescheduleTime(IntentResult intent, out TimeSpan newStartTime)
