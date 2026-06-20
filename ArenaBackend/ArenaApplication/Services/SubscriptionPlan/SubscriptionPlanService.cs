@@ -50,6 +50,7 @@ namespace ArenaApplication.Services.SubscriptionPlan
                 Price = createDto.Price,
                 SessionLimit = createDto.SessionLimit,
                 IsActive = true,
+                HasAI = createDto.HasAI,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -89,6 +90,9 @@ namespace ArenaApplication.Services.SubscriptionPlan
             if (updateDto.IsActive.HasValue)
                 plan.IsActive = updateDto.IsActive.Value;
 
+            if (updateDto.HasAI.HasValue)
+                plan.HasAI = updateDto.HasAI.Value;
+
             plan.UpdatedAt = DateTime.UtcNow;
             await _repository.UpdateAsync(plan, cancellationToken);
 
@@ -122,7 +126,8 @@ namespace ArenaApplication.Services.SubscriptionPlan
                 DurationMonths = plan.DurationMonths,
                 Price = plan.Price,
                 SessionLimit = plan.SessionLimit ?? 0,
-                IsActive = plan.IsActive
+                IsActive = plan.IsActive,
+                HasAI = plan.HasAI
             };
         }
     }

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ArenaApplication.Dtos.SubscriptionPlanDtos
 {
@@ -21,5 +21,6 @@ namespace ArenaApplication.Dtos.SubscriptionPlanDtos
         public decimal Price { get; set; }
 
         public int SessionLimit { get; set; }
+        public bool HasAI { get; set; }
     }
 }
