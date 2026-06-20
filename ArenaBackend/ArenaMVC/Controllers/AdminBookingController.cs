@@ -5,6 +5,7 @@ using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaMVC.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -15,6 +16,7 @@ using System.Threading.Tasks;
 
 namespace ArenaMVC.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AdminBookingController : Controller
     {
         private readonly IBookingService _bookingService;

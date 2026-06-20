@@ -224,6 +224,26 @@ html:not([data-theme="light"]) .nav-link.active {
     box-shadow: inset 0 0 0 1px rgba(213, 235, 69, 0.2);
 }
 
+/* Sidebar Footer (Logout) */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 16px 12px 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.nav-link-logout {
+    color: var(--text-secondary) !important;
+}
+
+.nav-link-logout:hover {
+    background-color: rgba(239, 68, 68, 0.08) !important;
+    color: #ef4444 !important;
+}
+
+.nav-link-logout:hover .nav-icon {
+    color: #ef4444 !important;
+}
+
 /* Main Content Area */
 .main-content {
     margin-left: var(--sidebar-width) !important;
@@ -405,7 +425,7 @@ html[data-theme="light"] .dashboard-card:hover {
 }
 
 .theme-toggle-btn {
-    background: none;
+    background: rgba(213, 235, 69, 0.05);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     cursor: pointer;
@@ -598,7 +618,7 @@ html:not([data-theme="light"]) .form-select:focus {
     padding: 6px 10px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    background-color: var(--input-bg);
+    background-color: rgba(213, 235, 69, 0.05);
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);

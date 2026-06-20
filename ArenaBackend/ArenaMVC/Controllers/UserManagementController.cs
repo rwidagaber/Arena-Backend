@@ -2,6 +2,7 @@ using ArenaApplication.Dtos.UserManagement;
 using ArenaApplication.IServices;
 using ArenaDomain.Shared;
 using ArenaMVC.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using System;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace ArenaMVC.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class UserManagementController : Controller
     {
         private readonly IUserManagementService _userService;

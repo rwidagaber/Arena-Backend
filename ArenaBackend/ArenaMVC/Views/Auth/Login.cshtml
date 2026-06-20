@@ -1,0 +1,107 @@
+@model ArenaMVC.Models.AdminLoginViewModel
+
+@using System.Globalization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ArenaLocalization> Localizer
+
+@{
+    ViewData["Title"] = Localizer["AdminLogin"];
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+
+    var isRtl = CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft;
+    var dir   = isRtl ? "rtl" : "ltr";
+}
+
+<div class="login-card" dir="@dir">
+
+    @* Brand *@
+    <div class="login-brand">
+        <span class="login-brand-text">@Localizer["Arena"]</span>
+        <span class="login-brand-badge">@Localizer["AdminPortal"]</span>
+    </div>
+
+    <h1 class="login-title">@Localizer["AdminLogin"]</h1>
+    <p class="login-subtitle">@Localizer["AdminLoginSubtitle"]</p>
+
+    <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ReturnUrl" />
+
+        @* Global validation summary (server errors) *@
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+        {
+            <div class="login-banner error" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>@ViewData.ModelState[string.Empty]!.Errors[0].ErrorMessage</span>
+            </div>
+        }
+
+        @* Email Field *@
+        <div class="login-field @(ViewData.ModelState["Email"]?.Errors.Count > 0 ? "invalid" : "")">
+            <label asp-for="Email">@Localizer["EmailAddress"]</label>
+            <input asp-for="Email"
+                   type="email"
+                   id="login-email"
+                   placeholder="admin@arena.com"
+                   autocomplete="email" />
+            <span asp-validation-for="Email" class="login-err"></span>
+        </div>
+
+        @* Password Field *@
+        <div class="login-field @(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "invalid" : "")">
+            <label asp-for="Password">@Localizer["Password"]</label>
+            <div class="login-input-wrap">
+                <input asp-for="Password"
+                       type="password"
+                       id="login-pw"
+                       placeholder="••••••••"
+                       autocomplete="current-password" />
+                <button type="button" class="toggle-pw" id="togglePw"
+                        aria-label="Toggle password visibility">
+                    <i data-lucide="eye" class="pw-icon-show"></i>
+                    <i data-lucide="eye-off" class="pw-icon-hide" style="display:none;"></i>
+                </button>
+            </div>
+            <span asp-validation-for="Password" class="login-err"></span>
+        </div>
+
+        @* Options Row: Remember Me *@
+        <div class="login-options-row">
+            <label class="login-remember">
+                <input asp-for="RememberMe" type="checkbox" id="login-remember" />
+                <span class="login-custom-checkbox"></span>
+                <span class="login-label-text">@Localizer["RememberMe"]</span>
+            </label>
+        </div>
+
+        @* Submit Button *@
+        <button type="submit" class="login-btn-submit" id="login-submit-btn">
+            <span class="login-btn-text">@Localizer["SignIn"]</span>
+        </button>
+
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Password show/hide toggle
+        (function () {
+            var btn      = document.getElementById('togglePw');
+            var input    = document.getElementById('login-pw');
+            var iconShow = btn.querySelector('.pw-icon-show');
+            var iconHide = btn.querySelector('.pw-icon-hide');
+
+            btn.addEventListener('click', function () {
+                var isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                iconShow.style.display = isPassword ? 'none' : '';
+                iconHide.style.display = isPassword ? '' : 'none';
+            });
+        })();
+    </script>
+}
