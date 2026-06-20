@@ -20,6 +20,11 @@ namespace ArenaInfrastructure.AI
         private readonly IGenericRepository<MemberProfile, Guid> _memberRepo;
         private readonly IUnitOfWork _unitOfWork;
 
+        private readonly record struct QrCodeReply(string? Code)
+        {
+            public static QrCodeReply NotAvailableYet => new(null);
+        }
+
         public BookingAIService(
             IBookingService bookingService,
             IQRCodeService qrService,
@@ -148,6 +153,8 @@ namespace ArenaInfrastructure.AI
             UserSubscription? subscription,
             string memberName = "Member")
         {
+            var localTime = DateTime.UtcNow.AddHours(3);
+
             if (subscription == null)
                 return isArabic
                     ? "❌ محتاج اشتراك نشط عشان تحجز."
@@ -169,10 +176,15 @@ namespace ArenaInfrastructure.AI
             if (!TimeSpan.TryParse(intent.Time, out var startTime))
                 return isArabic ? "❌ الوقت مش واضح." : "❌ Couldn't understand the time.";
 
-            if (bookingDate.Date < DateTime.Today)
+            if (bookingDate.Date < localTime.Date)
                 return isArabic
                     ? "❌ مينفعش تحجز في الماضي."
                     : "❌ You can't book in the past.";
+
+            if (bookingDate.Date == localTime.Date && startTime <= localTime.TimeOfDay)
+                return isArabic
+                    ? "❌ الوقت ده عدى خلاص النهارده. اختار وقت لسه جاي."
+                    : "❌ That time has already passed today. Please choose a future time.";
 
             var existingBooking = _bookingRepo.GetAll()
                 .FirstOrDefault(b =>
@@ -198,7 +210,9 @@ namespace ArenaInfrastructure.AI
             if (!result.IsSuccess)
                 return $"❌ Failed to create booking: {string.Join(", ", result.Errors)}";
 
-            var qr = await _qrService.GenerateAsync(result.Value.Id);
+            QrCodeReply qrReply = bookingDate.Date == localTime.Date
+                ? new QrCodeReply((await _qrService.GenerateAsync(result.Value.Id)).Code)
+                : QrCodeReply.NotAvailableYet;
 
 
             await _subscriptionRepo.UpdateAsync(subscription);
@@ -210,15 +224,25 @@ namespace ArenaInfrastructure.AI
         📅 التاريخ: {bookingDate:dddd, MMMM dd yyyy}
         ⏰ الوقت: {startTime:hh\:mm} — {startTime.Add(TimeSpan.FromHours(1)):hh\:mm}
         🎫 الجلسات المتبقية: {subscription.RemainingSessions}
-        🔑 QR Code: {qr.Code}
+        {FormatQrReply(qrReply, isArabic)}
         """
      : $"""
         ✅ Booking confirmed, {memberName}!
         📅 Date: {bookingDate:dddd, MMMM dd yyyy}
         ⏰ Time: {startTime:hh\:mm} — {startTime.Add(TimeSpan.FromHours(1)):hh\:mm}
         🎫 Remaining sessions: {subscription.RemainingSessions}
-        🔑 QR Code: {qr.Code}
+        {FormatQrReply(qrReply, isArabic)}
         """;
+        }
+
+        private static string FormatQrReply(QrCodeReply qrReply, bool isArabic)
+        {
+            if (!string.IsNullOrWhiteSpace(qrReply.Code))
+                return $"🔑 QR Code: {qrReply.Code}";
+
+            return isArabic
+                ? "🔑 الـ QR سيظهر في نفس يوم الحجز فقط."
+                : "🔑 QR code will be available only on the booking day.";
         }
     }
 }

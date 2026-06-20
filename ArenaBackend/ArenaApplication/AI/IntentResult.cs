@@ -12,6 +12,7 @@ namespace ArenaApplication.AI
             public string? Date { get; set; }
             public string? Time { get; set; }
             public string Action { get; set; } = "create";
+            public string? RawMessage { get; set; }
         }
     }
 }
