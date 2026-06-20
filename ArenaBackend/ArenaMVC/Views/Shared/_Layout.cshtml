@@ -78,6 +78,14 @@
                     </a>
                 </li>
             </ul>
+
+            @* Logout at the bottom of the sidebar *@
+            <div class="sidebar-footer">
+                <a asp-controller="Auth" asp-action="Logout" class="nav-link nav-link-logout">
+                    <i data-lucide="log-out" class="nav-icon"></i>
+                    <span>@Localizer["Logout"]</span>
+                </a>
+            </div>
         </nav>
     </aside>
     <div class="main-content">

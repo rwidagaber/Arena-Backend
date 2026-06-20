@@ -7,6 +7,7 @@ using Microsoft.Extensions.Localization;
 
 namespace ArenaMVC.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class SubscriptionPlansController : Controller
     {
         private readonly ISubscriptionPlanService _subscriptionPlanService;

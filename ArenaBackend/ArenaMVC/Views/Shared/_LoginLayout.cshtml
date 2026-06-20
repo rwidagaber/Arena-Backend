@@ -1,0 +1,86 @@
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ArenaLocalization> Localizer
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name"
+      dir="@(System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @Localizer["Arena"]</title>
+
+    @* Inject theme BEFORE first paint to avoid flash *@
+    <script>
+        (function () {
+            var theme = localStorage.getItem('arena-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.style.colorScheme = theme;
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @if (System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft)
+    {
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    }
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
+    <link rel="stylesheet" href="~/css/StyleSheet.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-login.css" asp-append-version="true" />
+</head>
+<body class="login-body">
+
+    @* Floating Controls: Theme Toggle + Language Switcher *@
+    <div class="login-controls">
+        <button type="button" class="theme-toggle-btn" id="themeToggle" aria-label="Toggle Theme">
+            <i data-lucide="sun" class="sun-icon"></i>
+            <i data-lucide="moon" class="moon-icon"></i>
+        </button>
+        <partial name="_LanguageSwitcher" />
+    </div>
+
+    @RenderBody()
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            lucide.createIcons();
+
+            // Theme toggle
+            var themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function () {
+                    var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('arena-theme', newTheme);
+                    document.documentElement.style.colorScheme = newTheme;
+                });
+            }
+        });
+
+        // Language switcher — open/close toggle
+        var langBtn = document.getElementById('langSwitcherBtn');
+        var langSwitcher = document.getElementById('langSwitcher');
+        if (langBtn && langSwitcher) {
+            langBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                langSwitcher.classList.toggle('open');
+                langBtn.setAttribute('aria-expanded', langSwitcher.classList.contains('open'));
+            });
+        }
+
+        // Close language dropdown on outside click
+        document.addEventListener('click', function (e) {
+            if (langSwitcher && !langSwitcher.contains(e.target)) {
+                langSwitcher.classList.remove('open');
+                if (langBtn) langBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

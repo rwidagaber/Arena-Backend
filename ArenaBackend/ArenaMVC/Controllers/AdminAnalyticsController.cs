@@ -1,10 +1,12 @@
 using ArenaApplication.Dtos.Dashboard.Analytics;
 using ArenaApplication.IServices;
 using ArenaMVC.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArenaMVC.Controllers;
 
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("admin/analytics/v2")]
 [Route("api/admin/analytics/v2")]
