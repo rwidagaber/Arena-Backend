@@ -24,7 +24,7 @@ namespace ArenaInfrastructure.AI
             var url = $"{_settings.BaseUrl}/text-embedding-004:embedContent?key={_settings.ApiKey}";
             var body = new
             {
-                model = "models/text-embedding-004",
+                model = "models/gemini-embedding-001",
                 content = new
                 {
                     parts = new[] { new { text } }

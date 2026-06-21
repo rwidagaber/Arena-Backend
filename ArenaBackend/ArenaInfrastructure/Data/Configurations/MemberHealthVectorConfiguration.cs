@@ -18,8 +18,9 @@ public class MemberHealthVectorConfiguration : IEntityTypeConfiguration<MemberHe
             .IsRequired()
             .HasMaxLength(100);
 
+        // Nullable legacy column — kept for backward compatibility
         builder.Property(v => v.EmbeddingJson)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(v => v.RecordedAt)
             .IsRequired();
