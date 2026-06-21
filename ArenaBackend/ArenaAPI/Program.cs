@@ -89,6 +89,7 @@ namespace ArenaAPI
                 builder.Configuration.GetSection("EmailSettings"));
 
             // ── Database ──────────────────────────────────────────────────
+            // Registers: AppDbContext (SQL Server) + NpgsqlDataSource + NeonVectorStore (Neon)
             builder.Services.ConfigureDbContext(builder.Configuration);
             builder.Services.AddRepositories();
             builder.Services.AddApplicationServices();
@@ -143,12 +144,9 @@ namespace ArenaAPI
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
-
-
             // ── Progress ───────────────────────────────────────────────────
             builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
             builder.Services.AddScoped<IProgressService, ProgressService>();
-
 
             // ── Payment ───────────────────────────────────────────────────
             builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
@@ -156,7 +154,6 @@ namespace ArenaAPI
             builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
 
             // ── AI / Chatbot Features ─────────────────────────────────────
-
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
@@ -194,7 +191,7 @@ namespace ArenaAPI
             var app = builder.Build();
             // ═════════════════════════════════════════════════════════════
 
-            // ── Seed Database ─────────────────────────────────────────────
+            // ── Seed Database + Init Vector Schema ────────────────────────
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -205,6 +202,15 @@ namespace ArenaAPI
                     context.Database.Migrate();
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
+
+                // ── Init pgvector schema on Neon (idempotent) ────────────
+                // Creates the MemberHealthVectors table + HNSW index if they don't exist.
+                var vectorStore = scope.ServiceProvider.GetService<NeonVectorStore>();
+                if (vectorStore != null)
+                {
+                    try { await vectorStore.EnsureSchemaAsync(); }
+                    catch (Exception ex) { Console.WriteLine($"[VectorStore] Schema init failed: {ex.Message}"); }
+                }
             }
 
             // ── Middleware Pipeline ───────────────────────────────────────

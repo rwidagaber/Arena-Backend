@@ -363,6 +363,61 @@ namespace ArenaInfrastructure.Migrations
                     b.ToTable("Translations", (string)null);
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.MemberHealthVector", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmbeddingJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MemberProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberProfileId");
+
+                    b.ToTable("MemberHealthVectors", (string)null);
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.MemberProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -447,62 +502,6 @@ namespace ArenaInfrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("MemberProfiles", (string)null);
-                });
-
-            modelBuilder.Entity("ArenaDomain.Entities.MemberHealthVector", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EmbeddingJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("MemberProfileId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("RecordedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MemberProfileId");
-
-                    b.ToTable("MemberHealthVectors", (string)null);
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Notifications.Notification", b =>
@@ -1692,17 +1691,6 @@ namespace ArenaInfrastructure.Migrations
                     b.Navigation("MemberProfile");
                 });
 
-            modelBuilder.Entity("ArenaDomain.Entities.MemberProfile", b =>
-                {
-                    b.HasOne("ArenaDomain.Entities.User.ApplicationUser", "User")
-                        .WithOne("MemberProfile")
-                        .HasForeignKey("ArenaDomain.Entities.MemberProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("ArenaDomain.Entities.MemberHealthVector", b =>
                 {
                     b.HasOne("ArenaDomain.Entities.MemberProfile", "MemberProfile")
@@ -1712,6 +1700,17 @@ namespace ArenaInfrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("MemberProfile");
+                });
+
+            modelBuilder.Entity("ArenaDomain.Entities.MemberProfile", b =>
+                {
+                    b.HasOne("ArenaDomain.Entities.User.ApplicationUser", "User")
+                        .WithOne("MemberProfile")
+                        .HasForeignKey("ArenaDomain.Entities.MemberProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Notifications.Notification", b =>
