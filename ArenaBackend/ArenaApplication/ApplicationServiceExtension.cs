@@ -17,6 +17,7 @@ namespace ArenaApplication
             services.AddScoped<IWorkoutPlanService, WorkoutPlanService>();
             services.AddScoped<INutritionPlanService, NutritionPlanService>();
             services.AddScoped<IWorkingHoursService, WorkingHoursService>();
+            services.AddScoped<IMealLogService, MealLogService>();
             return services;
         }
     }
