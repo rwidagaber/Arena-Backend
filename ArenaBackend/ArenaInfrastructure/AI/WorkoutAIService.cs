@@ -41,17 +41,20 @@ namespace ArenaInfrastructure.AI
         private readonly AppDbContext _context;
         private readonly IGenericRepository<MemberProfile, Guid> _memberRepo;
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
+        private readonly IMemberHealthRAGService _healthRAG;
 
         public WorkoutAIService(
             IGeminiCompletionService gemini,
             AppDbContext context,
             IGenericRepository<MemberProfile, Guid> memberProfile,
-            IGenericRepository<UserSubscription, Guid> userSubscription)
+            IGenericRepository<UserSubscription, Guid> userSubscription,
+            IMemberHealthRAGService healthRAG)
         {
             _gemini = gemini;
             _context = context;
             _memberRepo = memberProfile;
             _subscriptionRepo = userSubscription;
+            _healthRAG = healthRAG;
         }
 
         public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(Guid memberProfileId, string userMessage)
@@ -63,13 +66,7 @@ namespace ArenaInfrastructure.AI
             if (profile == null)
                 throw new Exception($"Profile not found: {memberProfileId}");
 
-            // ✅ Debug Verification Logging
-            Console.WriteLine($"=== PROFILE ===");
-            Console.WriteLine($"Name: {profile.FirstName}");
-            Console.WriteLine($"Goal: {profile.Goal}");
-            Console.WriteLine($"Injuries: {profile.Injuries}");
-            Console.WriteLine($"Experience: {profile.FitnessExperience}");
-            Console.WriteLine($"===============");
+            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
 
             // ✅ OPTIMIZATION: Async database lookup for active subscriptions
             var subscription = await _subscriptionRepo.GetAll()
@@ -84,6 +81,9 @@ namespace ArenaInfrastructure.AI
             if (!string.IsNullOrEmpty(profile.Injuries))
                 knowledge += GymKnowledge.GetInjuryGuide(profile.Injuries);
 
+            if (!string.IsNullOrEmpty(healthContext))
+                knowledge += $"\n\n=== MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===\n{healthContext}";
+
             var prompt = PromptLoader.GetWorkoutPrompt(
                 userContext: userContext,
                 name: profile.FirstName ?? "User",
@@ -92,7 +92,7 @@ namespace ArenaInfrastructure.AI
                 healthConditions: profile.HealthConditions ?? "None",
                 experience: profile.FitnessExperience ?? "Beginner",
                 equipment: profile.Equipment ?? "Full Gym",
-                userMessage: userMessage);
+                userMessage: userMessage + "\n\n" + knowledge);
 
             WorkoutPlanAIResponse planData;
             try
@@ -101,14 +101,14 @@ namespace ArenaInfrastructure.AI
                 var cleanJson = AIHelper.CleanJson(jsonResponse);
                 planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
                     cleanJson,
-                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile);
+                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile, userMessage);
             }
             catch
             {
-                planData = CreateFallbackPlanData(profile);
+                planData = CreateFallbackPlanData(profile, userMessage);
             }
 
-            NormalizeWorkoutPlan(planData, profile.FirstName ?? "Member");
+            NormalizeWorkoutPlan(planData, profile, profile.FirstName ?? "Member", userMessage, healthContext);
 
             // ✅ Instantiate Core Plan Entity
             var plan = new WorkoutPlan
@@ -206,7 +206,12 @@ namespace ArenaInfrastructure.AI
             return options;
         }
 
-        private static void NormalizeWorkoutPlan(WorkoutPlanAIResponse planData, string memberName)
+        private static void NormalizeWorkoutPlan(
+            WorkoutPlanAIResponse planData,
+            MemberProfile profile,
+            string memberName,
+            string userMessage,
+            string healthContext)
         {
             if (string.IsNullOrWhiteSpace(planData.Name))
                 planData.Name = $"{memberName} Workout Plan";
@@ -215,6 +220,9 @@ namespace ArenaInfrastructure.AI
                 planData.DurationWeeks = 4;
 
             planData.Days ??= [];
+            var avoidKneeStress = ContainsAny(profile.Injuries, "knee", "ركبة")
+                || ContainsAny(userMessage, "knee", "ركبة")
+                || ContainsAny(healthContext, "knee", "ركبة");
 
             foreach (var day in planData.Days)
             {
@@ -236,15 +244,19 @@ namespace ArenaInfrastructure.AI
 
                     if (string.IsNullOrWhiteSpace(exercise.MuscleGroup))
                         exercise.MuscleGroup = "General";
+
+                    if (avoidKneeStress && IsKneeStressExercise(exercise.Name))
+                        ReplaceWithKneeFriendlyExercise(exercise);
                 }
             }
         }
 
-        private static WorkoutPlanAIResponse CreateFallbackPlanData(MemberProfile profile)
+        private static WorkoutPlanAIResponse CreateFallbackPlanData(MemberProfile profile, string userMessage = "")
         {
             var memberName = string.IsNullOrWhiteSpace(profile.FirstName) ? "Member" : profile.FirstName;
             var goal = string.IsNullOrWhiteSpace(profile.Goal) ? "General Fitness" : profile.Goal;
-            var avoidKneeStress = ContainsAny(profile.Injuries, "knee", "ركبة");
+            var avoidKneeStress = ContainsAny(profile.Injuries, "knee", "ركبة")
+                || ContainsAny(userMessage, "knee", "ركبة");
 
             return new WorkoutPlanAIResponse
             {
@@ -306,6 +318,29 @@ namespace ArenaInfrastructure.AI
                 return false;
 
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsKneeStressExercise(string? exerciseName) =>
+            ContainsAny(
+                exerciseName,
+                "squat",
+                "leg press",
+                "lunge",
+                "running",
+                "run",
+                "jump",
+                "step-up",
+                "step up");
+
+        private static void ReplaceWithKneeFriendlyExercise(WorkoutExerciseAIResponse exercise)
+        {
+            exercise.Name = exercise.MuscleGroup.Contains("leg", StringComparison.OrdinalIgnoreCase)
+                || exercise.MuscleGroup.Contains("quad", StringComparison.OrdinalIgnoreCase)
+                ? "Seated Leg Curl"
+                : "Hip Thrust";
+            exercise.Sets = exercise.Sets <= 0 ? 3 : exercise.Sets;
+            exercise.Reps = exercise.Reps <= 0 ? 12 : exercise.Reps;
+            exercise.MuscleGroup = exercise.Name == "Seated Leg Curl" ? "Hamstrings" : "Glutes";
         }
     }
 }

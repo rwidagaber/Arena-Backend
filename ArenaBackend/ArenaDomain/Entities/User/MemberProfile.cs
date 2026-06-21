@@ -82,6 +82,7 @@ namespace ArenaDomain.Entities
 
         public virtual ICollection<ChatConversation> ChatConversations { get; set; } = [];
 
+        public virtual ICollection<MemberHealthVector> HealthVectors { get; set; } = [];
 
 
 

@@ -28,6 +28,7 @@ namespace ArenaInfrastructure.AI
         private readonly IRAGService _ragService;
         private readonly ILogger<ChatService> _logger;
         private readonly IHostEnvironment _environment;
+        private readonly IMemberHealthRAGService _healthRAG;
         private const int MaxStoredMessageLength = 4000;
         private const int MaxTitleLength = 200;
 
@@ -40,7 +41,8 @@ namespace ArenaInfrastructure.AI
             IGenericRepository<Booking, Guid> bookingRepo,
             IRAGService ragService,
             ILogger<ChatService> logger,
-            IHostEnvironment environment)
+            IHostEnvironment environment,
+            IMemberHealthRAGService healthRAG)
         {
             _gemini = gemini;
             _workoutAI = workoutAI;
@@ -51,6 +53,7 @@ namespace ArenaInfrastructure.AI
             _ragService = ragService;
             _logger = logger;
             _environment = environment;
+            _healthRAG = healthRAG;
         }
 
         public async Task<ChatResponseWithHistoryDto> SendMessageAsync(
@@ -92,6 +95,15 @@ namespace ArenaInfrastructure.AI
                     Reply = "❌ Access Denied: You need an active subscription with AI features enabled to use the AI Coach chatbot. Please upgrade your plan in the Pricing section.",
                     ConversationId = Guid.Empty
                 };
+            }
+
+            try
+            {
+                await _healthRAG.ExtractAndSaveFromChatAsync(profile.Id, userMessage);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to save health context for member profile {MemberProfileId}", profile.Id);
             }
 
             // ✅ Step 1 — Get or Create conversation
@@ -440,18 +452,21 @@ namespace ArenaInfrastructure.AI
 
                 case "food_analysis":
                     {
+                        var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
+                        var healthAwareUserMessage = BuildHealthAwareUserMessage(userMessage, healthContext);
+
                         var foodPrompt = PromptLoader.GetFoodAnalysisPrompt(
                             name: memberName,
                             goal: profile.Goal ?? "General Fitness",
-                            healthConditions: profile.HealthConditions ?? "None",
+                            healthConditions: CombineHealthConditions(profile.HealthConditions, healthContext),
                             dietaryRestrictions: profile.DietaryRestrictions ?? "None",
                             weight: (profile.Weight ?? 70).ToString(),
-                            userMessage: userMessage);
+                            userMessage: healthAwareUserMessage);
 
                         return await _gemini.GetCompletionAsync(
                             foodPrompt,
                             history,
-                            userMessage);
+                            healthAwareUserMessage);
                     }
                 default:
                     {
@@ -461,6 +476,8 @@ namespace ArenaInfrastructure.AI
                         // ✅ RAG: Also search member-specific data
                         var memberData = await ((SimpleRAGService)_ragService)
                             .SearchMemberDataAsync(profile.Id, userMessage);
+
+                        var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
 
                         var userContext = UserContextBuilder.Build(profile);
                         var systemPrompt = PromptLoader.GetChatSystemPrompt(
@@ -489,6 +506,15 @@ namespace ArenaInfrastructure.AI
         === THIS MEMBER'S HISTORY ===
         {memberData}
         ============================
+        """;
+
+                        if (!string.IsNullOrEmpty(healthContext))
+                            ragEnhancedPrompt += $"""
+
+
+        === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+        {healthContext}
+        ===============================================================
         """;
 
                         return await _gemini.GetCompletionAsync(
@@ -870,6 +896,30 @@ namespace ArenaInfrastructure.AI
             return isArabic
                 ? "Target language: Arabic. Use natural Arabic matching the user's tone. Do not switch to English except for unavoidable exercise or nutrition terms."
                 : "Target language: English. Use clear professional English. Do not switch to Arabic.";
+        }
+
+        private static string CombineHealthConditions(string? profileHealthConditions, string healthContext)
+        {
+            if (string.IsNullOrWhiteSpace(healthContext))
+                return string.IsNullOrWhiteSpace(profileHealthConditions) ? "None" : profileHealthConditions;
+
+            if (string.IsNullOrWhiteSpace(profileHealthConditions))
+                return healthContext;
+
+            return $"{profileHealthConditions}\n{healthContext}";
+        }
+
+        private static string BuildHealthAwareUserMessage(string userMessage, string healthContext)
+        {
+            if (string.IsNullOrWhiteSpace(healthContext))
+                return userMessage;
+
+            return $"""
+            {userMessage}
+
+            === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+            {healthContext}
+            """;
         }
 
         // ✅ Get all conversations for member
