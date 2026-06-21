@@ -35,11 +35,16 @@ namespace ArenaInfrastructure.AI
     {
         private readonly IGeminiCompletionService _gemini;
         private readonly AppDbContext _context;
+        private readonly IMemberHealthRAGService _healthRAG;
 
-        public NutritionAIService(IGeminiCompletionService gemini, AppDbContext context)
+        public NutritionAIService(
+            IGeminiCompletionService gemini,
+            AppDbContext context,
+            IMemberHealthRAGService healthRAG)
         {
             _gemini = gemini;
             _context = context;
+            _healthRAG = healthRAG;
         }
 
         public async Task<NutritionPlanResponseDto> GenerateNutritionPlanAsync(
@@ -51,6 +56,8 @@ namespace ArenaInfrastructure.AI
 
             if (profile == null)
                 throw new Exception($"MemberProfile not found for Id: {memberProfileId}");
+
+            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
 
             // ✅ Build subscription for context
             var subscription = await _context.UserSubscriptions
@@ -70,7 +77,7 @@ namespace ArenaInfrastructure.AI
     goal: profile.Goal ?? "General Fitness",
     dietaryRestrictions: profile.DietaryRestrictions ?? "None",
     healthConditions: profile.HealthConditions ?? "None",
-    userMessage: userMessage);
+    userMessage: BuildHealthAwareUserMessage(userMessage, healthContext));
 
             NutritionPlanAIResponse planData;
             try
@@ -258,6 +265,19 @@ namespace ArenaInfrastructure.AI
                 return false;
 
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string BuildHealthAwareUserMessage(string userMessage, string healthContext)
+        {
+            if (string.IsNullOrWhiteSpace(healthContext))
+                return userMessage;
+
+            return $"""
+            {userMessage}
+
+            === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+            {healthContext}
+            """;
         }
     }
 }

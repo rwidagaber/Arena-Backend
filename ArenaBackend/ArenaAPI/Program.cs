@@ -163,10 +163,12 @@ namespace ArenaAPI
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
             builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
             builder.Services.AddScoped<IRAGService, SimpleRAGService>();
+            builder.Services.AddScoped<IMemberHealthRAGService, MemberHealthRAGService>();
             builder.Services.Configure<GeminiSettings>(
                 builder.Configuration.GetSection("GeminiSettings"));
 
             builder.Services.AddHttpClient<IGeminiCompletionService, GeminiService>();
+            builder.Services.AddHttpClient<IEmbeddingService, GeminiEmbeddingService>();
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>
