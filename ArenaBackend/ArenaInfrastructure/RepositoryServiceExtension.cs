@@ -16,6 +16,7 @@ namespace ArenaInfrastructure
             services.AddScoped<IGenericRepository<WorkoutPlan, Guid>, GenericRepository<WorkoutPlan, Guid>>();
             services.AddScoped<IGenericRepository<NutritionPlan, Guid>, GenericRepository<NutritionPlan, Guid>>();
             services.AddScoped<IGenericRepository<Meal, Guid>, GenericRepository<Meal, Guid>>();
+            services.AddScoped<IGenericRepository<MealLog, Guid>, GenericRepository<MealLog, Guid>>();
             return services;
         }
     }
