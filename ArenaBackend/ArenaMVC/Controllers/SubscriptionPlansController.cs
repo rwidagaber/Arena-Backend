@@ -30,7 +30,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredRetrievingSubscriptionPlans"];
+                TempData["Error"] = _localizer["AnErrorOccurredRetrievingSubscriptionPlans"].Value;
                 return View(new List<SubscriptionPlanDto>());
             }
         }
@@ -54,7 +54,7 @@ namespace ArenaMVC.Controllers
                 }
 
                 var createdPlan = await _subscriptionPlanService.CreateAsync(createDto, cancellationToken);
-                TempData["Success"] = _localizer["SubscriptionPlanCreatedSuccessfully"];
+                TempData["Success"] = _localizer["SubscriptionPlanCreatedSuccessfully"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
@@ -64,7 +64,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredCreatingSubscriptionPlan"];
+                TempData["Error"] = _localizer["AnErrorOccurredCreatingSubscriptionPlan"].Value;
                 return View(createDto);
             }
         }
@@ -79,12 +79,12 @@ namespace ArenaMVC.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["Error"] = _localizer["SubscriptionPlanNotFound"];
+                TempData["Error"] = _localizer["SubscriptionPlanNotFound"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredRetrievingSubscriptionPlan"];
+                TempData["Error"] = _localizer["AnErrorOccurredRetrievingSubscriptionPlan"].Value;
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -103,12 +103,12 @@ namespace ArenaMVC.Controllers
                 }
 
                 var updatedPlan = await _subscriptionPlanService.UpdateAsync(id, updateDto, cancellationToken);
-                TempData["Success"] = _localizer["SubscriptionPlanUpdatedSuccessfully"];
+                TempData["Success"] = _localizer["SubscriptionPlanUpdatedSuccessfully"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["Error"] = _localizer["SubscriptionPlanNotFound"];
+                TempData["Error"] = _localizer["SubscriptionPlanNotFound"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
@@ -118,7 +118,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredUpdatingSubscriptionPlan"];
+                TempData["Error"] = _localizer["AnErrorOccurredUpdatingSubscriptionPlan"].Value;
                 return View(updateDto);
             }
         }
@@ -129,17 +129,17 @@ namespace ArenaMVC.Controllers
             try
             {
                 await _subscriptionPlanService.DeleteAsync(id, cancellationToken);
-                TempData["Success"] = _localizer["SubscriptionPlanDeletedSuccessfully"];
+                TempData["Success"] = _localizer["SubscriptionPlanDeletedSuccessfully"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["Error"] = _localizer["SubscriptionPlanNotFound"];
+                TempData["Error"] = _localizer["SubscriptionPlanNotFound"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredDeletingSubscriptionPlan"];
+                TempData["Error"] = _localizer["AnErrorOccurredDeletingSubscriptionPlan"].Value;
                 return RedirectToAction(nameof(Index));
             }
         }

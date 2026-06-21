@@ -77,6 +77,12 @@
                         <span>@Localizer["AnalyticsDashboard"]</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "WorkingHours" ? "active" : "")" asp-area="" asp-controller="WorkingHours" asp-action="Index">
+                        <i data-lucide="clock" class="nav-icon"></i>
+                        <span>@Localizer["WorkingHours"]</span>
+                    </a>
+                </li>
             </ul>
         </nav>
     </aside>
