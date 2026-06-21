@@ -1,5 +1,6 @@
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
+using ArenaApplication.Services.Gym;
 using ArenaApplication.Services.SubscriptionPlan;
 using ArenaApplication.Services.UserSubscription;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ namespace ArenaApplication
             services.AddScoped<IUserSubscriptionService, UserSubscriptionService>();
             services.AddScoped<IWorkoutPlanService, WorkoutPlanService>();
             services.AddScoped<INutritionPlanService, NutritionPlanService>();
+            services.AddScoped<IWorkingHoursService, WorkingHoursService>();
             return services;
         }
     }

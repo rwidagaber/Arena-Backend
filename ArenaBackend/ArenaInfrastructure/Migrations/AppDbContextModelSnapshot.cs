@@ -271,6 +271,125 @@ namespace ArenaInfrastructure.Migrations
                     b.ToTable("ChatMessages", (string)null);
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.Gym.WorkingHours", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<TimeSpan>("CloseTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsClosed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan>("OpenTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WorkingHours", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Monday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Tuesday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Wednesday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Thursday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Friday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 15, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Saturday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Sunday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        });
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.Health.ProgressLog", b =>
                 {
                     b.Property<Guid>("Id")

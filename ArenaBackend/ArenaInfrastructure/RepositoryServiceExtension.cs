@@ -1,3 +1,4 @@
+using ArenaDomain.Entities.Gym;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Entities.Workout;
@@ -16,6 +17,7 @@ namespace ArenaInfrastructure
             services.AddScoped<IGenericRepository<WorkoutPlan, Guid>, GenericRepository<WorkoutPlan, Guid>>();
             services.AddScoped<IGenericRepository<NutritionPlan, Guid>, GenericRepository<NutritionPlan, Guid>>();
             services.AddScoped<IGenericRepository<Meal, Guid>, GenericRepository<Meal, Guid>>();
+            services.AddScoped<IGenericRepository<WorkingHours, int>, GenericRepository<WorkingHours, int>>();
             return services;
         }
     }
