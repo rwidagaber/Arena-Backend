@@ -26,6 +26,13 @@ namespace ArenaInfrastructure.Services
 
         public async Task<AdminDashboardDto> GetDashboardDataAsync(CancellationToken cancellationToken = default)
         {
+            // ── Cache gate: expensive path runs at most once every 5 minutes ──
+            var bucket   = (DateTime.UtcNow.Minute / 5) * 5;
+            var cacheKey = $"admin-dashboard|{DateTime.UtcNow:yyyy-MM-dd-HH}-{bucket:D2}";
+
+            if (_memoryCache.TryGetValue(cacheKey, out AdminDashboardDto? cached) && cached is not null)
+                return cached;
+
             var now = DateTime.UtcNow;
             var today = now.Date;
             var currentMonthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -173,6 +180,8 @@ namespace ArenaInfrastructure.Services
                 };
             }).ToList();
 
+            // ── Store in cache and return ──────────────────────────────────
+            _memoryCache.Set(cacheKey, dto, TimeSpan.FromMinutes(5));
             return dto;
         }
 
