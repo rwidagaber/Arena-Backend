@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Enums;
 using System;
@@ -20,6 +20,8 @@ namespace ArenaApplication.Dtos.Booking
         public TimeSpan StartTime { get; set; }
 
         public TimeSpan? EndTime { get; set; }
+
+        public BookingSource Source { get; set; } = BookingSource.Manual;
 
     }
 }

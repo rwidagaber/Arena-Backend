@@ -97,6 +97,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<Guid>("MemberProfileId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Source")
+                        .HasColumnType("int");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
