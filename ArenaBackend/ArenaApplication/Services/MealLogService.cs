@@ -76,6 +76,27 @@ namespace ArenaApplication.Services
             return Result<DailyNutritionSummaryDto>.Success(summary);
         }
 
+        public async Task<Result<DailyNutritionSummaryDto>> DeleteMealLogAsync(
+            Guid memberProfileId, Guid mealLogId)
+        {
+            var mealLog = await _mealLogRepo.GetByIdAsync(mealLogId);
+
+            if (mealLog == null || mealLog.IsDeleted)
+                return Result<DailyNutritionSummaryDto>.Failure("Meal log not found.");
+
+            // A member can only remove their own logged meals.
+            if (mealLog.MemberProfileId != memberProfileId)
+                return Result<DailyNutritionSummaryDto>.Failure(
+                    "You are not allowed to delete this meal log.");
+
+            await _mealLogRepo.SoftDeleteAsync(mealLog);
+
+            // Recalculate the day the removed meal belonged to so the caller can
+            // refresh its remaining calories/macros after the undo.
+            var summary = await BuildDailySummaryAsync(memberProfileId, mealLog.LogDate);
+            return Result<DailyNutritionSummaryDto>.Success(summary);
+        }
+
         private async Task<DailyNutritionSummaryDto> BuildDailySummaryAsync(
             Guid memberProfileId, DateTime date)
         {

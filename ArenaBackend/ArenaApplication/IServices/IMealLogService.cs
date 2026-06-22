@@ -21,5 +21,13 @@ namespace ArenaApplication.IServices
         /// </summary>
         Task<Result<DailyNutritionSummaryDto>> GetDailySummaryAsync(
             Guid memberProfileId, DateTime? date = null);
+
+        /// <summary>
+        /// Removes a meal the member previously logged (undo) and returns the
+        /// recalculated daily summary for the day that meal belonged to. Only the
+        /// owning member may delete their own meal log.
+        /// </summary>
+        Task<Result<DailyNutritionSummaryDto>> DeleteMealLogAsync(
+            Guid memberProfileId, Guid mealLogId);
     }
 }

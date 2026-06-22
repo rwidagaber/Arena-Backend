@@ -191,6 +191,18 @@ namespace ArenaApi.Controllers
             return Ok(result.Value);
         }
 
+        [HttpDelete("meal-logs/{id}")]
+        public async Task<IActionResult> DeleteMealLog(Guid id)
+        {
+            var memberProfileId = _currentUserService.MemberProfileId;
+            var result = await _mealLogService.DeleteMealLogAsync(memberProfileId, id);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Errors);
+
+            return Ok(result.Value);
+        }
+
         private async Task<MealImageAnalysisDto?> ParseOrRepairMealImageAnalysisAsync(string raw)
         {
             if (TryParseMealImageAnalysis(raw, out var parsed))
