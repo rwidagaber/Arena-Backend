@@ -19,7 +19,6 @@
     "UserNotFound": "المستخدم غير موجود",
     "Locked": "مقفل",
     "ProfileLockedRequiresSubscription": "الملف الشخصي مقفل. الاشتراك النشط مطلوب لتحديث الملف.",
-
     "FirstNameRequired": "الاسم الأول مطلوب",
     "LastNameRequired": "اسم العائلة مطلوب",
     "NameMaxLength": "يجب أن يكون الاسم أقل من 50 حرفًا",
@@ -36,15 +35,12 @@
     "PhoneRequired": "رقم الهاتف مطلوب",
     "ValidPhoneRequired": "أدخل رقم هاتف صالحًا",
     "AgeRequirement": "يجب أن يكون عمر المستخدم 16 عامًا أو أكثر",
-
     "IfTheEmailExistsResetLinkSent": "إذا كان البريد الإلكتروني موجودًا، فقد تم إرسال رابط إعادة التعيين.",
-
     "Home": "الرئيسية",
     "Privacy": "الخصوصية",
     "SubscriptionPlans": "خطط الاشتراك",
     "Bookings": "الحجوزات",
     "TodaysBookings": "حجوزات اليوم",
-
     "PrivacyPolicy": "سياسة الخصوصية",
     "PrivacyPolicyHeading": "سياسة الخصوصية",
     "PrivacyPolicyIntro": "في Arena فيتنس، نعطي الأولوية لحماية وسرية بيانات أعضاء الصالة الرياضية والمشرفين. توضح سياسة الخصوصية هذه كيفية جمعنا وتخزيننا ومعالجتنا لسجلات اللياقة البدنية وتفاصيل الاشتراك ومعلومات تسجيل الدخول.",
@@ -54,9 +50,7 @@
     "SecurityComplianceText": "جميع معاملات الاشتراك وقواعد بيانات حالة العضوية مشفرة ومحمية بموجب إرشادات أمنية صارمة. لا نبيع أو نشارك مقاييس تتبع اللياقة البدنية مع مقدمي الخدمات الخارجيين.",
     "BackToDashboard": "العودة إلى لوحة التحكم",
     "AllRightsReserved": "جميع الحقوق محفوظة.",
-
     "AnErrorOccurredWhileRetrievingBookings": "حدث خطأ أثناء استرجاع الحجوزات.",
-
     "AnErrorOccurredRetrievingSubscriptionPlans": "حدث خطأ أثناء استرجاع خطط الاشتراك.",
     "AnErrorOccurredRetrievingSubscriptionPlan": "حدث خطأ أثناء استرجاع خطة الاشتراك.",
     "SubscriptionPlanCreatedSuccessfully": "تم إنشاء خطة الاشتراك بنجاح!",
@@ -69,13 +63,11 @@
     "AnErrorOccurredCreatingSubscriptionPlan": "حدث خطأ أثناء إنشاء خطة الاشتراك.",
     "AnErrorOccurredUpdatingSubscriptionPlan": "حدث خطأ أثناء تحديث خطة الاشتراك.",
     "AnErrorOccurredDeletingSubscriptionPlan": "حدث خطأ أثناء حذف خطة الاشتراك.",
-
     "AnErrorOccurredRetrievingUserSubscriptions": "حدث خطأ أثناء استرجاع اشتراكات المستخدم.",
     "AnErrorOccurredRetrievingUserSubscription": "حدث خطأ أثناء استرجاع اشتراك المستخدم.",
     "AnErrorOccurredCreatingUserSubscription": "حدث خطأ أثناء إنشاء اشتراك المستخدم.",
     "AnErrorOccurredUpdatingUserSubscriptionStatus": "حدث خطأ أثناء تحديث حالة اشتراك المستخدم.",
     "AnErrorOccurredDeletingUserSubscription": "حدث خطأ أثناء حذف اشتراك المستخدم.",
-
     "InvalidWebhookSignature": "توقيع webhook غير صالح.",
     "Plans1": "خطط",
     "TotalPlans": "خطط إجمالا",
@@ -141,12 +133,10 @@
     "StartDate": "تاريخ البداية",
     "EndDate": "تاريخ النهاية",
     "RemainingSessions": "الجلسات المتبقية",
-
     "FieldRequired": "حقل {0} مطلوب.",
     "FieldMaxLength": "حقل {0} يجب أن يكون أقل من {1} حرفًا.",
     "FieldRange": "حقل {0} يجب أن يكون بين {1} و {2}.",
     "FieldInvalid": "حقل {0} غير صالح.",
-
     "Reset": "إعادة تعيين",
     "StatusFilterHint": "يتم تطبيق فلتر الحالة تلقائيًا عند التغيير.",
     "Start": "البداية",
@@ -159,19 +149,15 @@
     "BookingNotFound": "الحجز غير موجود",
     "BookingAlreadyCancelled": "الحجز ملغي بالفعل",
     "CancelledBookingCannotBeRescheduled": "لا يمكن إعادة جدولة الحجوزات الملغاة",
-
     "SubscriptionPlanNotFoundById": "خطة الاشتراك غير موجودة.",
-
     "UserSubscriptionNotFoundById": "اشتراك المستخدم غير موجود.",
     "EntityNotFoundById": "{0} بالمعرف {1} غير موجود.",
     "UnknownMember": "عضو غير معروف",
-
     "MemberProfileNotFound": "الملف الشخصي للعضو غير موجود.",
     "AlreadyHasActiveSubscription": "المستخدم لديه بالفعل اشتراك نشط لهذه الخطة.",
     "PaymentNotFound": "الدفع غير موجود.",
     "PaymentNotFoundWithIntentId": "الدفع غير موجود مع معرف الدفع المقدم.",
     "PaidPaymentCannotBeModified": "لا يمكن تعديل الدفعة المدفوعة.",
-
     "UserManagement": "إدارة المستخدمين",
     "Users": "المستخدمين",
     "UsersManagement": "إدارة المستخدمين",
@@ -191,7 +177,6 @@
     "QRAlreadyScanned": "تم مسح رمز QR بالفعل",
     "QRExpired": "انتهت صلاحية رمز QR",
     "QRScannedSuccess": "تم تسجيل الحضور بنجاح",
-
     "NotificationWelcomeTitle": "مرحبًا بك في Arena!",
     "NotificationWelcomeMessage": "مرحبًا {0}! حسابك جاهز. اشترك في خطة لفتح جميع الميزات.",
     "NotificationPaymentConfirmedTitle": "تم تأكيد الدفع",
@@ -214,7 +199,6 @@
     "NotificationNutritionPlanMessage": "خطة التغذية الشخصية بالذكاء الاصطناعي جاهزة. تحقق من لوحة التحكم لمعرفة أهدافك اليومية.",
     "NotificationMealAnalysisTitle": "اكتمل تحليل الوجبة",
     "NotificationMealAnalysisMessage": "تم تحليل صورة وجبتك. عرض التحليل الغذائي في سجل وجباتك.",
-
     "EmailOtpSubject": "رمز التحقق الخاص بك من Arena",
     "EmailOtpBody": "<h2>رمز التحقق</h2><p>رمز OTP الخاص بك هو:</p><h1 style=\"letter-spacing:8px\">{0}</h1><p>تنتهي صلاحية هذا الرمز خلال 10 دقائق. لا تشاركه مع أي شخص.</p>",
     "EmailPaymentConfirmedSubject": "تم تأكيد الدفع",
@@ -223,7 +207,6 @@
     "EmailSubscriptionExpiringBody": "<h2>مرحبًا {0}!</h2><p>سينتهي اشتراكك في Arena خلال <strong>{1} يوم/أيام</strong>.</p><p>جدد الآن للاستمرار في الوصول إلى جميع الميزات وأدوات الذكاء الاصطناعي.</p>",
     "EmailSubscriptionExpiredSubject": "انتهى اشتراكك",
     "EmailSubscriptionExpiredBody": "<h2>مرحبًا {0}!</h2><p>انتهى اشتراكك في Arena .</p><p>جدد خطتك للاستمرار في حجز الجلسات واستخدام ميزات الذكاء الاصطناعي.</p>",
-
     "ArenaBrandName": "أرينا",
     "ArenaBrandNameWithSlogan": "أرينا - رحلة لياقتك",
     "FullName": "الاسم الكامل",
@@ -266,6 +249,7 @@
     "BookingCancelled": "ملغي",
     "BookingCompleted": "مكتمل",
     "ContactInfo": "معلومات التواصل",
+    "Selected": "محدد",
     "Days": "أيام",
     "Day": "يوم",
     "Basic": "أساسي",
@@ -331,5 +315,27 @@
     "JustNow": "الآن",
     "MinsAgo": "منذ {0} دقيقة",
     "HrsAgo": "منذ {0} ساعة",
-    "DaysAgo": "منذ {0} يوم"
+    "DaysAgo": "منذ {0} يوم",
+    "WorkingHours": "أوقات العمل",
+    "WorkingHoursSchedule": "أوقات وجدول العمل",
+    "ManageWorkingHours": "إدارة أوقات عمل الجيم",
+    "DayOfWeek": "اليوم",
+    "OpenTime": "وقت الفتح",
+    "CloseTime": "وقت الإغلاق",
+    "IsClosed": "مغلق",
+    "Open": "مفتوح",
+    "Closed": "مغلق",
+    "EditWorkingHours": "تعديل أوقات العمل",
+    "UpdateWorkingHours": "تحديث أوقات العمل",
+    "WorkingHoursUpdatedSuccessfully": "تم تحديث أوقات العمل بنجاح!",
+    "AnErrorOccurredUpdatingWorkingHours": "حدث خطأ أثناء تحديث أوقات العمل.",
+    "ConfirmSaveWorkingHours": "هل أنت متأكد من حفظ هذه التغييرات في أوقات العمل؟",
+    "InvalidTimeRange": "يجب أن يكون وقت الفتح والإغلاق صالحين.",
+    "Monday": "الإثنين",
+    "Tuesday": "الثلاثاء",
+    "Wednesday": "الأربعاء",
+    "Thursday": "الخميس",
+    "Friday": "الجمعة",
+    "Saturday": "السبت",
+    "Sunday": "الأحد"
 }

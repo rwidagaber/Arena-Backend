@@ -19,7 +19,6 @@
     "UserNotFound": "User not found",
     "Locked": "Locked",
     "ProfileLockedRequiresSubscription": "Profile is locked. Active subscription required to update profile.",
-
     "FirstNameRequired": "First Name is required",
     "LastNameRequired": "Last Name is required",
     "NameMaxLength": "Name must be less than 50 characters",
@@ -36,15 +35,12 @@
     "PhoneRequired": "Phone number is required",
     "ValidPhoneRequired": "Enter a valid phone number",
     "AgeRequirement": "User must be 16 years or older",
-
     "IfTheEmailExistsResetLinkSent": "If the email exists, a reset link has been sent.",
-
     "Home": "Home",
     "Privacy": "Privacy Policy & Regulations",
     "SubscriptionPlans": "Subscription Plans",
     "Bookings": "Bookings",
     "TodaysBookings": "Today's Bookings",
-
     "PrivacyPolicy": "Privacy Policy",
     "PrivacyPolicyHeading": "Privacy Policy",
     "PrivacyPolicyIntro": "At Arena Fitness, we prioritize the protection and confidentiality of our gym members' and administrators' data. This privacy policy details how we collect, store, and process physical fitness records, subscription details, and login information.",
@@ -54,9 +50,7 @@
     "SecurityComplianceText": "All subscription transactions and membership status databases are encrypted and protected under strict security guidelines. We do not sell or share fitness tracking metrics with third-party providers.",
     "BackToDashboard": "Back to Dashboard",
     "AllRightsReserved": "All rights reserved.",
-
     "AnErrorOccurredWhileRetrievingBookings": "An error occurred while retrieving bookings.",
-
     "AnErrorOccurredRetrievingSubscriptionPlans": "An error occurred while retrieving subscription plans.",
     "AnErrorOccurredRetrievingSubscriptionPlan": "An error occurred while retrieving the subscription plan.",
     "SubscriptionPlanCreatedSuccessfully": "Subscription plan created successfully!",
@@ -69,13 +63,11 @@
     "AnErrorOccurredCreatingSubscriptionPlan": "An error occurred while creating the subscription plan.",
     "AnErrorOccurredUpdatingSubscriptionPlan": "An error occurred while updating the subscription plan.",
     "AnErrorOccurredDeletingSubscriptionPlan": "An error occurred while deleting the subscription plan.",
-
     "AnErrorOccurredRetrievingUserSubscriptions": "An error occurred while retrieving user subscriptions.",
     "AnErrorOccurredRetrievingUserSubscription": "An error occurred while retrieving the user subscription.",
     "AnErrorOccurredCreatingUserSubscription": "An error occurred while creating the user subscription.",
     "AnErrorOccurredUpdatingUserSubscriptionStatus": "An error occurred while updating the user subscription status.",
     "AnErrorOccurredDeletingUserSubscription": "An error occurred while deleting the user subscription.",
-
     "InvalidWebhookSignature": "Invalid webhook signature.",
     "Plans1": "Plans",
     "Subscriptions": "Subscriptions",
@@ -143,12 +135,10 @@
     "StartDate": "Start Date",
     "EndDate": "End Date",
     "RemainingSessions": "Remaining Sessions",
-
     "FieldRequired": "The {0} field is required.",
     "FieldMaxLength": "The {0} field must be less than {1} characters.",
     "FieldRange": "The {0} field must be between {1} and {2}.",
     "FieldInvalid": "The {0} field is invalid.",
-
     "Reset": "Reset",
     "StatusFilterHint": "Status filter applies automatically when changed.",
     "Start": "Start",
@@ -161,19 +151,15 @@
     "BookingNotFound": "Booking not found",
     "BookingAlreadyCancelled": "Booking is already cancelled",
     "CancelledBookingCannotBeRescheduled": "Cancelled bookings cannot be rescheduled",
-
     "SubscriptionPlanNotFoundById": "Subscription plan not found.",
-
     "UserSubscriptionNotFoundById": "User subscription not found.",
     "EntityNotFoundById": "{0} with ID {1} not found.",
     "UnknownMember": "Unknown Member",
-
     "MemberProfileNotFound": "Member profile not found.",
     "AlreadyHasActiveSubscription": "User already has an active subscription for this plan.",
     "PaymentNotFound": "Payment not found.",
     "PaymentNotFoundWithIntentId": "Payment not found with the provided Intent ID.",
     "PaidPaymentCannotBeModified": "Paid payment cannot be modified.",
-
     "UserManagement": "User Management",
     "Users": "Users",
     "UsersManagement": "Users Management",
@@ -193,7 +179,6 @@
     "QRAlreadyScanned": "QR code already scanned",
     "QRExpired": "QR code has expired",
     "QRScannedSuccess": "Attendance recorded successfully",
-
     "NotificationWelcomeTitle": "Welcome to Arena!",
     "NotificationWelcomeMessage": "Hey {0}! Your account is ready. Subscribe to a plan to unlock all features.",
     "NotificationPaymentConfirmedTitle": "Payment Confirmed",
@@ -216,7 +201,6 @@
     "NotificationNutritionPlanMessage": "Your personalised AI nutrition plan is ready. Check your dashboard for your daily targets.",
     "NotificationMealAnalysisTitle": "Meal Analysis Complete",
     "NotificationMealAnalysisMessage": "Your meal image has been analyzed. View the nutritional breakdown in your meal log.",
-
     "EmailOtpSubject": "Your Arena Verification Code",
     "EmailOtpBody": "<h2>Verification Code</h2><p>Your OTP code is:</p><h1 style=\"letter-spacing:8px\">{0}</h1><p>This code expires in 10 minutes. Do not share it with anyone.</p>",
     "EmailPaymentConfirmedSubject": "Payment Confirmed",
@@ -225,7 +209,6 @@
     "EmailSubscriptionExpiringBody": "<h2>Hey {0}!</h2><p>Your Arena subscription expires in <strong>{1} day(s)</strong>.</p><p>Renew now to keep access to all features and AI tools.</p>",
     "EmailSubscriptionExpiredSubject": "Your Subscription Has Expired",
     "EmailSubscriptionExpiredBody": "<h2>Hey {0}!</h2><p>Your Arena subscription has expired.</p><p>Renew your plan to continue booking sessions and using AI features.</p>",
-
     "ArenaBrandName": "Arena",
     "ArenaBrandNameWithSlogan": "Arena - Your Fitness Journey",
     "FullName": "Full Name",
@@ -280,7 +263,7 @@
     "Records": "Records",
     "Showing": "Showing",
     "RowsPerPage": "Rows Per Page",
-    "Currency" : "EGP",
+    "Currency": "EGP",
     "AnalyticsDashboard": "Analytics Dashboard",
     "AnalyticsSubtitle": "Real-time business performance, memberships, and revenue analytics.",
     "Refresh": "Refresh",
@@ -332,5 +315,27 @@
     "JustNow": "Just now",
     "MinsAgo": "{0} mins ago",
     "HrsAgo": "{0} hrs ago",
-    "DaysAgo": "{0} days ago"
+    "DaysAgo": "{0} days ago",
+    "WorkingHours": "Working Hours",
+    "WorkingHoursSchedule": "Working Hours & Schedule",
+    "ManageWorkingHours": "Manage Gym Working Hours",
+    "DayOfWeek": "Day of Week",
+    "OpenTime": "Open Time",
+    "CloseTime": "Close Time",
+    "IsClosed": "Is Closed",
+    "Open": "Open",
+    "Closed": "Closed",
+    "EditWorkingHours": "Edit Working Hours",
+    "UpdateWorkingHours": "Update Working Hours",
+    "WorkingHoursUpdatedSuccessfully": "Working hours updated successfully!",
+    "AnErrorOccurredUpdatingWorkingHours": "An error occurred while updating working hours.",
+    "ConfirmSaveWorkingHours": "Are you sure you want to save these changes to gym hours?",
+    "InvalidTimeRange": "Open time and close time must be valid.",
+    "Monday": "Monday",
+    "Tuesday": "Tuesday",
+    "Wednesday": "Wednesday",
+    "Thursday": "Thursday",
+    "Friday": "Friday",
+    "Saturday": "Saturday",
+    "Sunday": "Sunday"
 }

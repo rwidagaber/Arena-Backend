@@ -271,6 +271,125 @@ namespace ArenaInfrastructure.Migrations
                     b.ToTable("ChatMessages", (string)null);
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.Gym.WorkingHours", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<TimeSpan>("CloseTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsClosed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan>("OpenTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WorkingHours", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Monday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Tuesday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Wednesday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Thursday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Friday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 15, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Saturday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Sunday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        });
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.Health.ProgressLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -361,6 +480,61 @@ namespace ArenaInfrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Translations", (string)null);
+                });
+
+            modelBuilder.Entity("ArenaDomain.Entities.MemberHealthVector", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmbeddingJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MemberProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberProfileId");
+
+                    b.ToTable("MemberHealthVectors", (string)null);
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.MemberProfile", b =>
@@ -1636,6 +1810,17 @@ namespace ArenaInfrastructure.Migrations
                     b.Navigation("MemberProfile");
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.MemberHealthVector", b =>
+                {
+                    b.HasOne("ArenaDomain.Entities.MemberProfile", "MemberProfile")
+                        .WithMany("HealthVectors")
+                        .HasForeignKey("MemberProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MemberProfile");
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.MemberProfile", b =>
                 {
                     b.HasOne("ArenaDomain.Entities.User.ApplicationUser", "User")
@@ -1879,6 +2064,8 @@ namespace ArenaInfrastructure.Migrations
                     b.Navigation("Bookings");
 
                     b.Navigation("ChatConversations");
+
+                    b.Navigation("HealthVectors");
 
                     b.Navigation("MealLogs");
 
