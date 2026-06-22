@@ -82,22 +82,20 @@ namespace ArenaInfrastructure.AI
                     ConversationId = Guid.Empty
                 };
 
-            // TODO: Temporary bypass — allow all users to access AI chat
-            // until the hasAI / subscription issue is properly fixed.
-            // Original check:
-            // var activeSub = await _context.UserSubscriptions
-            //     .Include(s => s.Plan)
-            //     .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id 
-            //                            && s.Status == SubscriptionStatus.Active);
-            //
-            // if (activeSub == null || !activeSub.Plan.HasAI)
-            // {
-            //     return new ChatResponseWithHistoryDto
-            //     {
-            //         Reply = "❌ Access Denied: You need an active subscription with AI features enabled to use the AI Coach chatbot. Please upgrade your plan in the Pricing section.",
-            //         ConversationId = Guid.Empty
-            //     };
-            // }
+            // Check if the user has an active subscription that includes AI features
+            var activeSub = await _context.UserSubscriptions
+                .Include(s => s.Plan)
+                .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id 
+                                       && s.Status == SubscriptionStatus.Active);
+
+            if (activeSub == null || !activeSub.Plan.HasAI)
+            {
+                return new ChatResponseWithHistoryDto
+                {
+                    Reply = "❌ Access Denied: You need an active subscription with AI features enabled to use the AI Coach chatbot. Please upgrade your plan in the Pricing section.",
+                    ConversationId = Guid.Empty
+                };
+            }
 
             try
             {
