@@ -84,15 +84,6 @@ namespace ArenaApi.Controllers
             return Ok(result.Value);
         }
 
-        [HttpGet("test-me/{email}")]
-        public async Task<IActionResult> GetProfileTest(string email)
-        {
-            var userManager = (Microsoft.AspNetCore.Identity.UserManager<ArenaDomain.Entities.User.ApplicationUser>)HttpContext.RequestServices.GetService(typeof(Microsoft.AspNetCore.Identity.UserManager<ArenaDomain.Entities.User.ApplicationUser>));
-            var user = await userManager.FindByEmailAsync(email);
-            if (user == null) return NotFound("User not found");
-            var result = await _authService.GetProfileAsync(user.Id);
-            return Ok(result.Value);
-        }
 
         [Authorize]
         [HttpPatch("change-password")]
