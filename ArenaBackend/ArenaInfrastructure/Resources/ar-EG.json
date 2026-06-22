@@ -338,5 +338,7 @@
     "Friday": "الجمعة",
     "Saturday": "السبت",
     "Sunday": "الأحد",
-    "GenerateDemoData": "إنشاء بيانات تجريبية"
+    "GenerateDemoData": "إنشاء بيانات تجريبية",
+    "MembersWithoutActiveSubscriptions": "أعضاء بدون اشتراكات نشطة",
+    "MembershipHealthOverview": "نظرة عامة على صحة العضوية"
 }

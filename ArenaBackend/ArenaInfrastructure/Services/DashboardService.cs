@@ -5,6 +5,7 @@ using ArenaDomain.Enums;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.Globalization;
 
 namespace ArenaInfrastructure.Services
 {
@@ -49,6 +50,14 @@ namespace ArenaInfrastructure.Services
             // ── KPI: Total Members ─────────────────────────────────────────────
             dto.TotalMembers = await _context.Users
                 .CountAsync(u => !u.IsDeleted, cancellationToken);
+
+            var membersWithActiveSubs = await _context.UserSubscriptions
+                .Where(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted)
+                .Select(s => s.MemberProfileId)
+                .Distinct()
+                .CountAsync(cancellationToken);
+
+            dto.MembersWithoutActiveSubscriptions = dto.TotalMembers - membersWithActiveSubs;
 
             // ── KPI: Active Subscriptions ──────────────────────────────────────
             dto.ActiveSubscriptions = await _context.UserSubscriptions
@@ -120,30 +129,31 @@ namespace ArenaInfrastructure.Services
                 ? Math.Round((dto.MonthlyRevenue - previousMonthRevenue) / previousMonthRevenue * 100, 1)
                 : (dto.MonthlyRevenue > 0 ? 100m : 0m);
 
-            // ── Weekly Attendance (Mon–Sun) ────────────────────────────────────
+            // ── Last 7 Days Attendance ────────────────────────────────────
+            var last7DaysStart = today.AddDays(-6);
+            var last7DaysEnd = today.AddDays(1); // To include today up to 23:59:59
+
             var weeklyCheckIns = await _context.Attendances
                 .Where(a => a.CheckInTime != null
-                            && a.CheckInTime >= weekStart
-                            && a.CheckInTime < weekEnd)
+                            && a.CheckInTime >= last7DaysStart
+                            && a.CheckInTime < last7DaysEnd)
                 .Select(a => a.CheckInTime!.Value)
                 .ToListAsync(cancellationToken);
 
             var weeklyData = weeklyCheckIns
-                .GroupBy(t => t.DayOfWeek)
-                .Select(g => new { DayOfWeek = g.Key, Count = g.Count() })
+                .GroupBy(t => t.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
                 .ToList();
 
-            var dayNames = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-            var dayOfWeekOrder = new[]
-            {
-                DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
-            };
+            var last7DaysOrder = Enumerable.Range(0, 7)
+                .Select(i => last7DaysStart.AddDays(i).Date)
+                .ToList();
 
-            dto.WeeklyAttendance = dayOfWeekOrder.Select((dow, i) => new DailyAttendanceDto
+            dto.WeeklyAttendance = last7DaysOrder.Select(date => new DailyAttendanceDto
             {
-                DayName = dayNames[i],
-                Count = weeklyData.FirstOrDefault(w => w.DayOfWeek == dow)?.Count ?? 0
+                DayName = date.ToString("ddd", CultureInfo.InvariantCulture),
+                Date = date,
+                Count = weeklyData.FirstOrDefault(w => w.Date == date)?.Count ?? 0
             }).ToList();
 
             // ── Recent Check-ins (last 5) ──────────────────────────────────────
