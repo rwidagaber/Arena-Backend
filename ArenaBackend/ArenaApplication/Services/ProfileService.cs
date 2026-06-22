@@ -36,7 +36,9 @@ namespace ArenaApplication.Services
                 return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
 
             var isSubscribed = activeSubscription != null;
 
@@ -71,7 +73,8 @@ namespace ArenaApplication.Services
                     RemainingSessions = activeSubscription.RemainingSessions,
                     TotalSessions = activeSubscription.Plan?.SessionLimit ?? 0,
                     PaymentAmount = activeSubscription.Plan?.Price ?? 0,
-                    ReminderSent = activeSubscription.ReminderSent
+                    ReminderSent = activeSubscription.ReminderSent,
+                    HasAI = activeSubscription.Plan?.HasAI ?? false
                 }
             };
 
@@ -85,7 +88,9 @@ namespace ArenaApplication.Services
                 return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
 
             if (activeSubscription == null)
             {
