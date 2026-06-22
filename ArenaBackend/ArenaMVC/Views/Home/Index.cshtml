@@ -8,9 +8,9 @@
     // Pre-calculate chart dimensions for the SVG
     var maxAttendance = Model.WeeklyAttendance.Any() ? Model.WeeklyAttendance.Max(a => a.Count) : 1;
     if (maxAttendance == 0) maxAttendance = 1;
-    var chartWidth = 480;
+    var chartWidth = 520;
     var chartHeight = 170;
-    var chartPadding = 20;
+    var chartPadding = 40;
     var usableWidth = chartWidth - (chartPadding * 2);
     var dayCount = Model.WeeklyAttendance.Count;
     var daySpacing = dayCount > 1 ? usableWidth / (dayCount - 1) : 0;
@@ -152,6 +152,9 @@
         font-size: 1.15rem;
         font-weight: 700;
         color: var(--whiteout);
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .chart-legend {
@@ -195,6 +198,21 @@
         gap: 1rem;
         margin-top: 1rem;
         flex: 1;
+        max-height: 380px;
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    .checkin-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    .checkin-list::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.05);
+        border-radius: 4px;
+    }
+    .checkin-list::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
     }
 
     .checkin-item {
@@ -320,6 +338,53 @@
         margin-bottom: 0.5rem;
         opacity: 0.5;
     }
+
+    .health-card {
+        margin-top: 1.5rem;
+    }
+
+    .health-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+    }
+
+    .health-stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .health-stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        color: var(--whiteout);
+        font-weight: 500;
+    }
+
+    .health-stat-value {
+        font-weight: 700;
+    }
+
+    .health-progress-bg {
+        width: 100%;
+        height: 8px;
+        background-color: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .health-progress-fill {
+        height: 100%;
+        border-radius: 4px;
+    }
+
+    .fill-inactive {
+        background-color: #EF4444;
+    }
 </style>
 
 <div class="dashboard-header">
@@ -377,7 +442,7 @@
 
     <!-- Expiring Subscriptions -->
     <div class="metric-card">
-        <div class="metric-icon">⏳</div>
+        <div class="metric-icon"><i data-lucide="clock"></i></div>
         <div class="metric-info">
             <span class="metric-label">@Localizer["ExpiringSoon"]</span>
             <span class="metric-value">@Model.ExpiringSubscriptions.ToString(CultureInfo.InvariantCulture)</span>
@@ -389,7 +454,7 @@
 
     <!-- Today's Attendance -->
     <div class="metric-card">
-        <div class="metric-icon">🏋️</div>
+        <div class="metric-icon"><i data-lucide="user-check"></i></div>
         <div class="metric-info">
             <span class="metric-label">@Localizer["AttendanceToday"]</span>
             <span class="metric-value">@Model.TodayAttendance.ToString(CultureInfo.InvariantCulture)</span>
@@ -400,10 +465,12 @@
 
 <!-- Main Layout Grid -->
 <div class="dashboard-layout">
-    <!-- Line Chart Component -->
-    <div class="dashboard-card chart-card">
-        <div class="chart-header">
-            <h2 class="chart-title">@Localizer["WeeklyAttendanceAndCheckins"]</h2>
+    <!-- Left Column: Charts and Health -->
+    <div>
+        <!-- Line Chart Component -->
+        <div class="dashboard-card chart-card">
+            <div class="chart-header">
+                <h2 class="chart-title"><i data-lucide="bar-chart-2"></i>@Localizer["WeeklyAttendanceAndCheckins"]</h2>
             <div class="chart-legend">
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: var(--yellow);"></span>
@@ -415,10 +482,19 @@
         <div class="mock-chart-container">
             <div class="chart-tooltip" id="homeChartTooltip"></div>
             <svg class="mock-chart-svg" viewBox="0 0 520 220" preserveAspectRatio="none">
-                <!-- Grid Lines -->
-                <line x1="0" y1="50" x2="500" y2="50" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
-                <line x1="0" y1="100" x2="500" y2="100" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
-                <line x1="0" y1="150" x2="500" y2="150" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
+                <!-- Y-Axis Grid and Labels -->
+                @{
+                    var ySteps = 3;
+                    for (int i = 0; i <= ySteps; i++)
+                    {
+                        var yValue = maxAttendance * (ySteps - i) / (double)ySteps;
+                        var ratio = yValue / maxAttendance;
+                        var yPos = (int)(chartHeight - (ratio * (chartHeight - 30)) + 10);
+                        
+                        <line x1="@chartPadding" y1="@yPos" x2="@(chartWidth - chartPadding)" y2="@yPos" stroke="var(--border-color)" stroke-dasharray="4" stroke-width="1" />
+                        @Html.Raw($"<text x=\"{chartPadding - 10}\" y=\"{yPos + 4}\" fill=\"#71717A\" font-size=\"11\" font-family=\"Outfit\" text-anchor=\"end\">{Math.Round(yValue)}</text>")
+                    }
+                }
                 
                 <!-- SVG Area Gradients -->
                 <defs>
@@ -451,17 +527,12 @@
                     <path d="@linePath" fill="none" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 
                     // Data point circles
-                    var dayOfWeekOrder = new[]
-                    {
-                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
-                    };
 
                     for (int i = 0; i < points.Count; i++)
                     {
                         var point = points[i];
                         var rawCount = Model.WeeklyAttendance[i].Count;
-                        var dow = dayOfWeekOrder[i];
+                        var dow = Model.WeeklyAttendance[i].Date.DayOfWeek;
                         var localizedDay = CultureInfo.CurrentUICulture.DateTimeFormat.GetDayName(dow);
 
                         <!-- Hit Area Circle for Hover -->
@@ -478,17 +549,10 @@
                 }
                 
                 <!-- X-Axis Labels -->
-                @{
-                    var dayOfWeekOrderForLabels = new[]
-                    {
-                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
-                    };
-                }
                 @for (int i = 0; i < Model.WeeklyAttendance.Count; i++)
                 {
                     var xPos = chartPadding + (i * daySpacing);
-                    var dow = dayOfWeekOrderForLabels[i];
+                    var dow = Model.WeeklyAttendance[i].Date.DayOfWeek;
                     var localizedAbbr = CultureInfo.CurrentUICulture.DateTimeFormat.GetAbbreviatedDayName(dow);
                     @Html.Raw($"<text x=\"{xPos}\" y=\"210\" fill=\"#71717A\" font-size=\"11\" font-family=\"Outfit\" text-anchor=\"middle\">{localizedAbbr}</text>")
                 }
@@ -516,6 +580,27 @@
                 <text x="465" y="190" fill="var(--text-secondary)" font-size="11" font-family="Outfit">Sun</text> *@
             </svg>
         </div>
+        </div>
+        
+        <!-- Membership Health Overview -->
+        <div class="dashboard-card health-card">
+            <h3 class="chart-title"><i data-lucide="activity"></i>@Localizer["MembershipHealthOverview"]</h3>
+            <div class="health-stats">
+                @{
+                    var inactiveMembers = Model.MembersWithoutActiveSubscriptions;
+                    var inactivePercent = Model.TotalMembers > 0 ? (inactiveMembers * 100.0 / Model.TotalMembers) : 0;
+                }
+                <div class="health-stat-item">
+                    <div class="health-stat-header">
+                        <span>@Localizer["MembersWithoutActiveSubscriptions"]</span>
+                        <span class="health-stat-value">@inactiveMembers.ToString("N0", CultureInfo.InvariantCulture) / @Model.TotalMembers.ToString("N0", CultureInfo.InvariantCulture) (@inactivePercent.ToString("0.#", CultureInfo.InvariantCulture)%)</span>
+                    </div>
+                    <div class="health-progress-bg">
+                        <div class="health-progress-fill fill-inactive" style="width: @inactivePercent.ToString(CultureInfo.InvariantCulture)%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Sidebar column: Quick Actions & Live feed -->
@@ -523,7 +608,7 @@
         <!-- Quick shortcuts -->
     <div>
         <div class="dashboard-card shortcuts-card">
-            <h3 class="chart-title">@Localizer["QuickAdministration"]</h3>
+            <h3 class="chart-title"><i data-lucide="settings"></i>@Localizer["QuickAdministration"]</h3>
             <div class="shortcuts-grid">
                 <a href="@Url.Action("Create", "SubscriptionPlans")" class="shortcut-btn">
                     <i data-lucide="plus" class="shortcut-icon"></i>
@@ -533,9 +618,9 @@
                     <i data-lucide="clipboard-list" class="shortcut-icon"></i>
                     <span>@Localizer["SubscriptionPlans"]</span>
                 </a>
-                <a href="@Url.Action("Privacy", "Home")" class="shortcut-btn" style="grid-column: span 2;">
-                    <i data-lucide="shield" class="shortcut-icon"></i>
-                    <span>@Localizer["Privacy"]</span>
+                <a href="@Url.Action("Index", "WorkingHours")" class="shortcut-btn" style="grid-column: span 2;">
+                    <i data-lucide="clock" class="shortcut-icon"></i>
+                    <span>@Localizer["EditWorkingHours"]</span>
                 </a>
             </div>
         </div>
@@ -543,7 +628,7 @@
         
         <!-- Recent Check-ins -->
         <div class="dashboard-card recent-checkins-card">
-            <h3 class="chart-title">@Localizer["LiveGymCheckins"]</h3>
+            <h3 class="chart-title"><i data-lucide="calendar"></i>@Localizer["LiveGymCheckins"]</h3>
             @if (Model.RecentCheckIns.Any())
             {
                 <div class="checkin-list">

@@ -101,23 +101,15 @@ builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
 
 // Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
 builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
+// ── Hangfire ──────────────────────────────────────────────────
 builder.Services.AddHangfire(config =>
-               config.UseSqlServerStorage(
-                   builder.Configuration.GetConnectionString("DefaultConnection")));
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
 // Booking service
 builder.Services.AddScoped<IBookingService, BookingService>();
-
-// ── Hangfire ──────────────────────────────────────────────────
-builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
-builder.Services.AddHangfireServer();
-builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
-builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
 var app = builder.Build();
 

@@ -192,6 +192,12 @@ Only flag actual member health facts, not general questions.
                 : string.Empty;
         }
 
+        public async Task<bool> HasHealthInfoAsync(Guid memberProfileId)
+        {
+            var criticalContent = await _vectorStore.GetCriticalContentAsync(memberProfileId, CriticalCategories);
+            return criticalContent.Count > 0;
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────────
 
         private static string CleanJson(string raw)

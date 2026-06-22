@@ -1,4 +1,4 @@
-﻿using ArenaApplication.AI;
+using ArenaApplication.AI;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.WorkoutDtos;
 using ArenaApplication.Dtos.WorkoutPlan;
@@ -61,21 +61,58 @@ namespace ArenaInfrastructure.AI
         {
             // ✅ Search by Id OR UserId
             var profile = await _context.MemberProfiles
+                .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.Id == memberProfileId || p.UserId == memberProfileId);
 
             if (profile == null)
                 throw new Exception($"Profile not found: {memberProfileId}");
 
-            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
+            var effectiveGoal = DetectGoalOverride(userMessage) ?? profile.Goal ?? "General Fitness";
+
+            var goalOverride = DetectGoalOverride(userMessage);
+            if (goalOverride != null && !string.Equals(profile.Goal, goalOverride, StringComparison.OrdinalIgnoreCase))
+            {
+                profile.Goal = goalOverride;
+                _context.MemberProfiles.Update(profile);
+            }
+
+            var memberName = GetMemberName(profile);
+            var goalAwareUserMessage = BuildGoalAwareUserMessage(userMessage, effectiveGoal);
+            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, goalAwareUserMessage);
+            var recentProgress = await _context.ProgressLogs
+                .Where(log => log.MemberProfileId == profile.Id)
+                .OrderByDescending(log => log.LoggedAt)
+                .Take(8)
+                .OrderBy(log => log.LoggedAt)
+                .ToListAsync();
+
+            var recentNutritionPlans = await _context.NutritionPlans
+                .Where(plan => plan.MemberProfileId == profile.Id && !plan.IsDeleted)
+                .Include(plan => plan.Meals)
+                .OrderByDescending(plan => plan.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            var recentWorkoutPlans = await _context.WorkoutPlans
+                .Where(plan => plan.MemberProfileId == profile.Id && !plan.IsDeleted)
+                .Include(plan => plan.WorkoutDays)
+                .OrderByDescending(plan => plan.CreatedAt)
+                .Take(5)
+                .ToListAsync();
 
             // ✅ OPTIMIZATION: Async database lookup for active subscriptions
             var subscription = await _subscriptionRepo.GetAll()
                 .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id && s.Status == SubscriptionStatus.Active);
 
-            var userContext = UserContextBuilder.Build(profile, subscription);
+            var userContext = UserContextBuilder.Build(
+                profile,
+                subscription,
+                recentProgress: recentProgress,
+                nutritionPlans: recentNutritionPlans,
+                workoutPlans: recentWorkoutPlans);
 
             var knowledge = GymKnowledge.GetExerciseGuide(
-                profile.Goal ?? "General Fitness",
+                effectiveGoal,
                 profile.FitnessExperience ?? "Beginner");
 
             if (!string.IsNullOrEmpty(profile.Injuries))
@@ -87,12 +124,12 @@ namespace ArenaInfrastructure.AI
             var prompt = PromptLoader.GetWorkoutPrompt(
                 userContext: userContext,
                 name: profile.FirstName ?? "User",
-                goal: profile.Goal ?? "General Fitness",
+                goal: effectiveGoal,
                 injuries: profile.Injuries ?? "None",
                 healthConditions: profile.HealthConditions ?? "None",
                 experience: profile.FitnessExperience ?? "Beginner",
                 equipment: profile.Equipment ?? "Full Gym",
-                userMessage: userMessage + "\n\n" + knowledge);
+                userMessage: goalAwareUserMessage + "\n\n" + knowledge);
 
             WorkoutPlanAIResponse planData;
             try
@@ -101,14 +138,26 @@ namespace ArenaInfrastructure.AI
                 var cleanJson = AIHelper.CleanJson(jsonResponse);
                 planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
                     cleanJson,
-                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile, userMessage);
+                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile, goalAwareUserMessage, effectiveGoal, memberName);
             }
             catch
             {
-                planData = CreateFallbackPlanData(profile, userMessage);
+                planData = CreateFallbackPlanData(profile, goalAwareUserMessage, effectiveGoal, memberName);
             }
 
-            NormalizeWorkoutPlan(planData, profile, profile.FirstName ?? "Member", userMessage, healthContext);
+            NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
+
+            var activeWorkoutPlans = await _context.WorkoutPlans
+                .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
+                    && existingPlan.IsActive
+                    && !existingPlan.IsDeleted)
+                .ToListAsync();
+
+            foreach (var existingPlan in activeWorkoutPlans)
+            {
+                existingPlan.IsActive = false;
+                existingPlan.UpdatedAt = DateTime.UtcNow;
+            }
 
             // ✅ Instantiate Core Plan Entity
             var plan = new WorkoutPlan
@@ -201,7 +250,12 @@ namespace ArenaInfrastructure.AI
 
         private static JsonSerializerOptions CreateJsonOptions()
         {
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var options = new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
+            };
             options.Converters.Add(new FlexibleIntConverter());
             return options;
         }
@@ -211,7 +265,8 @@ namespace ArenaInfrastructure.AI
             MemberProfile profile,
             string memberName,
             string userMessage,
-            string healthContext)
+            string healthContext,
+            string effectiveGoal)
         {
             if (string.IsNullOrWhiteSpace(planData.Name))
                 planData.Name = $"{memberName} Workout Plan";
@@ -251,67 +306,156 @@ namespace ArenaInfrastructure.AI
             }
         }
 
-        private static WorkoutPlanAIResponse CreateFallbackPlanData(MemberProfile profile, string userMessage = "")
+        private static WorkoutPlanAIResponse CreateFallbackPlanData(MemberProfile profile, string userMessage, string effectiveGoal, string memberName)
         {
-            var memberName = string.IsNullOrWhiteSpace(profile.FirstName) ? "Member" : profile.FirstName;
-            var goal = string.IsNullOrWhiteSpace(profile.Goal) ? "General Fitness" : profile.Goal;
+            var goal = effectiveGoal;
+            var defaults = GetTrainingDefaults(profile, effectiveGoal);
             var avoidKneeStress = ContainsAny(profile.Injuries, "knee", "ركبة")
                 || ContainsAny(userMessage, "knee", "ركبة");
+            var avoidBackStress = ContainsAny(profile.Injuries, "back", "spine", "lower back", "ظهر")
+                || ContainsAny(userMessage, "back", "spine", "lower back", "ظهر");
+            var avoidArmStress = ContainsAny(profile.Injuries, "arm", "shoulder", "elbow", "wrist", "ذراع", "كتف")
+                || ContainsAny(userMessage, "arm", "shoulder", "elbow", "wrist", "ذراع", "كتف");
+            var hasDiabetes = ContainsAny(profile.HealthConditions, "diabetes", "sugar", "سكري");
+
+            var days = new List<WorkoutDayAIResponse>
+            {
+                new()
+                {
+                    DayName = "Day 1 - Controlled Upper Body",
+                    Exercises = avoidArmStress
+                        ?
+                        [
+                            Exercise("Walking or Bike Warmup", 1, hasDiabetes ? 12 : 10, "Cardio"),
+                            Exercise("Scapular Retraction", defaults.Sets, defaults.Reps + 2, "Posture"),
+                            Exercise("Cable Row Light", defaults.Sets, defaults.Reps, "Back"),
+                            Exercise("Wall Push-up", defaults.Sets, defaults.Reps, "Chest"),
+                            Exercise("Dead Bug", defaults.Sets, 10, "Core")
+                        ]
+                        :
+                        [
+                            Exercise("Chest Press Machine", defaults.Sets, defaults.Reps, "Chest"),
+                            Exercise("Lat Pulldown", defaults.Sets, defaults.Reps + 2, "Back"),
+                            Exercise("Seated Shoulder Press", Math.Max(defaults.Sets - 1, 2), defaults.Reps, "Shoulders"),
+                            Exercise("Cable Row", defaults.Sets, defaults.Reps + 2, "Back"),
+                            Exercise("Biceps Curl", Math.Max(defaults.Sets - 1, 2), defaults.Reps + 2, "Arms"),
+                            Exercise("Triceps Pushdown", Math.Max(defaults.Sets - 1, 2), defaults.Reps + 2, "Arms")
+                        ]
+                },
+                new()
+                {
+                    DayName = "Day 2 - Joint-Friendly Lower Body and Core",
+                    Exercises = avoidKneeStress
+                        ?
+                        [
+                            Exercise("Hip Thrust", defaults.Sets, defaults.Reps + 2, "Glutes"),
+                            Exercise("Seated Leg Curl", defaults.Sets, defaults.Reps + 2, "Hamstrings"),
+                            Exercise("Glute Bridge", defaults.Sets, defaults.Reps + 4, "Glutes"),
+                            Exercise(avoidBackStress ? "Bird Dog" : "Plank", defaults.Sets, avoidBackStress ? 10 : 30, "Core"),
+                            Exercise("Bike Moderate Pace", 1, hasDiabetes ? 15 : 10, "Cardio")
+                        ]
+                        :
+                        [
+                            Exercise(avoidBackStress ? "Leg Extension Machine" : "Leg Press", defaults.Sets, defaults.Reps + 2, "Legs"),
+                            Exercise("Seated Leg Curl", defaults.Sets, defaults.Reps + 2, "Hamstrings"),
+                            Exercise("Calf Raise", defaults.Sets, defaults.Reps + 4, "Calves"),
+                            Exercise(avoidBackStress ? "Dead Bug" : "Plank", defaults.Sets, avoidBackStress ? 10 : 30, "Core"),
+                            Exercise("Incline Walk", 1, hasDiabetes ? 15 : 10, "Cardio")
+                        ]
+                }
+            };
+
+            if (defaults.WeeklyDays >= 3)
+            {
+                days.Add(new WorkoutDayAIResponse
+                {
+                    DayName = "Day 3 - Full Body Technique",
+                    Exercises =
+                    [
+                        Exercise(avoidBackStress ? "Machine Chest Press" : "Dumbbell Bench Press", defaults.Sets, defaults.Reps, "Chest"),
+                        Exercise("Assisted Pull-up", Math.Max(defaults.Sets - 1, 2), Math.Max(defaults.Reps - 2, 6), "Back"),
+                        Exercise("Cable Face Pull", defaults.Sets, defaults.Reps + 4, "Shoulders"),
+                        Exercise(avoidBackStress ? "Suitcase Hold" : "Farmer Carry", Math.Max(defaults.Sets - 1, 2), 30, "Full Body")
+                    ]
+                });
+            }
+
+            if (defaults.WeeklyDays >= 4)
+            {
+                days.Add(new WorkoutDayAIResponse
+                {
+                    DayName = hasDiabetes ? "Day 4 - Moderate Cardio and Mobility" : "Day 4 - Goal Conditioning",
+                    Exercises =
+                    [
+                        Exercise("Bike Moderate Pace", 1, hasDiabetes ? 20 : 15, "Cardio"),
+                        Exercise("Mobility Flow", 1, 10, "Mobility"),
+                        Exercise("Cable Row Light", 2, defaults.Reps + 2, "Back"),
+                        Exercise("Glute Bridge", 2, defaults.Reps + 4, "Glutes")
+                    ]
+                });
+            }
 
             return new WorkoutPlanAIResponse
             {
-                Name = $"{memberName} {goal} Workout Plan",
-                DurationWeeks = 4,
-                Days =
-                [
-                    new WorkoutDayAIResponse
-                    {
-                        DayName = "Day 1 - Upper Body",
-                        Exercises =
-                        [
-                            new WorkoutExerciseAIResponse { Name = "Chest Press Machine", Sets = 3, Reps = 10, MuscleGroup = "Chest" },
-                            new WorkoutExerciseAIResponse { Name = "Lat Pulldown", Sets = 3, Reps = 12, MuscleGroup = "Back" },
-                            new WorkoutExerciseAIResponse { Name = "Seated Shoulder Press", Sets = 3, Reps = 10, MuscleGroup = "Shoulders" },
-                            new WorkoutExerciseAIResponse { Name = "Cable Row", Sets = 3, Reps = 12, MuscleGroup = "Back" },
-                            new WorkoutExerciseAIResponse { Name = "Biceps Curl", Sets = 3, Reps = 12, MuscleGroup = "Arms" },
-                            new WorkoutExerciseAIResponse { Name = "Triceps Pushdown", Sets = 3, Reps = 12, MuscleGroup = "Arms" }
-                        ]
-                    },
-                    new WorkoutDayAIResponse
-                    {
-                        DayName = "Day 2 - Lower Body and Core",
-                        Exercises = avoidKneeStress
-                            ?
-                            [
-                                new WorkoutExerciseAIResponse { Name = "Hip Thrust", Sets = 3, Reps = 12, MuscleGroup = "Glutes" },
-                                new WorkoutExerciseAIResponse { Name = "Seated Leg Curl", Sets = 3, Reps = 12, MuscleGroup = "Hamstrings" },
-                                new WorkoutExerciseAIResponse { Name = "Glute Bridge", Sets = 3, Reps = 15, MuscleGroup = "Glutes" },
-                                new WorkoutExerciseAIResponse { Name = "Plank", Sets = 3, Reps = 30, MuscleGroup = "Core" }
-                            ]
-                            :
-                            [
-                                new WorkoutExerciseAIResponse { Name = "Leg Press", Sets = 3, Reps = 12, MuscleGroup = "Legs" },
-                                new WorkoutExerciseAIResponse { Name = "Romanian Deadlift", Sets = 3, Reps = 10, MuscleGroup = "Hamstrings" },
-                                new WorkoutExerciseAIResponse { Name = "Leg Curl", Sets = 3, Reps = 12, MuscleGroup = "Hamstrings" },
-                                new WorkoutExerciseAIResponse { Name = "Calf Raise", Sets = 3, Reps = 15, MuscleGroup = "Calves" },
-                                new WorkoutExerciseAIResponse { Name = "Plank", Sets = 3, Reps = 30, MuscleGroup = "Core" }
-                            ]
-                    },
-                    new WorkoutDayAIResponse
-                    {
-                        DayName = "Day 3 - Full Body",
-                        Exercises =
-                        [
-                            new WorkoutExerciseAIResponse { Name = "Dumbbell Bench Press", Sets = 3, Reps = 10, MuscleGroup = "Chest" },
-                            new WorkoutExerciseAIResponse { Name = "Assisted Pull-up", Sets = 3, Reps = 8, MuscleGroup = "Back" },
-                            new WorkoutExerciseAIResponse { Name = "Cable Face Pull", Sets = 3, Reps = 15, MuscleGroup = "Shoulders" },
-                            new WorkoutExerciseAIResponse { Name = "Farmer Carry", Sets = 3, Reps = 30, MuscleGroup = "Full Body" }
-                        ]
-                    }
-                ]
+                Name = $"{memberName} {goal} Personalized Workout Plan",
+                DurationWeeks = defaults.DurationWeeks,
+                Days = days
             };
         }
 
+        private static WorkoutExerciseAIResponse Exercise(string name, int sets, int reps, string muscleGroup) => new()
+        {
+            Name = name,
+            Sets = sets,
+            Reps = reps,
+            MuscleGroup = muscleGroup
+        };
+
+        private static (int Sets, int Reps, int WeeklyDays, int DurationWeeks) GetTrainingDefaults(MemberProfile profile, string effectiveGoal)
+        {
+            var isBeginner = ContainsAny(profile.FitnessExperience, "beginner", "new", "مبتدئ");
+            var isAdvanced = ContainsAny(profile.FitnessExperience, "advanced", "متقدم");
+            var hasPainOrDisease = !string.IsNullOrWhiteSpace(profile.Injuries)
+                || ContainsAny(profile.HealthConditions, "diabetes", "heart", "pressure", "سكري", "ضغط");
+            var isWeightLoss = ContainsAny(effectiveGoal, "loss", "lose", "cut", "اخس", "تنشيف")
+                || (profile.TargetWeight.HasValue && profile.Weight.HasValue && profile.TargetWeight.Value < profile.Weight.Value - 1m);
+            var isGain = ContainsAny(effectiveGoal, "gain", "bulk", "muscle", "اكسب", "اضخم", "عضلات");
+
+            var sets = isBeginner || hasPainOrDisease ? 2 : isAdvanced ? 4 : 3;
+            var reps = isWeightLoss ? 14 : isGain ? 8 : isAdvanced ? 8 : 10;
+            var weeklyDays = hasPainOrDisease ? 3 : isAdvanced ? 4 : 3;
+            var durationWeeks = isBeginner || hasPainOrDisease ? 6 : 4;
+
+            return (sets, reps, weeklyDays, durationWeeks);
+        }
+
+        private static string? DetectGoalOverride(string? userMessage)
+        {
+            if (ContainsAny(userMessage, "gain weight", "weight gain", "increase weight", "bulk", "bulking", "gain muscle", "muscle gain", "build muscle", "اكسب وزن", "ازيد وزن", "اضخم", "عضلات"))
+                return "Weight Gain / Muscle Gain";
+
+            if (ContainsAny(userMessage, "lose weight", "weight loss", "loss weight", "fat loss", "cut", "cutting", "اخس", "انحف", "تنشيف", "نزل وزن"))
+                return "Weight Loss";
+
+            if (ContainsAny(userMessage, "endurance", "fitness", "fit", "لياقة"))
+                return "General Fitness";
+
+            return null;
+        }
+
+        private static string BuildGoalAwareUserMessage(string userMessage, string effectiveGoal) =>
+            $"Current requested goal, if different from profile, is: {effectiveGoal}.\nUser message: {userMessage}";
+
+        private static string GetMemberName(MemberProfile profile)
+        {
+            if (!string.IsNullOrWhiteSpace(profile.FirstName))
+                return profile.FirstName;
+
+            if (!string.IsNullOrWhiteSpace(profile.User?.FirstName))
+                return profile.User.FirstName;
+
+            return "Member";
+        }
         private static bool ContainsAny(string? text, params string[] values)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -344,3 +488,4 @@ namespace ArenaInfrastructure.AI
         }
     }
 }
+

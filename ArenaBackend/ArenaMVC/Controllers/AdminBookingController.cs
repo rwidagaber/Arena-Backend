@@ -45,44 +45,23 @@ namespace ArenaMVC.Controllers
             if (!result.IsSuccess)
                 return View("Error");
 
-            var pagedResult = result.Value;
-            var bookings = pagedResult.Items;
-            var memberProfileIds = bookings.Select(b => b.MemberProfileId).Distinct().ToList();
-
-            var profiles = await _memberProfileRepo.GetAll()
-                .Include(mp => mp.User)
-                .Where(mp => memberProfileIds.Contains(mp.Id))
-                .ToListAsync();
-
-            var profilesMap = profiles.ToDictionary(
-                mp => mp.Id,
-                mp => mp.User != null ? $"{mp.User.FirstName} {mp.User.LastName}".Trim() : string.Empty
-            );
-
-            var viewModels = bookings.Select(b => new AdminBookingViewModel
-            {
-                Id = b.Id,
-                MemberProfileName = profilesMap.TryGetValue(b.MemberProfileId, out var name) && !string.IsNullOrWhiteSpace(name)
-                    ? name
-                    : b.MemberProfileId.ToString(),
-                BookingDate = b.BookingDate,
-                StartTime = b.StartTime,
-                EndTime = b.EndTime,
-                Status = b.Status
-            }).ToList();
+            var pagedResult    = result.Value;
+            var bookings       = pagedResult.Items;
+            var profilesMap    = await BuildProfileNameMapAsync(bookings.Select(b => b.MemberProfileId));
+            var viewModels     = MapBookings(bookings, profilesMap);
 
             var viewModel = new AdminBookingPagedViewModel
             {
-                Items = viewModels,
-                TotalCount = pagedResult.TotalCount,
-                Page = page,
-                PageSize = pageSize,
+                Items          = viewModels,
+                TotalCount     = pagedResult.TotalCount,
+                Page           = page,
+                PageSize       = pageSize,
                 SelectedStatus = status,
-                SelectedDate = bookingDate
+                SelectedDate   = bookingDate
             };
 
             ViewBag.SelectedStatus = status;
-            ViewBag.SelectedDate = bookingDate?.Date;
+            ViewBag.SelectedDate   = bookingDate?.Date;
             return View(viewModel);
         }
 
@@ -93,32 +72,46 @@ namespace ArenaMVC.Controllers
             if (!result.IsSuccess)
                 return View("Error");
 
-            var bookings = result.Value;
-            var memberProfileIds = bookings.Select(b => b.MemberProfileId).Distinct().ToList();
-
-            var profiles = await _memberProfileRepo.GetAll()
-                .Include(mp => mp.User)
-                .Where(mp => memberProfileIds.Contains(mp.Id))
-                .ToListAsync();
-
-            var profilesMap = profiles.ToDictionary(
-                mp => mp.Id,
-                mp => mp.User != null ? $"{mp.User.FirstName} {mp.User.LastName}".Trim() : string.Empty
-            );
-
-            var viewModels = bookings.Select(b => new AdminBookingViewModel
-            {
-                Id = b.Id,
-                MemberProfileName = profilesMap.TryGetValue(b.MemberProfileId, out var name) && !string.IsNullOrWhiteSpace(name)
-                    ? name
-                    : b.MemberProfileId.ToString(),
-                BookingDate = b.BookingDate,
-                StartTime = b.StartTime,
-                EndTime = b.EndTime,
-                Status = b.Status
-            }).ToList();
+            var bookings    = result.Value;
+            var profilesMap = await BuildProfileNameMapAsync(bookings.Select(b => b.MemberProfileId));
+            var viewModels  = MapBookings(bookings, profilesMap);
 
             return View(viewModels);
+        }
+        // ── Private helpers ────────────────────────────────────────────────
+
+        private async Task<Dictionary<Guid, string>> BuildProfileNameMapAsync(
+            IEnumerable<Guid> memberProfileIds)
+        {
+            var ids      = memberProfileIds.Distinct().ToList();
+            var profiles = await _memberProfileRepo.GetAll()
+                .Include(mp => mp.User)
+                .Where(mp => ids.Contains(mp.Id))
+                .ToListAsync();
+
+            return profiles.ToDictionary(
+                mp => mp.Id,
+                mp => mp.User != null
+                    ? $"{mp.User.FirstName} {mp.User.LastName}".Trim()
+                    : string.Empty);
+        }
+
+        private static List<AdminBookingViewModel> MapBookings(
+            IEnumerable<BookingDto> bookings,
+            Dictionary<Guid, string> profilesMap)
+        {
+            return bookings.Select(b => new AdminBookingViewModel
+            {
+                Id                = b.Id,
+                MemberProfileName = profilesMap.TryGetValue(b.MemberProfileId, out var name)
+                                    && !string.IsNullOrWhiteSpace(name)
+                                        ? name
+                                        : b.MemberProfileId.ToString(),
+                BookingDate = b.BookingDate,
+                StartTime   = b.StartTime,
+                EndTime     = b.EndTime,
+                Status      = b.Status
+            }).ToList();
         }
     }
 }
