@@ -37,7 +37,7 @@
     "AgeRequirement": "User must be 16 years or older",
     "IfTheEmailExistsResetLinkSent": "If the email exists, a reset link has been sent.",
     "Home": "Home",
-    "Privacy": "Privacy Policy & Regulations",
+    "Privacy": "Privacy Policy",
     "SubscriptionPlans": "Subscription Plans",
     "Bookings": "Bookings",
     "TodaysBookings": "Today's Bookings",
@@ -71,7 +71,6 @@
     "InvalidWebhookSignature": "Invalid webhook signature.",
     "Plans1": "Plans",
     "Subscriptions": "Subscriptions",
-    //"Total":  "Total",
     "TotalPlans": "Total Plans",
     "ActivePlans": "Active Plans",
     "InactivePlans": "Inactive Plans",
@@ -338,5 +337,7 @@
     "Friday": "Friday",
     "Saturday": "Saturday",
     "Sunday": "Sunday",
-    "GenerateDemoData": "Generate Demo Data"
+    "GenerateDemoData": "Generate Demo Data",
+    "MembersWithoutActiveSubscriptions": "Members without active subscriptions",
+    "MembershipHealthOverview": "Membership Health Overview"
 }

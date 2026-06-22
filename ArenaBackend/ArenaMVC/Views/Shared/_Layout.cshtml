@@ -48,9 +48,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
-                        <i data-lucide="shield" class="nav-icon"></i>
-                        <span>@Localizer["Privacy"]</span>
+                    <a class="nav-link @(currentController == "AdminAnalytics" && currentAction == "Dashboard" ? "active" : "")" asp-area="" asp-controller="AdminAnalytics" asp-action="Dashboard">
+                        <i data-lucide="chart-line" class="nav-icon"></i>
+                        <span>@Localizer["AnalyticsDashboard"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "WorkingHours" ? "active" : "")" asp-area="" asp-controller="WorkingHours" asp-action="Index">
+                        <i data-lucide="clock" class="nav-icon"></i>
+                        <span>@Localizer["WorkingHours"]</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -72,15 +78,9 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "AdminAnalytics" && currentAction == "Dashboard" ? "active" : "")" asp-area="" asp-controller="AdminAnalytics" asp-action="Dashboard">
-                        <i data-lucide="chart-line" class="nav-icon"></i>
-                        <span>@Localizer["AnalyticsDashboard"]</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link @(currentController == "WorkingHours" ? "active" : "")" asp-area="" asp-controller="WorkingHours" asp-action="Index">
-                        <i data-lucide="clock" class="nav-icon"></i>
-                        <span>@Localizer["WorkingHours"]</span>
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
+                        <i data-lucide="shield" class="nav-icon"></i>
+                        <span>@Localizer["PrivacyPolicy"]</span>
                     </a>
                 </li>
             </ul>
