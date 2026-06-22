@@ -57,27 +57,54 @@ namespace ArenaInfrastructure.AI
             if (profile == null)
                 throw new Exception($"MemberProfile not found for Id: {memberProfileId}");
 
-            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
+            var effectiveGoal = DetectGoalOverride(userMessage) ?? profile.Goal ?? "General Fitness";
+            var goalAwareUserMessage = BuildGoalAwareUserMessage(userMessage, effectiveGoal);
+            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, goalAwareUserMessage);
+            var recentProgress = await _context.ProgressLogs
+                .Where(log => log.MemberProfileId == profile.Id)
+                .OrderByDescending(log => log.LoggedAt)
+                .Take(8)
+                .OrderBy(log => log.LoggedAt)
+                .ToListAsync();
 
-            // ✅ Build subscription for context
+            var recentNutritionPlans = await _context.NutritionPlans
+                .Where(plan => plan.MemberProfileId == profile.Id && !plan.IsDeleted)
+                .Include(plan => plan.Meals)
+                .OrderByDescending(plan => plan.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            var recentWorkoutPlans = await _context.WorkoutPlans
+                .Where(plan => plan.MemberProfileId == profile.Id && !plan.IsDeleted)
+                .Include(plan => plan.WorkoutDays)
+                .OrderByDescending(plan => plan.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            //  Build subscription for context
             var subscription = await _context.UserSubscriptions
                 .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id
                                        && s.Status == SubscriptionStatus.Active
                                        && s.EndDate > DateTime.UtcNow);
 
-            // ✅ Build userContext
-            var userContext = UserContextBuilder.Build(profile, subscription);
+            //  Build userContext
+            var userContext = UserContextBuilder.Build(
+                profile,
+                subscription,
+                recentProgress: recentProgress,
+                nutritionPlans: recentNutritionPlans,
+                workoutPlans: recentWorkoutPlans);
 
-            // ✅ Pass userContext as third parameter
+            //  Pass userContext as third parameter
             //var prompt = PromptBuilder.BuildNutritionPrompt(profile, userMessage, userContext);
 
 
             var prompt = PromptLoader.GetNutritionPrompt(
     userContext: userContext,
-    goal: profile.Goal ?? "General Fitness",
+    goal: effectiveGoal,
     dietaryRestrictions: profile.DietaryRestrictions ?? "None",
     healthConditions: profile.HealthConditions ?? "None",
-    userMessage: BuildHealthAwareUserMessage(userMessage, healthContext));
+    userMessage: BuildHealthAwareUserMessage(goalAwareUserMessage, healthContext));
 
             NutritionPlanAIResponse planData;
             try
@@ -88,14 +115,26 @@ namespace ArenaInfrastructure.AI
                 var cleanJson = AIHelper.CleanJson(jsonResponse);
                 planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
                     cleanJson,
-                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile);
+                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile, effectiveGoal);
             }
             catch
             {
-                planData = CreateFallbackPlanData(profile);
+                planData = CreateFallbackPlanData(profile, effectiveGoal);
             }
 
             NormalizeNutritionPlan(planData);
+
+            var activeNutritionPlans = await _context.NutritionPlans
+                .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
+                    && existingPlan.IsActive
+                    && !existingPlan.IsDeleted)
+                .ToListAsync();
+
+            foreach (var existingPlan in activeNutritionPlans)
+            {
+                existingPlan.IsActive = false;
+                existingPlan.UpdatedAt = DateTime.UtcNow;
+            }
 
             var plan = new NutritionPlan
             {
@@ -202,63 +241,111 @@ namespace ArenaInfrastructure.AI
             }
         }
 
-        private static NutritionPlanAIResponse CreateFallbackPlanData(ArenaDomain.Entities.MemberProfile profile)
+        private static NutritionPlanAIResponse CreateFallbackPlanData(ArenaDomain.Entities.MemberProfile profile, string effectiveGoal)
         {
-            var isWeightLoss = ContainsAny(profile.Goal, "loss", "lose", "cut", "اخس", "تنشيف");
-            var calories = isWeightLoss ? 1900 : 2400;
+            var weight = Math.Clamp(profile.Weight ?? 70m, 35m, 220m);
+            var height = Math.Clamp(profile.Height ?? 170m, 120m, 230m);
+            var age = CalculateAge(profile.DateOfBirth);
+            var isFemale = profile.Gender == Gender.Female;
+            var isWeightLoss = IsWeightLossGoal(profile);
+            var isMuscleGain = ContainsAny(profile.Goal, "muscle", "gain", "bulk", "عضلات", "اكسب");
+            var hasDiabetes = ContainsAny(profile.HealthConditions, "diabetes", "sugar", "سكري");
+            var isVegetarian = ContainsAny(profile.DietaryRestrictions, "vegetarian", "vegan", "نباتي");
+
+            var bmr = 10m * weight + 6.25m * height - 5m * age + (isFemale ? -161m : 5m);
+            var maintenance = bmr * GetActivityMultiplier(profile.ActivityLevel);
+            var targetGap = profile.TargetWeight.HasValue ? profile.TargetWeight.Value - weight : 0m;
+
+            var calories = maintenance;
+            if (isWeightLoss || targetGap < -1m)
+                calories -= targetGap < -10m ? 500m : 350m;
+            else if (isMuscleGain || targetGap > 1m)
+                calories += targetGap > 8m ? 400m : 250m;
+
+            if (hasDiabetes && calories < maintenance - 450m)
+                calories = maintenance - 450m;
+
+            calories = Math.Round(Math.Clamp(calories, isFemale ? 1200m : 1400m, 4200m) / 25m) * 25m;
+            var proteinMultiplier = isMuscleGain ? 2.0m : isWeightLoss ? 1.8m : 1.6m;
+            var protein = Math.Round(weight * proteinMultiplier);
+            var fat = Math.Round(Math.Max(weight * 0.7m, calories * 0.22m / 9m));
+            var carbs = Math.Round(Math.Max((calories - protein * 4m - fat * 9m) / 4m, hasDiabetes ? 90m : 120m));
+
+            var meals = CreatePersonalizedFallbackMeals(calories, protein, carbs, fat, hasDiabetes, isVegetarian);
 
             return new NutritionPlanAIResponse
             {
                 DailyCalories = calories,
-                ProteinGrams = isWeightLoss ? 140 : 170,
-                CarbsGrams = isWeightLoss ? 180 : 260,
-                FatGrams = isWeightLoss ? 60 : 75,
-                Meals =
-                [
-                    new MealAIResponse
-                    {
-                        MealType = "Breakfast",
-                        Name = "Oats with Greek yogurt",
-                        Calories = 450,
-                        ProteinGrams = 35,
-                        CarbsGrams = 55,
-                        FatGrams = 12,
-                        Ingredients = "Oats, Greek yogurt, berries, chia seeds"
-                    },
-                    new MealAIResponse
-                    {
-                        MealType = "Lunch",
-                        Name = "Chicken rice bowl",
-                        Calories = 650,
-                        ProteinGrams = 50,
-                        CarbsGrams = 70,
-                        FatGrams = 18,
-                        Ingredients = "Grilled chicken, brown rice, vegetables, olive oil"
-                    },
-                    new MealAIResponse
-                    {
-                        MealType = "Dinner",
-                        Name = "Salmon and sweet potato",
-                        Calories = 600,
-                        ProteinGrams = 45,
-                        CarbsGrams = 50,
-                        FatGrams = 24,
-                        Ingredients = "Salmon, sweet potato, salad, avocado"
-                    },
-                    new MealAIResponse
-                    {
-                        MealType = "Snack",
-                        Name = "Protein snack",
-                        Calories = 250,
-                        ProteinGrams = 25,
-                        CarbsGrams = 20,
-                        FatGrams = 8,
-                        Ingredients = "Protein shake or cottage cheese with fruit"
-                    }
-                ]
+                ProteinGrams = protein,
+                CarbsGrams = carbs,
+                FatGrams = fat,
+                Meals = meals
             };
         }
 
+        private static List<MealAIResponse> CreatePersonalizedFallbackMeals(
+            decimal dailyCalories,
+            decimal protein,
+            decimal carbs,
+            decimal fat,
+            bool hasDiabetes,
+            bool isVegetarian)
+        {
+            var proteinBase = isVegetarian ? "Greek yogurt, eggs, lentils, chickpeas, tofu" : "eggs, Greek yogurt, chicken, fish";
+            var carbBase = hasDiabetes ? "oats, sweet potato, vegetables, brown rice" : "oats, rice, potatoes, fruit, vegetables";
+            var breakfastCalories = Math.Round(dailyCalories * 0.25m);
+            var lunchCalories = Math.Round(dailyCalories * 0.35m);
+            var dinnerCalories = Math.Round(dailyCalories * 0.30m);
+            var snackCalories = dailyCalories - breakfastCalories - lunchCalories - dinnerCalories;
+
+            return
+            [
+                CreateMeal("Breakfast", hasDiabetes ? "Low-GI protein breakfast" : "Protein breakfast", breakfastCalories, protein * 0.25m, carbs * 0.28m, fat * 0.22m, $"{proteinBase}, {carbBase}, chia or nuts"),
+                CreateMeal("Lunch", isVegetarian ? "Legume power bowl" : "Lean protein bowl", lunchCalories, protein * 0.35m, carbs * 0.36m, fat * 0.32m, $"{proteinBase}, {carbBase}, salad, olive oil"),
+                CreateMeal("Dinner", hasDiabetes ? "Steady blood sugar dinner" : "Recovery dinner", dinnerCalories, protein * 0.30m, carbs * 0.26m, fat * 0.34m, $"{proteinBase}, vegetables, {carbBase}"),
+                CreateMeal("Snack", "Goal-support snack", snackCalories, protein * 0.10m, carbs * 0.10m, fat * 0.12m, isVegetarian ? "Cottage cheese or hummus with vegetables" : "Protein shake or yogurt with nuts")
+            ];
+        }
+
+        private static MealAIResponse CreateMeal(
+            string type,
+            string name,
+            decimal calories,
+            decimal protein,
+            decimal carbs,
+            decimal fat,
+            string ingredients) => new()
+            {
+                MealType = type,
+                Name = name,
+                Calories = Math.Round(calories),
+                ProteinGrams = Math.Round(protein),
+                CarbsGrams = Math.Round(carbs),
+                FatGrams = Math.Round(fat),
+                Ingredients = ingredients
+            };
+
+        private static int CalculateAge(DateTime dateOfBirth)
+        {
+            var today = DateTime.UtcNow.Date;
+            var age = today.Year - dateOfBirth.Year;
+            if (dateOfBirth.Date > today.AddYears(-age))
+                age--;
+            return Math.Clamp(age, 13, 90);
+        }
+
+        private static decimal GetActivityMultiplier(string? activityLevel)
+        {
+            if (ContainsAny(activityLevel, "sedentary")) return 1.2m;
+            if (ContainsAny(activityLevel, "light")) return 1.375m;
+            if (ContainsAny(activityLevel, "active", "very")) return 1.725m;
+            if (ContainsAny(activityLevel, "moderate")) return 1.55m;
+            return 1.4m;
+        }
+
+        private static bool IsWeightLossGoal(ArenaDomain.Entities.MemberProfile profile) =>
+            ContainsAny(profile.Goal, "loss", "lose", "cut", "اخس", "تنشيف")
+            || (profile.TargetWeight.HasValue && profile.Weight.HasValue && profile.TargetWeight.Value < profile.Weight.Value - 1m);
         private static bool ContainsAny(string? text, params string[] values)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -267,6 +354,23 @@ namespace ArenaInfrastructure.AI
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
 
+
+        private static string? DetectGoalOverride(string? userMessage)
+        {
+            if (ContainsAny(userMessage, "gain weight", "weight gain", "increase weight", "bulk", "bulking", "gain muscle", "muscle gain", "build muscle", "اكسب وزن", "ازيد وزن", "اضخم", "عضلات"))
+                return "Weight Gain / Muscle Gain";
+
+            if (ContainsAny(userMessage, "lose weight", "weight loss", "loss weight", "fat loss", "cut", "cutting", "اخس", "انحف", "تنشيف", "نزل وزن"))
+                return "Weight Loss";
+
+            if (ContainsAny(userMessage, "endurance", "fitness", "fit", "لياقة"))
+                return "General Fitness";
+
+            return null;
+        }
+
+        private static string BuildGoalAwareUserMessage(string userMessage, string effectiveGoal) =>
+            $"Current requested goal, if different from profile, is: {effectiveGoal}.\nUser message: {userMessage}";
         private static string BuildHealthAwareUserMessage(string userMessage, string healthContext)
         {
             if (string.IsNullOrWhiteSpace(healthContext))
@@ -281,3 +385,4 @@ namespace ArenaInfrastructure.AI
         }
     }
 }
+
