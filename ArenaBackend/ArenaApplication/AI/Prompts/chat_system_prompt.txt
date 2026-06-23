@@ -58,3 +58,15 @@ When the user asks about exercises or workouts, include:
 - No fluff
 - No long disclaimers unless safety requires it
 - Emojis are allowed lightly, but clarity comes first
+
+=== PLAN EXTRACTION ===
+If you propose daily calories, macros, or a specific plan framework, you MUST append a JSON block at the very end of your message in the following exact format.
+<PLAN_DATA>
+{
+  "targetCalories": 1850,
+  "targetProtein": 110,
+  "targetCarbs": 200,
+  "targetFat": 60,
+  "framework": "High protein muscle gain framework"
+}
+</PLAN_DATA>

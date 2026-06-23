@@ -555,6 +555,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CurrentPlanFramework")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime2");
 
@@ -599,6 +602,18 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal?>("TargetCalories")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TargetCarbs")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TargetFat")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TargetProtein")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("TargetWeight")
                         .HasColumnType("decimal(18,2)");
