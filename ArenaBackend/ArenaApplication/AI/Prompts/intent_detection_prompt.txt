@@ -26,6 +26,8 @@ PROFILE EXTRACTION RULES (Apply to ALL intents!):
 - IF the user mentions experience (e.g. beginner, advanced), extract into "fitnessExperience".
 - IF the user mentions diet/allergies, extract into "dietaryRestrictions" (or "None").
 - IF the user mentions equipment/gym access, extract into "equipment".
+- IF the user mentions going to a gym, extract "equipment" as "full gym".
+- IF the user explicitly says they don't want to specify equipment or don't care, extract "equipment" as "full gym".
 - IF the user mentions their weight, extract into "weightString".
 - IF the user mentions their height, extract into "heightString".
 - IF the user mentions a specific duration for the plan (e.g. 4 weeks, 1 month), extract it into "preferredDuration".

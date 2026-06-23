@@ -206,6 +206,32 @@ namespace ArenaInfrastructure.AI
                 intent ??= new IntentResult { Intent = "chat" };
             }
 
+            // Extract Plan Data
+            var planDataMatch = Regex.Match(reply, @"<PLAN_DATA>\s*({.*?})\s*</PLAN_DATA>", RegexOptions.Singleline);
+            if (planDataMatch.Success)
+            {
+                var jsonStr = planDataMatch.Groups[1].Value;
+                try
+                {
+                    using var doc = JsonDocument.Parse(jsonStr);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("targetCalories", out var cals) && cals.TryGetDecimal(out var dCals)) profile.TargetCalories = dCals;
+                    if (root.TryGetProperty("targetProtein", out var prot) && prot.TryGetDecimal(out var dProt)) profile.TargetProtein = dProt;
+                    if (root.TryGetProperty("targetCarbs", out var carbs) && carbs.TryGetDecimal(out var dCarbs)) profile.TargetCarbs = dCarbs;
+                    if (root.TryGetProperty("targetFat", out var fat) && fat.TryGetDecimal(out var dFat)) profile.TargetFat = dFat;
+                    if (root.TryGetProperty("framework", out var fw)) profile.CurrentPlanFramework = fw.GetString();
+                    
+                    _context.MemberProfiles.Update(profile);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to parse PLAN_DATA JSON.");
+                }
+
+                reply = reply.Replace(planDataMatch.Value, "").TrimEnd();
+            }
+
             reply = TruncateForStorage(reply);
 
             // ✅ Step 6 — Save AI reply
@@ -298,24 +324,41 @@ namespace ArenaInfrastructure.AI
                 if (IsProfileMemoryQuestion(userMessage))
                     return new IntentResult { Intent = "chat" };
 
-                var clarificationIntent = DetectPlanClarificationIntent(userMessage, history);
-                if (clarificationIntent != null)
-                    return clarificationIntent;
-
-                var localIntent = DetectSimpleIntent(userMessage);
-                if (localIntent != null)
-                    return localIntent;
-
                 var intentJson = await _gemini.GetCompletionAsync(
                     PromptLoader.GetIntentDetectionPrompt(),
                     history,
                     userMessage);
 
                 var cleanIntentJson = AIHelper.CleanJson(intentJson);
-                return JsonSerializer.Deserialize<IntentResult>(
+                var geminiResult = JsonSerializer.Deserialize<IntentResult>(
                     cleanIntentJson,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                     ?? new IntentResult { Intent = "chat" };
+
+                if (geminiResult.Intent == "chat" || geminiResult.Intent == null)
+                {
+                    var clarificationIntent = DetectPlanClarificationIntent(userMessage, history);
+                    if (clarificationIntent != null)
+                    {
+                        geminiResult.Intent = clarificationIntent.Intent;
+                        geminiResult.PreferredDuration ??= clarificationIntent.PreferredDuration;
+                        geminiResult.DietaryRestrictions ??= clarificationIntent.DietaryRestrictions;
+                        geminiResult.Injuries ??= clarificationIntent.Injuries;
+                        geminiResult.HealthConditions ??= clarificationIntent.HealthConditions;
+                    }
+                    else
+                    {
+                        var localIntent = DetectSimpleIntent(userMessage);
+                        if (localIntent != null)
+                        {
+                            geminiResult.Intent = localIntent.Intent;
+                            geminiResult.PreferredDuration ??= localIntent.PreferredDuration;
+                            geminiResult.Equipment ??= localIntent.Equipment;
+                        }
+                    }
+                }
+
+                return geminiResult;
             }
             catch (Exception ex)
             {
@@ -393,15 +436,19 @@ namespace ArenaInfrastructure.AI
         {
             if (intent?.Intent == "workout" || intent?.Intent == "nutrition" || intent?.Intent == "both")
             {
+                bool hasHealthVectors = await _healthRAG.HasHealthInfoAsync(profile.Id);
+                if (!hasHealthVectors && string.IsNullOrWhiteSpace(profile.Injuries) && string.IsNullOrWhiteSpace(profile.HealthConditions)) 
+                {
+                    return isArabic
+                        ? "عشان أقدر أصمم لك خطة دقيقة ومناسبة، محتاج أعرف الأول: هل تعاني من أي إصابات أو أمراض؟ (أو أخبرني إذا كنت سليم تماماً)\n\nتقدر ترد عليا هنا في الشات وهكمل على طول!"
+                        : "To generate the most accurate and safe plan for you, I first need to know: do you have any injuries or health conditions? (or say 'none')\n\nPlease reply here in the chat and I'll generate it right away!";
+                }
+
                 var missingInfo = new List<string>();
                 
                 // Common missing info
                 if (string.IsNullOrWhiteSpace(profile.Goal)) 
                     missingInfo.Add(isArabic ? "هدفك (خسارة وزن، بناء عضلات، الخ)" : "your fitness goal");
-                
-                bool hasHealthVectors = await _healthRAG.HasHealthInfoAsync(profile.Id);
-                if (string.IsNullOrWhiteSpace(profile.Injuries) && string.IsNullOrWhiteSpace(profile.HealthConditions) && !hasHealthVectors) 
-                    missingInfo.Add(isArabic ? "أي إصابات أو أمراض (أو أخبرني إذا كنت سليم تماماً)" : "any injuries or health conditions (or say 'none')");
 
                 // Workout specific missing info
                 if (intent.Intent == "workout" || intent.Intent == "both")
@@ -921,9 +968,6 @@ namespace ArenaInfrastructure.AI
                 "both", "workout", "nutrition", "meal", "diet", "food", "gym",
                 "\u0627\u0644\u0627\u062a\u0646\u064a\u0646", "\u0643\u0644\u0647", "\u062a\u063a\u0630\u064a\u0629", "\u063a\u0630\u0627\u0626\u064a\u0629", "\u0648\u062c\u0628\u0629", "\u0648\u062c\u0628\u0627\u062a", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u062a\u0645\u0631\u064a\u0646", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645");
 
-            if (!isDurationOnlyReply && !isNoneReply && !looksLikePlanKeyword)
-                return null;
-
             var recentAssistantMessage = history
                 .Where(m => m.Sender == "assistant")
                 .Reverse()
@@ -932,9 +976,10 @@ namespace ArenaInfrastructure.AI
                 .FirstOrDefault(message => ContainsAny(message,
                     "workout plan, a nutrition plan, or both", "workout plan", "nutrition plan", "or both",
                     "preferred plan duration", "dietary restrictions", "food allergies", "i need to know",
-                    "\u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u0645\u062f\u0629 \u0627\u0644\u062e\u0637\u0629", "\u062d\u0633\u0627\u0633\u064a\u0629", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u0627\u0644\u0627\u062a\u0646\u064a\u0646"));
+                    "first need to know", "injuries or health conditions",
+                    "\u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u0645\u062f\u0629 \u0627\u0644\u062e\u0637\u0629", "\u062d\u0633\u0627\u0633\u064a\u0629", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u0627\u0644\u0627\u062a\u0646\u064a\u0646", "\u0625\u0635\u0627\u0628\u0627\u062a \u0623\u0648 \u0623\u0645\u0631\u0627\u0636"));
 
-            if (recentAssistantMessage == null && (isDurationOnlyReply || isNoneReply))
+            if (recentAssistantMessage == null && !isDurationOnlyReply && !isNoneReply && !looksLikePlanKeyword)
                 return null;
 
             var asksWorkout = ContainsAny(text,
@@ -965,6 +1010,9 @@ namespace ArenaInfrastructure.AI
 
             if (recentAssistantMessage != null && ContainsAny(recentAssistantMessage, "nutrition plan", "dietary restrictions", "food allergies", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u062d\u0633\u0627\u0633\u064a\u0629", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a"))
                 asksNutrition = true;
+            
+            if (recentAssistantMessage != null && ContainsAny(recentAssistantMessage, "workout plan", "injuries or health conditions", "\u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646", "\u0625\u0635\u0627\u0628\u0627\u062a \u0623\u0648 \u0623\u0645\u0631\u0627\u0636"))
+                asksWorkout = true;
 
             var preferredDuration = isDurationOnlyReply
                 ? durationFromCurrentMessage
@@ -978,7 +1026,9 @@ namespace ArenaInfrastructure.AI
             {
                 Intent = intent,
                 PreferredDuration = preferredDuration,
-                DietaryRestrictions = isNoneReply ? "None" : null
+                DietaryRestrictions = isNoneReply ? "None" : null,
+                Injuries = isNoneReply ? "None" : null,
+                HealthConditions = isNoneReply ? "None" : null
             };
         }
 

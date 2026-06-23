@@ -42,19 +42,22 @@ namespace ArenaInfrastructure.AI
         private readonly IGenericRepository<MemberProfile, Guid> _memberRepo;
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
         private readonly IMemberHealthRAGService _healthRAG;
+        private readonly INotificationService _notificationService; // ✅
 
         public WorkoutAIService(
             IGeminiCompletionService gemini,
             AppDbContext context,
             IGenericRepository<MemberProfile, Guid> memberProfile,
             IGenericRepository<UserSubscription, Guid> userSubscription,
-            IMemberHealthRAGService healthRAG)
+            IMemberHealthRAGService healthRAG,
+            INotificationService notificationService) // ✅
         {
             _gemini = gemini;
             _context = context;
             _memberRepo = memberProfile;
             _subscriptionRepo = userSubscription;
             _healthRAG = healthRAG;
+            _notificationService = notificationService; // ✅
         }
 
         public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(Guid memberProfileId, string userMessage)
@@ -66,6 +69,13 @@ namespace ArenaInfrastructure.AI
 
             if (profile == null)
                 throw new Exception($"Profile not found: {memberProfileId}");
+
+            Console.WriteLine($"=== PROFILE ===");
+            Console.WriteLine($"Name: {profile.FirstName}");
+            Console.WriteLine($"Goal: {profile.Goal}");
+            Console.WriteLine($"Injuries: {profile.Injuries}");
+            Console.WriteLine($"Experience: {profile.FitnessExperience}");
+            Console.WriteLine($"===============");
 
             var effectiveGoal = DetectGoalOverride(userMessage) ?? profile.Goal ?? "General Fitness";
 
@@ -236,6 +246,9 @@ namespace ArenaInfrastructure.AI
             // ✅ OPTIMIZATION: Commit all changes in a single database round-trip transaction block
             await _context.SaveChangesAsync();
 
+            // ✅ notification إن الـ workout plan اتعمل
+            await _notificationService.NotifyWorkoutPlanReadyAsync(profile.Id, plan.Name);
+
             return new WorkoutPlanDto
             {
                 Id = plan.Id,
@@ -250,8 +263,8 @@ namespace ArenaInfrastructure.AI
 
         private static JsonSerializerOptions CreateJsonOptions()
         {
-            var options = new JsonSerializerOptions 
-            { 
+            var options = new JsonSerializerOptions
+            {
                 PropertyNameCaseInsensitive = true,
                 AllowTrailingCommas = true,
                 ReadCommentHandling = JsonCommentHandling.Skip
@@ -488,4 +501,3 @@ namespace ArenaInfrastructure.AI
         }
     }
 }
-

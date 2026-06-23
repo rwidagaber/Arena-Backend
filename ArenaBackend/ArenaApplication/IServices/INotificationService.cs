@@ -31,6 +31,8 @@ namespace ArenaApplication.IServices
         // ── Subscriptions & Payments ──────────────────────────────────────────
         Task NotifyPaymentConfirmedAsync(Guid memberProfileId, decimal amount, string planName, CancellationToken cancellationToken = default);
         Task NotifySubscriptionExpiringAsync(Guid memberProfileId, int daysLeft, CancellationToken cancellationToken = default);
+        Task NotifySessionsExpiringSoonAsync(Guid memberProfileId, int remainingSessions, CancellationToken cancellationToken = default);
+
         Task NotifySubscriptionExpiredAsync(Guid memberProfileId, CancellationToken cancellationToken = default);
 
         // ── Bookings & Attendance ─────────────────────────────────────────────
