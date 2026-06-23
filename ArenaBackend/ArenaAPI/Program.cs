@@ -84,7 +84,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
-
+            builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
             builder.Services.Configure<EmailSettings>(
                 builder.Configuration.GetSection("EmailSettings"));
 
@@ -200,7 +200,7 @@ namespace ArenaAPI
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
                 if (app.Environment.IsDevelopment())
-                    context.Database.Migrate();
+                    await context.Database.MigrateAsync();
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
             }
@@ -230,7 +230,8 @@ namespace ArenaAPI
             app.UseAuthorization();
 
             app.MapControllers();
-            app.MapHub<NotificationHub>("/hubs/notifications");
+            app.MapHub<NotificationHub>("/hubs/notifications")
+   .RequireAuthorization();
 
             app.Run();
         }

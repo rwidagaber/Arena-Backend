@@ -34,6 +34,8 @@ namespace ArenaInfrastructure.Data
 
         // ── Notifications ─────────────────────────────────────────────────────────
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<PushSubscription> PushSubscriptions { get; set; } 
+
 
         // ── Nutrition ─────────────────────────────────────────────────────────────
         public DbSet<NutritionPlan> NutritionPlans { get; set; }

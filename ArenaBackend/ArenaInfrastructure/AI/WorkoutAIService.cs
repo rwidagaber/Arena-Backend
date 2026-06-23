@@ -41,29 +41,30 @@ namespace ArenaInfrastructure.AI
         private readonly AppDbContext _context;
         private readonly IGenericRepository<MemberProfile, Guid> _memberRepo;
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
+        private readonly INotificationService _notificationService; // ✅
 
         public WorkoutAIService(
             IGeminiCompletionService gemini,
             AppDbContext context,
             IGenericRepository<MemberProfile, Guid> memberProfile,
-            IGenericRepository<UserSubscription, Guid> userSubscription)
+            IGenericRepository<UserSubscription, Guid> userSubscription,
+            INotificationService notificationService) // ✅
         {
             _gemini = gemini;
             _context = context;
             _memberRepo = memberProfile;
             _subscriptionRepo = userSubscription;
+            _notificationService = notificationService; // ✅
         }
 
         public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(Guid memberProfileId, string userMessage)
         {
-            // ✅ Search by Id OR UserId
             var profile = await _context.MemberProfiles
                 .FirstOrDefaultAsync(p => p.Id == memberProfileId || p.UserId == memberProfileId);
 
             if (profile == null)
                 throw new Exception($"Profile not found: {memberProfileId}");
 
-            // ✅ Debug Verification Logging
             Console.WriteLine($"=== PROFILE ===");
             Console.WriteLine($"Name: {profile.FirstName}");
             Console.WriteLine($"Goal: {profile.Goal}");
@@ -71,9 +72,9 @@ namespace ArenaInfrastructure.AI
             Console.WriteLine($"Experience: {profile.FitnessExperience}");
             Console.WriteLine($"===============");
 
-            // ✅ OPTIMIZATION: Async database lookup for active subscriptions
             var subscription = await _subscriptionRepo.GetAll()
-                .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id && s.Status == SubscriptionStatus.Active);
+                .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id
+                                       && s.Status == SubscriptionStatus.Active);
 
             var userContext = UserContextBuilder.Build(profile, subscription);
 
@@ -97,7 +98,8 @@ namespace ArenaInfrastructure.AI
             WorkoutPlanAIResponse planData;
             try
             {
-                var jsonResponse = await _gemini.GetCompletionAsync(prompt, new List<ChatMessageDto>(), "Generate the plan");
+                var jsonResponse = await _gemini.GetCompletionAsync(
+                    prompt, new List<ChatMessageDto>(), "Generate the plan");
                 var cleanJson = AIHelper.CleanJson(jsonResponse);
                 planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
                     cleanJson,
@@ -110,10 +112,9 @@ namespace ArenaInfrastructure.AI
 
             NormalizeWorkoutPlan(planData, profile.FirstName ?? "Member");
 
-            // ✅ Instantiate Core Plan Entity
             var plan = new WorkoutPlan
             {
-                Id = Guid.NewGuid(), // Explicitly setting ID to safely link children before hitting SaveChanges
+                Id = Guid.NewGuid(),
                 MemberProfileId = profile.Id,
                 Name = planData.Name,
                 DurationWeeks = planData.DurationWeeks,
@@ -123,7 +124,6 @@ namespace ArenaInfrastructure.AI
 
             var dayDtos = new List<WorkoutDayDto>();
 
-            // Loop and build out hierarchy in EF Memory State
             foreach (var day in planData.Days ?? [])
             {
                 var workoutDay = new WorkoutDay
@@ -138,7 +138,6 @@ namespace ArenaInfrastructure.AI
 
                 foreach (var ex in day.Exercises ?? [])
                 {
-                    // Check local change-tracker state cache first, fallback to DB execution context
                     var existingExercise = _context.Exercises.Local
                         .FirstOrDefault(e => e.Name == ex.Name && e.MemberProfileId == profile.Id)
                         ?? await _context.Exercises
@@ -162,7 +161,7 @@ namespace ArenaInfrastructure.AI
                     {
                         WorkoutDayId = workoutDay.Id,
                         ExerciseId = existingExercise.Id,
-                        ExrciseName = ex.Name, // Match this property naming scheme exactly to your entity schema definitions
+                        ExrciseName = ex.Name,
                         Sets = ex.Sets,
                         Reps = ex.Reps
                     });
@@ -184,8 +183,10 @@ namespace ArenaInfrastructure.AI
                 });
             }
 
-            // ✅ OPTIMIZATION: Commit all changes in a single database round-trip transaction block
             await _context.SaveChangesAsync();
+
+            // ✅ notification إن الـ workout plan اتعمل
+            await _notificationService.NotifyWorkoutPlanReadyAsync(profile.Id, plan.Name);
 
             return new WorkoutPlanDto
             {
@@ -225,17 +226,10 @@ namespace ArenaInfrastructure.AI
 
                 foreach (var exercise in day.Exercises)
                 {
-                    if (string.IsNullOrWhiteSpace(exercise.Name))
-                        exercise.Name = "Exercise";
-
-                    if (exercise.Sets <= 0)
-                        exercise.Sets = 3;
-
-                    if (exercise.Reps <= 0)
-                        exercise.Reps = 10;
-
-                    if (string.IsNullOrWhiteSpace(exercise.MuscleGroup))
-                        exercise.MuscleGroup = "General";
+                    if (string.IsNullOrWhiteSpace(exercise.Name)) exercise.Name = "Exercise";
+                    if (exercise.Sets <= 0) exercise.Sets = 3;
+                    if (exercise.Reps <= 0) exercise.Reps = 10;
+                    if (string.IsNullOrWhiteSpace(exercise.MuscleGroup)) exercise.MuscleGroup = "General";
                 }
             }
         }
@@ -257,12 +251,12 @@ namespace ArenaInfrastructure.AI
                         DayName = "Day 1 - Upper Body",
                         Exercises =
                         [
-                            new WorkoutExerciseAIResponse { Name = "Chest Press Machine", Sets = 3, Reps = 10, MuscleGroup = "Chest" },
-                            new WorkoutExerciseAIResponse { Name = "Lat Pulldown", Sets = 3, Reps = 12, MuscleGroup = "Back" },
-                            new WorkoutExerciseAIResponse { Name = "Seated Shoulder Press", Sets = 3, Reps = 10, MuscleGroup = "Shoulders" },
-                            new WorkoutExerciseAIResponse { Name = "Cable Row", Sets = 3, Reps = 12, MuscleGroup = "Back" },
-                            new WorkoutExerciseAIResponse { Name = "Biceps Curl", Sets = 3, Reps = 12, MuscleGroup = "Arms" },
-                            new WorkoutExerciseAIResponse { Name = "Triceps Pushdown", Sets = 3, Reps = 12, MuscleGroup = "Arms" }
+                            new WorkoutExerciseAIResponse { Name = "Chest Press Machine",    Sets = 3, Reps = 10, MuscleGroup = "Chest" },
+                            new WorkoutExerciseAIResponse { Name = "Lat Pulldown",           Sets = 3, Reps = 12, MuscleGroup = "Back" },
+                            new WorkoutExerciseAIResponse { Name = "Seated Shoulder Press",  Sets = 3, Reps = 10, MuscleGroup = "Shoulders" },
+                            new WorkoutExerciseAIResponse { Name = "Cable Row",              Sets = 3, Reps = 12, MuscleGroup = "Back" },
+                            new WorkoutExerciseAIResponse { Name = "Biceps Curl",            Sets = 3, Reps = 12, MuscleGroup = "Arms" },
+                            new WorkoutExerciseAIResponse { Name = "Triceps Pushdown",       Sets = 3, Reps = 12, MuscleGroup = "Arms" }
                         ]
                     },
                     new WorkoutDayAIResponse
@@ -271,18 +265,18 @@ namespace ArenaInfrastructure.AI
                         Exercises = avoidKneeStress
                             ?
                             [
-                                new WorkoutExerciseAIResponse { Name = "Hip Thrust", Sets = 3, Reps = 12, MuscleGroup = "Glutes" },
+                                new WorkoutExerciseAIResponse { Name = "Hip Thrust",      Sets = 3, Reps = 12, MuscleGroup = "Glutes" },
                                 new WorkoutExerciseAIResponse { Name = "Seated Leg Curl", Sets = 3, Reps = 12, MuscleGroup = "Hamstrings" },
-                                new WorkoutExerciseAIResponse { Name = "Glute Bridge", Sets = 3, Reps = 15, MuscleGroup = "Glutes" },
-                                new WorkoutExerciseAIResponse { Name = "Plank", Sets = 3, Reps = 30, MuscleGroup = "Core" }
+                                new WorkoutExerciseAIResponse { Name = "Glute Bridge",    Sets = 3, Reps = 15, MuscleGroup = "Glutes" },
+                                new WorkoutExerciseAIResponse { Name = "Plank",           Sets = 3, Reps = 30, MuscleGroup = "Core" }
                             ]
                             :
                             [
-                                new WorkoutExerciseAIResponse { Name = "Leg Press", Sets = 3, Reps = 12, MuscleGroup = "Legs" },
-                                new WorkoutExerciseAIResponse { Name = "Romanian Deadlift", Sets = 3, Reps = 10, MuscleGroup = "Hamstrings" },
-                                new WorkoutExerciseAIResponse { Name = "Leg Curl", Sets = 3, Reps = 12, MuscleGroup = "Hamstrings" },
-                                new WorkoutExerciseAIResponse { Name = "Calf Raise", Sets = 3, Reps = 15, MuscleGroup = "Calves" },
-                                new WorkoutExerciseAIResponse { Name = "Plank", Sets = 3, Reps = 30, MuscleGroup = "Core" }
+                                new WorkoutExerciseAIResponse { Name = "Leg Press",          Sets = 3, Reps = 12, MuscleGroup = "Legs" },
+                                new WorkoutExerciseAIResponse { Name = "Romanian Deadlift",  Sets = 3, Reps = 10, MuscleGroup = "Hamstrings" },
+                                new WorkoutExerciseAIResponse { Name = "Leg Curl",           Sets = 3, Reps = 12, MuscleGroup = "Hamstrings" },
+                                new WorkoutExerciseAIResponse { Name = "Calf Raise",         Sets = 3, Reps = 15, MuscleGroup = "Calves" },
+                                new WorkoutExerciseAIResponse { Name = "Plank",              Sets = 3, Reps = 30, MuscleGroup = "Core" }
                             ]
                     },
                     new WorkoutDayAIResponse
@@ -291,9 +285,9 @@ namespace ArenaInfrastructure.AI
                         Exercises =
                         [
                             new WorkoutExerciseAIResponse { Name = "Dumbbell Bench Press", Sets = 3, Reps = 10, MuscleGroup = "Chest" },
-                            new WorkoutExerciseAIResponse { Name = "Assisted Pull-up", Sets = 3, Reps = 8, MuscleGroup = "Back" },
-                            new WorkoutExerciseAIResponse { Name = "Cable Face Pull", Sets = 3, Reps = 15, MuscleGroup = "Shoulders" },
-                            new WorkoutExerciseAIResponse { Name = "Farmer Carry", Sets = 3, Reps = 30, MuscleGroup = "Full Body" }
+                            new WorkoutExerciseAIResponse { Name = "Assisted Pull-up",     Sets = 3, Reps = 8,  MuscleGroup = "Back" },
+                            new WorkoutExerciseAIResponse { Name = "Cable Face Pull",      Sets = 3, Reps = 15, MuscleGroup = "Shoulders" },
+                            new WorkoutExerciseAIResponse { Name = "Farmer Carry",         Sets = 3, Reps = 30, MuscleGroup = "Full Body" }
                         ]
                     }
                 ]
@@ -302,10 +296,8 @@ namespace ArenaInfrastructure.AI
 
         private static bool ContainsAny(string? text, params string[] values)
         {
-            if (string.IsNullOrWhiteSpace(text))
-                return false;
-
-            return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(text)) return false;
+            return values.Any(v => text.Contains(v, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

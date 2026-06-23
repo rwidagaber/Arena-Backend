@@ -8,22 +8,18 @@ using ArenaDomain.Shared;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ArenaApplication.Services
 {
     public class BookingService : IBookingService
     {
-         private readonly IGenericRepository<Booking, Guid> _bookingRepo;
+        private readonly IGenericRepository<Booking, Guid> _bookingRepo;
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificationService _notificationService;
         private readonly IBackgroundJobService _backgroundJobService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-
-       public BookingService(
+        public BookingService(
             IGenericRepository<Booking, Guid> bookingRepo,
             IUnitOfWork unitOfWork,
             INotificationService notificationService,
@@ -36,12 +32,11 @@ namespace ArenaApplication.Services
             _backgroundJobService = backgroundJobService;
             _localizer = localizer;
         }
+
         public async Task<Result<BookingDto>> CreateBooking(CreateBookingDto dto)
         {
             if (dto.BookingDate.Date < DateTime.UtcNow.Date)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingDateCannotBeInPast"]);
-            }
 
             var booking = dto.Adapt<Booking>();
             booking.Status = BookingStatus.Confirmed;
@@ -49,10 +44,10 @@ namespace ArenaApplication.Services
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
+            // ✅ Reminder الساعة 8 PM قبل يوم
             await _backgroundJobService.ScheduleBookingReminderAsync(
-            booking.MemberProfileId,
-            booking.BookingDate);
-          
+                booking.MemberProfileId,
+                booking.BookingDate);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -60,9 +55,7 @@ namespace ArenaApplication.Services
         public async Task<Result<List<BookingDto>>> GetUserBookings(Guid memberProfileId)
         {
             var userBookings = await _bookingRepo.FindAsync(b => b.MemberProfileId == memberProfileId);
-            var result = userBookings.Adapt<List<BookingDto>>();
-
-            return Result<List<BookingDto>>.Success(result);
+            return Result<List<BookingDto>>.Success(userBookings.Adapt<List<BookingDto>>());
         }
 
         public async Task<Result<BookingDto>> GetBookingById(Guid bookingId)
@@ -70,9 +63,7 @@ namespace ArenaApplication.Services
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
 
             if (booking == null)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
-            }
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -82,19 +73,19 @@ namespace ArenaApplication.Services
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
 
             if (booking == null)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
-            }
 
             if (booking.Status == BookingStatus.Cancelled)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingAlreadyCancelled"]);
-            }
 
             booking.Status = BookingStatus.Cancelled;
-
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
+
+            // ✅ Cancellation notification
+            await _backgroundJobService.EnqueueBookingCancellationAsync(
+                booking.MemberProfileId,
+                booking.BookingDate);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -104,19 +95,13 @@ namespace ArenaApplication.Services
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
 
             if (booking == null)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
-            }
 
             if (booking.Status == BookingStatus.Cancelled)
-            {
                 return Result<BookingDto>.Failure(_localizer["CancelledBookingCannotBeRescheduled"]);
-            }
 
             if (dto.BookingDate.Date < DateTime.UtcNow.Date)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingDateCannotBeInPast"]);
-            }
 
             booking.BookingDate = dto.BookingDate;
             booking.StartTime = dto.StartTime;
@@ -126,18 +111,21 @@ namespace ArenaApplication.Services
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
-            await _backgroundJobService.ScheduleBookingReminderAsync(
-            booking.MemberProfileId,
-            booking.BookingDate);
+            // ✅ Rescheduled notification
+            await _backgroundJobService.EnqueueBookingRescheduledAsync(
+                booking.MemberProfileId,
+                booking.BookingDate);
 
-            await _backgroundJobService.EnqueueBookingCancellationAsync(
-               booking.MemberProfileId,
-              booking.BookingDate);
+            // ✅ Reminder جديد للتاريخ الجديد
+            await _backgroundJobService.ScheduleBookingReminderAsync(
+                booking.MemberProfileId,
+                booking.BookingDate);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
 
-        public async Task<Result<PagedResult<BookingDto>>> GetAdminBookings(BookingStatus? status, DateTime? bookingDate, int page, int pageSize)
+        public async Task<Result<PagedResult<BookingDto>>> GetAdminBookings(
+            BookingStatus? status, DateTime? bookingDate, int page, int pageSize)
         {
             try
             {
@@ -147,14 +135,10 @@ namespace ArenaApplication.Services
                 var query = _bookingRepo.GetAll();
 
                 if (status.HasValue)
-                {
                     query = query.Where(b => b.Status == status.Value);
-                }
 
                 if (bookingDate.HasValue)
-                {
                     query = query.Where(b => b.BookingDate.Date == bookingDate.Value.Date);
-                }
 
                 int totalCount = await query.CountAsync();
 
@@ -165,11 +149,9 @@ namespace ArenaApplication.Services
                     .Take(pageSize)
                     .ToListAsync();
 
-                var dtos = bookings.Adapt<List<BookingDto>>();
-
                 var pagedResult = new PagedResult<BookingDto>
                 {
-                    Items = dtos,
+                    Items = bookings.Adapt<List<BookingDto>>(),
                     TotalCount = totalCount,
                     Page = page,
                     PageSize = pageSize
@@ -179,7 +161,8 @@ namespace ArenaApplication.Services
             }
             catch (Exception)
             {
-                return Result<PagedResult<BookingDto>>.Failure(_localizer["AnErrorOccurredWhileRetrievingBookings"]);
+                return Result<PagedResult<BookingDto>>.Failure(
+                    _localizer["AnErrorOccurredWhileRetrievingBookings"]);
             }
         }
 
@@ -187,7 +170,6 @@ namespace ArenaApplication.Services
         {
             var today = DateTime.UtcNow.Date;
             var todayBookings = await _bookingRepo.FindAsync(b => b.BookingDate.Date == today);
-
             return Result<List<BookingDto>>.Success(todayBookings.Adapt<List<BookingDto>>());
         }
     }

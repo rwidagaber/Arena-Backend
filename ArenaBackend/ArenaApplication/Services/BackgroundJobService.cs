@@ -1,17 +1,16 @@
 using ArenaApplication.IServices;
+using ArenaApplication.IServices.User;
+using ArenaInfrastructure.Repositories;
 using Hangfire;
-using System;
-using System.Threading.Tasks;
 
 namespace ArenaApplication.Services
 {
     public class BackgroundJobService : IBackgroundJobService
     {
-        private readonly INotificationService _notificationService;
         private readonly IBackgroundJobClient _jobClient;
-        public BackgroundJobService(INotificationService notificationService, IBackgroundJobClient jobClient)
+
+        public BackgroundJobService(IBackgroundJobClient jobClient)
         {
-            _notificationService = notificationService;
             _jobClient = jobClient;
         }
 
@@ -22,8 +21,7 @@ namespace ArenaApplication.Services
         public Task EnqueueEmailConfirmationAsync(Guid userId, string email, string otp)
         {
             _jobClient.Enqueue<INotificationService>(s =>
-                 s.NotifyEmailConfirmationAsync(userId, email, otp, CancellationToken.None));
-
+                s.NotifyEmailConfirmationAsync(userId, email, otp, CancellationToken.None));
             return Task.CompletedTask;
         }
 
@@ -34,8 +32,7 @@ namespace ArenaApplication.Services
         public Task EnqueuePasswordResetTokenEmailAsync(string email, string resetToken, string userEmail)
         {
             _jobClient.Enqueue<INotificationService>(s =>
-               s.NotifyPasswordResetAsync(email, resetToken, userEmail));
-
+                s.NotifyPasswordResetAsync(email, resetToken, userEmail));
             return Task.CompletedTask;
         }
 
@@ -45,24 +42,40 @@ namespace ArenaApplication.Services
 
         public Task EnqueueSubscriptionPaymentJobAsync(Guid memberId, decimal amount, string planName)
         {
-            _jobClient.Enqueue(() =>
-                _notificationService.NotifyPaymentConfirmedAsync(memberId, amount, planName));
-
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifyPaymentConfirmedAsync(memberId, amount, planName, CancellationToken.None));
             return Task.CompletedTask;
         }
 
         public Task ScheduleSubscriptionExpiryReminderAsync(Guid memberId, DateTime expiryDate)
         {
-            var runAt = expiryDate.Date.AddDays(-5).AddHours(9);
-            var delay = runAt.ToUniversalTime() - DateTime.UtcNow;
+            var expiryUtc = expiryDate.Kind == DateTimeKind.Utc
+                ? expiryDate
+                : expiryDate.ToUniversalTime();
 
-            if (delay <= TimeSpan.Zero)
-                delay = TimeSpan.FromMinutes(1);
+            // Send reminder 3 days before expiry at 9:00 AM UTC
+            var runAt = expiryUtc.Date.AddDays(-3).AddHours(9);
+            var delay = runAt - DateTime.UtcNow;
 
-            _jobClient.Schedule(() =>
-                _notificationService.NotifySubscriptionExpiringAsync(memberId, 5),
+            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromMinutes(1);
+
+            _jobClient.Schedule<INotificationService>(s =>
+                s.NotifySubscriptionExpiringAsync(memberId, 3, CancellationToken.None),
                 delay);
+            return Task.CompletedTask;
+        }
 
+        public Task EnqueueSubscriptionExpiredAsync(Guid memberId)
+        {
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifySubscriptionExpiredAsync(memberId, CancellationToken.None));
+            return Task.CompletedTask;
+        }
+
+        public Task EnqueueSessionsLowAsync(Guid memberProfileId, int remainingSessions)
+        {
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifySessionsExpiringSoonAsync(memberProfileId, remainingSessions, CancellationToken.None));
             return Task.CompletedTask;
         }
 
@@ -70,42 +83,42 @@ namespace ArenaApplication.Services
         // Bookings
         // =========================
 
-        public Task ScheduleBookingReminderAsync(Guid memberId, DateTime bookingDate)
-        {
-            var runAt = bookingDate.Date.AddDays(-1).AddHours(9);
-            var delay = runAt.ToUniversalTime() - DateTime.UtcNow;
-
-            if (delay <= TimeSpan.Zero)
-                delay = TimeSpan.FromMinutes(1);
-
-            _jobClient.Schedule(() =>
-                _notificationService.NotifySessionReminderAsync(memberId, bookingDate),
-                delay);
-
-            return Task.CompletedTask;
-        }
-
         public Task EnqueueBookingConfirmationAsync(Guid memberId, DateTime bookingDate)
         {
-            _jobClient.Enqueue(() =>
-                _notificationService.NotifyBookingConfirmedAsync(memberId, bookingDate));
-
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifyBookingConfirmedAsync(memberId, bookingDate, CancellationToken.None));
             return Task.CompletedTask;
         }
 
         public Task EnqueueBookingCancellationAsync(Guid memberId, DateTime bookingDate)
         {
-            _jobClient.Enqueue(() =>
-                _notificationService.NotifyBookingCancelledAsync(memberId, bookingDate));
-
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifyBookingCancelledAsync(memberId, bookingDate, CancellationToken.None));
             return Task.CompletedTask;
         }
 
         public Task EnqueueBookingRescheduledAsync(Guid memberId, DateTime newBookingDate)
         {
-            _jobClient.Enqueue(() =>
-                _notificationService.NotifyBookingRescheduledAsync(memberId, newBookingDate));
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifyBookingRescheduledAsync(memberId, newBookingDate, CancellationToken.None));
+            return Task.CompletedTask;
+        }
 
+        public Task ScheduleBookingReminderAsync(Guid memberId, DateTime bookingDate)
+        {
+            var bookingUtc = bookingDate.Kind == DateTimeKind.Utc
+                ? bookingDate
+                : bookingDate.ToUniversalTime();
+
+            // Send reminder 1 day before booking at 8:00 PM UTC
+            var runAt = bookingUtc.Date.AddDays(-1).AddHours(20);
+            var delay = runAt - DateTime.UtcNow;
+
+            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromMinutes(1);
+
+            _jobClient.Schedule<INotificationService>(s =>
+                s.NotifySessionReminderAsync(memberId, bookingDate, CancellationToken.None),
+                delay);
             return Task.CompletedTask;
         }
     }
