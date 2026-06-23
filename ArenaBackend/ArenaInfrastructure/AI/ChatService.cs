@@ -330,9 +330,9 @@ namespace ArenaInfrastructure.AI
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                     ?? new IntentResult { Intent = "chat" };
 
+                var clarificationIntent = DetectPlanClarificationIntent(userMessage, history);
                 if (geminiResult.Intent == "chat" || geminiResult.Intent == null)
                 {
-                    var clarificationIntent = DetectPlanClarificationIntent(userMessage, history);
                     if (clarificationIntent != null)
                     {
                         geminiResult.Intent = clarificationIntent.Intent;
@@ -350,6 +350,63 @@ namespace ArenaInfrastructure.AI
                             geminiResult.PreferredDuration ??= localIntent.PreferredDuration;
                             geminiResult.Equipment ??= localIntent.Equipment;
                         }
+                    }
+                }
+                else
+                {
+                    if (clarificationIntent != null)
+                    {
+                        geminiResult.PreferredDuration ??= clarificationIntent.PreferredDuration;
+                        geminiResult.DietaryRestrictions ??= clarificationIntent.DietaryRestrictions;
+                        geminiResult.Injuries ??= clarificationIntent.Injuries;
+                        geminiResult.HealthConditions ??= clarificationIntent.HealthConditions;
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(geminiResult.PreferredDuration))
+                {
+                    if (TryFindDuration(userMessage.Trim().ToLowerInvariant(), out var duration))
+                    {
+                        geminiResult.PreferredDuration = duration;
+                    }
+                    else
+                    {
+                        geminiResult.PreferredDuration = FindRecentDuration(history);
+                    }
+                }
+
+                var recentAssistantMsg = history
+                    .Where(m => m.Sender == "assistant")
+                    .Reverse()
+                    .FirstOrDefault()?.MessageText?.ToLowerInvariant();
+
+                if (recentAssistantMsg != null)
+                {
+                    if (string.IsNullOrWhiteSpace(geminiResult.DietaryRestrictions) && 
+                        ContainsAny(recentAssistantMsg, "dietary restrictions", "food allergies", "\u062d\u0633\u0627\u0633\u064a\u0629", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(geminiResult.HealthConditions) && geminiResult.HealthConditions != "None")
+                            geminiResult.DietaryRestrictions = "None"; 
+                        else if (geminiResult.Intent != "chat" && !string.IsNullOrWhiteSpace(userMessage))
+                            geminiResult.DietaryRestrictions = userMessage;
+                    }
+                    
+                    if (string.IsNullOrWhiteSpace(geminiResult.Injuries) && 
+                        ContainsAny(recentAssistantMsg, "injuries", "\u0625\u0635\u0627\u0628\u0627\u062a", "\u0623\u0645\u0631\u0627\u0636"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(geminiResult.HealthConditions) && geminiResult.HealthConditions != "None")
+                            geminiResult.Injuries = "None";
+                        else if (geminiResult.Intent != "chat" && !string.IsNullOrWhiteSpace(userMessage))
+                            geminiResult.Injuries = userMessage;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(geminiResult.HealthConditions) && 
+                        ContainsAny(recentAssistantMsg, "health conditions", "\u0625\u0635\u0627\u0628\u0627\u062a", "\u0623\u0645\u0631\u0627\u0636"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(geminiResult.Injuries) && geminiResult.Injuries != "None")
+                            geminiResult.HealthConditions = "None";
+                        else if (geminiResult.Intent != "chat" && !string.IsNullOrWhiteSpace(userMessage))
+                            geminiResult.HealthConditions = userMessage;
                     }
                 }
 
@@ -882,8 +939,8 @@ namespace ArenaInfrastructure.AI
             var text = userMessage.Trim().ToLowerInvariant();
             var isDurationOnlyReply = TryFindDuration(text, out var durationFromCurrentMessage);
             var isNoneReply = ContainsAny(text,
-                "none", "no", "nope", "nothing", "no allergies", "no restrictions", "not any",
-                "\u0644\u0627", "\u0644\u0627 \u064a\u0648\u062c\u062f", "\u0645\u0641\u064a\u0634", "\u0645\u0627\u0641\u064a\u0634", "\u0628\u062f\u0648\u0646");
+                "none", "no", "nope", "nothing", "no allergies", "no restrictions", "not any", "healthy", "i am healthy", "im healthy",
+                "\u0644\u0627", "\u0644\u0627 \u064a\u0648\u062c\u062f", "\u0645\u0641\u064a\u0634", "\u0645\u0627\u0641\u064a\u0634", "\u0628\u062f\u0648\u0646", "\u0633\u0644\u064a\u0645", "\u0633\u0644\u064a\u0645\u0629", "\u0633\u0644\u064a\u0645 \u062a\u0645\u0627\u0645\u0627", "\u0633\u0644\u064a\u0645 \u062a\u0645\u0627\u0645\u0627\u064b", "سليم");
             var looksLikePlanKeyword = ContainsAny(text,
                 "both", "workout", "nutrition", "meal", "diet", "food", "gym",
                 "\u0627\u0644\u0627\u062a\u0646\u064a\u0646", "\u0643\u0644\u0647", "\u062a\u063a\u0630\u064a\u0629", "\u063a\u0630\u0627\u0626\u064a\u0629", "\u0648\u062c\u0628\u0629", "\u0648\u062c\u0628\u0627\u062a", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u062a\u0645\u0631\u064a\u0646", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645");
