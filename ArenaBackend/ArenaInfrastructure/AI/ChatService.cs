@@ -673,21 +673,26 @@ namespace ArenaInfrastructure.AI
                                 : $"📅 Your upcoming bookings:\n{bookingsList}";
                         }
 
-                        // No time → suggest slots
+                        // No time → suggest slots built from the gym's DB working hours.
                         if (intent.Time == null)
                         {
-                            var allSlots = new[] {
-                                               "11:00","12:00","13:00","14:00","15:00",
-                                               "16:00","17:00","18:00","19:00","20:00" };
-
                             var egyptNow = DateTime.UtcNow.AddHours(3);
                             var egyptToday = egyptNow.Date;
 
-                            IEnumerable<string> slotsToShow = allSlots;
+                            // Pull the day's open hours + crowd profile from the database.
+                            var occupancyResult = await _attendanceSuggestion.GetDayOccupancyAsync(targetDate);
+                            var occupancy = occupancyResult.Value;
+
+                            if (occupancy == null || occupancy.IsClosed || occupancy.Slots.Count == 0)
+                                return isArabic
+                                    ? $"الجيم مقفول يوم {targetDate:dddd}. اختار يوم تاني."
+                                    : $"The gym is closed on {targetDate:dddd}. Please pick another day.";
+
+                            IEnumerable<OccupancySlotDto> slotsToShow = occupancy.Slots;
                             if (targetDate.Date == egyptToday)
                             {
-                                var currentTime = egyptNow.TimeOfDay;
-                                slotsToShow = allSlots.Where(s => TimeSpan.Parse(s) > currentTime);
+                                var currentHour = egyptNow.Hour;
+                                slotsToShow = occupancy.Slots.Where(s => s.Hour > currentHour);
                             }
 
                             if (!slotsToShow.Any())
@@ -697,13 +702,11 @@ namespace ArenaInfrastructure.AI
                                     : "Sorry, there are no more available times today. Would you like to book for tomorrow?";
                             }
 
-                            var slotCrowds = slotsToShow.Select(slot =>
+                            var slotCrowds = slotsToShow.Select(s =>
                             {
-                                var st = TimeSpan.Parse(slot);
-                                var count = dayBookings.Count(b =>
-                                    Math.Abs((b.StartTime - st).TotalHours) < 1);
-                                var level = count switch { < 3 => "🟢", < 7 => "🟡", _ => "🔴" };
-                                return $"  {slot} {level} ";
+                                var level = s.OverCapacity || s.Level == "High" ? "🔴"
+                                          : s.Level == "Medium" ? "🟡" : "🟢";
+                                return $"  {s.Hour:00}:00 {level} ";
                             });
 
                             var dateLabel = targetDate.Date == egyptToday.AddDays(1)
