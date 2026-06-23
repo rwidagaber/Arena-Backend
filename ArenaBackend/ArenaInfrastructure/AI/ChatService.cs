@@ -1,5 +1,6 @@
 using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
+using ArenaApplication.Dtos.Attendance;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Bookings;
@@ -11,6 +12,7 @@ using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -29,6 +31,7 @@ namespace ArenaInfrastructure.AI
         private readonly ILogger<ChatService> _logger;
         private readonly IHostEnvironment _environment;
         private readonly IMemberHealthRAGService _healthRAG;
+        private readonly IAttendanceSuggestionService _attendanceSuggestion;
         private const int MaxStoredMessageLength = 4000;
         private const int MaxTitleLength = 200;
 
@@ -42,7 +45,8 @@ namespace ArenaInfrastructure.AI
             IRAGService ragService,
             ILogger<ChatService> logger,
             IHostEnvironment environment,
-            IMemberHealthRAGService healthRAG)
+            IMemberHealthRAGService healthRAG,
+            IAttendanceSuggestionService attendanceSuggestion)
         {
             _gemini = gemini;
             _workoutAI = workoutAI;
@@ -54,6 +58,7 @@ namespace ArenaInfrastructure.AI
             _logger = logger;
             _environment = environment;
             _healthRAG = healthRAG;
+            _attendanceSuggestion = attendanceSuggestion;
         }
 
         public async Task<ChatResponseWithHistoryDto> SendMessageAsync(
@@ -317,6 +322,64 @@ namespace ArenaInfrastructure.AI
                 _logger.LogWarning(ex, "Intent detection failed. Falling back to normal chat.");
                 return new IntentResult { Intent = "chat" };
             }
+        }
+
+        private static DateTime ParseAttendanceDate(string? date)
+        {
+            if (!string.IsNullOrWhiteSpace(date))
+            {
+                // The intent prompt emits yyyy-MM-dd; parse culture-invariantly.
+                if (DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exact))
+                    return exact.Date;
+                if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+                    return parsed.Date;
+            }
+            return DateTime.UtcNow.AddHours(3).Date; // local (Egypt) today
+        }
+
+        private static string FormatHour12Ar(int hour24)
+        {
+            var period = hour24 >= 12 ? "م" : "ص";
+            var hour12 = hour24 % 12;
+            if (hour12 == 0) hour12 = 12;
+            return $"{hour12} {period}";
+        }
+
+        private static string FormatHour12En(int hour24)
+        {
+            var period = hour24 >= 12 ? "PM" : "AM";
+            var hour12 = hour24 % 12;
+            if (hour12 == 0) hour12 = 12;
+            return $"{hour12} {period}";
+        }
+
+        // Bilingual chat reply: recommends the quietest time(s) and warns about the
+        // busy / over-capacity (full) hours to avoid.
+        private static string BuildAttendanceReply(AttendanceSuggestionDto suggestion, bool isArabic)
+        {
+            var sep = isArabic ? "، " : ", ";
+
+            var quiet = string.Join(sep, suggestion.RecommendedHours.Take(3)
+                .Select(h => isArabic ? FormatHour12Ar(h) : FormatHour12En(h)));
+
+            // Busiest / full = over-capacity (>5 bookings) or High crowd level.
+            var avoid = string.Join(sep, suggestion.Occupancy.Slots
+                .Where(slot => slot.OverCapacity || slot.Level == "High")
+                .Take(4)
+                .Select(slot => isArabic ? FormatHour12Ar(slot.Hour) : FormatHour12En(slot.Hour)));
+
+            if (isArabic)
+            {
+                var reply = $"🟢 أهدأ وقت يوم {suggestion.DayOfWeek} تقريباً {quiet} — ده أنسب وقت تيجي فيه.";
+                if (!string.IsNullOrEmpty(avoid))
+                    reply += $"\n🔴 الأزحم/الممتلئ: {avoid} — حاول تتجنبها.";
+                return reply;
+            }
+
+            var enReply = $"🟢 Best time on {suggestion.DayOfWeek}: around {quiet} (quietest) — that's your window.";
+            if (!string.IsNullOrEmpty(avoid))
+                enReply += $"\n🔴 Busiest/full: {avoid} — best to avoid these.";
+            return enReply;
         }
 
         private async Task<string> RouteIntent(
@@ -641,6 +704,23 @@ namespace ArenaInfrastructure.AI
                             foodPrompt,
                             history,
                             healthAwareUserMessage);
+                    }
+                case "attendance":
+                    {
+                        var date = ParseAttendanceDate(intent?.Date);
+                        var suggestionResult = await _attendanceSuggestion.SuggestBestTimeAsync(date);
+                        if (!suggestionResult.IsSuccess || suggestionResult.Value == null)
+                            return isArabic
+                                ? "معلش، مش قادر أقترح وقت دلوقتي. جرّب تاني."
+                                : "Sorry, I couldn't suggest a time right now. Please try again.";
+
+                        var suggestion = suggestionResult.Value;
+                        if (suggestion.IsClosed || suggestion.RecommendedHours.Count == 0)
+                            return isArabic
+                                ? $"الجيم مقفول يوم {suggestion.DayOfWeek}. جرّب يوم تاني."
+                                : $"The gym is closed on {suggestion.DayOfWeek}. Try another day.";
+
+                        return BuildAttendanceReply(suggestion, isArabic);
                     }
                 default:
                     {
