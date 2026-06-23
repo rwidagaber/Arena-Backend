@@ -29,7 +29,7 @@ namespace ArenaApplication.Services
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
 
-       public BookingService(
+        public BookingService(
             IGenericRepository<Booking, Guid> bookingRepo,
             IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepo,
             IGenericRepository<WorkingHours, int> workingHoursRepo,
@@ -46,6 +46,7 @@ namespace ArenaApplication.Services
             _backgroundJobService = backgroundJobService;
             _localizer = localizer;
         }
+
         public async Task<Result<BookingDto>> CreateBooking(CreateBookingDto dto)
         {
             var localTime = DateTime.UtcNow.AddHours(3);
@@ -60,9 +61,9 @@ namespace ArenaApplication.Services
                 return Result<BookingDto>.Failure(_localizer["BookingTimeCannotBeInPast"]);
             }
 
-            var subscription = (await _subscriptionRepo.FindAsync(s => 
-                s.MemberProfileId == dto.MemberProfileId && 
-                s.Status == SubscriptionStatus.Active && 
+            var subscription = (await _subscriptionRepo.FindAsync(s =>
+                s.MemberProfileId == dto.MemberProfileId &&
+                s.Status == SubscriptionStatus.Active &&
                 s.EndDate > DateTime.UtcNow)).FirstOrDefault();
 
             if (subscription == null)
@@ -84,8 +85,8 @@ namespace ArenaApplication.Services
             var dayOfWeekVal = targetShiftDate.DayOfWeek;
             var workingDayIndex = dayOfWeekVal == DayOfWeek.Sunday ? WorkingDay.Sunday : (WorkingDay)((int)dayOfWeekVal - 1);
 
-            var workingHours = (await _workingHoursRepo.FindAsync(wh => 
-                wh.DayOfWeek == workingDayIndex && 
+            var workingHours = (await _workingHoursRepo.FindAsync(wh =>
+                wh.DayOfWeek == workingDayIndex &&
                 !wh.IsDeleted)).FirstOrDefault();
 
             if (workingHours == null || workingHours.IsClosed)
@@ -115,10 +116,10 @@ namespace ArenaApplication.Services
             var startDate = dto.BookingDate.Date.AddDays(-1);
             var endDate = dto.BookingDate.Date.AddDays(1);
 
-            var candidateBookings = await _bookingRepo.FindAsync(b => 
-                b.MemberProfileId == dto.MemberProfileId && 
-                b.BookingDate.Date >= startDate && 
-                b.BookingDate.Date <= endDate && 
+            var candidateBookings = await _bookingRepo.FindAsync(b =>
+                b.MemberProfileId == dto.MemberProfileId &&
+                b.BookingDate.Date >= startDate &&
+                b.BookingDate.Date <= endDate &&
                 b.Status != BookingStatus.Cancelled);
 
             var targetDateTime = dto.BookingDate.Date.Add(dto.StartTime);
@@ -144,6 +145,7 @@ namespace ArenaApplication.Services
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
+            // ✅ Reminder الساعة 8 PM قبل يوم
             await _backgroundJobService.ScheduleBookingReminderAsync(
                 booking.MemberProfileId,
                 booking.BookingDate);
@@ -190,6 +192,11 @@ namespace ArenaApplication.Services
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
+            // ✅ Cancellation notification
+            await _backgroundJobService.EnqueueBookingCancellationAsync(
+                booking.MemberProfileId,
+                booking.BookingDate);
+
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
 
@@ -219,9 +226,9 @@ namespace ArenaApplication.Services
                 return Result<BookingDto>.Failure(_localizer["BookingTimeCannotBeInPast"]);
             }
 
-            var subscription = (await _subscriptionRepo.FindAsync(s => 
-                s.MemberProfileId == booking.MemberProfileId && 
-                s.Status == SubscriptionStatus.Active && 
+            var subscription = (await _subscriptionRepo.FindAsync(s =>
+                s.MemberProfileId == booking.MemberProfileId &&
+                s.Status == SubscriptionStatus.Active &&
                 s.EndDate > DateTime.UtcNow)).FirstOrDefault();
 
             if (subscription == null)
@@ -243,8 +250,8 @@ namespace ArenaApplication.Services
             var dayOfWeekVal = targetShiftDate.DayOfWeek;
             var workingDayIndex = dayOfWeekVal == DayOfWeek.Sunday ? WorkingDay.Sunday : (WorkingDay)((int)dayOfWeekVal - 1);
 
-            var workingHours = (await _workingHoursRepo.FindAsync(wh => 
-                wh.DayOfWeek == workingDayIndex && 
+            var workingHours = (await _workingHoursRepo.FindAsync(wh =>
+                wh.DayOfWeek == workingDayIndex &&
                 !wh.IsDeleted)).FirstOrDefault();
 
             if (workingHours == null || workingHours.IsClosed)
@@ -274,10 +281,10 @@ namespace ArenaApplication.Services
             var startDate = dto.BookingDate.Date.AddDays(-1);
             var endDate = dto.BookingDate.Date.AddDays(1);
 
-            var candidateBookings = await _bookingRepo.FindAsync(b => 
-                b.MemberProfileId == booking.MemberProfileId && 
-                b.BookingDate.Date >= startDate && 
-                b.BookingDate.Date <= endDate && 
+            var candidateBookings = await _bookingRepo.FindAsync(b =>
+                b.MemberProfileId == booking.MemberProfileId &&
+                b.BookingDate.Date >= startDate &&
+                b.BookingDate.Date <= endDate &&
                 b.Id != bookingId &&
                 b.Status != BookingStatus.Cancelled);
 
@@ -305,11 +312,13 @@ namespace ArenaApplication.Services
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
-            await _backgroundJobService.ScheduleBookingReminderAsync(
+            // ✅ Rescheduled notification
+            await _backgroundJobService.EnqueueBookingRescheduledAsync(
                 booking.MemberProfileId,
                 booking.BookingDate);
 
-            await _backgroundJobService.EnqueueBookingCancellationAsync(
+            // ✅ Reminder جديد للتاريخ الجديد
+            await _backgroundJobService.ScheduleBookingReminderAsync(
                 booking.MemberProfileId,
                 booking.BookingDate);
 

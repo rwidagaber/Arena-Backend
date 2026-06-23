@@ -12,6 +12,9 @@ namespace ArenaApplication.IServices
         // =========================
         Task EnqueueSubscriptionPaymentJobAsync(Guid memberId, decimal amount, string planName);
         Task ScheduleSubscriptionExpiryReminderAsync(Guid memberId, DateTime expiryDate);
+        Task EnqueueSubscriptionExpiredAsync(Guid memberId);
+
+        Task EnqueueSessionsLowAsync(Guid memberProfileId, int remainingSessions);
 
         // =========================
         // Bookings

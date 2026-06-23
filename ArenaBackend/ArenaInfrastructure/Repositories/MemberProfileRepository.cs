@@ -19,6 +19,7 @@ namespace ArenaInfrastructure.Repositories
         public async Task<MemberProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _context.MemberProfiles
+                .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         }
 
