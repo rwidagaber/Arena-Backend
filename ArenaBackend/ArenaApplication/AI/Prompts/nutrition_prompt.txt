@@ -35,6 +35,7 @@ If member has diabetes:
 {userMessage}
 
 Return ONLY valid JSON, no markdown:
+IMPORTANT: You MUST use the exact English property names (keys) shown in the JSON structure below. Never translate the JSON keys to Arabic or any other language. You may translate the values (like mealType, name, ingredients) to the language of the user's message.
 Numeric fields must be JSON numbers only. Do not use strings, ranges, units, or words for numeric fields.
 Required numeric fields:
 - dailyCalories, proteinGrams, carbsGrams, fatGrams, waterLiters, mealsPerDay, calories
