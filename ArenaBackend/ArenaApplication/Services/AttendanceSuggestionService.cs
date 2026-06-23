@@ -93,17 +93,20 @@ namespace ArenaApplication.Services
             var openHour = hours.OpenTime.Minutes > 0 ? hours.OpenTime.Hours + 1 : hours.OpenTime.Hours;
             var closeHour = hours.CloseTime.Hours;
 
-            // No full hour fits within the open window (or overnight hours) -> nothing to suggest.
+            // Overnight hours (e.g. open 08:00, close 03:00 the next day): unwrap the closing
+            // hour past midnight so the open window is a positive range we can iterate over.
             if (closeHour <= openHour)
-                return Result<DayOccupancyDto>.Success(dto);
+                closeHour += 24;
 
             for (var hour = openHour; hour < closeHour; hour++)
             {
-                var checkInCount = localCheckInHours.Count(h => h == hour);
-                var bookingCount = bookingHours.Count(s => s.Hours == hour);
+                // Hours past midnight wrap back into 0-23 for crowd matching and display.
+                var slotHour = hour % 24;
+                var checkInCount = localCheckInHours.Count(h => h == slotHour);
+                var bookingCount = bookingHours.Count(s => s.Hours == slotHour);
                 dto.Slots.Add(new OccupancySlotDto
                 {
-                    Hour = hour,
+                    Hour = slotHour,
                     CheckInCount = checkInCount,
                     BookingCount = bookingCount,
                     Total = checkInCount + bookingCount,
