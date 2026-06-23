@@ -97,6 +97,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<Guid>("MemberProfileId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Source")
+                        .HasColumnType("int");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
@@ -271,6 +274,125 @@ namespace ArenaInfrastructure.Migrations
                     b.ToTable("ChatMessages", (string)null);
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.Gym.WorkingHours", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<TimeSpan>("CloseTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsClosed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan>("OpenTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WorkingHours", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Monday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Tuesday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Wednesday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Thursday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Friday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 15, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Saturday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CloseTime = new TimeSpan(0, 3, 0, 0, 0),
+                            CreatedAt = new DateTime(2026, 6, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DayOfWeek = "Sunday",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            OpenTime = new TimeSpan(0, 8, 0, 0, 0)
+                        });
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.Health.ProgressLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -361,6 +483,61 @@ namespace ArenaInfrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Translations", (string)null);
+                });
+
+            modelBuilder.Entity("ArenaDomain.Entities.MemberHealthVector", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmbeddingJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MemberProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberProfileId");
+
+                    b.ToTable("MemberHealthVectors", (string)null);
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.MemberProfile", b =>
@@ -836,6 +1013,11 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<int>("DurationMonths")
                         .HasColumnType("int");
 
+                    b.Property<bool>("HasAI")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -875,42 +1057,121 @@ namespace ArenaInfrastructure.Migrations
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
-                            DescriptionAr = "مثالي للمبتدئين للبدء في اللياقة البدنية",
-                            DescriptionEn = "Perfect for beginners to get started with fitness",
+                            DescriptionAr = "دخول أساسي لصالة الألعاب الرياضية وحجز الحصص",
+                            DescriptionEn = "Essential access to gym facilities and class bookings",
                             DurationMonths = 1,
+                            HasAI = false,
                             IsActive = true,
                             IsDeleted = false,
                             NameAr = "أساسي",
                             NameEn = "Basic",
-                            Price = 9.99m,
-                            SessionLimit = 4
+                            Price = 400.00m,
+                            SessionLimit = 24
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
                             CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
-                            DescriptionAr = "الوصول الكامل إلى جميع المرافق والفئات المتميزة",
-                            DescriptionEn = "Full access to all facilities and premium classes",
+                            DescriptionAr = "دخول قياسي ممتد مع توفير في التكلفة",
+                            DescriptionEn = "Extended standard access with savings",
                             DurationMonths = 3,
+                            HasAI = false,
                             IsActive = true,
                             IsDeleted = false,
-                            NameAr = "بريميوم",
-                            NameEn = "Premium",
-                            Price = 24.99m,
-                            SessionLimit = 12
+                            NameAr = "برو",
+                            NameEn = "Pro",
+                            Price = 1000.00m,
+                            SessionLimit = 72
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
                             CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
-                            DescriptionAr = "وصول غير محدود مع جلسات المدرب الشخصي",
-                            DescriptionEn = "Unlimited access with personal trainer sessions",
-                            DurationMonths = 12,
+                            DescriptionAr = "دخول متوسط المدى للرياضيين المستمرين",
+                            DescriptionEn = "Mid-term gym access for consistent athletes",
+                            DurationMonths = 6,
+                            HasAI = false,
                             IsActive = true,
                             IsDeleted = false,
-                            NameAr = "نخبة",
-                            NameEn = "Elite",
-                            Price = 79.99m
+                            NameAr = "بريميوم",
+                            NameEn = "Premium",
+                            Price = 1800.00m,
+                            SessionLimit = 144
+                        },
+                        new
+                        {
+                            Id = new Guid("44444444-4444-4444-4444-444444444444"),
+                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
+                            DescriptionAr = "دخول أساسي لصالة الألعاب الرياضية لمدة عام كامل",
+                            DescriptionEn = "Full year essential gym access",
+                            DurationMonths = 12,
+                            HasAI = false,
+                            IsActive = true,
+                            IsDeleted = false,
+                            NameAr = "ماكس",
+                            NameEn = "Max",
+                            Price = 3000.00m,
+                            SessionLimit = 288
+                        },
+                        new
+                        {
+                            Id = new Guid("55555555-5555-5555-5555-555555555555"),
+                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
+                            DescriptionAr = "اشتراك لمدة شهر مع توجيه كامل من مدرب الذكاء الاصطناعي",
+                            DescriptionEn = "1 Month of full fitness access + AI Coach guidance",
+                            DurationMonths = 1,
+                            HasAI = true,
+                            IsActive = true,
+                            IsDeleted = false,
+                            NameAr = "أساسي ذكي",
+                            NameEn = "Basic AI",
+                            Price = 500.00m,
+                            SessionLimit = 24
+                        },
+                        new
+                        {
+                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
+                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
+                            DescriptionAr = "اشتراك لمدة 3 أشهر مع مدرب الذكاء الاصطناعي (الأكثر شعبية)",
+                            DescriptionEn = "3 Months of full access + AI Coach (Most Popular)",
+                            DurationMonths = 3,
+                            HasAI = true,
+                            IsActive = true,
+                            IsDeleted = false,
+                            NameAr = "برو ذكي",
+                            NameEn = "Pro AI",
+                            Price = 1100.00m,
+                            SessionLimit = 72
+                        },
+                        new
+                        {
+                            Id = new Guid("77777777-7777-7777-7777-777777777777"),
+                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
+                            DescriptionAr = "اشتراك لمدة 6 أشهر مع توجيه كامل من مدرب الذكاء الاصطناعي",
+                            DescriptionEn = "6 Months of full access + AI Coach guidance",
+                            DurationMonths = 6,
+                            HasAI = true,
+                            IsActive = true,
+                            IsDeleted = false,
+                            NameAr = "بريميوم ذكي",
+                            NameEn = "Premium AI",
+                            Price = 1900.00m,
+                            SessionLimit = 144
+                        },
+                        new
+                        {
+                            Id = new Guid("88888888-8888-8888-8888-888888888888"),
+                            CreatedAt = new DateTime(2026, 5, 31, 18, 14, 57, 893, DateTimeKind.Utc),
+                            DescriptionAr = "سنة كاملة من اللياقة المخصصة مع مدرب الذكاء الاصطناعي (أفضل قيمة)",
+                            DescriptionEn = "1 Year of complete personalized fitness (Best Value)",
+                            DurationMonths = 12,
+                            HasAI = true,
+                            IsActive = true,
+                            IsDeleted = false,
+                            NameAr = "ماكس ذكي",
+                            NameEn = "Max AI",
+                            Price = 3100.00m,
+                            SessionLimit = 288
                         });
                 });
 
@@ -1596,6 +1857,17 @@ namespace ArenaInfrastructure.Migrations
                     b.Navigation("MemberProfile");
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.MemberHealthVector", b =>
+                {
+                    b.HasOne("ArenaDomain.Entities.MemberProfile", "MemberProfile")
+                        .WithMany("HealthVectors")
+                        .HasForeignKey("MemberProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MemberProfile");
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.MemberProfile", b =>
                 {
                     b.HasOne("ArenaDomain.Entities.User.ApplicationUser", "User")
@@ -1839,6 +2111,8 @@ namespace ArenaInfrastructure.Migrations
                     b.Navigation("Bookings");
 
                     b.Navigation("ChatConversations");
+
+                    b.Navigation("HealthVectors");
 
                     b.Navigation("MealLogs");
 

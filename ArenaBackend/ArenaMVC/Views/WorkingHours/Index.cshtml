@@ -1,0 +1,706 @@
+@model IEnumerable<ArenaApplication.Dtos.Gym.WorkingHoursDto>
+
+@{
+    ViewData["Title"] = Localizer["WorkingHours"];
+    
+    // Generate 30-minute interval time slots
+    var timeSlots = new List<TimeSpan>();
+    for (int h = 0; h < 24; h++)
+    {
+        timeSlots.Add(new TimeSpan(h, 0, 0));
+        timeSlots.Add(new TimeSpan(h, 30, 0));
+    }
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+
+<style>
+    /* Working Hours Grid and Card Layout */
+    .working-hours-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .working-hours-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    .working-hours-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--yellow);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .working-hours-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        border-color: rgba(213, 235, 69, 0.3);
+    }
+
+    html[data-theme="light"] .working-hours-card:hover {
+        border-color: rgba(198, 239, 46, 0.35);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .working-hours-card:hover::before {
+        opacity: 1;
+    }
+
+    .working-hours-card.closed-card::before {
+        background: #EF4444;
+    }
+
+    .working-hours-card.closed-card:hover {
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Card Header Action (Checkbox) */
+    .card-header-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .working-hours-card .form-check-input {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px !important;
+        cursor: pointer;
+    }
+
+    /* Day Title */
+    .card-day-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-day-icon {
+        width: 22px;
+        height: 22px;
+        color: var(--yellow);
+    }
+
+    .closed-card .card-day-icon {
+        color: #EF4444;
+    }
+
+    .card-day-title h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    /* Status Badge */
+    .card-status-badge {
+        display: flex;
+        align-items: center;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 30px;
+    }
+
+    .status-badge.open {
+        background-color: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #10B981;
+    }
+
+    .status-badge.closed {
+        background-color: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #EF4444;
+    }
+
+    .status-badge svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Hours Info */
+    .card-hours-info {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        color: var(--text-secondary);
+    }
+
+    .hours-text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+    }
+
+    .hours-text.closed {
+        color: var(--text-secondary);
+        font-style: italic;
+        opacity: 0.7;
+    }
+
+    .time-part {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .time-separator {
+        display: inline-flex;
+        align-items: center;
+        color: var(--text-secondary);
+        opacity: 0.6;
+    }
+
+    [dir="rtl"] .time-separator svg {
+        transform: rotate(180deg);
+    }
+
+    .time-separator svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Card Actions */
+    .card-actions {
+        margin-top: 0.5rem;
+    }
+
+    .btn-card-edit {
+        width: 100%;
+        background-color: rgba(213, 235, 69, 0.05);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 0.6rem;
+        border-radius: 10px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-card-edit:hover {
+        background-color: var(--active-bg);
+        color: var(--yellow);
+        border-color: var(--yellow);
+    }
+
+    .closed-card .btn-card-edit:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #EF4444;
+        border-color: #EF4444;
+    }
+
+    .btn-card-edit svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Bulk Actions Header Toolbar */
+    .bulk-actions-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--card-shadow);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bulk-actions-toolbar.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        max-height: 100px;
+        margin-bottom: 1.5rem;
+    }
+
+    .bulk-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .bulk-info span {
+        color: var(--yellow);
+        font-weight: 700;
+    }
+
+    /* Dark Modal styles */
+    .modal-dark .modal-content {
+        background-color: #121214;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        color: var(--whiteout);
+    }
+
+    html[data-theme="light"] .modal-dark .modal-content {
+        background-color: #FFFFFF;
+        color: var(--text-primary);
+    }
+
+    .modal-dark .modal-header {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-dark .modal-footer {
+        border-top: 1px solid var(--border-color);
+    }
+
+    .modal-dark .btn-close {
+        filter: invert(1);
+    }
+
+    html[data-theme="light"] .modal-dark .btn-close {
+        filter: none;
+    }
+
+    /* Overlay Confirm Modal */
+    #confirmSaveModal {
+        z-index: 1070;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+    }
+
+    /* Confirm Modal accent border */
+    #confirmSaveModal .modal-content {
+        border: 1px solid rgba(213, 235, 69, 0.3);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    /* ── Status Pill Toggle ─────────────────────────────────────── */
+    .status-toggle-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .status-toggle-pill {
+        display: flex;
+        align-items: center;
+        position: relative;
+        width: 180px;
+        height: 40px;
+        background: rgba(16, 185, 129, 0.12);
+        border: 1.5px solid rgba(16, 185, 129, 0.4);
+        border-radius: 50px;
+        padding: 4px;
+        transition: background 0.3s ease, border-color 0.3s ease;
+        overflow: hidden;
+    }
+
+    .status-toggle-pill .pill-thumb {
+        position: absolute;
+        left: 4px;
+        width: 50%;
+        height: calc(100% - 8px);
+        background: #10B981;
+        border-radius: 50px;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+        z-index: 1;
+    }
+
+    .status-toggle-pill .pill-open,
+    .status-toggle-pill .pill-closed {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        text-align: center;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        transition: color 0.3s ease;
+    }
+
+    .status-toggle-pill .pill-open  { color: #fff; }
+    .status-toggle-pill .pill-closed { color: rgba(255,255,255,0.45); }
+
+    /* When IsClosed checkbox is checked — slide thumb to right, turn red */
+    #isClosedCheckbox:checked ~ .status-toggle-pill {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    #isClosedCheckbox:checked ~ .status-toggle-pill .pill-thumb {
+        left: calc(50% + 4px);
+        background: #EF4444;
+    }
+
+    #isClosedCheckbox:checked ~ .status-toggle-pill .pill-open  { color: rgba(255,255,255,0.45); }
+    #isClosedCheckbox:checked ~ .status-toggle-pill .pill-closed { color: #fff; }
+
+    html[data-theme="light"] .status-toggle-pill .pill-open  { color: #fff; }
+    html[data-theme="light"] #isClosedCheckbox:checked ~ .status-toggle-pill .pill-closed { color: #fff; }
+</style>
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header">
+        <h1><i data-lucide="clock" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["WorkingHours"]</h1>
+        <p>@Localizer["ManageWorkingHours"]</p>
+    </div>
+
+    <div class="container-fluid mt-4">
+        @if (TempData["Success"] != null)
+        {
+            <div class="subscription-alert success">
+                <strong>@Localizer["Success"]</strong> @TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+    
+        <!-- Bulk Actions Toolbar -->
+        <div class="bulk-actions-toolbar" id="bulkToolbar">
+            <div class="bulk-info">
+                <i data-lucide="check-square" style="color: var(--yellow);"></i>
+                <div>
+                    @Localizer["Selected"]: <span id="selectedCount">0</span> @Localizer["Days"]
+                </div>
+            </div>
+            <button type="button" class="btn btn-subscription-primary d-inline-flex align-items-center gap-2" id="bulkEditBtn">
+                <i data-lucide="edit-3" style="width: 18px; height: 18px;"></i> @Localizer["EditWorkingHours"]
+            </button>
+        </div>
+
+        <!-- Responsive Card Grid -->
+        <div class="working-hours-grid">
+            @foreach (var item in Model)
+            {
+                <div class="working-hours-card @(item.IsClosed ? "closed-card" : "")" 
+                     id="card-@item.Id"
+                     data-id="@item.Id"
+                     data-day="@Localizer[item.DayOfWeek.ToString()]"
+                     data-isclosed="@item.IsClosed.ToString().ToLower()"
+                     data-opentime="@(item.OpenTime.HasValue ? item.OpenTime.Value.ToString(@"hh\:mm") : "08:00")"
+                     data-closetime="@(item.CloseTime.HasValue ? item.CloseTime.Value.ToString(@"hh\:mm") : "22:00")">
+                    
+                    <div class="card-header-actions">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input bulk-select-checkbox" data-id="@item.Id" id="checkbox-@item.Id" aria-label="Select day for bulk edit" />
+                            <label class="form-check-label" for="checkbox-@item.Id"></label>
+                        </div>
+                    </div>
+                    
+                    <div class="card-day-title">
+                        <i data-lucide="calendar" class="card-day-icon"></i>
+                        <h3>@Localizer[item.DayOfWeek.ToString()]</h3>
+                    </div>
+                    
+                    <div class="card-status-badge">
+                        @if (item.IsClosed)
+                        {
+                            <span class="status-badge closed"><i data-lucide="shield-alert"></i> @Localizer["Closed"]</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge open"><i data-lucide="shield-check"></i> @Localizer["Open"]</span>
+                        }
+                    </div>
+                    
+                    <div class="card-hours-info">
+                        @if (item.IsClosed)
+                        {
+                            <div class="hours-text closed">@Localizer["Closed"]</div>
+                        }
+                        else
+                        {
+                            <div class="hours-text">
+                                <span class="time-part">@(item.OpenTime.HasValue ? DateTime.Today.Add(item.OpenTime.Value).ToString("t") : "-")</span>
+                                <span class="time-separator"><i data-lucide="arrow-right"></i></span>
+                                <span class="time-part">@(item.CloseTime.HasValue ? DateTime.Today.Add(item.CloseTime.Value).ToString("t") : "-")</span>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="card-actions">
+                        <button type="button" class="btn btn-card-edit edit-day-btn" data-id="@item.Id">
+                            <i data-lucide="edit-3"></i> @Localizer["Edit"]
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Edit Working Hours Modal -->
+<div class="modal fade modal-dark" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="editModalLabel">
+                    <i data-lucide="clock" style="color: var(--yellow);"></i> <span id="modalTitleText">@Localizer["EditWorkingHours"]</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="modalCloseX"></button>
+            </div>
+            <form id="editForm" method="post" style="margin: 0;">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="editIdInput" />
+                    <div id="bulkIdsContainer"></div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="subscription-form-group">
+                                <label>@Localizer["Status"]</label>
+                                <div style="margin-top: 0.5rem;">
+                                    <label class="status-toggle-label" for="isClosedCheckbox">
+                                        <input type="checkbox" name="IsClosed" class="form-check-input visually-hidden" id="isClosedCheckbox" value="true" />
+                                        <div class="status-toggle-pill">
+                                            <span class="pill-open">@Localizer["Open"]</span>
+                                            <span class="pill-thumb"></span>
+                                            <span class="pill-closed">@Localizer["Closed"]</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" id="timeFields">
+                        <div class="col-md-6">
+                            <div class="subscription-form-group">
+                                <label for="openTimeSelect">@Localizer["OpenTime"] *</label>
+                                <select name="OpenTime" class="form-select" id="openTimeSelect">
+                                    @foreach (var slot in timeSlots)
+                                    {
+                                        <option value="@slot.ToString(@"hh\:mm")">@DateTime.Today.Add(slot).ToString("t")</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="subscription-form-group">
+                                <label for="closeTimeSelect">@Localizer["CloseTime"] *</label>
+                                <select name="CloseTime" class="form-select" id="closeTimeSelect">
+                                    @foreach (var slot in timeSlots)
+                                    {
+                                        <option value="@slot.ToString(@"hh\:mm")">@DateTime.Today.Add(slot).ToString("t")</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-subscription-secondary" data-bs-dismiss="modal" id="modalCancelBtn">@Localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-subscription-primary d-inline-flex align-items-center gap-1" id="saveFormBtn">
+                        <i data-lucide="check" style="width: 18px; height: 18px;"></i> @Localizer["SaveChanges"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modern Confirm Overlay Modal -->
+<div class="modal fade modal-dark" id="confirmSaveModal" tabindex="-1" aria-labelledby="confirmSaveModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="confirmSaveModalLabel" style="color: var(--yellow);">
+                    <i data-lucide="alert-triangle"></i> @Localizer["Confirm"]
+                </h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="m-0" style="font-size: 1.05rem; font-weight: 500;">@Localizer["ConfirmSaveWorkingHours"]</p>
+            </div>
+            <div class="modal-footer justify-content-center gap-2">
+                <button type="button" class="btn btn-subscription-secondary px-4" id="confirmCancelBtn">@Localizer["Cancel"]</button>
+                <button type="button" class="btn btn-subscription-primary px-4" id="confirmOkBtn">@Localizer["Confirm"]</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Element variables
+            const bulkSelectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+            const bulkToolbar = document.getElementById('bulkToolbar');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            const bulkEditBtn = document.getElementById('bulkEditBtn');
+            
+            const editModalEl = document.getElementById('editModal');
+            const editModal = new bootstrap.Modal(editModalEl);
+            const editForm = document.getElementById('editForm');
+            const editIdInput = document.getElementById('editIdInput');
+            const bulkIdsContainer = document.getElementById('bulkIdsContainer');
+            const modalTitleText = document.getElementById('modalTitleText');
+            const isClosedCheckbox = document.getElementById('isClosedCheckbox');
+            const timeFields = document.getElementById('timeFields');
+            const openTimeSelect = document.getElementById('openTimeSelect');
+            const closeTimeSelect = document.getElementById('closeTimeSelect');
+            
+            const confirmSaveModalEl = document.getElementById('confirmSaveModal');
+            const confirmSaveModal = new bootstrap.Modal(confirmSaveModalEl);
+            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+            const confirmOkBtn = document.getElementById('confirmOkBtn');
+            const saveFormBtn = document.getElementById('saveFormBtn');
+
+            // 1. Bulk Select & Toolbar Toggling
+            function updateBulkToolbar() {
+                const checkedCheckboxes = document.querySelectorAll('.bulk-select-checkbox:checked');
+                const checkedCount = checkedCheckboxes.length;
+                
+                selectedCountSpan.textContent = checkedCount;
+                
+                if (checkedCount > 0) {
+                    bulkToolbar.classList.add('active');
+                } else {
+                    bulkToolbar.classList.remove('active');
+                }
+            }
+
+            bulkSelectCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateBulkToolbar);
+            });
+
+            // 2. Disabling time selects dynamically when "Closed" is checked
+            function toggleTimeFields() {
+                if (isClosedCheckbox.checked) {
+                    timeFields.style.opacity = '0.4';
+                    timeFields.style.pointerEvents = 'none';
+                    openTimeSelect.disabled = true;
+                    closeTimeSelect.disabled = true;
+                } else {
+                    timeFields.style.opacity = '1';
+                    timeFields.style.pointerEvents = 'auto';
+                    openTimeSelect.disabled = false;
+                    closeTimeSelect.disabled = false;
+                }
+            }
+
+            isClosedCheckbox.addEventListener('change', toggleTimeFields);
+
+            // 3. Populate Modal for Single Edit
+            document.querySelectorAll('.edit-day-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const card = document.getElementById('card-' + this.getAttribute('data-id'));
+                    const id = card.getAttribute('data-id');
+                    const dayName = card.getAttribute('data-day');
+                    const isClosed = card.getAttribute('data-isclosed') === 'true';
+                    const openTime = card.getAttribute('data-opentime');
+                    const closeTime = card.getAttribute('data-closetime');
+
+                    // Reset form and bulk fields
+                    editForm.action = '@Url.Action("Edit", "WorkingHours")/' + id;
+                    editIdInput.value = id;
+                    bulkIdsContainer.innerHTML = ''; // clear bulk ids
+
+                    modalTitleText.textContent = dayName;
+                    isClosedCheckbox.checked = isClosed;
+                    
+                    if (openTime) openTimeSelect.value = openTime;
+                    if (closeTime) closeTimeSelect.value = closeTime;
+
+                    toggleTimeFields();
+                    editModal.show();
+                });
+            });
+
+            // 4. Setup Modal for Bulk Edit
+            bulkEditBtn.addEventListener('click', function () {
+                const checkedCheckboxes = document.querySelectorAll('.bulk-select-checkbox:checked');
+                if (checkedCheckboxes.length === 0) return;
+
+                // Setup bulk form action & IDs
+                editForm.action = '@Url.Action("BulkEdit", "WorkingHours")';
+                editIdInput.value = ''; // clear single edit id
+                
+                bulkIdsContainer.innerHTML = '';
+                checkedCheckboxes.forEach(cb => {
+                    const id = cb.getAttribute('data-id');
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'ids';
+                    hidden.value = id;
+                    bulkIdsContainer.appendChild(hidden);
+                });
+
+                modalTitleText.textContent = '@Localizer["EditWorkingHours"] (' + checkedCheckboxes.length + ' @Localizer["Days"])';
+                
+                // Defaults
+                isClosedCheckbox.checked = false;
+                openTimeSelect.value = '08:00';
+                closeTimeSelect.value = '22:00';
+
+                toggleTimeFields();
+                editModal.show();
+            });
+
+            // 5. Intercept Form Submit & Show Confirm Overlay Modal
+            editForm.addEventListener('submit', function (e) {
+                e.preventDefault(); // stop form from submitting directly
+                confirmSaveModal.show();
+            });
+
+            // Confirmation ok click
+            confirmOkBtn.addEventListener('click', function () {
+                confirmSaveModal.hide();
+                editModal.hide();
+
+                // Clear all bulk checkboxes and hide toolbar before navigation
+                document.querySelectorAll('.bulk-select-checkbox').forEach(cb => cb.checked = false);
+                updateBulkToolbar();
+
+                // Disable submit button to indicate loading state
+                saveFormBtn.disabled = true;
+                saveFormBtn.innerHTML = `<span class="subscription-spinner" style="width:16px;height:16px;vertical-align:middle;margin-inline-end:6px;"></span> @Localizer["Loading"]`;
+
+                // Submit the form programmatically
+                editForm.submit();
+            });
+
+            // Confirmation cancel click
+            confirmCancelBtn.addEventListener('click', function () {
+                confirmSaveModal.hide();
+            });
+        });
+    </script>
+}

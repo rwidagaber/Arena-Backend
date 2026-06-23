@@ -17,15 +17,18 @@ namespace ArenaApi.Controllers
         private readonly INutritionPlanService _nutritionPlanService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IGeminiCompletionService _geminiCompletionService;
+        private readonly IMealLogService _mealLogService;
 
         public NutritionPlansController(
             INutritionPlanService nutritionPlanService,
             ICurrentUserService currentUserService,
-            IGeminiCompletionService geminiCompletionService)
+            IGeminiCompletionService geminiCompletionService,
+            IMealLogService mealLogService)
         {
             _nutritionPlanService = nutritionPlanService;
             _currentUserService = currentUserService;
             _geminiCompletionService = geminiCompletionService;
+            _mealLogService = mealLogService;
         }
 
         [HttpGet]
@@ -84,7 +87,7 @@ namespace ArenaApi.Controllers
 
         [HttpPost("analyze-meal-image")]
         [RequestSizeLimit(8 * 1024 * 1024)]
-        public async Task<IActionResult> AnalyzeMealImage([FromForm] IFormFile image)
+        public async Task<IActionResult> AnalyzeMealImage([FromForm] IFormFile image, [FromForm] bool logMeal = true)
         {
             if (image == null || image.Length == 0)
                 return BadRequest("Please upload a meal image.");
@@ -136,6 +139,17 @@ namespace ArenaApi.Controllers
                 if (result == null)
                     return BadRequest("Unable to analyze this image. Please try another clear meal photo.");
 
+                // Link the analysis to the member's nutrition plan: log the meal and
+                // report how many calories are left of today's target.
+                if (logMeal)
+                {
+                    var memberProfileId = _currentUserService.MemberProfileId;
+                    var logResult = await _mealLogService.LogAnalyzedMealAsync(memberProfileId, result);
+
+                    if (logResult.IsSuccess)
+                        return Ok(logResult.Value);
+                }
+
                 return Ok(result);
             }
             catch (InvalidOperationException ex) when (IsGeminiConfigurationError(ex.Message))
@@ -163,6 +177,30 @@ namespace ArenaApi.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     "An unexpected error occurred during meal analysis. Please try again.");
             }
+        }
+
+        [HttpGet("daily-summary")]
+        public async Task<IActionResult> GetDailySummary([FromQuery] DateTime? date = null)
+        {
+            var memberProfileId = _currentUserService.MemberProfileId;
+            var result = await _mealLogService.GetDailySummaryAsync(memberProfileId, date);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Errors);
+
+            return Ok(result.Value);
+        }
+
+        [HttpDelete("meal-logs/{id}")]
+        public async Task<IActionResult> DeleteMealLog(Guid id)
+        {
+            var memberProfileId = _currentUserService.MemberProfileId;
+            var result = await _mealLogService.DeleteMealLogAsync(memberProfileId, id);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Errors);
+
+            return Ok(result.Value);
         }
 
         private async Task<MealImageAnalysisDto?> ParseOrRepairMealImageAnalysisAsync(string raw)

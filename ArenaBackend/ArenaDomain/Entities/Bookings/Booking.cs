@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Enums;
+using ArenaDomain.Enums;
 using ArenaDomain.Shared;
 
 namespace ArenaDomain.Entities.Bookings
@@ -16,6 +16,8 @@ namespace ArenaDomain.Entities.Bookings
         public TimeSpan? EndTime { get; set; }
 
         public BookingStatus Status { get; set; }
+
+        public BookingSource Source { get; set; }
 
         // Navigation
         public virtual QRCode? QRCode { get; set; }

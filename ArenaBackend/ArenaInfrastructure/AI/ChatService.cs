@@ -1,4 +1,4 @@
-﻿using ArenaApplication.AI;
+using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.IServices;
@@ -28,6 +28,7 @@ namespace ArenaInfrastructure.AI
         private readonly IRAGService _ragService;
         private readonly ILogger<ChatService> _logger;
         private readonly IHostEnvironment _environment;
+        private readonly IMemberHealthRAGService _healthRAG;
         private const int MaxStoredMessageLength = 4000;
         private const int MaxTitleLength = 200;
 
@@ -40,7 +41,8 @@ namespace ArenaInfrastructure.AI
             IGenericRepository<Booking, Guid> bookingRepo,
             IRAGService ragService,
             ILogger<ChatService> logger,
-            IHostEnvironment environment)
+            IHostEnvironment environment,
+            IMemberHealthRAGService healthRAG)
         {
             _gemini = gemini;
             _workoutAI = workoutAI;
@@ -51,6 +53,7 @@ namespace ArenaInfrastructure.AI
             _ragService = ragService;
             _logger = logger;
             _environment = environment;
+            _healthRAG = healthRAG;
         }
 
         public async Task<ChatResponseWithHistoryDto> SendMessageAsync(
@@ -78,6 +81,33 @@ namespace ArenaInfrastructure.AI
                     Reply = "❌ Profile not found.",
                     ConversationId = Guid.Empty
                 };
+
+            // Check if the user has an active subscription that includes AI features
+            //var activeSub = await _context.UserSubscriptions
+            //    .Include(s => s.Plan)
+            //    .FirstOrDefaultAsync(s => s.MemberProfileId == profile.Id 
+            //                           && s.Status == SubscriptionStatus.Active);
+
+            //if (activeSub == null || !activeSub.Plan.HasAI)
+            //{
+            //    return new ChatResponseWithHistoryDto
+            //    {
+            //        Reply = "❌ Access Denied: You need an active subscription with AI features enabled to use the AI Coach chatbot. Please upgrade your plan in the Pricing section.",
+            //        ConversationId = Guid.Empty
+            //    };
+            //}
+
+            if (!IsProfileMemoryQuestion(userMessage))
+            {
+                try
+                {
+                    await _healthRAG.ExtractAndSaveFromChatAsync(profile.Id, userMessage);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to save health context for member profile {MemberProfileId}", profile.Id);
+                }
+            }
 
             // ✅ Step 1 — Get or Create conversation
             ChatConversation conversation;
@@ -107,6 +137,11 @@ namespace ArenaInfrastructure.AI
                 })
                 .ToListAsync();
 
+            var upcomingBookings = await _bookingRepo.FindAsync(b =>
+                b.MemberProfileId == profile.Id &&
+                b.BookingDate.Date >= DateTime.UtcNow.AddHours(3).Date &&
+                b.Status != BookingStatus.Cancelled);
+
             // ✅ Step 3 — Save user message
             _context.ChatMessages.Add(new ChatMessage
             {
@@ -118,15 +153,46 @@ namespace ArenaInfrastructure.AI
             });
             await _context.SaveChangesAsync();
 
-            bool isArabic = IsArabic(userMessage);
-            var intent = await DetectIntentAsync(userMessage);
+            var bookingContinuationIntent = DetectBookingContinuationIntent(userMessage, history);
+            bool isArabic = IsArabic(userMessage)
+                || (bookingContinuationIntent != null && HistoryLooksArabic(history));
+            var intent = bookingContinuationIntent ?? await DetectIntentAsync(userMessage, history);
+            if (intent != null)
+            {
+                intent.RawMessage = userMessage;
+
+                bool profileUpdated = false;
+                if (!string.IsNullOrWhiteSpace(intent.Goal)) { profile.Goal = intent.Goal; profileUpdated = true; }
+                if (!string.IsNullOrWhiteSpace(intent.Injuries)) { profile.Injuries = intent.Injuries; profileUpdated = true; }
+                if (!string.IsNullOrWhiteSpace(intent.HealthConditions)) { profile.HealthConditions = intent.HealthConditions; profileUpdated = true; }
+                if (!string.IsNullOrWhiteSpace(intent.FitnessExperience)) { profile.FitnessExperience = intent.FitnessExperience; profileUpdated = true; }
+                if (!string.IsNullOrWhiteSpace(intent.DietaryRestrictions)) { profile.DietaryRestrictions = intent.DietaryRestrictions; profileUpdated = true; }
+                if (!string.IsNullOrWhiteSpace(intent.Equipment)) { profile.Equipment = intent.Equipment; profileUpdated = true; }
+                
+                if (!string.IsNullOrWhiteSpace(intent.WeightString)) 
+                { 
+                    var match = Regex.Match(intent.WeightString, @"\d+(\.\d+)?");
+                    if (match.Success && decimal.TryParse(match.Value, out var w)) { profile.Weight = w; profileUpdated = true; }
+                }
+                if (!string.IsNullOrWhiteSpace(intent.HeightString)) 
+                { 
+                    var match = Regex.Match(intent.HeightString, @"\d+(\.\d+)?");
+                    if (match.Success && decimal.TryParse(match.Value, out var h)) { profile.Height = h; profileUpdated = true; }
+                }
+
+                if (profileUpdated)
+                {
+                    _context.MemberProfiles.Update(profile);
+                    await _context.SaveChangesAsync();
+                }
+            }
             var memberName = GetMemberFirstName(profile);
 
             string reply;
             try
             {
                 // ✅ Step 5 — Route and get reply
-                reply = await RouteIntent(profile, intent, userMessage, isArabic, memberName, history);
+                reply = await RouteIntent(profile, intent, userMessage, isArabic, memberName, history, upcomingBookings);
             }
             catch (Exception ex)
             {
@@ -160,7 +226,12 @@ namespace ArenaInfrastructure.AI
             {
                 ConversationId = conversation.Id,
                 Reply = reply,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
+                Intent = intent?.Intent ?? "chat",
+                Action = intent?.Action,
+                BookingChanged = intent?.Intent == "booking"
+                    && (intent.Action == "create" || intent.Action == "cancel" || intent.Action == "reschedule")
+                    && IsSuccessfulBookingReply(reply)
             };
         }
 
@@ -215,17 +286,24 @@ namespace ArenaInfrastructure.AI
             };
         }
 
-        private async Task<IntentResult> DetectIntentAsync(string userMessage)
+        private async Task<IntentResult> DetectIntentAsync(string userMessage, List<ChatMessageDto> history)
         {
             try
             {
+                if (IsProfileMemoryQuestion(userMessage))
+                    return new IntentResult { Intent = "chat" };
+
+                var clarificationIntent = DetectPlanClarificationIntent(userMessage, history);
+                if (clarificationIntent != null)
+                    return clarificationIntent;
+
                 var localIntent = DetectSimpleIntent(userMessage);
                 if (localIntent != null)
                     return localIntent;
 
                 var intentJson = await _gemini.GetCompletionAsync(
                     PromptLoader.GetIntentDetectionPrompt(),
-                    new List<ChatMessageDto>(),
+                    history,
                     userMessage);
 
                 var cleanIntentJson = AIHelper.CleanJson(intentJson);
@@ -247,10 +325,100 @@ namespace ArenaInfrastructure.AI
             string userMessage,
             bool isArabic,
             string memberName,
-            List<ChatMessageDto> history)
+            List<ChatMessageDto> history,
+            IEnumerable<Booking> upcomingBookings)
         {
+            if (intent?.Intent == "workout" || intent?.Intent == "nutrition" || intent?.Intent == "both")
+            {
+                var missingInfo = new List<string>();
+                
+                // Common missing info
+                if (string.IsNullOrWhiteSpace(profile.Goal)) 
+                    missingInfo.Add(isArabic ? "هدفك (خسارة وزن، بناء عضلات، الخ)" : "your fitness goal");
+                
+                bool hasHealthVectors = await _healthRAG.HasHealthInfoAsync(profile.Id);
+                if (string.IsNullOrWhiteSpace(profile.Injuries) && string.IsNullOrWhiteSpace(profile.HealthConditions) && !hasHealthVectors) 
+                    missingInfo.Add(isArabic ? "أي إصابات أو أمراض (أو أخبرني إذا كنت سليم تماماً)" : "any injuries or health conditions (or say 'none')");
+
+                // Workout specific missing info
+                if (intent.Intent == "workout" || intent.Intent == "both")
+                {
+                    if (string.IsNullOrWhiteSpace(profile.FitnessExperience)) 
+                        missingInfo.Add(isArabic ? "مستوى خبرتك (مبتدئ، متوسط، متقدم)" : "your fitness experience level");
+                    
+                    if (string.IsNullOrWhiteSpace(profile.Equipment)) 
+                        missingInfo.Add(isArabic ? "المعدات المتاحة لك (جيم كامل، أوزان منزلية، بدون معدات)" : "available equipment (full gym, home weights, no equipment)");
+                }
+
+                // Nutrition specific missing info
+                if (intent.Intent == "nutrition" || intent.Intent == "both")
+                {
+                    if (profile.Weight == null || profile.Weight <= 0) 
+                        missingInfo.Add(isArabic ? "وزنك الحالي" : "your current weight");
+                    
+                    if (profile.Height == null || profile.Height <= 0) 
+                        missingInfo.Add(isArabic ? "طولك" : "your height");
+                    
+                    if (string.IsNullOrWhiteSpace(profile.DietaryRestrictions)) 
+                        missingInfo.Add(isArabic ? "أي حساسية أو نظام غذائي معين (نباتي، خالي، الخ، أو أخبرني إذا لا يوجد)" : "any dietary restrictions or food allergies (or say 'none')");
+                }
+
+                if (string.IsNullOrWhiteSpace(intent.PreferredDuration))
+                    missingInfo.Add(isArabic ? "مدة الخطة المطلوبة (مثلاً 4 أسابيع، أو أخبرني أن أحدد الأنسب لك)" : "preferred plan duration (e.g. 4 weeks, or tell me to choose what's best)");
+
+                if (missingInfo.Any())
+                {
+                    return isArabic
+                        ? $"عشان أقدر أصمم لك خطة دقيقة ومناسبة لحالتك، محتاج أعرف الأول:\n- {string.Join("\n- ", missingInfo)}\n\nتقدر ترد عليا هنا في الشات وهكمل على طول!"
+                        : $"To generate the most accurate and safe plan for you, I need to know:\n- {string.Join("\n- ", missingInfo)}\n\nPlease reply here in the chat and I'll generate it right away!";
+                }
+            }
+
             switch (intent?.Intent)
             {
+                case "both":
+                    {
+                        var workoutPlan = await _workoutAI
+                            .GenerateWorkoutPlanAsync(profile.Id, userMessage);
+                        var nutritionPlan = await _nutritionAI
+                            .GenerateNutritionPlanAsync(profile.Id, userMessage);
+
+                        var combined = new StringBuilder();
+                        combined.AppendLine(isArabic
+                            ? $"✅ تم إعداد خطتي التمرين والتغذية بنجاح يا {memberName}! 🚀"
+                            : $"✅ Done {memberName}! I've generated both your personalized plans. 🚀");
+                        combined.AppendLine();
+
+                        // --- WORKOUT SECTION ---
+                        combined.AppendLine(isArabic ? "🏋️ **خطة التمرين**" : "🏋️ **WORKOUT PLAN**");
+                        combined.AppendLine($"🎯 {workoutPlan.Name} ({(isArabic ? $"{workoutPlan.DurationWeeks} أسابيع" : $"{workoutPlan.DurationWeeks} weeks")})");
+                        foreach (var day in workoutPlan.Days)
+                        {
+                            var exerciseNames = string.Join(", ", day.Exercises.Take(5).Select(ex => ex.Name));
+                            combined.AppendLine($"   • **{day.DayName}**: {exerciseNames}{(day.Exercises.Count > 5 ? "..." : "")}");
+                        }
+                        combined.AppendLine();
+
+                        // --- NUTRITION SECTION ---
+                        combined.AppendLine(isArabic ? "🥗 **خطة التغذية**" : "🥗 **NUTRITION PLAN**");
+                        combined.AppendLine(isArabic
+                            ? $"🔥 {nutritionPlan.DailyCalories} سعر | بروتين {nutritionPlan.ProteinGrams}g | كارب {nutritionPlan.CarbsGrams}g | دهون {nutritionPlan.FatGrams}g"
+                            : $"🔥 {nutritionPlan.DailyCalories} kcal | Protein {nutritionPlan.ProteinGrams}g | Carbs {nutritionPlan.CarbsGrams}g | Fat {nutritionPlan.FatGrams}g");
+
+                        foreach (var meal in nutritionPlan.Meals)
+                        {
+                            combined.AppendLine(isArabic
+                                ? $"   • **{meal.MealType}**: {meal.Name} ({meal.Calories} سعر)"
+                                : $"   • **{meal.MealType}**: {meal.Name} ({meal.Calories} kcal)");
+                        }
+                        combined.AppendLine();
+
+                        combined.AppendLine(isArabic
+                            ? "💡 تفاصيل المجموعات، التكرارات، والمكونات محفوظة بالكامل في لوحة التحكم الخاصة بك."
+                            : "💡 Full sets, reps, and ingredients details are saved to your dashboard!");
+
+                        return combined.ToString();
+                    }
                 case "workout":
                     {
                         var workoutPlan = await _workoutAI
@@ -260,6 +428,54 @@ namespace ArenaInfrastructure.AI
                         sb.AppendLine(isArabic
                             ? $"✅ يا {memberName}، تم إنشاء خطة التمرين '{workoutPlan.Name}'!"
                             : $"✅ {memberName}, your workout plan '{workoutPlan.Name}' has been generated!");
+                        sb.AppendLine(isArabic
+                            ? $"📅 المدة: {workoutPlan.DurationWeeks} أسابيع\n"
+                            : $"📅 Duration: {workoutPlan.DurationWeeks} weeks\n");
+
+                        foreach (var day in workoutPlan.Days)
+                        {
+                            sb.AppendLine($"🏋️ {day.DayName}:");
+                            foreach (var ex in day.Exercises)
+                            {
+                                if (ex.Name.ToLower().Contains("rest"))
+                                    sb.AppendLine($"   • {ex.Name} 😴");
+                                else if (ex.Sets <= 1 && ex.Reps >= 20)
+                                    sb.AppendLine(isArabic
+                                        ? $"   • {ex.Name} — {ex.Reps} دقيقة"
+                                        : $"   • {ex.Name} — {ex.Reps} minutes");
+                                else
+                                    sb.AppendLine(isArabic
+                                        ? $"   • {ex.Name} — {ex.Sets} مجموعات × {ex.Reps}"
+                                        : $"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
+                            }
+                            sb.AppendLine();
+                        }
+
+                        sb.AppendLine(isArabic
+                            ? "💡 هل تريد خطة تغذية أيضاً؟"
+                            : "💡 Want a nutrition plan too? Just ask!");
+
+                        return sb.ToString();
+                    }
+
+                case "goal_change":
+                    {
+                        var newGoal = DetectGoalFromMessage(userMessage);
+                        if (newGoal != null && !string.Equals(profile.Goal, newGoal, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var oldGoal = profile.Goal ?? "Not set";
+                            profile.Goal = newGoal;
+                            _context.MemberProfiles.Update(profile);
+                            await _context.SaveChangesAsync();
+                        }
+                        
+                        // Generate a new workout plan aligned with the new goal
+                        var workoutPlan = await _workoutAI.GenerateWorkoutPlanAsync(profile.Id, userMessage);
+
+                        var sb = new StringBuilder();
+                        sb.AppendLine(isArabic
+                            ? $"✅ يا {memberName}، تم تحديث هدفك وتم إنشاء خطة تمرين جديدة لتناسب هدفك!"
+                            : $"✅ {memberName}, your goal has been updated to '{newGoal}' and a new workout plan '{workoutPlan.Name}' has been generated!");
                         sb.AppendLine(isArabic
                             ? $"📅 المدة: {workoutPlan.DurationWeeks} أسابيع\n"
                             : $"📅 Duration: {workoutPlan.DurationWeeks} weeks\n");
@@ -319,7 +535,7 @@ namespace ArenaInfrastructure.AI
                     {
                         var targetDate = intent.Date != null
                             ? DateTime.Parse(intent.Date)
-                            : DateTime.Now.AddDays(1);
+                            : DateTime.UtcNow.AddHours(3).Date;
 
                         var targetTime = intent.Time != null
                             ? TimeSpan.Parse(intent.Time)
@@ -334,6 +550,19 @@ namespace ArenaInfrastructure.AI
                             return await _bookingAI.HandleBookingRequestAsync(
                                 profile.Id, intent, userMessage, memberName);
 
+                        if (intent.Action == "view")
+                        {
+                            if (!upcomingBookings.Any())
+                                return isArabic ? "ماعندكش حجوزات قادمة." : "You have no upcoming bookings.";
+
+                            var bookingsList = string.Join("\n", upcomingBookings.Select(b =>
+                                $"- {b.BookingDate:dddd, MMMM dd} at {b.StartTime:hh\\:mm}"));
+
+                            return isArabic
+                                ? $"📅 حجوزاتك القادمة:\n{bookingsList}"
+                                : $"📅 Your upcoming bookings:\n{bookingsList}";
+                        }
+
                         // No time → suggest slots
                         if (intent.Time == null)
                         {
@@ -341,7 +570,24 @@ namespace ArenaInfrastructure.AI
                                                "11:00","12:00","13:00","14:00","15:00",
                                                "16:00","17:00","18:00","19:00","20:00" };
 
-                            var slotCrowds = allSlots.Select(slot =>
+                            var egyptNow = DateTime.UtcNow.AddHours(3);
+                            var egyptToday = egyptNow.Date;
+
+                            IEnumerable<string> slotsToShow = allSlots;
+                            if (targetDate.Date == egyptToday)
+                            {
+                                var currentTime = egyptNow.TimeOfDay;
+                                slotsToShow = allSlots.Where(s => TimeSpan.Parse(s) > currentTime);
+                            }
+
+                            if (!slotsToShow.Any())
+                            {
+                                return isArabic
+                                    ? "للأسف الأوقات المتاحة للنهارده خلصت. تحب تحجز لبكرة؟"
+                                    : "Sorry, there are no more available times today. Would you like to book for tomorrow?";
+                            }
+
+                            var slotCrowds = slotsToShow.Select(slot =>
                             {
                                 var st = TimeSpan.Parse(slot);
                                 var count = dayBookings.Count(b =>
@@ -350,8 +596,10 @@ namespace ArenaInfrastructure.AI
                                 return $"  {slot} {level} ";
                             });
 
-                            var dateLabel = targetDate.Date == DateTime.Today.AddDays(1)
+                            var dateLabel = targetDate.Date == egyptToday.AddDays(1)
                                 ? (isArabic ? "بكرة" : "tomorrow")
+                                : targetDate.Date == egyptToday
+                                ? (isArabic ? "النهارده" : "today")
                                 : targetDate.ToString("dddd, MMMM dd");
 
                             return isArabic
@@ -378,18 +626,21 @@ namespace ArenaInfrastructure.AI
 
                 case "food_analysis":
                     {
+                        var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
+                        var healthAwareUserMessage = BuildHealthAwareUserMessage(userMessage, healthContext);
+
                         var foodPrompt = PromptLoader.GetFoodAnalysisPrompt(
                             name: memberName,
                             goal: profile.Goal ?? "General Fitness",
-                            healthConditions: profile.HealthConditions ?? "None",
+                            healthConditions: CombineHealthConditions(profile.HealthConditions, healthContext),
                             dietaryRestrictions: profile.DietaryRestrictions ?? "None",
                             weight: (profile.Weight ?? 70).ToString(),
-                            userMessage: userMessage);
+                            userMessage: healthAwareUserMessage);
 
                         return await _gemini.GetCompletionAsync(
                             foodPrompt,
                             history,
-                            userMessage);
+                            healthAwareUserMessage);
                     }
                 default:
                     {
@@ -399,6 +650,8 @@ namespace ArenaInfrastructure.AI
                         // ✅ RAG: Also search member-specific data
                         var memberData = await ((SimpleRAGService)_ragService)
                             .SearchMemberDataAsync(profile.Id, userMessage);
+
+                        var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
 
                         var userContext = UserContextBuilder.Build(profile);
                         var systemPrompt = PromptLoader.GetChatSystemPrompt(
@@ -427,6 +680,15 @@ namespace ArenaInfrastructure.AI
         === THIS MEMBER'S HISTORY ===
         {memberData}
         ============================
+        """;
+
+                        if (!string.IsNullOrEmpty(healthContext))
+                            ragEnhancedPrompt += $"""
+
+
+        === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+        {healthContext}
+        ===============================================================
         """;
 
                         return await _gemini.GetCompletionAsync(
@@ -475,27 +737,478 @@ namespace ArenaInfrastructure.AI
         private bool IsArabic(string text) =>
             text.Any(c => c >= 0x0600 && c <= 0x06FF);
 
+        private static bool IsProfileMemoryQuestion(string userMessage)
+        {
+            var text = userMessage.Trim().ToLowerInvariant();
+            var asksKnownInfo = ContainsAny(text,
+                "do you know", "did you know", "you know", "remember", "my profile", "my info", "my data", "what are my", "tell me my",
+                "\u0627\u0646\u062a \u0639\u0627\u0631\u0641", "\u0627\u0646\u062a\u064a \u0639\u0627\u0631\u0641\u0629", "\u0639\u0627\u0631\u0641", "\u0641\u0627\u0643\u0631", "\u0641\u0627\u0643\u0631\u0629", "\u0627\u0644\u0645\u0644\u0641", "\u0628\u0631\u0648\u0641\u0627\u064a\u0644", "\u0628\u064a\u0627\u0646\u0627\u062a\u064a");
+            var asksAboutMemberData = ContainsAny(text,
+                "injury", "injuries", "pain", "condition", "conditions", "health", "disease", "diseases", "goal", "weight", "height", "equipment", "experience",
+                "\u0627\u0635\u0627\u0628\u0629", "\u0627\u0635\u0627\u0628\u0627\u062a", "\u0627\u0644\u0627\u0635\u0627\u0628\u0627\u062a", "\u0627\u0644\u0625\u0635\u0627\u0628\u0627\u062a", "\u0648\u062c\u0639", "\u0627\u0644\u0645", "\u0635\u062d\u0629", "\u0627\u0645\u0631\u0627\u0636", "\u0623\u0645\u0631\u0627\u0636", "\u0647\u062f\u0641", "\u0648\u0632\u0646", "\u0637\u0648\u0644", "\u0645\u0639\u062f\u0627\u062a", "\u062e\u0628\u0631\u0629");
+            var asksToCreatePlan = ContainsAny(text,
+                "generate", "create", "make me", "build me", "plan", "program", "meal plan", "workout plan",
+                "\u0627\u0639\u0645\u0644", "\u0627\u0639\u0645\u0644\u064a", "\u0627\u0639\u0645\u0644\u0644\u064a", "\u062e\u0637\u0629", "\u0628\u0631\u0646\u0627\u0645\u062c", "\u0646\u0638\u0627\u0645");
+
+            return asksKnownInfo && asksAboutMemberData && !asksToCreatePlan;
+        }
+
         private static IntentResult? DetectSimpleIntent(string userMessage)
         {
             var text = userMessage.ToLowerInvariant();
 
-            if (ContainsAny(text, "workout", "exercise", "training plan", "تمرين", "تدريب"))
-                return new IntentResult { Intent = "workout" };
+            var asksWorkout = ContainsAny(text,
+                "workout", "exercise", "training plan", "fitness plan", "gym", "gym plan", "days a week", "times a week",
+                "\u062a\u0645\u0631\u064a\u0646", "\u062a\u062f\u0631\u064a\u0628", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645", "\u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646", "\u062e\u0637\u0629 \u062a\u062f\u0631\u064a\u0628");
+            var asksNutrition = ContainsAny(text,
+                "nutrition", "meal plan", "diet", "calories", "food plan", "food", "meal",
+                "\u063a\u0630\u0627\u0621", "\u063a\u0630\u0627\u0626\u064a\u0629", "\u062a\u063a\u0630\u064a\u0629", "\u0648\u062c\u0628\u0627\u062a", "\u0648\u062c\u0628\u0629", "\u0627\u0643\u0644", "\u0623\u0643\u0644", "\u062f\u0627\u064a\u062a", "\u0633\u0639\u0631\u0627\u062a", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629");
+            var asksGenericPlan = ContainsAny(text,
+                "wanna a plan", "want a plan", "need a plan", "make me a plan", "create a plan", "generate a plan",
+                "give me a plan", "build me a plan", "plan for me", "custom plan", "personalized plan", "personalised plan",
+                "\u0627\u0639\u0645\u0644 \u062e\u0637\u0629", "\u0627\u0639\u0645\u0644\u064a \u062e\u0637\u0629", "\u0627\u0639\u0645\u0644\u0644\u064a \u062e\u0637\u0629", "\u0639\u0627\u064a\u0632 \u062e\u0637\u0629", "\u0639\u0627\u064a\u0632\u0629 \u062e\u0637\u0629", "\u062e\u0637\u0629 \u0627\u0645\u0634\u064a \u0639\u0644\u064a\u0647\u0627");
 
-            if (ContainsAny(text, "nutrition", "meal plan", "diet", "calories", "غذاء", "دايت", "سعرات"))
-                return new IntentResult { Intent = "nutrition" };
+            var preferredDuration = TryFindDuration(text, out var detectedDuration) ? detectedDuration : null;
+            var equipment = DetectEquipmentFromMessage(text);
 
-            if (ContainsAny(text, "food analysis", "analyze food", "تحليل الاكل", "حلل الاكل"))
+            if (ContainsAny(text, "both", "workout and nutrition", "nutrition and workout", "meal and workout", "diet and workout", "\u0627\u0644\u0627\u062a\u0646\u064a\u0646", "\u0643\u0644\u0647")
+                || (asksWorkout && asksNutrition))
+                return new IntentResult { Intent = "both", PreferredDuration = preferredDuration, Equipment = equipment };
+
+            if (asksWorkout)
+                return new IntentResult { Intent = "workout", PreferredDuration = preferredDuration, Equipment = equipment };
+
+            var goalChangeKeywords = ContainsAny(text,
+                "change my goal", "switch goal", "new goal", "i want to gain", "i wanna gain",
+                "i want to lose", "i wanna lose", "my goal is", "my new goal");
+            if (goalChangeKeywords && !asksWorkout)
+                return new IntentResult { Intent = "goal_change" };
+
+            if (asksNutrition)
+                return new IntentResult { Intent = "nutrition", PreferredDuration = preferredDuration, Equipment = equipment };
+
+            if (asksGenericPlan)
+                return new IntentResult { Intent = "both", PreferredDuration = preferredDuration, Equipment = equipment };
+
+            if (ContainsAny(text, "food analysis", "analyze food", "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0627\u0643\u0644", "\u062d\u0644\u0644 \u0627\u0644\u0627\u0643\u0644"))
                 return new IntentResult { Intent = "food_analysis" };
 
-            if (!ContainsAny(text, "book", "booking", "reserve", "cancel", "reschedule", "احجز", "حجز", "الغاء", "إلغاء"))
+            if (!ContainsAny(text, "book", "booking", "reserve", "cancel", "reschedule", "\u0627\u062d\u062c\u0632", "\u062d\u062c\u0632", "\u0627\u0644\u063a\u0627\u0621", "\u0625\u0644\u063a\u0627\u0621"))
                 return new IntentResult { Intent = "chat" };
 
             return null;
         }
 
+        private static string? DetectEquipmentFromMessage(string text)
+        {
+            if (ContainsAny(text, "full gym", "gym", "at the gym", "go to gym", "go to the gym", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645"))
+                return "Full Gym";
+
+            if (ContainsAny(text, "home", "home workout", "at home", "\u0627\u0644\u0628\u064a\u062a", "\u0641\u064a \u0627\u0644\u0628\u064a\u062a"))
+                return "Home workout";
+
+            if (ContainsAny(text, "dumbbell", "dumbbells", "weights", "home weights", "\u062f\u0645\u0628\u0644", "\u0627\u0648\u0632\u0627\u0646", "\u0623\u0648\u0632\u0627\u0646"))
+                return "Dumbbells / weights";
+
+            if (ContainsAny(text, "no equipment", "bodyweight", "without equipment", "\u0628\u062f\u0648\u0646 \u0645\u0639\u062f\u0627\u062a", "\u0645\u0646 \u063a\u064a\u0631 \u0645\u0639\u062f\u0627\u062a"))
+                return "No equipment";
+
+            return null;
+        }
+
+        private static string? DetectGoalFromMessage(string userMessage)
+        {
+            var text = userMessage.ToLowerInvariant();
+            if (ContainsAny(text, "gain weight", "weight gain", "bulk", "muscle gain", "build muscle", "اكسب وزن", "ازيد وزن", "اضخم"))
+                return "Weight Gain / Muscle Gain";
+            if (ContainsAny(text, "lose weight", "weight loss", "fat loss", "cut", "اخس", "انحف", "تنشيف"))
+                return "Weight Loss";
+            if (ContainsAny(text, "endurance", "fitness", "fit", "لياقة"))
+                return "General Fitness";
+            return null;
+        }
+
+        private static IntentResult? DetectPlanClarificationIntent(
+            string userMessage,
+            List<ChatMessageDto> history)
+        {
+            var text = userMessage.Trim().ToLowerInvariant();
+            var isDurationOnlyReply = TryFindDuration(text, out var durationFromCurrentMessage);
+            var isNoneReply = ContainsAny(text,
+                "none", "no", "nope", "nothing", "no allergies", "no restrictions", "not any",
+                "\u0644\u0627", "\u0644\u0627 \u064a\u0648\u062c\u062f", "\u0645\u0641\u064a\u0634", "\u0645\u0627\u0641\u064a\u0634", "\u0628\u062f\u0648\u0646");
+            var looksLikePlanKeyword = ContainsAny(text,
+                "both", "workout", "nutrition", "meal", "diet", "food", "gym",
+                "\u0627\u0644\u0627\u062a\u0646\u064a\u0646", "\u0643\u0644\u0647", "\u062a\u063a\u0630\u064a\u0629", "\u063a\u0630\u0627\u0626\u064a\u0629", "\u0648\u062c\u0628\u0629", "\u0648\u062c\u0628\u0627\u062a", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u062a\u0645\u0631\u064a\u0646", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645");
+
+            if (!isDurationOnlyReply && !isNoneReply && !looksLikePlanKeyword)
+                return null;
+
+            var recentAssistantMessage = history
+                .Where(m => m.Sender == "assistant")
+                .Reverse()
+                .Take(6)
+                .Select(m => m.MessageText.ToLowerInvariant())
+                .FirstOrDefault(message => ContainsAny(message,
+                    "workout plan, a nutrition plan, or both", "workout plan", "nutrition plan", "or both",
+                    "preferred plan duration", "dietary restrictions", "food allergies", "i need to know",
+                    "\u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u0645\u062f\u0629 \u0627\u0644\u062e\u0637\u0629", "\u062d\u0633\u0627\u0633\u064a\u0629", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u0627\u0644\u0627\u062a\u0646\u064a\u0646"));
+
+            if (recentAssistantMessage == null && (isDurationOnlyReply || isNoneReply))
+                return null;
+
+            var asksWorkout = ContainsAny(text,
+                "workout", "exercise", "training", "gym",
+                "\u062a\u0645\u0631\u064a\u0646", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645", "\u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646", "\u062e\u0637\u0629 \u062a\u062f\u0631\u064a\u0628");
+            var asksNutrition = ContainsAny(text,
+                "nutrition", "meal", "diet", "food",
+                "\u062a\u063a\u0630\u064a\u0629", "\u063a\u0630\u0627\u0626\u064a\u0629", "\u0648\u062c\u0628\u0629", "\u0648\u062c\u0628\u0627\u062a", "\u062f\u0627\u064a\u062a", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629");
+
+            var recentUserPlanRequest = history
+                .Where(m => m.Sender == "user")
+                .Reverse()
+                .Take(8)
+                .Select(m => m.MessageText.ToLowerInvariant())
+                .FirstOrDefault(message => ContainsAny(message,
+                    "workout", "exercise", "training", "nutrition", "meal", "diet", "food", "gym",
+                    "\u062a\u0645\u0631\u064a\u0646", "\u062a\u063a\u0630\u064a\u0629", "\u063a\u0630\u0627\u0626\u064a\u0629", "\u0648\u062c\u0628\u0629", "\u0648\u062c\u0628\u0627\u062a", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645"));
+
+            if (recentUserPlanRequest != null)
+            {
+                asksWorkout = asksWorkout || ContainsAny(recentUserPlanRequest,
+                    "workout", "exercise", "training", "gym",
+                    "\u062a\u0645\u0631\u064a\u0646", "\u062c\u064a\u0645", "\u0627\u0644\u062c\u064a\u0645", "\u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646", "\u062e\u0637\u0629 \u062a\u062f\u0631\u064a\u0628");
+                asksNutrition = asksNutrition || ContainsAny(recentUserPlanRequest,
+                    "nutrition", "meal", "diet", "food",
+                    "\u062a\u063a\u0630\u064a\u0629", "\u063a\u0630\u0627\u0626\u064a\u0629", "\u0648\u062c\u0628\u0629", "\u0648\u062c\u0628\u0627\u062a", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629");
+            }
+
+            if (recentAssistantMessage != null && ContainsAny(recentAssistantMessage, "nutrition plan", "dietary restrictions", "food allergies", "\u062e\u0637\u0629 \u062a\u063a\u0630\u064a\u0629", "\u062e\u0637\u0629 \u063a\u0630\u0627\u0626\u064a\u0629", "\u062d\u0633\u0627\u0633\u064a\u0629", "\u0646\u0638\u0627\u0645 \u063a\u0630\u0627\u0626\u064a"))
+                asksNutrition = true;
+
+            var preferredDuration = isDurationOnlyReply
+                ? durationFromCurrentMessage
+                : FindRecentDuration(history);
+
+            var intent = asksWorkout && asksNutrition ? "both" : asksWorkout ? "workout" : asksNutrition ? "nutrition" : null;
+            if (intent == null)
+                return null;
+
+            return new IntentResult
+            {
+                Intent = intent,
+                PreferredDuration = preferredDuration,
+                DietaryRestrictions = isNoneReply ? "None" : null
+            };
+        }
+
+        private static string? FindRecentDuration(List<ChatMessageDto> history)
+        {
+            foreach (var message in history.Where(m => m.Sender == "user").Reverse().Take(8))
+            {
+                if (TryFindDuration(message.MessageText.Trim().ToLowerInvariant(), out var duration))
+                    return duration;
+            }
+
+            return null;
+        }
+
+        private static bool TryFindDuration(string text, out string? duration)
+        {
+            duration = null;
+            var match = Regex.Match(text, @"\b\d+\s*(week|weeks|month|months|day|days)\b", RegexOptions.IgnoreCase);
+            if (!match.Success)
+                match = Regex.Match(text, @"\d+\s*(\u0627\u0633\u0628\u0648\u0639|\u0623\u0633\u0627\u0628\u064a\u0639|\u0627\u0633\u0627\u0628\u064a\u0639|\u0634\u0647\u0631|\u0634\u0647\u0648\u0631|\u064a\u0648\u0645|\u0627\u064a\u0627\u0645|\u0623\u064a\u0627\u0645)", RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return false;
+
+            duration = match.Value.Trim();
+            return true;
+        }
+
         private static bool ContainsAny(string text, params string[] values) =>
             values.Any(text.Contains);
+        private static bool IsSuccessfulBookingReply(string reply)
+        {
+            return ContainsAny(
+                reply,
+                "Booking confirmed",
+                "Booking cancelled",
+                "Booking rescheduled",
+                "تم تأكيد الحجز",
+                "تم إلغاء الحجز",
+                "تم تغيير الحجز");
+        }
+
+        private static IntentResult? DetectBookingContinuationIntent(
+            string userMessage,
+            List<ChatMessageDto> history)
+        {
+            if (!TryParseBookingTime(userMessage, out var time))
+                return null;
+
+            var recentAssistantMessage = history
+                .Where(m => m.Sender == "assistant")
+                .Reverse()
+                .Take(5)
+                .Select(m => m.MessageText.ToLowerInvariant())
+                .FirstOrDefault(text => ContainsAny(text,
+                    "available times", "tell me your preferred time", "preferred time",
+                    "الأوقات المتاحة", "قولي الوقت", "هحجزلك", "اختار وقت",
+                    "date and time of the booking you want to cancel",
+                    "booking date and the new time"));
+
+            if (recentAssistantMessage == null)
+                return null;
+
+            string action = "create";
+            if (ContainsAny(recentAssistantMessage, "cancel", "تلغيه", "إلغاء"))
+            {
+                action = "cancel";
+            }
+            else if (ContainsAny(recentAssistantMessage, "new time", "الوقت الجديد", "تغيير"))
+            {
+                action = "reschedule";
+            }
+
+            var previousBookingMessage = history
+                .Where(m => m.Sender == "user")
+                .Reverse()
+                .FirstOrDefault(m => LooksLikeBookingRequest(m.MessageText));
+
+            DateTime? date = null;
+            if (previousBookingMessage != null
+                && TryParseBookingDate(previousBookingMessage.MessageText, out var parsedDate))
+                date = parsedDate;
+            else if (TryParseBookingDate(userMessage, out var userParsedDate))
+                date = userParsedDate;
+            else
+                date = TryParseDateFromSlotReply(history);
+
+            if (!date.HasValue)
+                return null;
+
+            return new IntentResult
+            {
+                Intent = "booking",
+                Action = action,
+                Date = date.Value.ToString("yyyy-MM-dd"),
+                Time = time.ToString(@"hh\:mm")
+            };
+        }
+
+        private static bool TryParseBookingTime(string text, out TimeSpan time)
+        {
+            time = default;
+
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            var normalized = text.Trim()
+                .Replace("：", ":")
+                .Replace("الساعة", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("ساعه", "", StringComparison.OrdinalIgnoreCase)
+                .Trim();
+
+            var match = Regex.Match(normalized, @"^(?<hour>\d{1,2})(?::(?<minute>\d{1,2}))?\s*(?<period>am|pm|ص|م)?$",
+                RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return false;
+
+            var hour = int.Parse(match.Groups["hour"].Value);
+            var minute = match.Groups["minute"].Success
+                ? int.Parse(match.Groups["minute"].Value)
+                : 0;
+
+            if (minute is < 0 or > 59)
+                return false;
+
+            var period = match.Groups["period"].Value.ToLowerInvariant();
+            if ((period is "pm" or "م") && hour < 12)
+                hour += 12;
+            else if ((period is "am" or "ص") && hour == 12)
+                hour = 0;
+            else if (string.IsNullOrEmpty(period) && hour is >= 1 and <= 9)
+                hour += 12;
+
+            if (hour is < 0 or > 23)
+                return false;
+
+            time = new TimeSpan(hour, minute, 0);
+            return true;
+        }
+
+        private static bool LooksLikeBookingRequest(string text)
+        {
+            var normalized = text.ToLowerInvariant();
+            return ContainsAny(
+                normalized,
+                "book",
+                "booking",
+                "reserve",
+                "schedule",
+                "session",
+                "احجز",
+                "حجز",
+                "عايز اجي",
+                "عايز أجي",
+                "موعد",
+                "اجي",
+                "أجي");
+        }
+
+        private static bool TryParseBookingDate(string text, out DateTime date)
+        {
+            var normalized = text.ToLowerInvariant();
+            var today = DateTime.UtcNow.AddHours(3).Date;
+
+            if (ContainsAny(normalized, "after tomorrow", "بعد بكرة", "بعد بكره"))
+            {
+                date = today.AddDays(2);
+                return true;
+            }
+
+            if (ContainsAny(normalized, "tomorrow", "بكرة", "بكره"))
+            {
+                date = today.AddDays(1);
+                return true;
+            }
+
+            if (ContainsAny(normalized, "today", "النهارده", "النهاردة", "اليوم"))
+            {
+                date = today;
+                return true;
+            }
+
+            var weekday = DetectWeekday(normalized);
+            if (weekday.HasValue)
+            {
+                date = NextOrSameWeekday(today, weekday.Value);
+                return true;
+            }
+
+            if (DateTime.TryParse(text, out date))
+                return date.Date >= today;
+
+            date = default;
+            return false;
+        }
+
+        private static DateTime? TryParseDateFromSlotReply(List<ChatMessageDto> history)
+        {
+            var lastSlotReply = history
+                .Where(m => m.Sender == "assistant")
+                .Reverse()
+                .FirstOrDefault(m => ContainsAny(
+                    m.MessageText.ToLowerInvariant(),
+                    "available times",
+                    "الأوقات المتاحة"));
+
+            if (lastSlotReply == null)
+                return null;
+
+            var egyptToday = DateTime.UtcNow.AddHours(3).Date;
+            var slotReplyText = lastSlotReply.MessageText.ToLowerInvariant();
+
+            var dateFromLabel = TryParseDateFromSlotLabel(slotReplyText, egyptToday);
+            if (dateFromLabel.HasValue)
+                return dateFromLabel.Value;
+
+            if (ContainsAny(slotReplyText, "after tomorrow", "بعد بكرة", "بعد بكره"))
+                return egyptToday.AddDays(2);
+
+            if (ContainsAny(slotReplyText, "tomorrow", "بكرة", "بكره"))
+                return egyptToday.AddDays(1);
+
+            if (ContainsAny(slotReplyText, "today", "النهارده", "النهاردة", "اليوم"))
+                return egyptToday;
+
+            var weekday = DetectWeekday(slotReplyText);
+            if (weekday.HasValue)
+                return NextOrSameWeekday(egyptToday, weekday.Value);
+
+            return null;
+        }
+
+        private static DateTime? TryParseDateFromSlotLabel(string text, DateTime today)
+        {
+            var month = DetectMonth(text);
+            if (!month.HasValue)
+                return null;
+
+            var dayMatches = Regex.Matches(text, @"\b(?<day>\d{1,2})\b");
+            foreach (Match match in dayMatches)
+            {
+                if (!int.TryParse(match.Groups["day"].Value, out var day))
+                    continue;
+
+                try
+                {
+                    var date = new DateTime(today.Year, month.Value, day);
+                    if (date.Date < today.Date.AddDays(-1))
+                        date = date.AddYears(1);
+
+                    return date.Date;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                }
+            }
+
+            return null;
+        }
+
+        private static int? DetectMonth(string text)
+        {
+            if (ContainsAny(text, "january", "\u064a\u0646\u0627\u064a\u0631")) return 1;
+            if (ContainsAny(text, "february", "\u0641\u0628\u0631\u0627\u064a\u0631")) return 2;
+            if (ContainsAny(text, "march", "\u0645\u0627\u0631\u0633")) return 3;
+            if (ContainsAny(text, "april", "\u0623\u0628\u0631\u064a\u0644", "\u0627\u0628\u0631\u064a\u0644")) return 4;
+            if (ContainsAny(text, "may", "\u0645\u0627\u064a\u0648")) return 5;
+            if (ContainsAny(text, "june", "\u064a\u0648\u0646\u064a\u0648")) return 6;
+            if (ContainsAny(text, "july", "\u064a\u0648\u0644\u064a\u0648")) return 7;
+            if (ContainsAny(text, "august", "\u0623\u063a\u0633\u0637\u0633", "\u0627\u063a\u0633\u0637\u0633")) return 8;
+            if (ContainsAny(text, "september", "\u0633\u0628\u062a\u0645\u0628\u0631")) return 9;
+            if (ContainsAny(text, "october", "\u0623\u0643\u062a\u0648\u0628\u0631", "\u0627\u0643\u062a\u0648\u0628\u0631")) return 10;
+            if (ContainsAny(text, "november", "\u0646\u0648\u0641\u0645\u0628\u0631")) return 11;
+            if (ContainsAny(text, "december", "\u062f\u064a\u0633\u0645\u0628\u0631")) return 12;
+
+            return null;
+        }
+
+        private static DayOfWeek? DetectWeekday(string text)
+        {
+            if (ContainsAny(text, "monday", "الاثنين", "الإثنين", "الاتنين"))
+                return DayOfWeek.Monday;
+            if (ContainsAny(text, "tuesday", "الثلاثاء", "التلات", "التلاتاء"))
+                return DayOfWeek.Tuesday;
+            if (ContainsAny(text, "wednesday", "الأربعاء", "الاربعاء", "الأربع", "الاربع"))
+                return DayOfWeek.Wednesday;
+            if (ContainsAny(text, "thursday", "الخميس"))
+                return DayOfWeek.Thursday;
+            if (ContainsAny(text, "friday", "الجمعة", "الجمعه"))
+                return DayOfWeek.Friday;
+            if (ContainsAny(text, "saturday", "السبت"))
+                return DayOfWeek.Saturday;
+            if (ContainsAny(text, "sunday", "الأحد", "الاحد", "الحد"))
+                return DayOfWeek.Sunday;
+
+            return null;
+        }
+
+        private static DateTime NextOrSameWeekday(DateTime from, DayOfWeek day)
+        {
+            var daysUntil = ((int)day - (int)from.DayOfWeek + 7) % 7;
+            return from.Date.AddDays(daysUntil);
+        }
+
+        private static bool HistoryLooksArabic(List<ChatMessageDto> history) =>
+            history
+                .Reverse<ChatMessageDto>()
+                .Take(4)
+                .Any(m => m.MessageText.Any(c => c >= 0x0600 && c <= 0x06FF));
 
         private string BuildAssistantUnavailableReply(bool isArabic, Exception ex)
         {
@@ -527,6 +1240,30 @@ namespace ArenaInfrastructure.AI
             return isArabic
                 ? "Target language: Arabic. Use natural Arabic matching the user's tone. Do not switch to English except for unavoidable exercise or nutrition terms."
                 : "Target language: English. Use clear professional English. Do not switch to Arabic.";
+        }
+
+        private static string CombineHealthConditions(string? profileHealthConditions, string healthContext)
+        {
+            if (string.IsNullOrWhiteSpace(healthContext))
+                return string.IsNullOrWhiteSpace(profileHealthConditions) ? "None" : profileHealthConditions;
+
+            if (string.IsNullOrWhiteSpace(profileHealthConditions))
+                return healthContext;
+
+            return $"{profileHealthConditions}\n{healthContext}";
+        }
+
+        private static string BuildHealthAwareUserMessage(string userMessage, string healthContext)
+        {
+            if (string.IsNullOrWhiteSpace(healthContext))
+                return userMessage;
+
+            return $"""
+            {userMessage}
+
+            === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+            {healthContext}
+            """;
         }
 
         // ✅ Get all conversations for member

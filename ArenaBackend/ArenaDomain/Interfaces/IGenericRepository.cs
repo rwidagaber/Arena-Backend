@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Shared;
+using ArenaDomain.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -11,6 +11,8 @@ namespace ArenaDomain.Interfaces
         public Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
         public Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
         public Task SoftDeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
 

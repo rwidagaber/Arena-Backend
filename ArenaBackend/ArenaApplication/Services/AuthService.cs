@@ -176,12 +176,13 @@ namespace ArenaApplication.Services
             var response = await GenerateAuthResponseAsync(user);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
             response.IsSubscribed = activeSubscription is not null;
 
             return Result<AuthResponseDto>.Success(response);
         }
-
 
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
@@ -219,7 +220,9 @@ namespace ArenaApplication.Services
             var response = await GenerateAuthResponseAsync(user);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
             response.IsSubscribed = activeSubscription is not null;
 
             return Result<AuthResponseDto>.Success(response);
@@ -238,7 +241,9 @@ namespace ArenaApplication.Services
                 return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
 
             var profile = new GetProfileDto
             {
@@ -269,7 +274,8 @@ namespace ArenaApplication.Services
                     RemainingSessions = activeSubscription.RemainingSessions,
                     TotalSessions = activeSubscription.Plan?.SessionLimit ?? 0,
                     PaymentAmount = activeSubscription.Plan?.Price ?? 0,
-                    ReminderSent = activeSubscription.ReminderSent
+                    ReminderSent = activeSubscription.ReminderSent,
+                    HasAI = activeSubscription.Plan?.HasAI ?? false
                 }
             };
 
@@ -435,7 +441,9 @@ namespace ArenaApplication.Services
             var response = await GenerateAuthResponseAsync(user, isGoogleUser: false);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
             response.IsSubscribed = activeSubscription is not null;
 
             return Result<AuthResponseDto>.Success(response);

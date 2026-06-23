@@ -1,4 +1,4 @@
-﻿using ArenaApplication.Dtos.AuthDtos;
+using ArenaApplication.Dtos.AuthDtos;
 using ArenaApplication.Dtos.AuthDtos.loginDto;
 using ArenaApplication.Dtos.RegisterDto;
 using ArenaApplication.IServices;
@@ -83,6 +83,7 @@ namespace ArenaApi.Controllers
                 return NotFound(result.Errors);
             return Ok(result.Value);
         }
+
 
         [Authorize]
         [HttpPatch("change-password")]

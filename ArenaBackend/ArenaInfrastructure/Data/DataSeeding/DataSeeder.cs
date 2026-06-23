@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

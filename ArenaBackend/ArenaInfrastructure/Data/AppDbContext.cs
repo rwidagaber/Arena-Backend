@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
 using ArenaDomain.Entities.Health;
@@ -9,6 +9,7 @@ using ArenaDomain.Entities.Payments;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Entities.Workout;
+using ArenaDomain.Entities.Gym;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -31,6 +32,7 @@ namespace ArenaInfrastructure.Data
 
         // ── Health ────────────────────────────────────────────────────────────────
         public DbSet<ProgressLog> ProgressLogs { get; set; }
+        //public DbSet<MemberHealthVector> MemberHealthVectors { get; set; }
 
         // ── Notifications ─────────────────────────────────────────────────────────
         public DbSet<Notification> Notifications { get; set; }
@@ -59,7 +61,8 @@ namespace ArenaInfrastructure.Data
         // ── Localization ──────────────────────────────────────────────────────────
         public DbSet<Translation> Translations { get; set; }
 
-
+        // ── Gym ───────────────────────────────────────────────────────────────────
+        public DbSet<WorkingHours> WorkingHours { get; set; }
         // ── Workout ───────────────────────────────────────────────────────────────
 
 

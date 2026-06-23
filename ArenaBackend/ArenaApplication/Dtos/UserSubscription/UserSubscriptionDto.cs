@@ -17,5 +17,6 @@ namespace ArenaApplication.Dtos.UserSupscriptionDto
         public int TotalSessions { get; set; }
         public decimal PaymentAmount { get; set; }
         public bool ReminderSent { get; set; }
+        public bool HasAI { get; set; }
     }
 }
