@@ -1,5 +1,4 @@
 using ArenaApplication.AI;
-
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.Nutrition;
 using ArenaApplication.IServices;
@@ -36,19 +35,22 @@ namespace ArenaInfrastructure.AI
         private readonly IGeminiCompletionService _gemini;
         private readonly AppDbContext _context;
         private readonly IMemberHealthRAGService _healthRAG;
+        private readonly INotificationService _notificationService; // ✅
 
         public NutritionAIService(
             IGeminiCompletionService gemini,
             AppDbContext context,
-            IMemberHealthRAGService healthRAG)
+            IMemberHealthRAGService healthRAG,
+            INotificationService notificationService) // ✅
         {
             _gemini = gemini;
             _context = context;
             _healthRAG = healthRAG;
+            _notificationService = notificationService; // ✅
         }
 
         public async Task<NutritionPlanResponseDto> GenerateNutritionPlanAsync(
-    Guid memberProfileId, string userMessage)
+            Guid memberProfileId, string userMessage)
         {
             var profile = await _context.MemberProfiles
                 .FirstOrDefaultAsync(p => p.Id == memberProfileId
@@ -95,16 +97,12 @@ namespace ArenaInfrastructure.AI
                 nutritionPlans: recentNutritionPlans,
                 workoutPlans: recentWorkoutPlans);
 
-            //  Pass userContext as third parameter
-            //var prompt = PromptBuilder.BuildNutritionPrompt(profile, userMessage, userContext);
-
-
             var prompt = PromptLoader.GetNutritionPrompt(
-    userContext: userContext,
-    goal: effectiveGoal,
-    dietaryRestrictions: profile.DietaryRestrictions ?? "None",
-    healthConditions: profile.HealthConditions ?? "None",
-    userMessage: BuildHealthAwareUserMessage(goalAwareUserMessage, healthContext));
+                userContext: userContext,
+                goal: effectiveGoal,
+                dietaryRestrictions: profile.DietaryRestrictions ?? "None",
+                healthConditions: profile.HealthConditions ?? "None",
+                userMessage: BuildHealthAwareUserMessage(goalAwareUserMessage, healthContext));
 
             NutritionPlanAIResponse planData;
             try
@@ -180,6 +178,8 @@ namespace ArenaInfrastructure.AI
             }
 
             await _context.SaveChangesAsync();
+
+            await _notificationService.NotifyNutritionPlanReadyAsync(profile.Id);
 
             return new NutritionPlanResponseDto
             {
@@ -346,6 +346,7 @@ namespace ArenaInfrastructure.AI
         private static bool IsWeightLossGoal(ArenaDomain.Entities.MemberProfile profile) =>
             ContainsAny(profile.Goal, "loss", "lose", "cut", "اخس", "تنشيف")
             || (profile.TargetWeight.HasValue && profile.Weight.HasValue && profile.TargetWeight.Value < profile.Weight.Value - 1m);
+
         private static bool ContainsAny(string? text, params string[] values)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -353,7 +354,6 @@ namespace ArenaInfrastructure.AI
 
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
-
 
         private static string? DetectGoalOverride(string? userMessage)
         {
@@ -371,6 +371,7 @@ namespace ArenaInfrastructure.AI
 
         private static string BuildGoalAwareUserMessage(string userMessage, string effectiveGoal) =>
             $"Current requested goal, if different from profile, is: {effectiveGoal}.\nUser message: {userMessage}";
+
         private static string BuildHealthAwareUserMessage(string userMessage, string healthContext)
         {
             if (string.IsNullOrWhiteSpace(healthContext))
@@ -385,4 +386,3 @@ namespace ArenaInfrastructure.AI
         }
     }
 }
-

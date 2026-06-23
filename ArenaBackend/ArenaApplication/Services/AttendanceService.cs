@@ -34,12 +34,10 @@ namespace ArenaInfrastructure.Services
             return MapToDto(attendance);
         }
 
-        public async Task<List<AttendanceResponseDto>> GetByMemberAsync(
-            Guid memberProfileId)
+        public async Task<List<AttendanceResponseDto>> GetByMemberAsync(Guid memberProfileId)
         {
             var list = await _attendanceRepo.FindAsync(
                 a => a.MemberProfileId == memberProfileId);
-
             return list.Select(MapToDto).ToList();
         }
 
@@ -49,7 +47,6 @@ namespace ArenaInfrastructure.Services
             var list = await _attendanceRepo.FindAsync(
                 a => a.CheckInTime.HasValue
                   && a.CheckInTime.Value.Date == today);
-
             return list.Select(MapToDto).ToList();
         }
 

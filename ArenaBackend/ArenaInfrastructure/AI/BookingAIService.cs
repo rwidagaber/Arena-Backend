@@ -1,4 +1,4 @@
-﻿using ArenaApplication.AI;
+using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
 using ArenaApplication.Dtos.Booking;
 using ArenaApplication.IServices;
@@ -203,7 +203,8 @@ namespace ArenaInfrastructure.AI
                 MemberProfileId = memberProfileId,
                 BookingDate = bookingDate,
                 StartTime = startTime,
-                EndTime = startTime.Add(TimeSpan.FromHours(1))
+                EndTime = startTime.Add(TimeSpan.FromHours(1)),
+                Source = BookingSource.Chatbot
             };
 
             var result = await _bookingService.CreateBooking(createDto);
