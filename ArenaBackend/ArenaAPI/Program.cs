@@ -99,7 +99,10 @@ namespace ArenaAPI
             builder.Services.AddHangfire(config =>
                 config.UseSqlServerStorage(
                     builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddHangfireServer();
+            builder.Services.AddHangfireServer(options =>
+            {
+                options.SchedulePollingInterval = TimeSpan.FromSeconds(1);
+            });
             builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
             builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
@@ -184,9 +187,13 @@ namespace ArenaAPI
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(
+                              "http://localhost:4200",
+                              "https://localhost:4200",
+                              "https://browser-eosin-two.vercel.app")
                           .AllowAnyMethod()
-                          .AllowAnyHeader());
+                          .AllowAnyHeader()
+                          .AllowCredentials());
             });
 
             // ═════════════════════════════════════════════════════════════

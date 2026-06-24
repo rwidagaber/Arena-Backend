@@ -100,6 +100,9 @@ namespace ArenaInfrastructure.Data.DataSeeding
                      await context.SaveChangesAsync();
                  }
              }
+             
+             // ── Seed Equipment & Exercises ───────────────────────────────
+             await EquipmentAndExerciseSeeder.SeedAsync(context);
            }
       }
 }
