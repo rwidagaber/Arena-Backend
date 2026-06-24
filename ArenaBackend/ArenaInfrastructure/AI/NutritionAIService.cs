@@ -1,6 +1,7 @@
 using ArenaApplication.AI;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.Nutrition;
+using ArenaApplication.Dtos.HealthIntelligence;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Enums;
@@ -36,17 +37,20 @@ namespace ArenaInfrastructure.AI
         private readonly AppDbContext _context;
         private readonly IMemberHealthRAGService _healthRAG;
         private readonly INotificationService _notificationService; // ✅
+        private readonly IHealthIntelligenceService _healthIntelligence;
 
         public NutritionAIService(
             IGeminiCompletionService gemini,
             AppDbContext context,
             IMemberHealthRAGService healthRAG,
-            INotificationService notificationService) // ✅
+            INotificationService notificationService,
+            IHealthIntelligenceService healthIntelligence) // ✅
         {
             _gemini = gemini;
             _context = context;
             _healthRAG = healthRAG;
             _notificationService = notificationService; // ✅
+            _healthIntelligence = healthIntelligence;
         }
 
         public async Task<NutritionPlanResponseDto> GenerateNutritionPlanAsync(
@@ -97,6 +101,18 @@ namespace ArenaInfrastructure.AI
                 nutritionPlans: recentNutritionPlans,
                 workoutPlans: recentWorkoutPlans);
 
+            HealthProfileDto healthProfile = new HealthProfileDto();
+            if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+            {
+                healthProfile = System.Text.Json.JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+            }
+
+            var medicalGuidelines = await _healthIntelligence.RetrieveMedicalGuidelinesAsync(healthProfile);
+            if (!string.IsNullOrWhiteSpace(medicalGuidelines))
+            {
+                healthContext += $"\n\n=== STRICT MEDICAL GUIDELINES (WHO/CDC/NHS) ===\n{medicalGuidelines}";
+            }
+
             var prompt = PromptLoader.GetNutritionPrompt(
                 userContext: userContext,
                 goal: effectiveGoal,
@@ -104,18 +120,42 @@ namespace ArenaInfrastructure.AI
                 healthConditions: profile.HealthConditions ?? "None",
                 userMessage: BuildHealthAwareUserMessage(goalAwareUserMessage, healthContext));
 
-            NutritionPlanAIResponse planData;
-            try
-            {
-                var jsonResponse = await _gemini.GetCompletionAsync(
-                    prompt, new List<ChatMessageDto>(), "Generate the plan");
+            NutritionPlanAIResponse planData = null;
+            int retries = 0;
+            bool isValid = false;
+            string currentPrompt = prompt;
 
-                var cleanJson = AIHelper.CleanJson(jsonResponse);
-                planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
-                    cleanJson,
-                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile, effectiveGoal);
+            while (retries < 3 && !isValid)
+            {
+                try
+                {
+                    var jsonResponse = await _gemini.GetCompletionAsync(
+                        currentPrompt, new List<ChatMessageDto>(), "Generate the plan");
+
+                    var cleanJson = AIHelper.CleanJson(jsonResponse);
+                    planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
+                        cleanJson,
+                        CreateJsonOptions()) ?? CreateFallbackPlanData(profile, effectiveGoal);
+
+                    var validationResult = await _healthIntelligence.ValidatePlanAsync(healthProfile, cleanJson, "Nutrition");
+                    
+                    if (validationResult.IsValid)
+                    {
+                        isValid = true;
+                    }
+                    else
+                    {
+                        retries++;
+                        currentPrompt = prompt + $"\n\n[CRITICAL FEEDBACK - REGENERATION REQUIRED]: Your previous plan was REJECTED by the Medical Validation Layer for the following reason:\n{validationResult.RejectionReason}\nYou MUST fix this immediately and provide a new, safe plan.";
+                    }
+                }
+                catch
+                {
+                    retries++;
+                }
             }
-            catch
+
+            if (!isValid || planData == null)
             {
                 planData = CreateFallbackPlanData(profile, effectiveGoal);
             }

@@ -158,6 +158,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
+            builder.Services.AddScoped<IHealthIntelligenceService, HealthIntelligenceService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
             builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
             builder.Services.AddScoped<IRAGService, SimpleRAGService>();

@@ -76,6 +76,8 @@ namespace ArenaDomain.Entities
 
         public string? CurrentPlanFramework { get; set; }
 
+        public string? HealthProfileJson { get; set; } // For Health Intelligence Layer
+
         // Navigation Properties
         public virtual ICollection<UserSubscription> Subscriptions { get; set; } = [];
         public virtual ICollection<Notification> Notifications { get; set; } = [];

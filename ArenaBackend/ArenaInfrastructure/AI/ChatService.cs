@@ -1,6 +1,7 @@
 using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
 using ArenaApplication.Dtos.ChatDtos;
+using ArenaApplication.Dtos.HealthIntelligence;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
@@ -29,6 +30,7 @@ namespace ArenaInfrastructure.AI
         private readonly ILogger<ChatService> _logger;
         private readonly IHostEnvironment _environment;
         private readonly IMemberHealthRAGService _healthRAG;
+        private readonly IHealthIntelligenceService _healthIntelligence;
         private const int MaxStoredMessageLength = 4000;
         private const int MaxTitleLength = 200;
 
@@ -42,7 +44,8 @@ namespace ArenaInfrastructure.AI
             IRAGService ragService,
             ILogger<ChatService> logger,
             IHostEnvironment environment,
-            IMemberHealthRAGService healthRAG)
+            IMemberHealthRAGService healthRAG,
+            IHealthIntelligenceService healthIntelligence)
         {
             _gemini = gemini;
             _workoutAI = workoutAI;
@@ -54,6 +57,7 @@ namespace ArenaInfrastructure.AI
             _logger = logger;
             _environment = environment;
             _healthRAG = healthRAG;
+            _healthIntelligence = healthIntelligence;
         }
 
         public async Task<ChatResponseWithHistoryDto> SendMessageAsync(
@@ -102,6 +106,48 @@ namespace ArenaInfrastructure.AI
                 try
                 {
                     await _healthRAG.ExtractAndSaveFromChatAsync(profile.Id, userMessage);
+                    
+                    var extraction = await _healthIntelligence.ExtractHealthProfileAsync(userMessage);
+                    
+                    var currentProfile = new HealthProfileDto();
+                    if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+                    {
+                        currentProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+                    }
+
+                    // Merge newly extracted items
+                    currentProfile.Conditions.AddRange(extraction.Conditions);
+                    currentProfile.Allergies.AddRange(extraction.Allergies);
+                    currentProfile.Injuries.AddRange(extraction.Injuries);
+                    currentProfile.Restrictions.AddRange(extraction.Restrictions);
+                    currentProfile.Medications.AddRange(extraction.Medications);
+
+                    // Distinct
+                    currentProfile.Conditions = currentProfile.Conditions.Distinct().ToList();
+                    currentProfile.Allergies = currentProfile.Allergies.Distinct().ToList();
+                    currentProfile.Injuries = currentProfile.Injuries.Distinct().ToList();
+                    currentProfile.Restrictions = currentProfile.Restrictions.Distinct().ToList();
+                    currentProfile.Medications = currentProfile.Medications.Distinct().ToList();
+
+                    profile.HealthProfileJson = JsonSerializer.Serialize(currentProfile);
+
+                    // Sync to legacy fields for backward compatibility
+                    if (currentProfile.Conditions.Any() || currentProfile.Allergies.Any() || currentProfile.Medications.Any())
+                    {
+                        var allHealth = currentProfile.Conditions.Concat(currentProfile.Allergies).Concat(currentProfile.Medications);
+                        profile.HealthConditions = string.Join(", ", allHealth);
+                    }
+                    if (currentProfile.Injuries.Any())
+                    {
+                        profile.Injuries = string.Join(", ", currentProfile.Injuries);
+                    }
+                    if (currentProfile.Restrictions.Any())
+                    {
+                        profile.DietaryRestrictions = string.Join(", ", currentProfile.Restrictions);
+                    }
+
+                    _context.MemberProfiles.Update(profile);
+                    await _context.SaveChangesAsync();
                 }
                 catch (Exception ex)
                 {
@@ -431,12 +477,8 @@ namespace ArenaInfrastructure.AI
             if (intent?.Intent == "workout" || intent?.Intent == "nutrition" || intent?.Intent == "both")
             {
                 bool hasHealthVectors = await _healthRAG.HasHealthInfoAsync(profile.Id);
-                if (!hasHealthVectors && string.IsNullOrWhiteSpace(profile.Injuries) && string.IsNullOrWhiteSpace(profile.HealthConditions)) 
-                {
-                    return isArabic
-                        ? "عشان أقدر أصمم لك خطة دقيقة ومناسبة، محتاج أعرف الأول: هل تعاني من أي إصابات أو أمراض؟ (أو أخبرني إذا كنت سليم تماماً)\n\nتقدر ترد عليا هنا في الشات وهكمل على طول!"
-                        : "To generate the most accurate and safe plan for you, I first need to know: do you have any injuries or health conditions? (or say 'none')\n\nPlease reply here in the chat and I'll generate it right away!";
-                }
+                var isHealthMissing = !hasHealthVectors && string.IsNullOrWhiteSpace(profile.Injuries) && string.IsNullOrWhiteSpace(profile.HealthConditions);
+                var isDietMissing = string.IsNullOrWhiteSpace(profile.DietaryRestrictions);
 
                 var missingInfo = new List<string>();
                 
@@ -447,6 +489,9 @@ namespace ArenaInfrastructure.AI
                 // Workout specific missing info
                 if (intent.Intent == "workout" || intent.Intent == "both")
                 {
+                    if (isHealthMissing)
+                        missingInfo.Add(isArabic ? "أي إصابات، أمراض مزمنة، أدوية، أو قيود بدنية (أو أخبرني إذا كنت سليم تماماً)" : "any medical conditions, injuries, medications, or physical limitations (or say 'none')");
+
                     if (string.IsNullOrWhiteSpace(profile.FitnessExperience)) 
                         missingInfo.Add(isArabic ? "مستوى خبرتك (مبتدئ، متوسط، متقدم)" : "your fitness experience level");
                     
@@ -457,14 +502,17 @@ namespace ArenaInfrastructure.AI
                 // Nutrition specific missing info
                 if (intent.Intent == "nutrition" || intent.Intent == "both")
                 {
+                    if (isHealthMissing && intent.Intent == "nutrition")
+                        missingInfo.Add(isArabic ? "أي أمراض مزمنة أو أدوية تتناولها (أو أخبرني إذا كنت سليم تماماً)" : "any medical conditions or medications (or say 'none')");
+
+                    if (isDietMissing)
+                        missingInfo.Add(isArabic ? "أي حساسية طعام أو نظام غذائي معين تتبعه (أو أخبرني إذا لا يوجد)" : "any food allergies or dietary restrictions (or say 'none')");
+
                     if (profile.Weight == null || profile.Weight <= 0) 
                         missingInfo.Add(isArabic ? "وزنك الحالي" : "your current weight");
                     
                     if (profile.Height == null || profile.Height <= 0) 
                         missingInfo.Add(isArabic ? "طولك" : "your height");
-                    
-                    if (string.IsNullOrWhiteSpace(profile.DietaryRestrictions)) 
-                        missingInfo.Add(isArabic ? "أي حساسية أو نظام غذائي معين (نباتي، خالي، الخ، أو أخبرني إذا لا يوجد)" : "any dietary restrictions or food allergies (or say 'none')");
                 }
 
                 if (string.IsNullOrWhiteSpace(intent.PreferredDuration))
@@ -472,6 +520,8 @@ namespace ArenaInfrastructure.AI
 
                 if (missingInfo.Any())
                 {
+                    missingInfo = missingInfo.Distinct().ToList();
+
                     return isArabic
                         ? $"عشان أقدر أصمم لك خطة دقيقة ومناسبة لحالتك، محتاج أعرف الأول:\n- {string.Join("\n- ", missingInfo)}\n\nتقدر ترد عليا هنا في الشات وهكمل على طول!"
                         : $"To generate the most accurate and safe plan for you, I need to know:\n- {string.Join("\n- ", missingInfo)}\n\nPlease reply here in the chat and I'll generate it right away!";
@@ -813,6 +863,18 @@ namespace ArenaInfrastructure.AI
             };
             _context.ChatConversations.Add(conversation);
             await _context.SaveChangesAsync();
+
+            var welcomeMessageText = "👋 Welcome to Arena AI Coach!\n\nBefore I create any workout or nutrition plan, please tell me about any medical conditions, injuries, allergies, medications, physical limitations, or dietary restrictions you have.";
+            _context.ChatMessages.Add(new ChatMessage
+            {
+                ChatConversationId = conversation.Id,
+                MessageText = welcomeMessageText,
+                Sender = SenderType.AI,
+                Intent = "welcome",
+                SentAt = DateTime.UtcNow.AddMilliseconds(-1)
+            });
+            await _context.SaveChangesAsync();
+
             return conversation;
         }
 
@@ -1438,13 +1500,24 @@ namespace ArenaInfrastructure.AI
             _context.ChatConversations.Add(conversation);
             await _context.SaveChangesAsync();
 
+            var welcomeMessageText = "👋 Welcome to Arena AI Coach!\n\nBefore I create any workout or nutrition plan, please tell me about any medical conditions, injuries, allergies, medications, physical limitations, or dietary restrictions you have.";
+            _context.ChatMessages.Add(new ChatMessage
+            {
+                ChatConversationId = conversation.Id,
+                MessageText = welcomeMessageText,
+                Sender = SenderType.AI,
+                Intent = "welcome",
+                SentAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
             return new ConversationDto
             {
                 Id = conversation.Id,
                 Title = conversation.Title,
                 StartedAt = conversation.StartedAt,
-                MessageCount = 0,
-                LastMessage = ""
+                MessageCount = 1,
+                LastMessage = welcomeMessageText
             };
         }
 
