@@ -97,6 +97,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<Guid>("MemberProfileId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Source")
+                        .HasColumnType("int");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
@@ -555,6 +558,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CurrentPlanFramework")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime2");
 
@@ -584,6 +590,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("HealthConditions")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HealthProfileJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("Height")
                         .HasColumnType("decimal(5,2)");
 
@@ -599,6 +608,18 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal?>("TargetCalories")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TargetCarbs")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TargetFat")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TargetProtein")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("TargetWeight")
                         .HasColumnType("decimal(18,2)");
@@ -675,6 +696,50 @@ namespace ArenaInfrastructure.Migrations
                     b.HasIndex("MemberProfileId");
 
                     b.ToTable("Notifications", (string)null);
+                });
+
+            modelBuilder.Entity("ArenaDomain.Entities.Notifications.PushSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PushSubscriptions");
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Nutrition.Meal", b =>

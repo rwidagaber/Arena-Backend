@@ -11,6 +11,8 @@
         Task SendSubscriptionExpiringAsync(string toEmail, string firstName, int daysLeft, CancellationToken cancellationToken = default);
         Task SendSubscriptionExpiredAsync(string toEmail, string firstName, CancellationToken cancellationToken = default);
 
-       
+        // ── Bookings ──────────────────────────────────────────────────────────
+        Task SendSessionReminderAsync(string toEmail, string firstName, DateTime bookingDate, CancellationToken cancellationToken = default);
+        Task SendSessionsExpiringSoonAsync(string toEmail, string firstName, int remainingSessions, CancellationToken cancellationToken = default);
     }
 }

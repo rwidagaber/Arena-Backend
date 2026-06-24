@@ -84,6 +84,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 
             builder.Services.Configure<EmailSettings>(
                 builder.Configuration.GetSection("EmailSettings"));
@@ -98,7 +99,10 @@ namespace ArenaAPI
             builder.Services.AddHangfire(config =>
                 config.UseSqlServerStorage(
                     builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddHangfireServer();
+            builder.Services.AddHangfireServer(options =>
+            {
+                options.SchedulePollingInterval = TimeSpan.FromSeconds(1);
+            });
             builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
             builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
@@ -157,6 +161,7 @@ namespace ArenaAPI
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
+            builder.Services.AddScoped<IHealthIntelligenceService, HealthIntelligenceService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
             builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
             builder.Services.AddScoped<IRAGService, SimpleRAGService>();
@@ -203,7 +208,7 @@ namespace ArenaAPI
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
                 if (app.Environment.IsDevelopment())
-                    context.Database.Migrate();
+                    await context.Database.MigrateAsync();
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
 
@@ -242,7 +247,8 @@ namespace ArenaAPI
             app.UseAuthorization();
 
             app.MapControllers();
-            app.MapHub<NotificationHub>("/hubs/notifications");
+            app.MapHub<NotificationHub>("/hubs/notifications")
+                .RequireAuthorization();
 
             app.Run();
         }

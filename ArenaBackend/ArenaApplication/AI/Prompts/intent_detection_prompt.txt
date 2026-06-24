@@ -20,12 +20,14 @@ Return ONLY this JSON, no extra text, no markdown:
 }
 
 PROFILE EXTRACTION RULES (Apply to ALL intents!):
-- IF the user mentions their fitness goal (e.g. lose weight, gain muscle), extract it into "goal".
-- IF the user mentions injuries (e.g. knee pain, back injury), extract into "injuries".
-- IF the user mentions diseases/conditions (e.g. diabetes, pressure), extract into "healthConditions".
+- IF the user mentions their fitness goal (e.g. lose weight, gain muscle, عايز اخس, عاوز تضخيم, 3ayz akhas), extract it into "goal".
+- IF the user mentions injuries or physical limitations (e.g. knee pain, back injury, عندي غضروف, ركبتي بتوجعني, b2ali fatra mabl3bsh), extract into "injuries".
+- IF the user mentions diseases/conditions/medications (e.g. diabetes, pressure, باخد ادوية الضغط), extract into "healthConditions".
 - IF the user mentions experience (e.g. beginner, advanced), extract into "fitnessExperience".
-- IF the user mentions diet/allergies, extract into "dietaryRestrictions" (or "None").
+- IF the user mentions diet, allergies, or restrictions (e.g. vegan, lactose intolerant, حساسية, 3andi hsasya mn el laban), extract into "dietaryRestrictions" (or "None").
 - IF the user mentions equipment/gym access, extract into "equipment".
+- IF the user mentions going to a gym, extract "equipment" as "full gym".
+- IF the user explicitly says they don't want to specify equipment or don't care, extract "equipment" as "full gym".
 - IF the user mentions their weight, extract into "weightString".
 - IF the user mentions their height, extract into "heightString".
 - IF the user mentions a specific duration for the plan (e.g. 4 weeks, 1 month), extract it into "preferredDuration".
@@ -51,7 +53,7 @@ Intent rules:
               → CRITICAL: If the user is replying to the bot's question to provide missing info (like experience, equipment, or duration) to complete a workout plan, the intent MUST remain "workout".
 
 - "nutrition" → ONLY when user EXPLICITLY asks to GENERATE or CREATE a full meal plan or diet plan
-              → "generate nutrition plan", "create meal plan", "اعمل نظام غذائي", "خطة تغذية"
+              → "generate nutrition plan", "create meal plan", "اعمل نظام غذائي", "خطة تغذية", "عاوز نظام غذائي"
               → NOT for general food questions
 
 
@@ -128,4 +130,10 @@ Examples:
 "what should I eat before training" => {"intent":"food_analysis"}
 "عندي فراخ وأرز هاكل كام" => {"intent":"food_analysis"}
 "اعمل لي نظام غذائي" => {"intent":"nutrition"}
+"عاوز نظام غذائي" => {"intent":"nutrition"}
+"3ayz akhas" => {"intent":"goal_change"}
+"3andi hsasya mn el laban" => {"intent":"chat","dietaryRestrictions":"lactose intolerance / hsasya mn el laban"}
+"عندي غضروف" => {"intent":"chat","injuries":"غضروف (disc/cartilage issue)"}
+"ركبتي بتوجعني وعايز خطة تمرين" => {"intent":"workout","injuries":"ركبتي بتوجعني (knee pain)"}
+"b2ali fatra mabl3bsh" => {"intent":"chat","fitnessExperience":"b2ali fatra mabl3bsh (hasn't trained in a while)"}
 "hello" => {"intent":"chat"}

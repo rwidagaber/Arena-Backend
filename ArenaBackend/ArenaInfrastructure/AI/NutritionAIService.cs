@@ -1,7 +1,7 @@
 using ArenaApplication.AI;
-
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.Nutrition;
+using ArenaApplication.Dtos.HealthIntelligence;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Enums;
@@ -36,19 +36,25 @@ namespace ArenaInfrastructure.AI
         private readonly IGeminiCompletionService _gemini;
         private readonly AppDbContext _context;
         private readonly IMemberHealthRAGService _healthRAG;
+        private readonly INotificationService _notificationService; // ✅
+        private readonly IHealthIntelligenceService _healthIntelligence;
 
         public NutritionAIService(
             IGeminiCompletionService gemini,
             AppDbContext context,
-            IMemberHealthRAGService healthRAG)
+            IMemberHealthRAGService healthRAG,
+            INotificationService notificationService,
+            IHealthIntelligenceService healthIntelligence) // ✅
         {
             _gemini = gemini;
             _context = context;
             _healthRAG = healthRAG;
+            _notificationService = notificationService; // ✅
+            _healthIntelligence = healthIntelligence;
         }
 
         public async Task<NutritionPlanResponseDto> GenerateNutritionPlanAsync(
-    Guid memberProfileId, string userMessage)
+            Guid memberProfileId, string userMessage)
         {
             var profile = await _context.MemberProfiles
                 .FirstOrDefaultAsync(p => p.Id == memberProfileId
@@ -95,29 +101,61 @@ namespace ArenaInfrastructure.AI
                 nutritionPlans: recentNutritionPlans,
                 workoutPlans: recentWorkoutPlans);
 
-            //  Pass userContext as third parameter
-            //var prompt = PromptBuilder.BuildNutritionPrompt(profile, userMessage, userContext);
+            HealthProfileDto healthProfile = new HealthProfileDto();
+            if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+            {
+                healthProfile = System.Text.Json.JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+            }
 
+            var medicalGuidelines = await _healthIntelligence.RetrieveMedicalGuidelinesAsync(healthProfile);
+            if (!string.IsNullOrWhiteSpace(medicalGuidelines))
+            {
+                healthContext += $"\n\n=== STRICT MEDICAL GUIDELINES (WHO/CDC/NHS) ===\n{medicalGuidelines}";
+            }
 
             var prompt = PromptLoader.GetNutritionPrompt(
-    userContext: userContext,
-    goal: effectiveGoal,
-    dietaryRestrictions: profile.DietaryRestrictions ?? "None",
-    healthConditions: profile.HealthConditions ?? "None",
-    userMessage: BuildHealthAwareUserMessage(goalAwareUserMessage, healthContext));
+                userContext: userContext,
+                goal: effectiveGoal,
+                dietaryRestrictions: profile.DietaryRestrictions ?? "None",
+                healthConditions: profile.HealthConditions ?? "None",
+                userMessage: BuildHealthAwareUserMessage(goalAwareUserMessage, healthContext));
 
-            NutritionPlanAIResponse planData;
-            try
+            NutritionPlanAIResponse planData = null;
+            int retries = 0;
+            bool isValid = false;
+            string currentPrompt = prompt;
+
+            while (retries < 3 && !isValid)
             {
-                var jsonResponse = await _gemini.GetCompletionAsync(
-                    prompt, new List<ChatMessageDto>(), "Generate the plan");
+                try
+                {
+                    var jsonResponse = await _gemini.GetCompletionAsync(
+                        currentPrompt, new List<ChatMessageDto>(), "Generate the plan");
 
-                var cleanJson = AIHelper.CleanJson(jsonResponse);
-                planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
-                    cleanJson,
-                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile, effectiveGoal);
+                    var cleanJson = AIHelper.CleanJson(jsonResponse);
+                    planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
+                        cleanJson,
+                        CreateJsonOptions()) ?? CreateFallbackPlanData(profile, effectiveGoal);
+
+                    var validationResult = await _healthIntelligence.ValidatePlanAsync(healthProfile, cleanJson, "Nutrition");
+                    
+                    if (validationResult.IsValid)
+                    {
+                        isValid = true;
+                    }
+                    else
+                    {
+                        retries++;
+                        currentPrompt = prompt + $"\n\n[CRITICAL FEEDBACK - REGENERATION REQUIRED]: Your previous plan was REJECTED by the Medical Validation Layer for the following reason:\n{validationResult.RejectionReason}\nYou MUST fix this immediately and provide a new, safe plan.";
+                    }
+                }
+                catch
+                {
+                    retries++;
+                }
             }
-            catch
+
+            if (!isValid || planData == null)
             {
                 planData = CreateFallbackPlanData(profile, effectiveGoal);
             }
@@ -180,6 +218,8 @@ namespace ArenaInfrastructure.AI
             }
 
             await _context.SaveChangesAsync();
+
+            await _notificationService.NotifyNutritionPlanReadyAsync(profile.Id);
 
             return new NutritionPlanResponseDto
             {
@@ -346,6 +386,7 @@ namespace ArenaInfrastructure.AI
         private static bool IsWeightLossGoal(ArenaDomain.Entities.MemberProfile profile) =>
             ContainsAny(profile.Goal, "loss", "lose", "cut", "اخس", "تنشيف")
             || (profile.TargetWeight.HasValue && profile.Weight.HasValue && profile.TargetWeight.Value < profile.Weight.Value - 1m);
+
         private static bool ContainsAny(string? text, params string[] values)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -353,7 +394,6 @@ namespace ArenaInfrastructure.AI
 
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
-
 
         private static string? DetectGoalOverride(string? userMessage)
         {
@@ -371,6 +411,7 @@ namespace ArenaInfrastructure.AI
 
         private static string BuildGoalAwareUserMessage(string userMessage, string effectiveGoal) =>
             $"Current requested goal, if different from profile, is: {effectiveGoal}.\nUser message: {userMessage}";
+
         private static string BuildHealthAwareUserMessage(string userMessage, string healthContext)
         {
             if (string.IsNullOrWhiteSpace(healthContext))
@@ -385,4 +426,3 @@ namespace ArenaInfrastructure.AI
         }
     }
 }
-

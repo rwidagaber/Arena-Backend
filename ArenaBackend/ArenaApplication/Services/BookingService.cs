@@ -2,6 +2,8 @@ using ArenaApplication.Dtos.Booking;
 using ArenaApplication.Dtos.UserSubscription;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Bookings;
+using ArenaDomain.Entities.Subscription;
+using ArenaDomain.Entities.Gym;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
@@ -10,49 +12,122 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ArenaApplication.Services
 {
     public class BookingService : IBookingService
     {
-         private readonly IGenericRepository<Booking, Guid> _bookingRepo;
+        private readonly IGenericRepository<Booking, Guid> _bookingRepo;
+        private readonly IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> _subscriptionRepo;
+        private readonly IGenericRepository<WorkingHours, int> _workingHoursRepo;
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificationService _notificationService;
         private readonly IBackgroundJobService _backgroundJobService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-
-       public BookingService(
+        public BookingService(
             IGenericRepository<Booking, Guid> bookingRepo,
+            IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepo,
+            IGenericRepository<WorkingHours, int> workingHoursRepo,
             IUnitOfWork unitOfWork,
             INotificationService notificationService,
             IBackgroundJobService backgroundJobService,
             IStringLocalizer<ArenaLocalization> localizer)
         {
             _bookingRepo = bookingRepo;
+            _subscriptionRepo = subscriptionRepo;
+            _workingHoursRepo = workingHoursRepo;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
             _backgroundJobService = backgroundJobService;
             _localizer = localizer;
         }
+
         public async Task<Result<BookingDto>> CreateBooking(CreateBookingDto dto)
         {
-            if (dto.BookingDate.Date < DateTime.UtcNow.Date)
-            {
+            var localTime = DateTime.UtcNow.AddHours(3);
+
+            if (dto.BookingDate.Date < localTime.Date)
                 return Result<BookingDto>.Failure(_localizer["BookingDateCannotBeInPast"]);
+
+            if (dto.BookingDate.Date == localTime.Date && dto.StartTime <= localTime.TimeOfDay)
+                return Result<BookingDto>.Failure(_localizer["BookingTimeCannotBeInPast"]);
+
+            var subscription = (await _subscriptionRepo.FindAsync(s =>
+                s.MemberProfileId == dto.MemberProfileId &&
+                s.Status == SubscriptionStatus.Active &&
+                s.EndDate > DateTime.UtcNow)).FirstOrDefault();
+
+            if (subscription == null)
+                return Result<BookingDto>.Failure(_localizer["ActiveSubscriptionRequired"]);
+
+            if (subscription.RemainingSessions <= 0)
+                return Result<BookingDto>.Failure(_localizer["NoRemainingSessions"]);
+
+            var targetShiftDate = dto.BookingDate.Date;
+            if (dto.StartTime < TimeSpan.FromHours(5))
+                targetShiftDate = targetShiftDate.AddDays(-1);
+
+            var dayOfWeekVal = targetShiftDate.DayOfWeek;
+            var workingDayIndex = dayOfWeekVal == DayOfWeek.Sunday ? WorkingDay.Sunday : (WorkingDay)((int)dayOfWeekVal - 1);
+
+            var workingHours = (await _workingHoursRepo.FindAsync(wh =>
+                wh.DayOfWeek == workingDayIndex &&
+                !wh.IsDeleted)).FirstOrDefault();
+
+            if (workingHours == null || workingHours.IsClosed)
+                return Result<BookingDto>.Failure(_localizer["GymIsClosed"]);
+
+            var start = dto.StartTime;
+            var open = workingHours.OpenTime;
+            var close = workingHours.CloseTime;
+            bool isWithinHours = close < open
+                ? (start >= open || start < close)
+                : (start >= open && start < close);
+
+            if (!isWithinHours)
+                return Result<BookingDto>.Failure(_localizer["GymIsClosed"]);
+
+            var startDate = dto.BookingDate.Date.AddDays(-1);
+            var endDate = dto.BookingDate.Date.AddDays(1);
+
+            var candidateBookings = await _bookingRepo.FindAsync(b =>
+                b.MemberProfileId == dto.MemberProfileId &&
+                b.BookingDate.Date >= startDate &&
+                b.BookingDate.Date <= endDate &&
+                b.Status != BookingStatus.Cancelled);
+
+            var targetDateTime = dto.BookingDate.Date.Add(dto.StartTime);
+
+            foreach (var existing in candidateBookings)
+            {
+                var existingDateTime = existing.BookingDate.Date.Add(existing.StartTime);
+                var diff = Math.Abs((existingDateTime - targetDateTime).TotalHours);
+                if (diff == 0)
+                    return Result<BookingDto>.Failure(_localizer["DuplicateBooking"]);
+                if (diff < 5)
+                    return Result<BookingDto>.Failure(_localizer["BookingGapViolation"]);
             }
 
             var booking = dto.Adapt<Booking>();
             booking.Status = BookingStatus.Confirmed;
+            booking.Source = dto.Source;
 
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
+            await _backgroundJobService.EnqueueBookingConfirmationAsync(
+                booking.MemberProfileId,
+                booking.BookingDate,
+                booking.StartTime);
+
             await _backgroundJobService.ScheduleBookingReminderAsync(
-            booking.MemberProfileId,
-            booking.BookingDate);
-          
+                booking.MemberProfileId,
+                booking.BookingDate,
+                booking.StartTime);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -60,9 +135,7 @@ namespace ArenaApplication.Services
         public async Task<Result<List<BookingDto>>> GetUserBookings(Guid memberProfileId)
         {
             var userBookings = await _bookingRepo.FindAsync(b => b.MemberProfileId == memberProfileId);
-            var result = userBookings.Adapt<List<BookingDto>>();
-
-            return Result<List<BookingDto>>.Success(result);
+            return Result<List<BookingDto>>.Success(userBookings.Adapt<List<BookingDto>>());
         }
 
         public async Task<Result<BookingDto>> GetBookingById(Guid bookingId)
@@ -70,9 +143,7 @@ namespace ArenaApplication.Services
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
 
             if (booking == null)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
-            }
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -82,19 +153,20 @@ namespace ArenaApplication.Services
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
 
             if (booking == null)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
-            }
 
             if (booking.Status == BookingStatus.Cancelled)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingAlreadyCancelled"]);
-            }
 
             booking.Status = BookingStatus.Cancelled;
 
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
+
+            await _backgroundJobService.EnqueueBookingCancellationAsync(
+                booking.MemberProfileId,
+                booking.BookingDate,
+                booking.StartTime);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -104,18 +176,74 @@ namespace ArenaApplication.Services
             var booking = await _bookingRepo.GetByIdAsync(bookingId);
 
             if (booking == null)
-            {
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
-            }
 
             if (booking.Status == BookingStatus.Cancelled)
-            {
                 return Result<BookingDto>.Failure(_localizer["CancelledBookingCannotBeRescheduled"]);
-            }
 
-            if (dto.BookingDate.Date < DateTime.UtcNow.Date)
-            {
+            var localTime = DateTime.UtcNow.AddHours(3);
+
+            if (dto.BookingDate.Date < localTime.Date)
                 return Result<BookingDto>.Failure(_localizer["BookingDateCannotBeInPast"]);
+
+            if (dto.BookingDate.Date == localTime.Date && dto.StartTime <= localTime.TimeOfDay)
+                return Result<BookingDto>.Failure(_localizer["BookingTimeCannotBeInPast"]);
+
+            var subscription = (await _subscriptionRepo.FindAsync(s =>
+                s.MemberProfileId == booking.MemberProfileId &&
+                s.Status == SubscriptionStatus.Active &&
+                s.EndDate > DateTime.UtcNow)).FirstOrDefault();
+
+            if (subscription == null)
+                return Result<BookingDto>.Failure(_localizer["ActiveSubscriptionRequired"]);
+
+            if (subscription.RemainingSessions <= 0)
+                return Result<BookingDto>.Failure(_localizer["NoRemainingSessions"]);
+
+            var targetShiftDate = dto.BookingDate.Date;
+            if (dto.StartTime < TimeSpan.FromHours(5))
+                targetShiftDate = targetShiftDate.AddDays(-1);
+
+            var dayOfWeekVal = targetShiftDate.DayOfWeek;
+            var workingDayIndex = dayOfWeekVal == DayOfWeek.Sunday ? WorkingDay.Sunday : (WorkingDay)((int)dayOfWeekVal - 1);
+
+            var workingHours = (await _workingHoursRepo.FindAsync(wh =>
+                wh.DayOfWeek == workingDayIndex &&
+                !wh.IsDeleted)).FirstOrDefault();
+
+            if (workingHours == null || workingHours.IsClosed)
+                return Result<BookingDto>.Failure(_localizer["GymIsClosed"]);
+
+            var start = dto.StartTime;
+            var open = workingHours.OpenTime;
+            var close = workingHours.CloseTime;
+            bool isWithinHours = close < open
+                ? (start >= open || start < close)
+                : (start >= open && start < close);
+
+            if (!isWithinHours)
+                return Result<BookingDto>.Failure(_localizer["GymIsClosed"]);
+
+            var startDate = dto.BookingDate.Date.AddDays(-1);
+            var endDate = dto.BookingDate.Date.AddDays(1);
+
+            var candidateBookings = await _bookingRepo.FindAsync(b =>
+                b.MemberProfileId == booking.MemberProfileId &&
+                b.BookingDate.Date >= startDate &&
+                b.BookingDate.Date <= endDate &&
+                b.Id != bookingId &&
+                b.Status != BookingStatus.Cancelled);
+
+            var targetDateTime = dto.BookingDate.Date.Add(dto.StartTime);
+
+            foreach (var existing in candidateBookings)
+            {
+                var existingDateTime = existing.BookingDate.Date.Add(existing.StartTime);
+                var diff = Math.Abs((existingDateTime - targetDateTime).TotalHours);
+                if (diff == 0)
+                    return Result<BookingDto>.Failure(_localizer["DuplicateBooking"]);
+                if (diff < 5)
+                    return Result<BookingDto>.Failure(_localizer["BookingGapViolation"]);
             }
 
             booking.BookingDate = dto.BookingDate;
@@ -126,13 +254,15 @@ namespace ArenaApplication.Services
             await _bookingRepo.UpdateAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
-            await _backgroundJobService.ScheduleBookingReminderAsync(
-            booking.MemberProfileId,
-            booking.BookingDate);
+            await _backgroundJobService.EnqueueBookingRescheduledAsync(
+                booking.MemberProfileId,
+                booking.BookingDate,
+                booking.StartTime);
 
-            await _backgroundJobService.EnqueueBookingCancellationAsync(
-               booking.MemberProfileId,
-              booking.BookingDate);
+            await _backgroundJobService.ScheduleBookingReminderAsync(
+                booking.MemberProfileId,
+                booking.BookingDate,
+                booking.StartTime);
 
             return Result<BookingDto>.Success(booking.Adapt<BookingDto>());
         }
@@ -147,14 +277,10 @@ namespace ArenaApplication.Services
                 var query = _bookingRepo.GetAll();
 
                 if (status.HasValue)
-                {
                     query = query.Where(b => b.Status == status.Value);
-                }
 
                 if (bookingDate.HasValue)
-                {
                     query = query.Where(b => b.BookingDate.Date == bookingDate.Value.Date);
-                }
 
                 int totalCount = await query.CountAsync();
 
@@ -165,11 +291,9 @@ namespace ArenaApplication.Services
                     .Take(pageSize)
                     .ToListAsync();
 
-                var dtos = bookings.Adapt<List<BookingDto>>();
-
                 var pagedResult = new PagedResult<BookingDto>
                 {
-                    Items = dtos,
+                    Items = bookings.Adapt<List<BookingDto>>(),
                     TotalCount = totalCount,
                     Page = page,
                     PageSize = pageSize
@@ -187,7 +311,6 @@ namespace ArenaApplication.Services
         {
             var today = DateTime.UtcNow.Date;
             var todayBookings = await _bookingRepo.FindAsync(b => b.BookingDate.Date == today);
-
             return Result<List<BookingDto>>.Success(todayBookings.Adapt<List<BookingDto>>());
         }
     }

@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities.Bookings;
+using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
 using ArenaDomain.Entities.Health;
 using ArenaDomain.Entities.Notifications;
@@ -61,8 +61,22 @@ namespace ArenaDomain.Entities
         // "Vegetarian, Lactose Intolerant"
 
         public string? Equipment { get; set; }
-       
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetCalories { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetProtein { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetCarbs { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetFat { get; set; }
+
+        public string? CurrentPlanFramework { get; set; }
+
+        public string? HealthProfileJson { get; set; } // For Health Intelligence Layer
 
         // Navigation Properties
         public virtual ICollection<UserSubscription> Subscriptions { get; set; } = [];
