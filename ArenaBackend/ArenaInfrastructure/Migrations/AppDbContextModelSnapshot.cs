@@ -590,6 +590,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<string>("HealthConditions")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HealthProfileJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("Height")
                         .HasColumnType("decimal(5,2)");
 

@@ -2,6 +2,7 @@ using ArenaApplication.AI;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.WorkoutDtos;
 using ArenaApplication.Dtos.WorkoutPlan;
+using ArenaApplication.Dtos.HealthIntelligence;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities;
 using ArenaDomain.Entities.Subscription;
@@ -43,6 +44,7 @@ namespace ArenaInfrastructure.AI
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
         private readonly IMemberHealthRAGService _healthRAG;
         private readonly INotificationService _notificationService; // ✅
+        private readonly IHealthIntelligenceService _healthIntelligence;
 
         public WorkoutAIService(
             IGeminiCompletionService gemini,
@@ -50,7 +52,8 @@ namespace ArenaInfrastructure.AI
             IGenericRepository<MemberProfile, Guid> memberProfile,
             IGenericRepository<UserSubscription, Guid> userSubscription,
             IMemberHealthRAGService healthRAG,
-            INotificationService notificationService) // ✅
+            INotificationService notificationService,
+            IHealthIntelligenceService healthIntelligence) // ✅
         {
             _gemini = gemini;
             _context = context;
@@ -58,6 +61,7 @@ namespace ArenaInfrastructure.AI
             _subscriptionRepo = userSubscription;
             _healthRAG = healthRAG;
             _notificationService = notificationService; // ✅
+            _healthIntelligence = healthIntelligence;
         }
 
         public async Task<WorkoutPlanDto> GenerateWorkoutPlanAsync(Guid memberProfileId, string userMessage)
@@ -131,6 +135,18 @@ namespace ArenaInfrastructure.AI
             if (!string.IsNullOrEmpty(healthContext))
                 knowledge += $"\n\n=== MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===\n{healthContext}";
 
+            HealthProfileDto healthProfile = new HealthProfileDto();
+            if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+            {
+                healthProfile = System.Text.Json.JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+            }
+
+            var medicalGuidelines = await _healthIntelligence.RetrieveMedicalGuidelinesAsync(healthProfile);
+            if (!string.IsNullOrWhiteSpace(medicalGuidelines))
+            {
+                knowledge += $"\n\n=== STRICT MEDICAL GUIDELINES (WHO/CDC/NHS) ===\n{medicalGuidelines}";
+            }
+
             var prompt = PromptLoader.GetWorkoutPrompt(
                 userContext: userContext,
                 name: profile.FirstName ?? "User",
@@ -141,16 +157,40 @@ namespace ArenaInfrastructure.AI
                 equipment: profile.Equipment ?? "Full Gym",
                 userMessage: goalAwareUserMessage + "\n\n" + knowledge);
 
-            WorkoutPlanAIResponse planData;
-            try
+            WorkoutPlanAIResponse planData = null;
+            int retries = 0;
+            bool isValid = false;
+            string currentPrompt = prompt;
+
+            while (retries < 3 && !isValid)
             {
-                var jsonResponse = await _gemini.GetCompletionAsync(prompt, new List<ChatMessageDto>(), "Generate the plan");
-                var cleanJson = AIHelper.CleanJson(jsonResponse);
-                planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
-                    cleanJson,
-                    CreateJsonOptions()) ?? CreateFallbackPlanData(profile, goalAwareUserMessage, effectiveGoal, memberName);
+                try
+                {
+                    var jsonResponse = await _gemini.GetCompletionAsync(currentPrompt, new List<ChatMessageDto>(), "Generate the plan");
+                    var cleanJson = AIHelper.CleanJson(jsonResponse);
+                    planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
+                        cleanJson,
+                        CreateJsonOptions()) ?? CreateFallbackPlanData(profile, goalAwareUserMessage, effectiveGoal, memberName);
+
+                    var validationResult = await _healthIntelligence.ValidatePlanAsync(healthProfile, cleanJson, "Workout");
+                    
+                    if (validationResult.IsValid)
+                    {
+                        isValid = true;
+                    }
+                    else
+                    {
+                        retries++;
+                        currentPrompt = prompt + $"\n\n[CRITICAL FEEDBACK - REGENERATION REQUIRED]: Your previous plan was REJECTED by the Medical Validation Layer for the following reason:\n{validationResult.RejectionReason}\nYou MUST fix this immediately and provide a new, safe plan.";
+                    }
+                }
+                catch
+                {
+                    retries++;
+                }
             }
-            catch
+
+            if (!isValid || planData == null)
             {
                 planData = CreateFallbackPlanData(profile, goalAwareUserMessage, effectiveGoal, memberName);
             }
