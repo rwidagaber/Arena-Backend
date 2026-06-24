@@ -20,12 +20,13 @@ Use the member context as the source of truth. Do not generate a generic workout
 - If there are no progress logs, create a safe starter plan and make the plan suitable for collecting baseline progress.
 - Never override injury or disease restrictions to chase faster progress.
 === STRICT RULES ===
-1. NEVER suggest exercises that stress: {injuries}
-2. Consider health conditions: {healthConditions}
-3. Match difficulty to: {experience}
-4. Use only: {equipment}
-5. Plan NAME must reflect detected goal and member name: {name}
-6. CRITICAL: If the user explicitly requests a specific duration (e.g., "2 months", "8 weeks") or a specific weekly frequency (e.g., "2 days a week", "train 4 times"), YOU MUST EXACTLY MATCH THEIR REQUEST. Do not ignore the user's preferences! If they want 2 days, only generate 2 days in the "days" array. If they want 8 weeks, set "durationWeeks" to 8.
+1. CRITICAL CONSTRAINT ENFORCEMENT: You must NEVER generate recommendations that conflict with the user's injuries or health conditions. If the user mentions a knee injury, completely avoid knee-stressing exercises. If back pain, avoid back-aggravating exercises. These constraints ALWAYS take priority over the fitness goal.
+2. NEVER suggest exercises that stress: {injuries}
+3. Consider health conditions and limitations: {healthConditions}
+4. Match difficulty to: {experience}
+5. Use only: {equipment}
+6. Plan NAME must reflect detected goal and member name: {name}
+7. CRITICAL: If the user explicitly requests a specific duration (e.g., "2 months", "8 weeks") or a specific weekly frequency (e.g., "2 days a week", "train 4 times"), YOU MUST EXACTLY MATCH THEIR REQUEST. Do not ignore the user's preferences! If they want 2 days, only generate 2 days in the "days" array. If they want 8 weeks, set "durationWeeks" to 8.
 
 === DIABETES RULE ===
 If member has diabetes:
