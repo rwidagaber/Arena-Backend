@@ -1,5 +1,6 @@
 using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
+using ArenaApplication.Dtos.Attendance;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.HealthIntelligence;
 using ArenaApplication.IServices;
@@ -12,6 +13,7 @@ using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -30,6 +32,7 @@ namespace ArenaInfrastructure.AI
         private readonly ILogger<ChatService> _logger;
         private readonly IHostEnvironment _environment;
         private readonly IMemberHealthRAGService _healthRAG;
+        private readonly IAttendanceSuggestionService _attendanceSuggestion;
         private readonly IHealthIntelligenceService _healthIntelligence;
         private const int MaxStoredMessageLength = 4000;
         private const int MaxTitleLength = 200;
@@ -45,6 +48,7 @@ namespace ArenaInfrastructure.AI
             ILogger<ChatService> logger,
             IHostEnvironment environment,
             IMemberHealthRAGService healthRAG,
+            IAttendanceSuggestionService attendanceSuggestion,
             IHealthIntelligenceService healthIntelligence)
         {
             _gemini = gemini;
@@ -57,6 +61,7 @@ namespace ArenaInfrastructure.AI
             _logger = logger;
             _environment = environment;
             _healthRAG = healthRAG;
+            _attendanceSuggestion = attendanceSuggestion;
             _healthIntelligence = healthIntelligence;
         }
 
@@ -470,6 +475,64 @@ namespace ArenaInfrastructure.AI
             }
         }
 
+        private static DateTime ParseAttendanceDate(string? date)
+        {
+            if (!string.IsNullOrWhiteSpace(date))
+            {
+                // The intent prompt emits yyyy-MM-dd; parse culture-invariantly.
+                if (DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exact))
+                    return exact.Date;
+                if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+                    return parsed.Date;
+            }
+            return DateTime.UtcNow.AddHours(3).Date; // local (Egypt) today
+        }
+
+        private static string FormatHour12Ar(int hour24)
+        {
+            var period = hour24 >= 12 ? "م" : "ص";
+            var hour12 = hour24 % 12;
+            if (hour12 == 0) hour12 = 12;
+            return $"{hour12} {period}";
+        }
+
+        private static string FormatHour12En(int hour24)
+        {
+            var period = hour24 >= 12 ? "PM" : "AM";
+            var hour12 = hour24 % 12;
+            if (hour12 == 0) hour12 = 12;
+            return $"{hour12} {period}";
+        }
+
+        // Bilingual chat reply: recommends the quietest time(s) and warns about the
+        // busy / over-capacity (full) hours to avoid.
+        private static string BuildAttendanceReply(AttendanceSuggestionDto suggestion, bool isArabic)
+        {
+            var sep = isArabic ? "، " : ", ";
+
+            var quiet = string.Join(sep, suggestion.RecommendedHours.Take(3)
+                .Select(h => isArabic ? FormatHour12Ar(h) : FormatHour12En(h)));
+
+            // Busiest / full = over-capacity (>5 bookings) or High crowd level.
+            var avoid = string.Join(sep, suggestion.Occupancy.Slots
+                .Where(slot => slot.OverCapacity || slot.Level == "High")
+                .Take(4)
+                .Select(slot => isArabic ? FormatHour12Ar(slot.Hour) : FormatHour12En(slot.Hour)));
+
+            if (isArabic)
+            {
+                var reply = $"🟢 أهدأ وقت يوم {suggestion.DayOfWeek} تقريباً {quiet} — ده أنسب وقت تيجي فيه.";
+                if (!string.IsNullOrEmpty(avoid))
+                    reply += $"\n🔴 الأزحم/الممتلئ: {avoid} — حاول تتجنبها.";
+                return reply;
+            }
+
+            var enReply = $"🟢 Best time on {suggestion.DayOfWeek}: around {quiet} (quietest) — that's your window.";
+            if (!string.IsNullOrEmpty(avoid))
+                enReply += $"\n🔴 Busiest/full: {avoid} — best to avoid these.";
+            return enReply;
+        }
+
         private async Task<string> RouteIntent(
             ArenaDomain.Entities.MemberProfile profile,
             IntentResult? intent,
@@ -676,21 +739,26 @@ namespace ArenaInfrastructure.AI
                                 : $"📅 Your upcoming bookings:\n{bookingsList}";
                         }
 
-                        // No time → suggest slots
+                        // No time → suggest slots built from the gym's DB working hours.
                         if (intent.Time == null)
                         {
-                            var allSlots = new[] {
-                                               "11:00","12:00","13:00","14:00","15:00",
-                                               "16:00","17:00","18:00","19:00","20:00" };
-
                             var egyptNow = DateTime.UtcNow.AddHours(3);
                             var egyptToday = egyptNow.Date;
 
-                            IEnumerable<string> slotsToShow = allSlots;
+                            // Pull the day's open hours + crowd profile from the database.
+                            var occupancyResult = await _attendanceSuggestion.GetDayOccupancyAsync(targetDate);
+                            var occupancy = occupancyResult.Value;
+
+                            if (occupancy == null || occupancy.IsClosed || occupancy.Slots.Count == 0)
+                                return isArabic
+                                    ? $"الجيم مقفول يوم {targetDate:dddd}. اختار يوم تاني."
+                                    : $"The gym is closed on {targetDate:dddd}. Please pick another day.";
+
+                            IEnumerable<OccupancySlotDto> slotsToShow = occupancy.Slots;
                             if (targetDate.Date == egyptToday)
                             {
-                                var currentTime = egyptNow.TimeOfDay;
-                                slotsToShow = allSlots.Where(s => TimeSpan.Parse(s) > currentTime);
+                                var currentHour = egyptNow.Hour;
+                                slotsToShow = occupancy.Slots.Where(s => s.Hour > currentHour);
                             }
 
                             if (!slotsToShow.Any())
@@ -700,13 +768,11 @@ namespace ArenaInfrastructure.AI
                                     : "Sorry, there are no more available times today. Would you like to book for tomorrow?";
                             }
 
-                            var slotCrowds = slotsToShow.Select(slot =>
+                            var slotCrowds = slotsToShow.Select(s =>
                             {
-                                var st = TimeSpan.Parse(slot);
-                                var count = dayBookings.Count(b =>
-                                    Math.Abs((b.StartTime - st).TotalHours) < 1);
-                                var level = count switch { < 3 => "🟢", < 7 => "🟡", _ => "🔴" };
-                                return $"  {slot} {level} ";
+                                var level = s.OverCapacity || s.Level == "High" ? "🔴"
+                                          : s.Level == "Medium" ? "🟡" : "🟢";
+                                return $"  {s.Hour:00}:00 {level} ";
                             });
 
                             var dateLabel = targetDate.Date == egyptToday.AddDays(1)
@@ -754,6 +820,23 @@ namespace ArenaInfrastructure.AI
                             foodPrompt,
                             history,
                             healthAwareUserMessage);
+                    }
+                case "attendance":
+                    {
+                        var date = ParseAttendanceDate(intent?.Date);
+                        var suggestionResult = await _attendanceSuggestion.SuggestBestTimeAsync(date);
+                        if (!suggestionResult.IsSuccess || suggestionResult.Value == null)
+                            return isArabic
+                                ? "معلش، مش قادر أقترح وقت دلوقتي. جرّب تاني."
+                                : "Sorry, I couldn't suggest a time right now. Please try again.";
+
+                        var suggestion = suggestionResult.Value;
+                        if (suggestion.IsClosed || suggestion.RecommendedHours.Count == 0)
+                            return isArabic
+                                ? $"الجيم مقفول يوم {suggestion.DayOfWeek}. جرّب يوم تاني."
+                                : $"The gym is closed on {suggestion.DayOfWeek}. Try another day.";
+
+                        return BuildAttendanceReply(suggestion, isArabic);
                     }
                 default:
                     {
@@ -928,6 +1011,12 @@ namespace ArenaInfrastructure.AI
 
             if (ContainsAny(text, "food analysis", "analyze food", "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0627\u0643\u0644", "\u062d\u0644\u0644 \u0627\u0644\u0627\u0643\u0644"))
                 return new IntentResult { Intent = "food_analysis" };
+
+            // Asking which times/slots are available/open to book \u2192 booking (no action, list the day's slots).
+            if (ContainsAny(text, "available time", "available times", "available slot", "available slots",
+                "available date", "available dates", "open slot", "open slots", "what times", "which times",
+                "\u0627\u0644\u0623\u0648\u0642\u0627\u062a \u0627\u0644\u0645\u062a\u0627\u062d\u0629", "\u0627\u0644\u0645\u0648\u0627\u0639\u064a\u062f \u0627\u0644\u0645\u062a\u0627\u062d\u0629", "\u0645\u0648\u0627\u0639\u064a\u062f \u0645\u062a\u0627\u062d\u0629"))
+                return new IntentResult { Intent = "booking" };
 
             if (!ContainsAny(text, "book", "booking", "reserve", "cancel", "reschedule", "\u0627\u062d\u062c\u0632", "\u062d\u062c\u0632", "\u0627\u0644\u063a\u0627\u0621", "\u0625\u0644\u063a\u0627\u0621"))
                 return new IntentResult { Intent = "chat" };

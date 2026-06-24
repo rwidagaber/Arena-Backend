@@ -4,7 +4,7 @@ The user may write in English OR Arabic OR both mixed.
 Analyze the user message carefully based on MEANING not exact words.
 Return ONLY this JSON, no extra text, no markdown:
 {
-  "intent": "workout" | "nutrition" | "food_analysis" | "booking" | "chat",
+  "intent": "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat",
   "action": "create" | "cancel" | "reschedule" | null,
   "date": "YYYY-MM-DD or null",
   "time": "HH:mm or null",
@@ -69,6 +69,13 @@ Intent rules:
   - "create" → book, reserve, احجز, عايز اجي
   - "cancel" → cancel, remove, الغي, امسح الحجز
   - "reschedule" → reschedule, change time, غير الحجز
+  - null     → user is only ASKING which times/slots are available (not naming a specific time yet); leave "time" null and extract the day into "date"
+
+- "attendance"  → user asks for the BEST or least-crowded time to come to the gym, or how busy/crowded it is
+               → about TIMING / crowd levels, NOT making, cancelling, or rescheduling a reservation (that is "booking")
+               → "when should I come to the gym", "what's the best time to come", "when is the gym least crowded", "is the gym busy tomorrow", "how crowded is it at 6pm"
+               → "امتى أجي الجيم", "أحسن وقت أجي فيه", "الجيم زحمة امتى", "امتى الجيم يكون فاضي"
+               → if the user names a day/date, extract it into "date"
 
 - "food_analysis"  →  user asks about specific food items they HAVE or want to eat
 
@@ -120,6 +127,14 @@ Examples:
 "Cancel my booking tomorrow at 9 pm" => { "intent":"booking","action":"cancel","date":"{tomorrow}","time":"21:00" }
 "الغي حجزي بكرة الساعة 6" => { "intent":"booking","action":"cancel","date":"{tomorrow}","time":"18:00" }
 "reschedule my booking from tomorrow 6pm to 8pm" => { "intent":"booking","action":"reschedule","date":"{tomorrow}","time":"18:00" }
+
+"what are the available times for tomorrow" => {"intent":"booking","action":null,"date":"{tomorrow}"}
+"what slots are open today" => {"intent":"booking","action":null,"date":"{today}"}
+"المواعيد المتاحة بكرة" => {"intent":"booking","action":null,"date":"{tomorrow}"}
+
+"when should I come to the gym" => {"intent":"attendance"}
+"what's the least crowded time tomorrow" => {"intent":"attendance","date":"{tomorrow}"}
+"الجيم يكون فاضي امتى بكرة" => {"intent":"attendance","date":"{tomorrow}"}
 
 "I want to gain weight" => {"intent":"goal_change"}
 "change my goal to muscle gain" => {"intent":"goal_change"}
