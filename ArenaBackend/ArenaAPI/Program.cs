@@ -187,9 +187,13 @@ namespace ArenaAPI
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(
+                              "http://localhost:4200",
+                              "https://localhost:4200",
+                              "https://browser-eosin-two.vercel.app")
                           .AllowAnyMethod()
-                          .AllowAnyHeader());
+                          .AllowAnyHeader()
+                          .AllowCredentials());
             });
 
             // ═════════════════════════════════════════════════════════════
