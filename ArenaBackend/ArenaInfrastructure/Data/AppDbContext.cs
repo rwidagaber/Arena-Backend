@@ -72,6 +72,10 @@ namespace ArenaInfrastructure.Data
         public DbSet<WorkoutLog> WorkoutLogs { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
 
+        public DbSet<Equipment> Equipments { get; set; }
+        public DbSet<ExerciseCatalogItem> ExerciseCatalogItems { get; set; }
+        public DbSet<ExerciseEquipmentRequirement> ExerciseEquipmentRequirements { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

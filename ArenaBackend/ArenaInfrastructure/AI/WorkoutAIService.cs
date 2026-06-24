@@ -147,6 +147,21 @@ namespace ArenaInfrastructure.AI
                 knowledge += $"\n\n=== STRICT MEDICAL GUIDELINES (WHO/CDC/NHS) ===\n{medicalGuidelines}";
             }
 
+            var availableEquipments = await _context.Equipments
+                .Where(e => e.IsAvailable)
+                .Select(e => e.Name)
+                .ToListAsync();
+            var equipmentStr = string.Join(", ", availableEquipments);
+            if (string.IsNullOrEmpty(equipmentStr)) equipmentStr = "Bodyweight only";
+
+            var catalogItems = await _context.ExerciseCatalogItems
+                .Include(c => c.EquipmentRequirements)
+                .ThenInclude(er => er.Equipment)
+                .ToListAsync();
+
+            var validCatalogItems = catalogItems.Where(c => c.EquipmentRequirements.All(er => er.Equipment.IsAvailable)).ToList();
+            var exerciseCatalogStr = string.Join("\n", validCatalogItems.Select(c => $"- {c.Name} ({c.MuscleGroup})"));
+
             var prompt = PromptLoader.GetWorkoutPrompt(
                 userContext: userContext,
                 name: profile.FirstName ?? "User",
@@ -154,7 +169,8 @@ namespace ArenaInfrastructure.AI
                 injuries: profile.Injuries ?? "None",
                 healthConditions: profile.HealthConditions ?? "None",
                 experience: profile.FitnessExperience ?? "Beginner",
-                equipment: profile.Equipment ?? "Full Gym",
+                equipment: equipmentStr,
+                exerciseCatalog: exerciseCatalogStr,
                 userMessage: goalAwareUserMessage + "\n\n" + knowledge);
 
             WorkoutPlanAIResponse planData = null;
@@ -196,6 +212,7 @@ namespace ArenaInfrastructure.AI
             }
 
             NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
+            ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
 
             var activeWorkoutPlans = await _context.WorkoutPlans
                 .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
@@ -355,6 +372,43 @@ namespace ArenaInfrastructure.AI
 
                     if (avoidKneeStress && IsKneeStressExercise(exercise.Name))
                         ReplaceWithKneeFriendlyExercise(exercise);
+                }
+            }
+        }
+
+        private static void ApplyEquipmentSubstitution(WorkoutPlanAIResponse planData, List<ExerciseCatalogItem> fullCatalog, List<ExerciseCatalogItem> validCatalog)
+        {
+            if (planData.Days == null) return;
+
+            foreach (var day in planData.Days)
+            {
+                if (day.Exercises == null) continue;
+
+                foreach (var ex in day.Exercises)
+                {
+                    var matchedCatalog = fullCatalog.FirstOrDefault(c => c.Name.Equals(ex.Name, StringComparison.OrdinalIgnoreCase));
+
+                    if (matchedCatalog != null && !validCatalog.Contains(matchedCatalog))
+                    {
+                        // Needs substitution! Requires unavailable equipment
+                        var substitute = validCatalog.FirstOrDefault(c => c.MuscleGroup.Equals(matchedCatalog.MuscleGroup, StringComparison.OrdinalIgnoreCase)) ?? validCatalog.FirstOrDefault();
+                        if (substitute != null)
+                        {
+                            ex.Name = substitute.Name;
+                            ex.MuscleGroup = substitute.MuscleGroup;
+                        }
+                    }
+                    else if (matchedCatalog == null)
+                    {
+                        // AI generated an exercise not in the catalog. 
+                        // Strictly enforce valid catalog to guarantee equipment availability.
+                        var substitute = validCatalog.FirstOrDefault(c => c.MuscleGroup.Equals(ex.MuscleGroup, StringComparison.OrdinalIgnoreCase)) ?? validCatalog.FirstOrDefault();
+                        if (substitute != null)
+                        {
+                            ex.Name = substitute.Name;
+                            ex.MuscleGroup = substitute.MuscleGroup;
+                        }
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿namespace ArenaApplication.AI
+namespace ArenaApplication.AI
 {
     public static class PromptLoader
     {
@@ -39,6 +39,7 @@
             string healthConditions,
             string experience,
             string equipment,
+            string exerciseCatalog,
             string userMessage)
         {
             return Load("workout_prompt.txt")
@@ -49,6 +50,7 @@
                 .Replace("{healthConditions}", healthConditions)
                 .Replace("{experience}", experience)
                 .Replace("{equipment}", equipment)
+                .Replace("{exerciseCatalog}", exerciseCatalog)
                 .Replace("{userMessage}", userMessage);
         }
 

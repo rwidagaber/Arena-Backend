@@ -9,6 +9,7 @@ namespace ArenaDomain.Enums
         Pending,
         Confirmed,
         Cancelled,
-        Completed
+        Completed,
+        Expired
     }
 }
