@@ -1042,6 +1042,12 @@ namespace ArenaInfrastructure.AI
             if (ContainsAny(text, "food analysis", "analyze food", "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0627\u0643\u0644", "\u062d\u0644\u0644 \u0627\u0644\u0627\u0643\u0644"))
                 return new IntentResult { Intent = "food_analysis" };
 
+            // Asking which times/slots are available/open to book \u2192 booking (no action, list the day's slots).
+            if (ContainsAny(text, "available time", "available times", "available slot", "available slots",
+                "available date", "available dates", "open slot", "open slots", "what times", "which times",
+                "\u0627\u0644\u0623\u0648\u0642\u0627\u062a \u0627\u0644\u0645\u062a\u0627\u062d\u0629", "\u0627\u0644\u0645\u0648\u0627\u0639\u064a\u062f \u0627\u0644\u0645\u062a\u0627\u062d\u0629", "\u0645\u0648\u0627\u0639\u064a\u062f \u0645\u062a\u0627\u062d\u0629"))
+                return new IntentResult { Intent = "booking" };
+
             if (!ContainsAny(text, "book", "booking", "reserve", "cancel", "reschedule", "\u0627\u062d\u062c\u0632", "\u062d\u062c\u0632", "\u0627\u0644\u063a\u0627\u0621", "\u0625\u0644\u063a\u0627\u0621"))
                 return new IntentResult { Intent = "chat" };
 
