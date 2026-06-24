@@ -49,15 +49,12 @@ namespace ArenaApplication.Services
 
         public Task ScheduleSubscriptionExpiryReminderAsync(Guid memberId, DateTime expiryDate)
         {
-            var expiryUtc = expiryDate.Kind == DateTimeKind.Utc
-                ? expiryDate
-                : expiryDate.ToUniversalTime();
+            var expiryUtc = DateTime.SpecifyKind(expiryDate, DateTimeKind.Utc);
 
-            // Send reminder 3 days before expiry at 9:00 AM UTC
             var runAt = expiryUtc.Date.AddDays(-3).AddHours(9);
             var delay = runAt - DateTime.UtcNow;
 
-            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromMinutes(1);
+            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromSeconds(5);
 
             _jobClient.Schedule<INotificationService>(s =>
                 s.NotifySubscriptionExpiringAsync(memberId, 3, CancellationToken.None),
@@ -83,42 +80,35 @@ namespace ArenaApplication.Services
         // Bookings
         // =========================
 
-        public Task EnqueueBookingConfirmationAsync(Guid memberId, DateTime bookingDate)
+        public Task EnqueueBookingConfirmationAsync(Guid memberId, DateTime bookingDate, TimeSpan startTime)
         {
+            var fullDateTime = DateTime.SpecifyKind(bookingDate.Date.Add(startTime), DateTimeKind.Utc);
             _jobClient.Enqueue<INotificationService>(s =>
-                s.NotifyBookingConfirmedAsync(memberId, bookingDate, CancellationToken.None));
+                s.NotifyBookingConfirmedAsync(memberId, fullDateTime, CancellationToken.None));
             return Task.CompletedTask;
         }
 
-        public Task EnqueueBookingCancellationAsync(Guid memberId, DateTime bookingDate)
+        public Task EnqueueBookingCancellationAsync(Guid memberId, DateTime bookingDate, TimeSpan startTime)
         {
+            var fullDateTime = DateTime.SpecifyKind(bookingDate.Date.Add(startTime), DateTimeKind.Utc);
             _jobClient.Enqueue<INotificationService>(s =>
-                s.NotifyBookingCancelledAsync(memberId, bookingDate, CancellationToken.None));
+                s.NotifyBookingCancelledAsync(memberId, fullDateTime, CancellationToken.None));
             return Task.CompletedTask;
         }
 
-        public Task EnqueueBookingRescheduledAsync(Guid memberId, DateTime newBookingDate)
+        public Task EnqueueBookingRescheduledAsync(Guid memberId, DateTime newBookingDate, TimeSpan startTime)
         {
+            var fullDateTime = DateTime.SpecifyKind(newBookingDate.Date.Add(startTime), DateTimeKind.Utc);
             _jobClient.Enqueue<INotificationService>(s =>
-                s.NotifyBookingRescheduledAsync(memberId, newBookingDate, CancellationToken.None));
+                s.NotifyBookingRescheduledAsync(memberId, fullDateTime, CancellationToken.None));
             return Task.CompletedTask;
         }
 
-        public Task ScheduleBookingReminderAsync(Guid memberId, DateTime bookingDate)
+        public Task ScheduleBookingReminderAsync(Guid memberId, DateTime bookingDate, TimeSpan startTime)
         {
-            var bookingUtc = bookingDate.Kind == DateTimeKind.Utc
-                ? bookingDate
-                : bookingDate.ToUniversalTime();
-
-            // Send reminder 1 day before booking at 8:00 PM UTC
-            var runAt = bookingUtc.Date.AddDays(-1).AddHours(20);
-            var delay = runAt - DateTime.UtcNow;
-
-            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromMinutes(1);
-
-            _jobClient.Schedule<INotificationService>(s =>
-                s.NotifySessionReminderAsync(memberId, bookingDate, CancellationToken.None),
-                delay);
+            var fullDateTime = DateTime.SpecifyKind(bookingDate.Date.Add(startTime), DateTimeKind.Utc);
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifySessionReminderAsync(memberId, fullDateTime, CancellationToken.None));
             return Task.CompletedTask;
         }
     }
