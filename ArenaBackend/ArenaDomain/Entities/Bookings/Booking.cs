@@ -19,6 +19,8 @@ namespace ArenaDomain.Entities.Bookings
 
         public BookingSource Source { get; set; }
 
+        public bool NoShowPenalized { get; set; } = false;
+
         // Navigation
         public virtual QRCode? QRCode { get; set; }
 

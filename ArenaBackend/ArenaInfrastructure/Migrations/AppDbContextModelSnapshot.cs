@@ -97,6 +97,9 @@ namespace ArenaInfrastructure.Migrations
                     b.Property<Guid>("MemberProfileId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("NoShowPenalized")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Source")
                         .HasColumnType("int");
 
@@ -312,6 +315,57 @@ namespace ArenaInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Equipments");
+                });
+
+            modelBuilder.Entity("ArenaDomain.Entities.Gym.GymSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsNoShowPenaltyEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("NoShowThreshold")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(2);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GymSettings", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 6, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            IsNoShowPenaltyEnabled = true,
+                            NoShowThreshold = 2
+                        });
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Gym.WorkingHours", b =>

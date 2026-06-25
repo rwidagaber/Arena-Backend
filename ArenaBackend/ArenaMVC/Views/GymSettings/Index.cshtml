@@ -1,0 +1,616 @@
+@{
+    ViewData["Title"] = Localizer["GymSettings"];
+    var threshold = ViewBag.Threshold ?? 2;
+    var isEnabled = ViewBag.IsEnabled ?? true;
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+
+<style>
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .settings-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        padding: 2.25rem;
+        box-shadow: var(--card-shadow);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 2rem;
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .settings-card:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+    .settings-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .settings-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(213, 235, 69, 0.35);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 0 15px rgba(213, 235, 69, 0.1);
+    }
+
+    html[data-theme="light"] .settings-card:hover {
+        border-color: rgba(198, 239, 46, 0.4);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06), 0 0 15px rgba(198, 239, 46, 0.1);
+    }
+
+    /* Ambient card glow */
+    .settings-card::after {
+        content: "";
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, rgba(213, 235, 69, 0.08) 0%, rgba(213, 235, 69, 0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        transition: all 0.4s ease;
+    }
+
+    html[data-theme="light"] .settings-card::after {
+        background: radial-gradient(circle, rgba(198, 239, 46, 0.08) 0%, rgba(198, 239, 46, 0) 70%);
+    }
+
+    .settings-card:hover::after {
+        transform: scale(1.5);
+        opacity: 0.15;
+    }
+
+    .settings-card-title {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .settings-card-title h3 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--whiteout);
+        margin: 0;
+        letter-spacing: -0.2px;
+    }
+
+    /* Glowing badge wrapper for the card icon */
+    .settings-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        background-color: rgba(213, 235, 69, 0.06);
+        border: 1px solid rgba(213, 235, 69, 0.15);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--yellow);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        flex-shrink: 0;
+    }
+
+    html[data-theme="light"] .settings-icon-wrapper {
+        background-color: rgba(198, 239, 46, 0.06);
+        border-color: rgba(198, 239, 46, 0.2);
+    }
+
+    .settings-card:hover .settings-icon-wrapper {
+        transform: scale(1.1) rotate(6deg);
+        background-color: var(--yellow);
+        color: var(--black);
+        box-shadow: 0 0 15px rgba(213, 235, 69, 0.3);
+    }
+
+    html[data-theme="light"] .settings-card:hover .settings-icon-wrapper {
+        background-color: var(--yellow);
+        color: var(--black);
+        box-shadow: 0 0 15px rgba(198, 239, 46, 0.3);
+    }
+
+    .settings-card-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .settings-card-body p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-number-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+
+    .settings-number-badge {
+        font-size: 4rem;
+        font-weight: 950;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+        display: inline-block;
+        background: linear-gradient(135deg, var(--whiteout) 30%, var(--yellow) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 12px rgba(213, 235, 69, 0.15));
+    }
+
+    html[data-theme="light"] .settings-number-badge {
+        background: linear-gradient(135deg, var(--text-primary) 30%, var(--yellow) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: none;
+    }
+
+    .settings-number-badge-sub {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+
+    /* Modal Backdrop Glassmorphism */
+    .modal-backdrop {
+        background-color: rgba(10, 10, 12, 0.8) !important;
+        backdrop-filter: blur(8px) !important;
+    }
+
+    /* Modal Styles */
+    .modal-dark .modal-content {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 24px !important;
+        padding: 1.25rem !important;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4) !important;
+        color: var(--text-primary) !important;
+    }
+
+    .modal-dark .modal-header {
+        border-bottom: 1px solid var(--border-color) !important;
+        padding: 1.25rem 1rem !important;
+    }
+
+    .modal-dark .modal-title {
+        font-size: 1.35rem !important;
+        font-weight: 850 !important;
+        color: var(--text-primary) !important;
+    }
+
+    .modal-dark .modal-body {
+        padding: 2rem 1rem !important;
+    }
+
+    .modal-dark .modal-footer {
+        border-top: 1px solid var(--border-color) !important;
+        padding: 1.25rem 1rem 0.5rem !important;
+        display: flex;
+        gap: 12px;
+    }
+
+    .modal-dark .modal-footer .btn {
+        flex: 1;
+        padding: 0.9rem 1.5rem !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+    }
+
+    .modal-dark .btn-close {
+        filter: invert(1);
+        opacity: 0.6;
+        transition: all 0.2s ease;
+    }
+
+    html[data-theme="light"] .modal-dark .btn-close {
+        filter: none;
+    }
+
+    .modal-dark .btn-close:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    /* Inputs in Modal */
+    .modal-dark .subscription-form-group label {
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        color: var(--text-secondary) !important;
+        margin-bottom: 0.6rem !important;
+    }
+
+    .modal-dark .form-control {
+        background-color: var(--input-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        border-radius: 12px !important;
+        padding: 0.85rem 1.1rem !important;
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .modal-dark .form-control:focus {
+        background-color: var(--input-bg-focus) !important;
+        border-color: var(--yellow) !important;
+        box-shadow: 0 0 0 4px rgba(213, 235, 69, 0.18) !important;
+        outline: none !important;
+    }
+
+    /* Penalty Status Custom Toggle Button */
+    .penalty-toggle-btn {
+        width: 100%;
+        padding: 1.1rem 1.5rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        font-weight: 800;
+        font-size: 1.05rem;
+        outline: none;
+        border: 2px solid transparent;
+        margin-top: 0.5rem;
+    }
+
+    /* Enabled state (matching confirmed/success badge) */
+    .penalty-toggle-btn.state-enabled {
+        background-color: var(--badge-bg-confirmed) !important;
+        border-color: var(--badge-border-confirmed) !important;
+        color: var(--badge-color-confirmed) !important;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.06);
+    }
+
+    .penalty-toggle-btn.state-enabled:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+        border-color: var(--badge-color-confirmed) !important;
+    }
+
+    /* Disabled state (matching cancelled/danger badge) */
+    .penalty-toggle-btn.state-disabled {
+        background-color: var(--badge-bg-cancelled) !important;
+        border-color: var(--badge-border-cancelled) !important;
+        color: var(--badge-color-cancelled) !important;
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.06);
+    }
+
+    .penalty-toggle-btn.state-disabled:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15);
+        border-color: var(--badge-color-cancelled) !important;
+    }
+
+    /* Status text pill badge inside toggle */
+    .penalty-status-badge {
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        padding: 0.45rem 1rem !important;
+        border-radius: 30px;
+        text-transform: uppercase;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .state-enabled .penalty-status-badge {
+        background-color: var(--badge-color-confirmed) !important;
+        color: var(--black) !important;
+    }
+
+    html[data-theme="light"] .state-enabled .penalty-status-badge {
+        color: #FFFFFF !important;
+    }
+
+    .state-disabled .penalty-status-badge {
+        background-color: var(--badge-color-cancelled) !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Alerts */
+    .subscription-alert {
+        border-radius: 14px !important;
+        padding: 1.1rem 1.4rem !important;
+        font-weight: 500 !important;
+        border: 1px solid transparent !important;
+        backdrop-filter: blur(4px) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08) !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .subscription-alert.success {
+        background-color: rgba(16, 185, 129, 0.08) !important;
+        border-color: rgba(16, 185, 129, 0.2) !important;
+        color: #10B981 !important;
+    }
+
+    .subscription-alert.error {
+        background-color: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
+        color: #EF4444 !important;
+    }
+
+    .subscription-alert.warning {
+        background-color: rgba(245, 158, 11, 0.05) !important;
+        border-color: rgba(245, 158, 11, 0.15) !important;
+        color: #F59E0B !important;
+    }
+
+    .btn-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(0,0,0,0.1);
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+        vertical-align: middle;
+    }
+</style>
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header">
+        <h1><i data-lucide="settings" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["GymSettings"]</h1>
+        <p>@Localizer["ManageGymConfigurations"]</p>
+    </div>
+
+    <div class="container-fluid mt-4">
+        @if (TempData["Success"] != null)
+        {
+            <div class="subscription-alert success">
+                <i data-lucide="check-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                <div>
+                    <strong>@Localizer["Success"]</strong> @TempData["Success"]
+                </div>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <i data-lucide="x-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                <div>
+                    <strong>@Localizer["Error"]</strong> @TempData["Error"]
+                </div>
+            </div>
+        }
+
+        <div class="settings-grid">
+            <!-- No-Show Penalty Policy Card -->
+            <div class="settings-card">
+                <div>
+                    <div class="settings-card-title">
+                        <div class="settings-icon-wrapper">
+                            <i data-lucide="alert-triangle" class="settings-card-icon"></i>
+                        </div>
+                        <h3>@Localizer["NoShowPenaltyPolicy"]</h3>
+                    </div>
+                    <div class="settings-card-body text-center py-3">
+                        <div class="mb-3">
+                            @if (isEnabled)
+                            {
+                                <span class="badge bg-success px-3 py-2 rounded-pill" style="font-size: 0.82rem;"><i data-lucide="check" class="d-inline-block align-middle me-1" style="width:14px;height:14px;"></i> @Localizer["PenaltyEnabled"]</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill" style="font-size: 0.82rem;"><i data-lucide="pause" class="d-inline-block align-middle me-1" style="width:14px;height:14px;"></i> @Localizer["PenaltyPaused"]</span>
+                            }
+                        </div>
+                        <div class="settings-number-container">
+                            <div class="settings-number-badge">@threshold</div>
+                            <div class="settings-number-badge-sub">@Localizer["NoShowThreshold"]</div>
+                        </div>
+                        <p class="mt-3 text-start">
+                            @Localizer["NoShowPenaltyPolicyDescription"]
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-subscription-primary w-100 d-flex align-items-center justify-content-center gap-2" id="editThresholdBtn">
+                        <i data-lucide="edit-3" style="width: 18px; height: 18px;"></i> @Localizer["ConfigureThreshold"]
+                    </button>
+                </div>
+            </div>
+
+            <!-- Manually Execute Penalty Processor Card -->
+            <div class="settings-card">
+                <div>
+                    <div class="settings-card-title">
+                        <div class="settings-icon-wrapper">
+                            <i data-lucide="cpu" class="settings-card-icon"></i>
+                        </div>
+                        <h3>@Localizer["ExecuteProcessor"]</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <p>
+                            @Localizer["ExecuteProcessorDescription"]
+                        </p>
+                        <div class="subscription-alert warning p-3 mb-0" style="font-size: 0.88rem;">
+                            <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                            <div>
+                                @Localizer["ExecuteProcessorWarning"]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <form asp-action="RunPenaltyProcess" method="post" id="runProcessorForm" style="margin: 0;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-subscription-secondary w-100 d-flex align-items-center justify-content-center gap-2" id="runProcessorBtn">
+                            <i data-lucide="play" style="width: 18px; height: 18px;"></i> @Localizer["RunProcessorNow"]
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Threshold Modal -->
+<div class="modal fade modal-dark" id="editThresholdModal" tabindex="-1" aria-labelledby="editThresholdModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="editThresholdModalLabel">
+                    <i data-lucide="settings" style="color: var(--yellow);"></i> <span>@Localizer["ConfigureThreshold"]</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="UpdateSettings" method="post" style="margin: 0;" id="thresholdForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="subscription-form-group">
+                        <label for="noShowThresholdInput">@Localizer["NoShowThreshold"] *</label>
+                        <input type="number" name="noShowThreshold" class="form-control" id="noShowThresholdInput" value="@threshold" min="1" required />
+                        <span class="form-text text-muted" style="font-size: 0.82rem; display: block; margin-top: 0.5rem; color: var(--autonomous) !important;">
+                            @Localizer["NoShowThresholdHelpText"]
+                        </span>
+                    </div>
+                    <div class="subscription-form-group mt-4">
+                        <label style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 0.6rem; display: block;">
+                            @Localizer["EnableNoShowPenalty"]
+                        </label>
+                        
+                        <input type="checkbox" name="isNoShowPenaltyEnabled" id="isNoShowPenaltyEnabledInput" value="true" @(isEnabled ? "checked" : "") style="display: none;" />
+                        <input type="hidden" name="isNoShowPenaltyEnabled" value="false" />
+                        
+                        <button type="button" id="customPenaltyToggleBtn" class="penalty-toggle-btn @(isEnabled ? "state-enabled" : "state-disabled")">
+                            <span class="d-flex align-items-center gap-2">
+                                <i id="penaltyStatusIcon" data-lucide="@(isEnabled ? "check" : "pause")" style="width: 20px; height: 20px;"></i>
+                                <span id="penaltyStatusText">@(isEnabled ? Localizer["PenaltyEnabled"] : Localizer["PenaltyPaused"])</span>
+                            </span>
+                            <span class="penalty-status-badge" id="penaltyStatusBadge">@(isEnabled ? "ON" : "OFF")</span>
+                        </button>
+                        
+                        <span class="form-text text-muted d-block mt-2" style="font-size: 0.82rem; color: var(--autonomous) !important;">
+                            @Localizer["EnableNoShowPenaltyHelpText"]
+                        </span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-subscription-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-subscription-primary d-inline-flex align-items-center gap-1" id="saveThresholdBtn">
+                        <i data-lucide="check" style="width: 18px; height: 18px;"></i> @Localizer["SaveChanges"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Edit threshold modal
+            const editThresholdBtn = document.getElementById('editThresholdBtn');
+            const editThresholdModalEl = document.getElementById('editThresholdModal');
+            const editThresholdModal = new bootstrap.Modal(editThresholdModalEl);
+            const thresholdForm = document.getElementById('thresholdForm');
+            const saveThresholdBtn = document.getElementById('saveThresholdBtn');
+
+            // Custom toggle button state handling
+            const customPenaltyToggleBtn = document.getElementById('customPenaltyToggleBtn');
+            const isNoShowPenaltyEnabledInput = document.getElementById('isNoShowPenaltyEnabledInput');
+            const penaltyStatusText = document.getElementById('penaltyStatusText');
+            const penaltyStatusIcon = document.getElementById('penaltyStatusIcon');
+            const penaltyStatusBadge = document.getElementById('penaltyStatusBadge');
+
+            const textEnabled = '@Localizer["PenaltyEnabled"]';
+            const textPaused = '@Localizer["PenaltyPaused"]';
+            
+            const isRtl = document.documentElement.dir === 'rtl' || document.body.dir === 'rtl' || document.documentElement.getAttribute('dir') === 'rtl';
+            const labelOn = isRtl ? "مفعل" : "ON";
+            const labelOff = isRtl ? "معطل" : "OFF";
+
+            function updateToggleState() {
+                const isChecked = isNoShowPenaltyEnabledInput.checked;
+                if (isChecked) {
+                    customPenaltyToggleBtn.classList.remove('state-disabled');
+                    customPenaltyToggleBtn.classList.add('state-enabled');
+                    penaltyStatusText.textContent = textEnabled;
+                    penaltyStatusBadge.textContent = labelOn;
+                    penaltyStatusIcon.setAttribute('data-lucide', 'check');
+                } else {
+                    customPenaltyToggleBtn.classList.remove('state-enabled');
+                    customPenaltyToggleBtn.classList.add('state-disabled');
+                    penaltyStatusText.textContent = textPaused;
+                    penaltyStatusBadge.textContent = labelOff;
+                    penaltyStatusIcon.setAttribute('data-lucide', 'pause');
+                }
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }
+
+            if (customPenaltyToggleBtn && isNoShowPenaltyEnabledInput) {
+                // Initialize state on load
+                updateToggleState();
+
+                customPenaltyToggleBtn.addEventListener('click', function () {
+                    isNoShowPenaltyEnabledInput.checked = !isNoShowPenaltyEnabledInput.checked;
+                    updateToggleState();
+                });
+            }
+
+            if (editThresholdBtn) {
+                editThresholdBtn.addEventListener('click', function () {
+                    editThresholdModal.show();
+                });
+            }
+
+            if (thresholdForm) {
+                thresholdForm.addEventListener('submit', function () {
+                    saveThresholdBtn.disabled = true;
+                    saveThresholdBtn.innerHTML = '<span class="btn-spinner me-1"></span> ' + '@Localizer["Loading"]';
+                });
+            }
+
+            // Execute processor form loading state
+            const runProcessorForm = document.getElementById('runProcessorForm');
+            const runProcessorBtn = document.getElementById('runProcessorBtn');
+
+            if (runProcessorForm && runProcessorBtn) {
+                runProcessorForm.addEventListener('submit', function () {
+                    runProcessorBtn.disabled = true;
+                    runProcessorBtn.innerHTML = '<span class="btn-spinner me-1"></span> ' + '@Localizer["Running"]';
+                });
+            }
+        });
+    </script>
+}

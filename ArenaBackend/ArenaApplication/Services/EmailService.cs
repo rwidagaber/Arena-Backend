@@ -27,23 +27,36 @@ namespace ArenaApplication.Services
 
         private async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken cancellationToken = default)
         {
-            var port = _emailSettings.Port;
-            var username = _emailSettings.Username;
-            var password = _emailSettings.Password;
-            var host = _emailSettings.SmtpServer;
-            var fromName = _emailSettings.SenderName;
+            try
+            {
+                var port = _emailSettings.Port;
+                var username = _emailSettings.Username;
+                var password = _emailSettings.Password;
+                var host = _emailSettings.SmtpServer;
+                var fromName = _emailSettings.SenderName;
 
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(fromName, username));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = subject;
-            message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
+                if (string.IsNullOrWhiteSpace(host))
+                {
+                    Console.WriteLine($"[EmailService] SMTP Server is not configured. Skipping email to {toEmail}. Subject: {subject}");
+                    return;
+                }
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(host, port, SecureSocketOptions.Auto, cancellationToken);
-            await smtp.AuthenticateAsync(username, password, cancellationToken);
-            await smtp.SendAsync(message, cancellationToken);
-            await smtp.DisconnectAsync(true, cancellationToken);
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(fromName, username));
+                message.To.Add(MailboxAddress.Parse(toEmail));
+                message.Subject = subject;
+                message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
+
+                using var smtp = new SmtpClient();
+                await smtp.ConnectAsync(host, port, SecureSocketOptions.Auto, cancellationToken);
+                await smtp.AuthenticateAsync(username, password, cancellationToken);
+                await smtp.SendAsync(message, cancellationToken);
+                await smtp.DisconnectAsync(true, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EmailService] Failed to send email to {toEmail}. Subject: {subject}. Error: {ex}");
+            }
         }
 
         // ── Authentication ────────────────────────────────────────────────────

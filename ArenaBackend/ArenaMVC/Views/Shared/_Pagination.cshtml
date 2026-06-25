@@ -1,5 +1,102 @@
 @model ArenaMVC.Models.PaginationInfo
 
+<style>
+    .usub-pagination {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 10px !important;
+        margin-top: 2.5rem !important;
+        margin-bottom: 2.5rem !important;
+        direction: ltr !important; /* Force left-to-right pagination layout for consistent order and arrow directions */
+    }
+
+    .usub-page-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        padding: 0 !important;
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        border-radius: 50% !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        text-decoration: none !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
+    }
+
+    html[data-theme="light"] .usub-page-btn {
+        background-color: rgba(0, 0, 0, 0.02) !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+        color: var(--text-primary) !important;
+    }
+
+    .usub-page-btn:hover:not(.disabled):not(.active) {
+        border-color: var(--yellow) !important;
+        color: var(--yellow) !important;
+        background-color: rgba(213, 235, 69, 0.08) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    html[data-theme="light"] .usub-page-btn:hover:not(.disabled):not(.active) {
+        background-color: rgba(198, 239, 46, 0.08) !important;
+        color: var(--yellow) !important;
+    }
+
+    .usub-page-btn.active {
+        background-color: var(--yellow) !important;
+        border-color: var(--yellow) !important;
+        color: var(--black) !important;
+        box-shadow: 0 0 15px rgba(213, 235, 69, 0.45) !important;
+        font-weight: 850 !important;
+        cursor: default !important;
+    }
+
+    html[data-theme="light"] .usub-page-btn.active {
+        background-color: var(--yellow) !important;
+        border-color: var(--yellow) !important;
+        color: #000000 !important;
+        box-shadow: 0 0 15px rgba(198, 239, 46, 0.45) !important;
+    }
+
+    .usub-page-btn.disabled {
+        opacity: 0.3 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    .usub-page-ellipsis {
+        color: var(--text-secondary) !important;
+        font-weight: 700 !important;
+        width: 32px !important;
+        text-align: center !important;
+        display: inline-block !important;
+    }
+
+    .usub-arrow-prev,
+    .usub-arrow-next {
+        font-size: 1.4rem !important;
+        font-weight: 400 !important;
+        line-height: 1 !important;
+        display: inline-block !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    /* Explicitly prevent external stylesheets from reversing arrows in RTL */
+    html[dir="rtl"] .usub-arrow-prev,
+    html[dir="rtl"] .usub-arrow-next,
+    [dir="rtl"] .usub-arrow-prev,
+    [dir="rtl"] .usub-arrow-next {
+        transform: none !important;
+        display: inline-block !important;
+    }
+</style>
+
 @if (Model.TotalPages > 1)
 {
     var routeData = new Dictionary<string, string>();
@@ -18,14 +115,14 @@
             var prevRoute = new Dictionary<string, string>(routeData);
             prevRoute["page"] = (Model.Page - 1).ToString();
             prevRoute["pageSize"] = Model.PageSize.ToString();
-            <a class="usub-page-btn" asp-all-route-data="prevRoute">
-                <span class="usub-arrow-prev">&lsaquo;</span> @Localizer["Previous"]
+            <a class="usub-page-btn" asp-all-route-data="prevRoute" aria-label="Previous Page">
+                <span class="usub-arrow-prev">&lsaquo;</span>
             </a>
         }
         else
         {
-            <span class="usub-page-btn disabled">
-                <span class="usub-arrow-prev">&lsaquo;</span> @Localizer["Previous"]
+            <span class="usub-page-btn disabled" aria-label="Previous Page">
+                <span class="usub-arrow-prev">&lsaquo;</span>
             </span>
         }
 
@@ -81,14 +178,14 @@
             var nextRoute = new Dictionary<string, string>(routeData);
             nextRoute["page"] = (Model.Page + 1).ToString();
             nextRoute["pageSize"] = Model.PageSize.ToString();
-            <a class="usub-page-btn" asp-all-route-data="nextRoute">
-                @Localizer["Next"] <span class="usub-arrow-next">&rsaquo;</span>
+            <a class="usub-page-btn" asp-all-route-data="nextRoute" aria-label="Next Page">
+                <span class="usub-arrow-next">&rsaquo;</span>
             </a>
         }
         else
         {
-            <span class="usub-page-btn disabled">
-                @Localizer["Next"] <span class="usub-arrow-next">&rsaquo;</span>
+            <span class="usub-page-btn disabled" aria-label="Next Page">
+                <span class="usub-arrow-next">&rsaquo;</span>
             </span>
         }
     </nav>
