@@ -86,6 +86,15 @@
         cursor: pointer;
     }
 
+    .working-hours-card .form-check-input:checked {
+        background-color: var(--yellow);
+        border-color: var(--yellow);
+    }
+
+    .working-hours-card .form-check-input:checked[type=checkbox] {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23121214' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+    }
+
     /* Day Title */
     .card-day-title {
         display: flex;
@@ -320,8 +329,8 @@
         position: relative;
         width: 180px;
         height: 40px;
-        background: rgba(16, 185, 129, 0.12);
-        border: 1.5px solid rgba(16, 185, 129, 0.4);
+        background: #10B981;
+        border: 1.5px solid #10B981;
         border-radius: 50px;
         padding: 4px;
         transition: background 0.3s ease, border-color 0.3s ease;
@@ -330,13 +339,15 @@
 
     .status-toggle-pill .pill-thumb {
         position: absolute;
+        top: 4px;
         left: 4px;
-        width: 50%;
+        width: calc(50% - 4px);
         height: calc(100% - 8px);
-        background: #10B981;
+        background: var(--card-bg, #ffffff);
         border-radius: 50px;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
         z-index: 1;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     }
 
     .status-toggle-pill .pill-open,
@@ -351,25 +362,21 @@
         transition: color 0.3s ease;
     }
 
-    .status-toggle-pill .pill-open  { color: #fff; }
-    .status-toggle-pill .pill-closed { color: rgba(255,255,255,0.45); }
+    .status-toggle-pill .pill-open  { color: #10B981; }
+    .status-toggle-pill .pill-closed { color: rgba(255, 255, 255, 0.85); }
 
     /* When IsClosed checkbox is checked — slide thumb to right, turn red */
     #isClosedCheckbox:checked ~ .status-toggle-pill {
-        background: rgba(239, 68, 68, 0.12);
-        border-color: rgba(239, 68, 68, 0.4);
+        background: #EF4444;
+        border-color: #EF4444;
     }
 
     #isClosedCheckbox:checked ~ .status-toggle-pill .pill-thumb {
-        left: calc(50% + 4px);
-        background: #EF4444;
+        left: 50%;
     }
 
-    #isClosedCheckbox:checked ~ .status-toggle-pill .pill-open  { color: rgba(255,255,255,0.45); }
-    #isClosedCheckbox:checked ~ .status-toggle-pill .pill-closed { color: #fff; }
-
-    html[data-theme="light"] .status-toggle-pill .pill-open  { color: #fff; }
-    html[data-theme="light"] #isClosedCheckbox:checked ~ .status-toggle-pill .pill-closed { color: #fff; }
+    #isClosedCheckbox:checked ~ .status-toggle-pill .pill-open  { color: rgba(255, 255, 255, 0.85); }
+    #isClosedCheckbox:checked ~ .status-toggle-pill .pill-closed { color: #EF4444; }
 </style>
 
 <div class="subscription-admin-container">
