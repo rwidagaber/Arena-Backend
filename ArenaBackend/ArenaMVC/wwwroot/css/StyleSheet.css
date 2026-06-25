@@ -265,7 +265,7 @@ main {
 /* Footer */
 .footer {
     position: relative !important;
-    bottom: auto !important;
+    bottom: -60px !important;
     width: 100% !important;
     background-color: var(--sidebar-bg) !important;
     color: #71717A !important;

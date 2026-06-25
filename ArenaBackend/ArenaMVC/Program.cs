@@ -99,7 +99,7 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
 
-// Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
+// Provide no-op implementations for the MVC app (admin UI doesn't need realtime/push notifications)
 builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
 builder.Services.AddScoped<IPushNotificationService, ArenaMVC.Services.NoopPushNotificationService>();
 // ── Hangfire ──────────────────────────────────────────────────
