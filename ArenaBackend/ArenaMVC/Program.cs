@@ -101,6 +101,7 @@ builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
 
 // Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
 builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
+builder.Services.AddScoped<IPushNotificationService, ArenaMVC.Services.NoopPushNotificationService>();
 // ── Hangfire ──────────────────────────────────────────────────
 builder.Services.AddHangfire(config =>
     config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -124,6 +125,14 @@ using (var scope = app.Services.CreateScope())
 
     // Seed roles + admin user (required for cookie-based admin login)
     await DataSeeder.SeedAsync(context, userManager, roleManager);
+
+    // ── Hangfire Recurring No-Show Penalty Job ────────────────────
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<INoShowPenaltyService>(
+        "NoShowPenaltyJob",
+        service => service.ProcessNoShowPenaltiesAsync(CancellationToken.None),
+        Cron.Minutely());
+
     // Dashboard demo data is now seeded on-demand via Admin Dashboard > Generate Demo Data
 }
 

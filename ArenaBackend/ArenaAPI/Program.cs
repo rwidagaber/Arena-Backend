@@ -208,6 +208,13 @@ namespace ArenaAPI
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
 
+                // ── Hangfire Recurring No-Show Penalty Job ────────────────────
+                var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+                recurringJobManager.AddOrUpdate<INoShowPenaltyService>(
+                    "NoShowPenaltyJob",
+                    service => service.ProcessNoShowPenaltiesAsync(CancellationToken.None),
+                    Cron.Minutely());
+
                 // ── Init pgvector schema on Neon (idempotent) ────────────
                 // Creates the MemberHealthVectors table + HNSW index if they don't exist.
                 var vectorStore = scope.ServiceProvider.GetService<NeonVectorStore>();

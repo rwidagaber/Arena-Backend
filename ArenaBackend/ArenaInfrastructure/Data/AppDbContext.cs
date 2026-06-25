@@ -63,6 +63,7 @@ namespace ArenaInfrastructure.Data
 
         // ── Gym ───────────────────────────────────────────────────────────────────
         public DbSet<WorkingHours> WorkingHours { get; set; }
+        public DbSet<GymSetting> GymSettings { get; set; }
         // ── Workout ───────────────────────────────────────────────────────────────
 
 
