@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @Localizer["Arena"]</title>
+    <link rel="icon" type="image/png" href="~/favicon.png" />
     <script type="importmap"></script>
     <script>
         (function () {
@@ -33,7 +34,9 @@
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+            <a asp-area="" asp-controller="Home" asp-action="Index" style="display: flex; justify-content: center; align-items: center; text-decoration: none;">
+                <img src="~/favicon.png" alt="Arena Logo" style="height: 100px; width: 180px; border-radius: 4px;" />
+            </a>
         </div>
         <nav class="sidebar-nav">
             @{
@@ -106,9 +109,11 @@
                 <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
                     <i data-lucide="menu"></i>
                 </button>
-                <div class="header-brand">
-                    <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
-                </div>
+            </div>
+            <div class="header-brand" style="position: absolute; left: 50%; transform: translateX(-50%);">
+                <a asp-area="" asp-controller="Home" asp-action="Index" style="display: flex; align-items: center; text-decoration: none;">
+                    <img src="~/favicon.png" alt="Arena Logo" style="height: 48px; width: auto; border-radius: 4px;" />
+                </a>
             </div>
             <div class="header-right">
                 <!-- Theme Toggle Button -->

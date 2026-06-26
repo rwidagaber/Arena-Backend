@@ -17,9 +17,9 @@
         <div class="analytics-header-actions">
             <form method="post" action="/admin/analytics/generate-demo-data" style="display:inline">
                 @Html.AntiForgeryToken()
-                <button type="submit" id="generateDemoDataBtn" class="btn btn-analytics-secondary">
+                @* <button type="submit" id="generateDemoDataBtn" class="btn btn-analytics-secondary">
                     ⚡ @Localizer["GenerateDemoData"]
-                </button>
+                </button> *@
             </form>
             <button type="button" id="refreshAnalyticsBtn" class="btn btn-primary">@Localizer["Refresh"]</button>
         </div>
