@@ -44,16 +44,23 @@ namespace ArenaApplication.Services
 
         public async Task<Result<bool>> DeactivateAsync(Guid memberProfileId, Guid planId)
         {
-            var plan = await _planRepo.GetByIdAsync(planId);
-            if (plan == null || plan.IsDeleted || plan.MemberProfileId != memberProfileId)
+            var plans = await _planRepo.GetAll()
+                .Where(p => p.MemberProfileId == memberProfileId && !p.IsDeleted)
+                .ToListAsync();
+
+            var plan = plans.FirstOrDefault(p => p.Id == planId);
+            if (plan == null)
                 return Result<bool>.Failure("Nutrition plan not found.");
 
-            if (plan.IsActive)
-            {
-                plan.IsActive = false;
-                await _planRepo.UpdateAsync(plan);
-            }
+            if (!plan.IsActive)
+                return Result<bool>.Success(true);
 
+            // A member must always keep at least one active nutrition plan.
+            if (plans.Count(p => p.IsActive) <= 1)
+                return Result<bool>.Failure("You must keep at least one active nutrition plan.");
+
+            plan.IsActive = false;
+            await _planRepo.UpdateAsync(plan);
             return Result<bool>.Success(true);
         }
     }
