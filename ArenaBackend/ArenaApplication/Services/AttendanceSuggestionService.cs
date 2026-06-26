@@ -18,7 +18,7 @@ namespace ArenaApplication.Services
 {
     public class AttendanceSuggestionService : IAttendanceSuggestionService
     {
-        // Capacity per hourly spot: more than this many bookings marks the slot full (red).
+        // Capacity per hourly spot: this many (or more) confirmed bookings marks the slot full (red).
         private const int SlotCapacity = 5;
 
         private const int DefaultUtcOffsetHours = 3;
@@ -79,10 +79,11 @@ namespace ArenaApplication.Services
                 .Select(t => t.Hour)
                 .ToList();
 
-            // Bookings already placed on the target date consume capacity.
+            // Only confirmed bookings on the target date consume capacity (cancelled,
+            // pending, expired, etc. are not counted toward crowd/traffic).
             var bookingHours = await _bookingRepo.GetAll()
                 .Where(b => b.BookingDate.Date == targetDate
-                         && b.Status != BookingStatus.Cancelled
+                         && b.Status == BookingStatus.Confirmed
                          && !b.IsDeleted)
                 .Select(b => b.StartTime)
                 .ToListAsync();
@@ -110,7 +111,8 @@ namespace ArenaApplication.Services
                     CheckInCount = checkInCount,
                     BookingCount = bookingCount,
                     Total = checkInCount + bookingCount,
-                    OverCapacity = bookingCount > SlotCapacity
+                    // 5 (or more) confirmed bookings in the slot = full / traffic expected.
+                    OverCapacity = bookingCount >= SlotCapacity
                 });
             }
 
