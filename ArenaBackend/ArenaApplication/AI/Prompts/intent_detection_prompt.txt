@@ -4,7 +4,7 @@ The user may write in English OR Arabic OR both mixed.
 Analyze the user message carefully based on MEANING not exact words.
 Return ONLY this JSON, no extra text, no markdown:
 {
-  "intent": "workout" | "nutrition" | "food_analysis" | "booking" | "chat",
+  "intent": "GENERATE_WORKOUT_PLAN" | "GENERATE_NUTRITION_PLAN" | "MODIFY_WORKOUT_PLAN" | "MODIFY_NUTRITION_PLAN" | "ASK_ABOUT_INJURY_COMPATIBILITY" | "ASK_ABOUT_EXERCISE" | "ASK_ABOUT_NUTRITION" | "REQUEST_ALTERNATIVE_EXERCISE" | "REQUEST_MEAL_SUGGESTION" | "REQUEST_FOOD_ANALYSIS" | "BOOK_SESSION" | "ASK_BOOKING_DETAILS" | "GENERAL_FITNESS_QUESTION" | "GREETING" | "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat",
   "action": "create" | "cancel" | "reschedule" | null,
   "date": "YYYY-MM-DD or null",
   "time": "HH:mm or null",
@@ -18,6 +18,17 @@ Return ONLY this JSON, no extra text, no markdown:
   "heightString": "user's height (e.g. 180cm) or null",
   "preferredDuration": "e.g. 4 weeks, 2 months, or 'Auto' if user doesn't know/cares, or null"
 }
+
+HIGH PRIORITY CONTEXT INTENT RULES:
+- If the user asks whether "this plan", "this workout", "this exercise", "previous plan", "previous workout", "that exercise", or "my plan" is safe/suitable for an injury, pain, physical limitation, or medical condition, return "ASK_ABOUT_INJURY_COMPATIBILITY". Do NOT return workout and do NOT create a new plan.
+- If the user asks to change, adjust, replace, reduce, or increase the current workout plan without explicitly asking for a brand new plan, return "MODIFY_WORKOUT_PLAN".
+- If the user asks to change, adjust, replace, reduce, or increase the current nutrition plan without explicitly asking for a brand new plan, return "MODIFY_NUTRITION_PLAN".
+- If the user asks for an alternative to one exercise, return "REQUEST_ALTERNATIVE_EXERCISE".
+- If the user asks what to eat today/now/pre-workout/post-workout without requesting a full diet plan, return "REQUEST_MEAL_SUGGESTION".
+- If the user lists foods they have or asks whether specific foods fit the diet, return "REQUEST_FOOD_ANALYSIS".
+- If the user asks about a specific exercise or technique, return "ASK_ABOUT_EXERCISE".
+- If the user asks a general nutrition question, return "ASK_ABOUT_NUTRITION".
+- If the user only greets, return "GREETING".
 
 PROFILE EXTRACTION RULES (Apply to ALL intents!):
 - IF the user mentions their fitness goal (e.g. lose weight, gain muscle, عايز اخس, عاوز تضخيم, 3ayz akhas), extract it into "goal".
@@ -57,16 +68,25 @@ Intent rules:
               → NOT for general food questions
 
 
-- "booking"   → user wants to reserve, cancel, or reschedule a gym session
+- "booking"   → user wants to reserve, cancel, or reschedule a gym session, OR asks which times/slots are available/open to book
 → reserve, schedule, coming to gym, specific time/date,
-                حجز, عايز اجي, احجزلي, موعد,
+                ask which slots/times/dates are available or open for a day,
+                حجز, عايز اجي, احجزلي, موعد, الأوقات المتاحة, المواعيد المتاحة,
 
                 "book tomorrow at 6pm", "احجزلي بكرة", "cancel my booking"
+                "what are the available times for tomorrow", "what slots are open today", "show me available booking times", "المواعيد المتاحة بكرة"
 
   action values:
   - "create" → book, reserve, احجز, عايز اجي
   - "cancel" → cancel, remove, الغي, امسح الحجز
   - "reschedule" → reschedule, change time, غير الحجز
+  - null     → user is only ASKING which times/slots are available (not naming a specific time yet); leave "time" null and extract the day into "date"
+
+- "attendance"  → user asks for the BEST or least-crowded time to come to the gym, or how busy/crowded it is
+               → about TIMING / crowd levels, NOT making, cancelling, or rescheduling a reservation (that is "booking")
+               → "when should I come to the gym", "what's the best time to come", "when is the gym least crowded", "is the gym busy tomorrow", "how crowded is it at 6pm"
+               → "امتى أجي الجيم", "أحسن وقت أجي فيه", "الجيم زحمة امتى", "امتى الجيم يكون فاضي"
+               → if the user names a day/date, extract it into "date"
 
 - "food_analysis"  →  user asks about specific food items they HAVE or want to eat
 
@@ -118,6 +138,14 @@ Examples:
 "Cancel my booking tomorrow at 9 pm" => { "intent":"booking","action":"cancel","date":"{tomorrow}","time":"21:00" }
 "الغي حجزي بكرة الساعة 6" => { "intent":"booking","action":"cancel","date":"{tomorrow}","time":"18:00" }
 "reschedule my booking from tomorrow 6pm to 8pm" => { "intent":"booking","action":"reschedule","date":"{tomorrow}","time":"18:00" }
+
+"what are the available times for tomorrow" => {"intent":"booking","action":null,"date":"{tomorrow}"}
+"what slots are open today" => {"intent":"booking","action":null,"date":"{today}"}
+"المواعيد المتاحة بكرة" => {"intent":"booking","action":null,"date":"{tomorrow}"}
+
+"when should I come to the gym" => {"intent":"attendance"}
+"what's the least crowded time tomorrow" => {"intent":"attendance","date":"{tomorrow}"}
+"الجيم يكون فاضي امتى بكرة" => {"intent":"attendance","date":"{tomorrow}"}
 
 "I want to gain weight" => {"intent":"goal_change"}
 "change my goal to muscle gain" => {"intent":"goal_change"}

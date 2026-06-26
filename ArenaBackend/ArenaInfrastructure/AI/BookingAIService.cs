@@ -7,7 +7,7 @@ using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
-//using ArenaDomain.Interfaces;
+
 
 namespace ArenaInfrastructure.AI
 {
@@ -197,6 +197,22 @@ namespace ArenaInfrastructure.AI
                 return isArabic
                     ? $"❌ عندك حجز بالفعل يوم {bookingDate:dddd} الساعة {startTime:hh\\:mm}.\nاختار وقت تاني."
                     : $"❌ You already have a booking on {bookingDate:dddd, MMMM dd yyyy} at {startTime:hh\\:mm}.\nPlease choose another time.";
+
+            // Same-day sessions must be at least 5 hours apart.
+            var sameDayStarts = _bookingRepo.GetAll()
+                .Where(b => b.MemberProfileId == memberProfileId
+                         && b.BookingDate.Date == bookingDate.Date
+                         && b.Status != BookingStatus.Cancelled)
+                .Select(b => b.StartTime)
+                .ToList();
+
+            foreach (var existingStart in sameDayStarts)
+            {
+                if (Math.Abs((startTime - existingStart).TotalHours) < 5)
+                    return isArabic
+                        ? $"❌ عندك حجز الساعة {existingStart:hh\\:mm} في نفس اليوم. لازم يكون بين الجلستين 5 ساعات على الأقل."
+                        : $"❌ You already have a session at {existingStart:hh\\:mm} that day. Same-day sessions must be at least 5 hours apart.";
+            }
 
             var createDto = new CreateBookingDto
             {

@@ -155,7 +155,8 @@ namespace ArenaInfrastructure.AI
             // ✅ Add booking history
             var bookings = await _context.Bookings
                 .Where(b => b.MemberProfileId == memberProfileId
-                         && b.Status != ArenaDomain.Enums.BookingStatus.Cancelled)
+                         && b.Status != ArenaDomain.Enums.BookingStatus.Cancelled
+                         && b.Status != ArenaDomain.Enums.BookingStatus.Expired)
                 .OrderByDescending(b => b.BookingDate)
                 .Take(3)
                 .ToListAsync();

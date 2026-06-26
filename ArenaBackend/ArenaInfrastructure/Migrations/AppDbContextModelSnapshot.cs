@@ -277,6 +277,46 @@ namespace ArenaInfrastructure.Migrations
                     b.ToTable("ChatMessages", (string)null);
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.Gym.Equipment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Equipments");
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.Gym.GymSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -1480,6 +1520,90 @@ namespace ArenaInfrastructure.Migrations
                     b.ToTable("Exercises", (string)null);
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.Workout.ExerciseCatalogItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DifficultyLevel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MuscleGroup")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExerciseCatalogItems");
+                });
+
+            modelBuilder.Entity("ArenaDomain.Entities.Workout.ExerciseEquipmentRequirement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("EquipmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ExerciseCatalogItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.HasIndex("ExerciseCatalogItemId");
+
+                    b.ToTable("ExerciseEquipmentRequirements");
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.Workout.WorkoutDay", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2043,6 +2167,25 @@ namespace ArenaInfrastructure.Migrations
                     b.Navigation("MemberProfile");
                 });
 
+            modelBuilder.Entity("ArenaDomain.Entities.Workout.ExerciseEquipmentRequirement", b =>
+                {
+                    b.HasOne("ArenaDomain.Entities.Gym.Equipment", "Equipment")
+                        .WithMany()
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArenaDomain.Entities.Workout.ExerciseCatalogItem", "ExerciseCatalogItem")
+                        .WithMany("EquipmentRequirements")
+                        .HasForeignKey("ExerciseCatalogItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Equipment");
+
+                    b.Navigation("ExerciseCatalogItem");
+                });
+
             modelBuilder.Entity("ArenaDomain.Entities.Workout.WorkoutDay", b =>
                 {
                     b.HasOne("ArenaDomain.Entities.Workout.WorkoutPlan", "WorkoutPlan")
@@ -2224,6 +2367,11 @@ namespace ArenaInfrastructure.Migrations
             modelBuilder.Entity("ArenaDomain.Entities.Workout.Exercise", b =>
                 {
                     b.Navigation("WorkoutExercises");
+                });
+
+            modelBuilder.Entity("ArenaDomain.Entities.Workout.ExerciseCatalogItem", b =>
+                {
+                    b.Navigation("EquipmentRequirements");
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Workout.WorkoutDay", b =>

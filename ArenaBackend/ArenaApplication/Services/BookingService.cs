@@ -98,7 +98,8 @@ namespace ArenaApplication.Services
                 b.MemberProfileId == dto.MemberProfileId &&
                 b.BookingDate.Date >= startDate &&
                 b.BookingDate.Date <= endDate &&
-                b.Status != BookingStatus.Cancelled);
+                b.Status != BookingStatus.Cancelled &&
+                b.Status != BookingStatus.Expired);
 
             var targetDateTime = dto.BookingDate.Date.Add(dto.StartTime);
 
@@ -186,7 +187,7 @@ namespace ArenaApplication.Services
             if (booking == null)
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
 
-            if (booking.Status == BookingStatus.Cancelled)
+            if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Expired)
                 return Result<BookingDto>.Failure(_localizer["CancelledBookingCannotBeRescheduled"]);
 
             var localTime = DateTime.UtcNow.AddHours(3);
@@ -240,7 +241,8 @@ namespace ArenaApplication.Services
                 b.BookingDate.Date >= startDate &&
                 b.BookingDate.Date <= endDate &&
                 b.Id != bookingId &&
-                b.Status != BookingStatus.Cancelled);
+                b.Status != BookingStatus.Cancelled &&
+                b.Status != BookingStatus.Expired);
 
             var targetDateTime = dto.BookingDate.Date.Add(dto.StartTime);
 
