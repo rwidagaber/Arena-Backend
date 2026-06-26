@@ -31,6 +31,8 @@
                     <option value="" selected="@(selectedStatus is null ? "selected" : null)">@Localizer["All"]</option>
                     <option value="Confirmed" selected="@(selectedStatus == BookingStatus.Confirmed ? "selected" : null)">@Localizer["Confirmed"]</option>
                     <option value="Cancelled" selected="@(selectedStatus == BookingStatus.Cancelled ? "selected" : null)">@Localizer["Cancelled"]</option>
+                    <option value="Completed" selected="@(selectedStatus == BookingStatus.Completed ? "selected" : null)">@Localizer["Completed"]</option>
+                    <option value="Expired" selected="@(selectedStatus == BookingStatus.Expired ? "selected" : null)">@Localizer["Expired"]</option>
                 </select>
             </div>
             <div class="col-12 col-md-4">

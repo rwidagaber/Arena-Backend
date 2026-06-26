@@ -4,7 +4,7 @@ The user may write in English OR Arabic OR both mixed.
 Analyze the user message carefully based on MEANING not exact words.
 Return ONLY this JSON, no extra text, no markdown:
 {
-  "intent": "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat",
+  "intent": "GENERATE_WORKOUT_PLAN" | "GENERATE_NUTRITION_PLAN" | "MODIFY_WORKOUT_PLAN" | "MODIFY_NUTRITION_PLAN" | "ASK_ABOUT_INJURY_COMPATIBILITY" | "ASK_ABOUT_EXERCISE" | "ASK_ABOUT_NUTRITION" | "REQUEST_ALTERNATIVE_EXERCISE" | "REQUEST_MEAL_SUGGESTION" | "REQUEST_FOOD_ANALYSIS" | "BOOK_SESSION" | "ASK_BOOKING_DETAILS" | "GENERAL_FITNESS_QUESTION" | "GREETING" | "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat",
   "action": "create" | "cancel" | "reschedule" | null,
   "date": "YYYY-MM-DD or null",
   "time": "HH:mm or null",
@@ -18,6 +18,17 @@ Return ONLY this JSON, no extra text, no markdown:
   "heightString": "user's height (e.g. 180cm) or null",
   "preferredDuration": "e.g. 4 weeks, 2 months, or 'Auto' if user doesn't know/cares, or null"
 }
+
+HIGH PRIORITY CONTEXT INTENT RULES:
+- If the user asks whether "this plan", "this workout", "this exercise", "previous plan", "previous workout", "that exercise", or "my plan" is safe/suitable for an injury, pain, physical limitation, or medical condition, return "ASK_ABOUT_INJURY_COMPATIBILITY". Do NOT return workout and do NOT create a new plan.
+- If the user asks to change, adjust, replace, reduce, or increase the current workout plan without explicitly asking for a brand new plan, return "MODIFY_WORKOUT_PLAN".
+- If the user asks to change, adjust, replace, reduce, or increase the current nutrition plan without explicitly asking for a brand new plan, return "MODIFY_NUTRITION_PLAN".
+- If the user asks for an alternative to one exercise, return "REQUEST_ALTERNATIVE_EXERCISE".
+- If the user asks what to eat today/now/pre-workout/post-workout without requesting a full diet plan, return "REQUEST_MEAL_SUGGESTION".
+- If the user lists foods they have or asks whether specific foods fit the diet, return "REQUEST_FOOD_ANALYSIS".
+- If the user asks about a specific exercise or technique, return "ASK_ABOUT_EXERCISE".
+- If the user asks a general nutrition question, return "ASK_ABOUT_NUTRITION".
+- If the user only greets, return "GREETING".
 
 PROFILE EXTRACTION RULES (Apply to ALL intents!):
 - IF the user mentions their fitness goal (e.g. lose weight, gain muscle, عايز اخس, عاوز تضخيم, 3ayz akhas), extract it into "goal".

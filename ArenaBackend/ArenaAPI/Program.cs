@@ -188,9 +188,11 @@ namespace ArenaAPI
             {
                 options.AddPolicy("AllowAll", policy =>
                     policy.WithOrigins(
-                              "http://localhost:4200",
-                              "https://localhost:4200",
-                              "https://browser-eosin-two.vercel.app")
+    "http://localhost:4200",
+    "https://localhost:4200",
+    "https://arena-frontend-r3nh-git-dev-rwidagabers-projects.vercel.app",
+    "https://arena-frontend-r3nh-bmvg1y355-rwidagabers-projects.vercel.app"
+)
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
@@ -211,6 +213,13 @@ namespace ArenaAPI
                     await context.Database.MigrateAsync();
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
+
+                // ── Hangfire Recurring No-Show Penalty Job ────────────────────
+                var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+                recurringJobManager.AddOrUpdate<INoShowPenaltyService>(
+                    "NoShowPenaltyJob",
+                    service => service.ProcessNoShowPenaltiesAsync(CancellationToken.None),
+                    Cron.Minutely());
 
                 // ── Init pgvector schema on Neon (idempotent) ────────────
                 // Creates the MemberHealthVectors table + HNSW index if they don't exist.

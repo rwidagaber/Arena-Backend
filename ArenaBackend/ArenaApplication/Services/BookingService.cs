@@ -157,8 +157,16 @@ namespace ArenaApplication.Services
                 return Result<BookingDto>.Failure(_localizer["BookingNotFound"]);
 
             if (booking.Status == BookingStatus.Cancelled)
+            {
                 return Result<BookingDto>.Failure(_localizer["BookingAlreadyCancelled"]);
+            }
 
+            var localTime = DateTime.UtcNow.AddHours(3);
+            var bookingDateTime = booking.BookingDate.Date.Add(booking.StartTime);
+            if ((bookingDateTime - localTime).TotalHours < 5)
+            {
+                return Result<BookingDto>.Failure(_localizer["CannotCancelWithin5Hours"]);
+            }
             booking.Status = BookingStatus.Cancelled;
 
             await _bookingRepo.UpdateAsync(booking);

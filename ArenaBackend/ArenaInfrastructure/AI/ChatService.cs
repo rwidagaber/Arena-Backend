@@ -216,6 +216,7 @@ namespace ArenaInfrastructure.AI
             if (intent != null)
             {
                 intent.RawMessage = userMessage;
+                intent.Intent = NormalizeIntent(intent.Intent, userMessage, history);
 
                 bool profileUpdated = false;
                 if (!string.IsNullOrWhiteSpace(intent.Goal)) { profile.Goal = intent.Goal; profileUpdated = true; }
@@ -283,7 +284,7 @@ namespace ArenaInfrastructure.AI
                 reply = reply.Replace(planDataMatch.Value, "").TrimEnd();
             }
 
-            reply = TruncateForStorage(reply);
+            reply = TruncateForStorage(FormatUserVisibleReply(reply, intent?.Intent, isArabic));
 
             // ✅ Step 6 — Save AI reply
             _context.ChatMessages.Add(new ChatMessage
@@ -810,6 +811,39 @@ namespace ArenaInfrastructure.AI
                         var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
                         var healthAwareUserMessage = BuildHealthAwareUserMessage(userMessage, healthContext);
 
+                        // If the user is asking a GENERAL food question (no specific foods listed),
+                        // answer directly as a coach instead of asking them to list available foods.
+                        if (!UserMentionsSpecificFoods(userMessage))
+                        {
+                            var userContext = await BuildFullConversationContextAsync(profile, history);
+                            var systemPrompt = PromptLoader.GetChatSystemPrompt(
+                                userContext,
+                                memberName,
+                                GetLanguageInstruction(isArabic, userMessage));
+
+                            var relevantKnowledge = await _ragService.SearchAsync(userMessage, topK: 5);
+                            if (!string.IsNullOrEmpty(relevantKnowledge))
+                                systemPrompt += $"""
+
+
+        === RELEVANT FITNESS KNOWLEDGE ===
+        {relevantKnowledge}
+        ==================================
+        """;
+
+                            if (!string.IsNullOrEmpty(healthContext))
+                                systemPrompt += $"""
+
+
+        === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+        {healthContext}
+        ===============================================================
+        """;
+
+                            return await _gemini.GetCompletionAsync(systemPrompt, history, userMessage);
+                        }
+
+                        // User listed specific food items — use the food-analysis JSON pipeline.
                         var foodPrompt = PromptLoader.GetFoodAnalysisPrompt(
                             name: memberName,
                             goal: profile.Goal ?? "General Fitness",
@@ -818,10 +852,46 @@ namespace ArenaInfrastructure.AI
                             weight: (profile.Weight ?? 70).ToString(),
                             userMessage: healthAwareUserMessage);
 
-                        return await _gemini.GetCompletionAsync(
+                        var rawFoodReply = await _gemini.GetCompletionAsync(
                             foodPrompt,
                             history,
                             healthAwareUserMessage);
+
+                        return FormatNutritionJsonReply(rawFoodReply, isArabic);
+                    }
+                case "ask_about_injury_compatibility":
+                    {
+                        var userContext = await BuildFullConversationContextAsync(profile, history);
+                        var activeWorkout = await GetActiveWorkoutPlanContextAsync(profile.Id);
+                        if (string.IsNullOrWhiteSpace(activeWorkout))
+                        {
+                            return isArabic
+                                ? "\u0645\u062d\u062a\u0627\u062c \u062e\u0637\u0629 \u062a\u0645\u0631\u064a\u0646 \u0645\u062d\u0641\u0648\u0638\u0629 \u0623\u0648\u0644\u0627\u064b \u0639\u0634\u0627\u0646 \u0623\u0642\u064a\u0651\u0645\u0647\u0627 \u0639\u0644\u0649 \u0625\u0635\u0627\u0628\u062a\u0643. \u0644\u0648 \u0639\u0646\u062f\u0643 \u062e\u0637\u0629 \u0645\u0639\u064a\u0646\u0629\u060c \u0627\u0628\u0639\u062a\u0647\u0627 \u0644\u064a \u0648\u0647\u062d\u0644\u0644\u0647\u0627 \u062a\u0645\u0631\u064a\u0646 \u0628\u062a\u0645\u0631\u064a\u0646."
+                                : "I need an active saved workout plan before I can assess it against your injury. Send me the plan if it is not saved here, and I will review it exercise by exercise.";
+                        }
+
+                        var prompt = $"""
+                        You are Arena AI, a professional fitness coach.
+                        Reply in Arabic only, with a friendly coaching tone.
+
+                        Analyze the ACTIVE workout plan against the member's injuries and limitations.
+                        Do NOT create a new workout plan.
+                        For every exercise, classify it exactly as one of:
+                        - \u2705 Safe
+                        - \u26a0\ufe0f Use With Caution
+                        - \u274c Not Recommended
+
+                        Explain why, and give a safer alternative when caution or not recommended is used.
+                        End with "\ud83d\udca1 Final Recommendation" and say whether the plan is suitable overall.
+
+                        === FULL MEMBER CONTEXT ===
+                        {userContext}
+
+                        === ACTIVE WORKOUT PLAN TO ANALYZE ===
+                        {activeWorkout}
+                        """;
+
+                        return await _gemini.GetCompletionAsync(prompt, history, userMessage);
                     }
                 case "attendance":
                     {
@@ -851,7 +921,7 @@ namespace ArenaInfrastructure.AI
 
                         var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
 
-                        var userContext = UserContextBuilder.Build(profile);
+                        var userContext = await BuildFullConversationContextAsync(profile, history);
                         var systemPrompt = PromptLoader.GetChatSystemPrompt(
                             userContext,
                             memberName,
@@ -896,6 +966,281 @@ namespace ArenaInfrastructure.AI
         }
 
         // ✅ Helper Methods
+        private async Task<string> BuildFullConversationContextAsync(
+            ArenaDomain.Entities.MemberProfile profile,
+            List<ChatMessageDto> history)
+        {
+            var workoutPlans = await _context.WorkoutPlans
+                .Include(p => p.WorkoutDays)
+                    .ThenInclude(d => d.Exercises)
+                        .ThenInclude(e => e.Exercise)
+                .Where(p => p.MemberProfileId == profile.Id && !p.IsDeleted)
+                .OrderByDescending(p => p.IsActive)
+                .ThenByDescending(p => p.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            var nutritionPlans = await _context.NutritionPlans
+                .Include(p => p.Meals)
+                .Where(p => p.MemberProfileId == profile.Id && !p.IsDeleted)
+                .OrderByDescending(p => p.IsActive)
+                .ThenByDescending(p => p.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            var context = UserContextBuilder.Build(
+                profile,
+                nutritionPlans: nutritionPlans,
+                workoutPlans: workoutPlans);
+
+            var historyText = history.Count == 0
+                ? "No previous messages in this conversation."
+                : string.Join("\n", history.Select(m => $"{m.Sender}: {m.MessageText}"));
+
+            return $"""
+            {context}
+
+            === RECENT CONVERSATION HISTORY ===
+            {historyText}
+
+            === REFERENCE RESOLUTION RULES ===
+            When the member says this plan, this workout, this exercise, this meal, previous plan, previous workout, that exercise, or my plan, connect it to the latest active saved plan above.
+            Never create a new workout or nutrition plan unless the member explicitly asks to generate or create one.
+            """;
+        }
+
+        private async Task<string> GetActiveWorkoutPlanContextAsync(Guid memberProfileId)
+        {
+            var plan = await _context.WorkoutPlans
+                .Include(p => p.WorkoutDays)
+                    .ThenInclude(d => d.Exercises)
+                        .ThenInclude(e => e.Exercise)
+                .Where(p => p.MemberProfileId == memberProfileId && p.IsActive && !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (plan == null)
+                return string.Empty;
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"Plan: {plan.Name}");
+            sb.AppendLine($"Duration: {plan.DurationWeeks} weeks");
+            foreach (var day in plan.WorkoutDays.OrderBy(d => d.DayNumber))
+            {
+                sb.AppendLine($"Day {day.DayNumber} - {day.DayName}");
+                foreach (var exercise in day.Exercises)
+                {
+                    var name = !string.IsNullOrWhiteSpace(exercise.ExrciseName)
+                        ? exercise.ExrciseName
+                        : exercise.Exercise?.Name ?? "Exercise";
+                    sb.AppendLine($"- {name}: {exercise.Sets} sets x {exercise.Reps} reps, rest {exercise.RestSeconds ?? 0}s, notes: {exercise.Notes ?? "None"}");
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static string NormalizeIntent(string? detectedIntent, string userMessage, List<ChatMessageDto> history)
+        {
+            var text = userMessage.ToLowerInvariant();
+            var normalized = detectedIntent?.Trim();
+            normalized = normalized switch
+            {
+                "GENERATE_WORKOUT_PLAN" => "workout",
+                "GENERATE_NUTRITION_PLAN" => "nutrition",
+                "MODIFY_WORKOUT_PLAN" => "chat",
+                "MODIFY_NUTRITION_PLAN" => "chat",
+                "ASK_ABOUT_INJURY_COMPATIBILITY" => "ask_about_injury_compatibility",
+                "ASK_ABOUT_EXERCISE" => "chat",
+                "ASK_ABOUT_NUTRITION" => "chat",
+                "REQUEST_ALTERNATIVE_EXERCISE" => "chat",
+                "REQUEST_MEAL_SUGGESTION" => "food_analysis",
+                "REQUEST_FOOD_ANALYSIS" => "food_analysis",
+                "BOOK_SESSION" => "booking",
+                "ASK_BOOKING_DETAILS" => "booking",
+                "GENERAL_FITNESS_QUESTION" => "chat",
+                "GREETING" => "chat",
+                _ => string.IsNullOrWhiteSpace(normalized) ? "chat" : normalized
+            };
+
+            if (ContainsAny(text,
+                "suitable for my injury", "safe for my injury", "okay for my injury", "with my injury", "injury compatible",
+                "hurt my", "bad for my knee", "bad for my back",
+                "\u064a\u0646\u0627\u0633\u0628 \u0627\u0635\u0627\u0628\u062a\u064a", "\u0645\u0646\u0627\u0633\u0628 \u0644\u0627\u0635\u0627\u0628\u062a\u064a", "\u064a\u0646\u0641\u0639 \u0645\u0639 \u0627\u0644\u0627\u0635\u0627\u0628\u0629", "\u0622\u0645\u0646 \u0644\u0627\u0635\u0627\u0628\u062a\u064a"))
+                return "ask_about_injury_compatibility";
+
+            if (ContainsAny(text, "this plan", "this workout", "previous plan", "previous workout", "my plan", "that exercise",
+                "\u0627\u0644\u062e\u0637\u0629 \u062f\u064a", "\u0627\u0644\u062a\u0645\u0631\u064a\u0646 \u062f\u0647", "\u062e\u0637\u062a\u064a", "\u0627\u0644\u062e\u0637\u0629 \u0627\u0644\u0644\u064a \u0641\u0627\u062a\u062a"))
+            {
+                if (ContainsAny(text, "injury", "injuries", "pain", "knee", "back", "\u0627\u0635\u0627\u0628\u0629", "\u0627\u0644\u0627\u0635\u0627\u0628\u0629", "\u0648\u062c\u0639", "\u0631\u0643\u0628\u0629", "\u0638\u0647\u0631"))
+                    return "ask_about_injury_compatibility";
+
+                if (normalized is "workout" or "nutrition" or "both")
+                    return "chat";
+            }
+
+            return normalized;
+        }
+
+        /// <summary>
+        /// Returns true when the message mentions specific food items (so the food-analysis
+        /// JSON pipeline is appropriate). Returns false for general questions like
+        /// "what should I eat before training?" where a direct coaching reply is better.
+        /// </summary>
+        private static bool UserMentionsSpecificFoods(string userMessage)
+        {
+            if (string.IsNullOrWhiteSpace(userMessage))
+                return false;
+
+            var text = userMessage.ToLowerInvariant();
+
+            // Arabic/English patterns that indicate "I have X food" or "can I eat X"
+            // These trigger the food-analysis pipeline.
+            var specificFoodPatterns = new[]
+            {
+                "عندي ", "عندى ", "عنده ", "i have ", "i've got ", "i got ",
+                "لدي ", "عندنا ", "can i eat ", "is it ok to eat ", "is it okay to eat ",
+                "هاكل ", "هآكل ", "ممكن اكل ", "ممكن آكل ",
+                "كام جرام ", "كام غرام ", "how many grams", "how much protein in",
+                "كالوريز ", "كالوريه ", "calories in ", "protein in ",
+                "بيض", "فراخ", "أرز", "رز", "جبن", "لبن", "موز", "تونة", "تونه",
+                "chicken", "rice", "eggs", "banana", "tuna", "oats", "milk", "cheese",
+                "bread", "عيش", "خبز", "pasta", "مكرونة", "sweet potato", "بطاطا",
+                "pizza", "burger", "فول", "عدس", "زبادي", "yogurt", "peanut butter",
+                "nuts", "مكسرات", "whey", "protein shake", "protein bar"
+            };
+
+            return specificFoodPatterns.Any(p => text.Contains(p));
+        }
+
+        private static string FormatUserVisibleReply(string reply, string? intent, bool isArabic)
+        {
+            if (string.IsNullOrWhiteSpace(reply))
+                return reply;
+
+            var cleaned = Regex.Replace(reply, @"<PLAN_DATA>\s*{.*?}\s*</PLAN_DATA>", string.Empty, RegexOptions.Singleline).Trim();
+
+            if (cleaned.Contains("\"foodPlan\"", StringComparison.OrdinalIgnoreCase))
+                return FormatNutritionJsonReply(cleaned, true);
+
+            if (LooksLikeJson(cleaned))
+            {
+                if (intent == "food_analysis" || cleaned.Contains("\"foodPlan\"", StringComparison.OrdinalIgnoreCase))
+                    return FormatNutritionJsonReply(cleaned, true);
+
+                return isArabic
+                    ? "\u062a\u0645\u0627\u0645\u060c \u062d\u0644\u0644\u062a \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0648\u062c\u0647\u0632\u062a \u0644\u0643 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0628\u0634\u0643\u0644 \u0648\u0627\u0636\u062d. \u0644\u0648 \u062d\u0627\u0628\u0628 \u062a\u0641\u0627\u0635\u064a\u0644 \u0623\u0643\u062b\u0631\u060c \u0627\u0633\u0623\u0644\u0646\u064a \u0639\u0646 \u0623\u064a \u062c\u0632\u0621."
+                    : "I processed the result and can walk you through any part in simple terms.";
+            }
+
+            return cleaned;
+        }
+
+        private static bool LooksLikeJson(string value)
+        {
+            var trimmed = value.Trim();
+            return (trimmed.StartsWith("{") && trimmed.EndsWith("}")) ||
+                   (trimmed.StartsWith("[") && trimmed.EndsWith("]"));
+        }
+
+        private static string FormatNutritionJsonReply(string rawReply, bool forceArabic)
+        {
+            var clean = ExtractJsonObject(rawReply);
+            try
+            {
+                using var doc = JsonDocument.Parse(clean);
+                var root = doc.RootElement;
+                if (!root.TryGetProperty("foodPlan", out var foodPlan) || foodPlan.ValueKind != JsonValueKind.Array)
+                    return BuildJsonBlockedFallback();
+
+                var sb = new StringBuilder();
+                AppendMealSection(sb, "\ud83c\udf73 \u0627\u0644\u0641\u0637\u0627\u0631", foodPlan, "breakfast");
+                AppendMealSection(sb, "\ud83c\udf57 \u0627\u0644\u063a\u062f\u0627\u0621", foodPlan, "lunch");
+                AppendMealSection(sb, "\ud83c\udfcb\ufe0f \u0642\u0628\u0644 \u0627\u0644\u062a\u0645\u0631\u064a\u0646", foodPlan, "pre-workout");
+                AppendMealSection(sb, "\ud83d\udcaa \u0628\u0639\u062f \u0627\u0644\u062a\u0645\u0631\u064a\u0646", foodPlan, "post-workout");
+
+                if (sb.Length == 0)
+                    AppendMealSection(sb, "\ud83c\udf7d\ufe0f \u0627\u0644\u0648\u062c\u0628\u0629 \u0627\u0644\u0645\u0642\u062a\u0631\u062d\u0629", foodPlan, null);
+
+                if (root.TryGetProperty("totals", out var totals))
+                {
+                    sb.AppendLine("\ud83d\udcca \u0645\u0644\u062e\u0635 \u0627\u0644\u064a\u0648\u0645");
+                    sb.AppendLine($"\u0627\u0644\u0633\u0639\u0631\u0627\u062a: {GetNumber(totals, "calories")} \u0633\u0639\u0631");
+                    sb.AppendLine($"\u0627\u0644\u0628\u0631\u0648\u062a\u064a\u0646: {GetNumber(totals, "proteinGrams")} \u062c\u0631\u0627\u0645");
+                    sb.AppendLine($"\u0627\u0644\u0643\u0627\u0631\u0628\u0648\u0647\u064a\u062f\u0631\u0627\u062a: {GetNumber(totals, "carbsGrams")} \u062c\u0631\u0627\u0645");
+                    sb.AppendLine($"\u0627\u0644\u062f\u0647\u0648\u0646: {GetNumber(totals, "fatGrams")} \u062c\u0631\u0627\u0645");
+                    sb.AppendLine();
+                }
+
+                sb.AppendLine("\ud83d\udca1 \u062a\u0648\u0635\u064a\u0629 \u0627\u0644\u0643\u0648\u062a\u0634");
+                if (root.TryGetProperty("sufficiencyAssessment", out var assessment) &&
+                    assessment.TryGetProperty("summary", out var summary))
+                    sb.AppendLine(summary.GetString());
+
+                if (root.TryGetProperty("recommendations", out var recommendations) && recommendations.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in recommendations.EnumerateArray())
+                        sb.AppendLine($"- {item.GetString()}");
+                }
+
+                return sb.ToString().Trim();
+            }
+            catch
+            {
+                return BuildJsonBlockedFallback();
+            }
+        }
+
+        private static string ExtractJsonObject(string rawReply)
+        {
+            var clean = AIHelper.CleanJson(rawReply);
+            if (LooksLikeJson(clean))
+                return clean;
+
+            var start = rawReply.IndexOf('{');
+            var end = rawReply.LastIndexOf('}');
+            return start >= 0 && end > start
+                ? rawReply.Substring(start, end - start + 1).Trim()
+                : clean;
+        }
+
+        private static string BuildJsonBlockedFallback() =>
+            "\u062d\u0644\u0644\u062a \u0627\u0644\u0623\u0643\u0644 \u0644\u0643\u060c \u0628\u0633 \u0645\u062d\u062a\u0627\u062c \u0623\u0639\u064a\u062f \u0635\u064a\u0627\u063a\u0629 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0628\u0634\u0643\u0644 \u0623\u0648\u0636\u062d. \u0642\u0648\u0644\u064a \u0627\u0644\u0623\u0643\u0644 \u0627\u0644\u0645\u062a\u0627\u062d \u0639\u0646\u062f\u0643 \u0648\u0647\u0623\u0631\u062a\u0628\u0647 \u0644\u0643 \u0643\u0648\u062c\u0628\u0629 \u0639\u0631\u0628\u064a\u0629 \u0648\u0627\u0636\u062d\u0629.";
+
+        private static void AppendMealSection(StringBuilder sb, string title, JsonElement foodPlan, string? mealKey)
+        {
+            var items = foodPlan.EnumerateArray()
+                .Where(item => mealKey == null ||
+                               (item.TryGetProperty("mealTiming", out var timing) &&
+                                timing.GetString()?.Contains(mealKey, StringComparison.OrdinalIgnoreCase) == true))
+                .ToList();
+
+            if (items.Count == 0)
+                return;
+
+            sb.AppendLine(title);
+            foreach (var item in items)
+            {
+                sb.AppendLine($"{GetString(item, "foodName")} - {GetString(item, "recommendedAmount")}");
+                sb.AppendLine($"\u0627\u0644\u0637\u0631\u064a\u0642\u0629: {GetString(item, "reason")}");
+                sb.AppendLine($"\u0627\u0644\u0633\u0639\u0631\u0627\u062a: {GetNumber(item, "calories")} | \u0628\u0631\u0648\u062a\u064a\u0646: {GetNumber(item, "proteinGrams")}g | \u0643\u0627\u0631\u0628: {GetNumber(item, "carbsGrams")}g");
+            }
+            sb.AppendLine("---");
+        }
+
+        private static string GetString(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var property) ? property.GetString() ?? "-" : "-";
+
+        private static string GetNumber(JsonElement element, string propertyName)
+        {
+            if (!element.TryGetProperty(propertyName, out var property))
+                return "0";
+
+            return property.ValueKind == JsonValueKind.Number && property.TryGetDecimal(out var value)
+                ? value.ToString("0.##", CultureInfo.InvariantCulture)
+                : property.ToString();
+        }
+
         private async Task<ChatConversation> CreateNewConversation(
             Guid memberProfileId, string firstMessage)
         {

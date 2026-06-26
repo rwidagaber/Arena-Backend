@@ -409,6 +409,7 @@ html[data-theme="light"] .manage-user-card:hover {
 .action-icon-btn {
     width: 34px !important;
     height: 34px !important;
+    flex-shrink: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -634,7 +635,7 @@ html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-chi
 }
 
 /* Desktop column widths */
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
     .col-user-name {
         width: 18%;
     }
@@ -690,38 +691,6 @@ html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-chi
 
 /* Tablet adjustments */
 @media (min-width: 768px) and (max-width: 1024px) {
-    .user-mgmt-table th {
-        font-size: 0.65rem !important;
-        padding: 0.75rem 0.6rem !important;
-    }
-
-    .user-mgmt-table tbody tr td {
-        padding: 0.75rem 0.6rem !important;
-        font-size: 0.85rem !important;
-    }
-
-    .user-name-cell {
-        font-size: 0.9rem !important;
-    }
-
-    .user-contact-cell a {
-        font-size: 0.8rem !important;
-    }
-
-    .user-contact-cell .contact-phone {
-        font-size: 0.75rem !important;
-    }
-
-    .action-icon-btn {
-        width: 30px !important;
-        height: 30px !important;
-    }
-
-    .actions-cell .action-icon-btn svg {
-        width: 14px;
-        height: 14px;
-    }
-
     .user-details-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
@@ -733,9 +702,9 @@ html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-chi
 }
 
 /* ----------------------------------------------------
-   MOBILE RESPONSIVE CARDS (< 768px)
+   MOBILE & TABLET RESPONSIVE CARDS (<= 1024px)
    ---------------------------------------------------- */
-@media (max-width: 767.98px) {
+@media (max-width: 1024px) {
 
     /* Table wrapper becomes transparent */
     .user-table-wrap {
@@ -1102,7 +1071,7 @@ html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-
 }
 
 /* Desktop styles for subscription history table */
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
     .user-history-table {
         table-layout: fixed !important;
     }
@@ -1310,8 +1279,8 @@ html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-
     border-right-color: var(--accent-color) !important;
 }
 
-/* Mobile & Tablet Overrides for Light Mode Tables (< 768px) */
-@media (max-width: 767.98px) {
+/* Mobile & Tablet Overrides for Light Mode Tables (<= 1024px) */
+@media (max-width: 1024px) {
     html[data-theme="light"] .user-mgmt-table tbody tr,
     html[data-theme="light"] .user-history-table tbody tr {
         background-color: var(--card-bg) !important;
