@@ -52,6 +52,7 @@ namespace ArenaApplication.Services
             var plans = await _nutritionPlanRepo.GetAll()
                 .Include(np => np.Meals)
                 .Where(np => np.MemberProfileId == memberProfileId && !np.IsDeleted)
+                .OrderBy(np => np.CreatedAt)
                 .ToListAsync();
 
             var dtos = _mapper.Map<List<NutritionPlanResponseDto>>(plans);
