@@ -716,10 +716,11 @@ namespace ArenaInfrastructure.AI
                             ? TimeSpan.Parse(intent.Time)
                             : TimeSpan.Zero;
 
+                        // Only confirmed bookings count toward crowd/traffic
+                        // (cancelled, pending, expired, etc. are excluded).
                         var dayBookings = _bookingRepo.GetAll()
                             .Where(b => b.BookingDate.Date == targetDate.Date
-                                && b.Status != BookingStatus.Cancelled
-                                && b.Status != BookingStatus.Expired)
+                                && b.Status == BookingStatus.Confirmed)
                             .ToList();
 
                         // Cancel/Reschedule → skip crowd
@@ -791,10 +792,11 @@ namespace ArenaInfrastructure.AI
                         var same = dayBookings.Count(b =>
                             Math.Abs((b.StartTime - targetTime).TotalHours) < 1);
 
+                        // 5+ confirmed bookings in the same slot = traffic/busy.
                         var crowd = same switch
                         {
                             < 3 => isArabic ? "🟢 الجيم هيكون هادي." : "🟢 The gym will be quiet.",
-                            < 7 => isArabic ? "🟡 في ناس شوية." : "🟡 Moderate crowd expected.",
+                            < 5 => isArabic ? "🟡 في ناس شوية." : "🟡 Moderate crowd expected.",
                             _ => isArabic ? "🔴 الجيم هيكون زحمة." : "🔴 The gym will be busy."
                         };
 
