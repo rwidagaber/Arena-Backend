@@ -304,7 +304,12 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -314,7 +319,7 @@ namespace ArenaInfrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Equipments");
+                    b.ToTable("Equipments", (string)null);
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Gym.GymSetting", b =>
@@ -1478,8 +1483,16 @@ namespace ArenaInfrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<string>("DescriptionAr")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("Equipment")
                         .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EquipmentAr")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -1498,8 +1511,16 @@ namespace ArenaInfrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("MuscleGroupAr")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NameAr")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
@@ -1537,7 +1558,12 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("DifficultyLevel")
                         .IsRequired()
@@ -1548,11 +1574,21 @@ namespace ArenaInfrastructure.Migrations
 
                     b.Property<string>("MuscleGroup")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MuscleGroupAr")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1562,7 +1598,7 @@ namespace ArenaInfrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExerciseCatalogItems");
+                    b.ToTable("ExerciseCatalogItems", (string)null);
                 });
 
             modelBuilder.Entity("ArenaDomain.Entities.Workout.ExerciseEquipmentRequirement", b =>

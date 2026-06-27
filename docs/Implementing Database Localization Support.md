@@ -214,6 +214,21 @@ The Arabic translations to be included in seeder data:
 
 ---
 
+### Phase 10 — Migrate Past Arabic Exercises Data
+
+---
+
+#### [MODIFY] [EquipmentAndExerciseSeeder.cs](file:///d:/Learn/ITI/Final%20Project/Arena/ArenaBackend/ArenaInfrastructure/Data/DataSeeding/EquipmentAndExerciseSeeder.cs)
+Add a new method `TranslateExistingRecordsAsync(AppDbContext context, IGeminiCompletionService gemini)`.
+- It will fetch all `Exercises` where `NameAr` is null.
+- Since past data might be in Arabic (because the AI responded in Arabic based on user language), it will prompt Gemini to take the existing `Name`, `Description`, `MuscleGroup`, `Equipment` and translate/sort them into explicit English and Arabic properties.
+- Update the records and call `SaveChangesAsync`.
+
+**Verification**:
+Run the seeder method from a test endpoint or controller to verify it translates existing Arabic data and populates `NameAr`.
+
+---
+
 ## Verification Plan
 
 ### Automated Tests

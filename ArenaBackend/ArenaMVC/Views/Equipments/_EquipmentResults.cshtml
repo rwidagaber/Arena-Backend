@@ -28,7 +28,15 @@
                     @foreach (var equipment in Model.Items)
                     {
                         <tr class="user-row">
-                            <td data-label="@Localizer["Name"]" class="user-name-cell">@equipment.Name</td>
+                            <td data-label="@Localizer["Name"]" class="user-name-cell">
+                                <div class="d-flex flex-column">
+                                    <span class="fw-semibold" style="color: var(--foreground);">@equipment.Name</span>
+                                    @if (!string.IsNullOrEmpty(equipment.NameAr))
+                                    {
+                                        <span class="text-muted small mt-1" dir="rtl" style="color: var(--muted-foreground) !important;">@equipment.NameAr</span>
+                                    }
+                                </div>
+                            </td>
                             <td data-label="@Localizer["Category"]" class="user-contact-cell">
                                 <span class="badge bg-secondary">@equipment.Category</span>
                             </td>

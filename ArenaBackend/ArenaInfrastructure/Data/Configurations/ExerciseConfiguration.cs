@@ -14,16 +14,32 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
                .IsRequired()
                .HasMaxLength(150);
 
+        builder.Property(e => e.NameAr)
+               .IsRequired(false)
+               .HasMaxLength(150);
+
         builder.Property(e => e.Description)
                .IsRequired()
+               .HasMaxLength(1000);
+
+        builder.Property(e => e.DescriptionAr)
+               .IsRequired(false)
                .HasMaxLength(1000);
 
         builder.Property(e => e.MuscleGroup)
                .IsRequired()
                .HasMaxLength(100);
 
+        builder.Property(e => e.MuscleGroupAr)
+               .IsRequired(false)
+               .HasMaxLength(100);
+
         builder.Property(e => e.Equipment)
                .IsRequired()
+               .HasMaxLength(100);
+
+        builder.Property(e => e.EquipmentAr)
+               .IsRequired(false)
                .HasMaxLength(100);
 
         builder.Property(e => e.VideoUrl)

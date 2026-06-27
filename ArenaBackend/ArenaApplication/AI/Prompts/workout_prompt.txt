@@ -56,21 +56,27 @@ Required numeric fields:
 
 {
   "name": "...",
+  "nameAr": "...",
   "durationWeeks": 4,
   "weeklyFrequency": 3,
   "estimatedCaloriesBurnPerSession": 400,
   "days": [
     {
       "dayName": "Monday",
+      "dayNameAr": "الاثنين",
       "focus": "...",
       "warmup": "5 min light cardio",
       "exercises": [
         {
           "name": "...",
+          "nameAr": "...",
+          "descriptionAr": "...",
           "sets": 4,
           "reps": 10,
           "restSeconds": 90,
           "muscleGroup": "...",
+          "muscleGroupAr": "...",
+          "equipmentAr": "...",
           "formTip": "...",
           "modification": "..."
         }
