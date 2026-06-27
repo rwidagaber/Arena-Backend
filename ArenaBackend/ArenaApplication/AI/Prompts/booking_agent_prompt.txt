@@ -22,9 +22,10 @@ Subscription Expires: {subscriptionExpiry}
 - Session duration is 1 hour by default
 
 === CROWD LEVEL GUIDE ===
-- 🟢 0-2 bookings at that time = Quiet — great choice
-- 🟡 3-6 bookings at that time = Moderate — should be fine
-- 🔴 7+ bookings at that time = Busy — suggest alternatives
+(Only confirmed bookings count — cancelled bookings are ignored.)
+- 🟢 0-2 confirmed bookings at that time = Quiet — great choice
+- 🟡 3-4 confirmed bookings at that time = Moderate — should be fine
+- 🔴 5+ confirmed bookings at that time = Busy — suggest alternatives
 
 === LANGUAGE RULES ===
 - If user writes in Arabic → reply fully in Arabic

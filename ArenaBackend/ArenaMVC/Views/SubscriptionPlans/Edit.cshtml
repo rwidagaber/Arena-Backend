@@ -6,6 +6,73 @@
 
 <link rel="stylesheet" href="~/css/subscription-admin.css" />
 
+<style>
+    .status-toggle-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .status-toggle-pill {
+        display: flex;
+        align-items: center;
+        position: relative;
+        width: 100%;
+        height: 44px;
+        background: #EF4444; /* Default: Inactive (Red) */
+        border: 1.5px solid #EF4444;
+        border-radius: 50px;
+        padding: 4px;
+        transition: background 0.3s ease, border-color 0.3s ease;
+        overflow: hidden;
+    }
+
+    .status-toggle-pill .pill-thumb {
+        position: absolute;
+        top: 4px;
+        inset-inline-start: 4px;
+        width: calc(50% - 4px);
+        height: calc(100% - 8px);
+        background: var(--card-bg, #ffffff);
+        border-radius: 50px;
+        transition: inset-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+        z-index: 1;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    .status-toggle-pill .pill-inactive,
+    .status-toggle-pill .pill-active {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        transition: color 0.3s ease;
+    }
+
+    /* Unchecked (Inactive) */
+    .status-toggle-pill .pill-inactive { color: #EF4444; }
+    .status-toggle-pill .pill-active { color: rgba(255, 255, 255, 0.85); }
+
+    /* Checked (Active) */
+    #isActiveCheckbox:checked ~ .status-toggle-pill {
+        background: #10B981;
+        border-color: #10B981;
+    }
+
+    #isActiveCheckbox:checked ~ .status-toggle-pill .pill-thumb {
+        inset-inline-start: 50%;
+    }
+
+    #isActiveCheckbox:checked ~ .status-toggle-pill .pill-inactive { color: rgba(255, 255, 255, 0.85); }
+    #isActiveCheckbox:checked ~ .status-toggle-pill .pill-active { color: #10B981; }
+</style>
+
 <div class="subscription-admin-container">
 	<div class="subscription-admin-header">
 		<h1><i data-lucide="edit-3" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["EditSubscriptionPlan"]</h1>
@@ -97,12 +164,14 @@
 							<div class="subscription-form-group">
 								<label asp-for="IsActive">@Localizer["Active"]</label>
 								<div style="margin-top: 0.5rem;">
-									<div class="form-check">
-										<input asp-for="IsActive" type="checkbox" class="form-check-input" id="isActive" />
-										<label class="form-check-label" for="isActive" style="color: var(--autonomous);">
-											@Localizer["EnableThisPlan"]
-										</label>
-									</div>
+									<label class="status-toggle-label" for="isActiveCheckbox">
+										<input asp-for="IsActive" type="checkbox" class="form-check-input visually-hidden" id="isActiveCheckbox" />
+										<div class="status-toggle-pill">
+											<span class="pill-inactive">@Localizer["Inactive"]</span>
+											<span class="pill-thumb"></span>
+											<span class="pill-active">@Localizer["Active"]</span>
+										</div>
+									</label>
 								</div>
 							</div>
 						</div>
