@@ -18,6 +18,7 @@ namespace ArenaInfrastructure.AI
     public class WorkoutPlanAIResponse
     {
         public string Name { get; set; } = string.Empty;
+        public string? NameAr { get; set; }
         public int DurationWeeks { get; set; }
         public List<WorkoutDayAIResponse> Days { get; set; } = [];
     }
@@ -25,15 +26,20 @@ namespace ArenaInfrastructure.AI
     public class WorkoutDayAIResponse
     {
         public string DayName { get; set; } = string.Empty;
+        public string? DayNameAr { get; set; }
         public List<WorkoutExerciseAIResponse> Exercises { get; set; } = [];
     }
 
     public class WorkoutExerciseAIResponse
     {
         public string Name { get; set; } = string.Empty;
+        public string? NameAr { get; set; }
+        public string? DescriptionAr { get; set; }
         public int Sets { get; set; }
         public int Reps { get; set; }
         public string MuscleGroup { get; set; } = string.Empty;
+        public string? MuscleGroupAr { get; set; }
+        public string? EquipmentAr { get; set; }
     }
 
     public class WorkoutAIService : IWorkoutAIService
@@ -266,9 +272,13 @@ namespace ArenaInfrastructure.AI
                         {
                             Id = Guid.NewGuid(),
                             Name = ex.Name,
+                            NameAr = ex.NameAr,
                             MuscleGroup = ex.MuscleGroup,
+                            MuscleGroupAr = ex.MuscleGroupAr,
                             Description = ex.Name,
+                            DescriptionAr = ex.DescriptionAr,
                             Equipment = "None",
+                            EquipmentAr = ex.EquipmentAr,
                             MemberProfileId = profile.Id
                         };
                         _context.Exercises.Add(existingExercise);
@@ -286,8 +296,22 @@ namespace ArenaInfrastructure.AI
                     exerciseDtos.Add(new WorkoutExerciseDto
                     {
                         Name = ex.Name,
+                        ExerciseId = existingExercise.Id,
                         Sets = ex.Sets,
-                        Reps = ex.Reps
+                        Reps = ex.Reps,
+                        Exercise = new ExerciseDto
+                        {
+                            Id = existingExercise.Id,
+                            Name = existingExercise.Name,
+                            NameAr = existingExercise.NameAr,
+                            Description = existingExercise.Description,
+                            DescriptionAr = existingExercise.DescriptionAr,
+                            MuscleGroup = existingExercise.MuscleGroup,
+                            MuscleGroupAr = existingExercise.MuscleGroupAr,
+                            Equipment = existingExercise.Equipment,
+                            EquipmentAr = existingExercise.EquipmentAr,
+                            MemberProfileId = existingExercise.MemberProfileId
+                        }
                     });
                 }
 

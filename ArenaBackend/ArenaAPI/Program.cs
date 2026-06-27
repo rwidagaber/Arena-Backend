@@ -214,6 +214,16 @@ namespace ArenaAPI
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
 
+                // ── Backfill missing Exercise localizations (MyMemory, no API key needed) ──
+                try
+                {
+                    await ExerciseLocalizationSeeder.SeedAsync(context);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Startup] ExerciseLocalizationSeeder failed (non-fatal): {ex.Message}");
+                }
+
                 // ── Hangfire Recurring No-Show Penalty Job ────────────────────
                 var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
                 recurringJobManager.AddOrUpdate<INoShowPenaltyService>(

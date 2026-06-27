@@ -55,6 +55,7 @@ namespace ArenaApplication.Services.Gym
                 {
                     Id = e.Id,
                     Name = e.Name,
+                    NameAr = e.NameAr,
                     Category = e.Category,
                     IsAvailable = e.IsAvailable
                 }).ToList();
@@ -88,6 +89,7 @@ namespace ArenaApplication.Services.Gym
                 {
                     Id = equipment.Id,
                     Name = equipment.Name,
+                    NameAr = equipment.NameAr,
                     Category = equipment.Category,
                     IsAvailable = equipment.IsAvailable
                 };
@@ -107,6 +109,7 @@ namespace ArenaApplication.Services.Gym
                 var equipment = new Equipment
                 {
                     Name = equipmentDto.Name,
+                    NameAr = equipmentDto.NameAr,
                     Category = equipmentDto.Category,
                     IsAvailable = equipmentDto.IsAvailable
                 };
@@ -129,6 +132,7 @@ namespace ArenaApplication.Services.Gym
                     return Result<bool>.Failure(_localizer["EquipmentNotFound"]);
 
                 equipment.Name = equipmentDto.Name;
+                equipment.NameAr = equipmentDto.NameAr;
                 equipment.Category = equipmentDto.Category;
                 equipment.IsAvailable = equipmentDto.IsAvailable;
 

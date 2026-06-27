@@ -20,16 +20,16 @@ namespace ArenaInfrastructure.Data.DataSeeding
             // ── Seed Equipment ──────────────────────────────────────────
             var equipments = new List<Equipment>
             {
-                new Equipment { Id = Guid.NewGuid(), Name = "Dumbbells", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Barbell", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Squat Rack", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Bench", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Pull-up Bar", Category = "Bodyweight", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Cable Machine", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Leg Press Machine", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Treadmill", Category = "Cardio", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Stationary Bike", Category = "Cardio", IsAvailable = true },
-                new Equipment { Id = Guid.NewGuid(), Name = "Kettlebell", Category = "Free Weights", IsAvailable = false } // Example unavailable equipment
+                new Equipment { Id = Guid.NewGuid(), Name = "Dumbbells", NameAr = "دمبلز", Category = "Free Weights", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Barbell", NameAr = "بار", Category = "Free Weights", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Squat Rack", NameAr = "رف السكوات", Category = "Strength Machine", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Bench", NameAr = "بنش", Category = "Free Weights", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Pull-up Bar", NameAr = "عقلة", Category = "Bodyweight", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Cable Machine", NameAr = "جهاز الكابل", Category = "Strength Machine", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Leg Press Machine", NameAr = "جهاز ضغط الأرجل", Category = "Strength Machine", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Treadmill", NameAr = "مشاية كهربائية", Category = "Cardio", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Stationary Bike", NameAr = "عجلة رياضية", Category = "Cardio", IsAvailable = true },
+                new Equipment { Id = Guid.NewGuid(), Name = "Kettlebell", NameAr = "كيتل بيل", Category = "Free Weights", IsAvailable = false } // Example unavailable equipment
             };
 
             await context.Equipments.AddRangeAsync(equipments);
@@ -38,16 +38,16 @@ namespace ArenaInfrastructure.Data.DataSeeding
             // ── Seed Exercises ──────────────────────────────────────────
             var exercises = new List<ExerciseCatalogItem>
             {
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Dumbbell Bench Press", MuscleGroup = "Chest", Description = "Press dumbbells while lying on a bench.", DifficultyLevel = "Intermediate" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Barbell Squat", MuscleGroup = "Legs", Description = "Squat with a barbell across the shoulders.", DifficultyLevel = "Intermediate" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Pull-up", MuscleGroup = "Back", Description = "Pull body up to a bar.", DifficultyLevel = "Intermediate" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Cable Row", MuscleGroup = "Back", Description = "Pull cable towards torso.", DifficultyLevel = "Beginner" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Leg Press", MuscleGroup = "Legs", Description = "Push weight away with legs.", DifficultyLevel = "Beginner" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Treadmill Running", MuscleGroup = "Cardio", Description = "Run on a treadmill.", DifficultyLevel = "Beginner" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Stationary Bike Cycling", MuscleGroup = "Cardio", Description = "Cycle on a stationary bike.", DifficultyLevel = "Beginner" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Kettlebell Swing", MuscleGroup = "Full Body", Description = "Swing kettlebell between legs and up to chest level.", DifficultyLevel = "Intermediate" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Push-up", MuscleGroup = "Chest", Description = "Push body up from floor.", DifficultyLevel = "Beginner" },
-                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Bodyweight Squat", MuscleGroup = "Legs", Description = "Squat without weights.", DifficultyLevel = "Beginner" }
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Dumbbell Bench Press", NameAr = "تمرين ضغط الصدر بالدمبلز", MuscleGroup = "Chest", MuscleGroupAr = "الصدر", Description = "Press dumbbells while lying on a bench.", DescriptionAr = "اضغط الدمبلز أثناء الاستلقاء على البنش.", DifficultyLevel = "Intermediate" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Barbell Squat", NameAr = "سكوات بالبار", MuscleGroup = "Legs", MuscleGroupAr = "الأرجل", Description = "Squat with a barbell across the shoulders.", DescriptionAr = "قم بتمرين القرفصاء مع وضع البار على الكتفين.", DifficultyLevel = "Intermediate" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Pull-up", NameAr = "عقلة", MuscleGroup = "Back", MuscleGroupAr = "الظهر", Description = "Pull body up to a bar.", DescriptionAr = "اسحب الجسم لأعلى إلى الشريط.", DifficultyLevel = "Intermediate" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Cable Row", NameAr = "تجديف بالكابل", MuscleGroup = "Back", MuscleGroupAr = "الظهر", Description = "Pull cable towards torso.", DescriptionAr = "اسحب الكابل نحو الجذع.", DifficultyLevel = "Beginner" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Leg Press", NameAr = "ضغط الأرجل", MuscleGroup = "Legs", MuscleGroupAr = "الأرجل", Description = "Push weight away with legs.", DescriptionAr = "ادفع الوزن بعيدًا باستخدام الأرجل.", DifficultyLevel = "Beginner" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Treadmill Running", NameAr = "الجري على المشاية", MuscleGroup = "Cardio", MuscleGroupAr = "كارديو", Description = "Run on a treadmill.", DescriptionAr = "اجرِ على المشاية الكهربائية.", DifficultyLevel = "Beginner" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Stationary Bike Cycling", NameAr = "ركوب الدراجة الثابتة", MuscleGroup = "Cardio", MuscleGroupAr = "كارديو", Description = "Cycle on a stationary bike.", DescriptionAr = "قم بركوب الدراجة الثابتة.", DifficultyLevel = "Beginner" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Kettlebell Swing", NameAr = "أرجحة الكيتل بيل", MuscleGroup = "Full Body", MuscleGroupAr = "الجسم بالكامل", Description = "Swing kettlebell between legs and up to chest level.", DescriptionAr = "أرجح الكيتل بيل بين الأرجل وحتى مستوى الصدر.", DifficultyLevel = "Intermediate" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Push-up", NameAr = "الضغط", MuscleGroup = "Chest", MuscleGroupAr = "الصدر", Description = "Push body up from floor.", DescriptionAr = "ادفع الجسم لأعلى من الأرض.", DifficultyLevel = "Beginner" },
+                new ExerciseCatalogItem { Id = Guid.NewGuid(), Name = "Bodyweight Squat", NameAr = "سكوات بوزن الجسم", MuscleGroup = "Legs", MuscleGroupAr = "الأرجل", Description = "Squat without weights.", DescriptionAr = "قم بتمرين القرفصاء بدون أوزان.", DifficultyLevel = "Beginner" }
             };
 
             await context.ExerciseCatalogItems.AddRangeAsync(exercises);

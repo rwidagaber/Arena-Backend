@@ -11,6 +11,9 @@ namespace ArenaApplication.Dtos.Gym
         [Display(Name = "Equipment Name")]
         public string Name { get; set; } = string.Empty;
 
+        [Display(Name = "Arabic Equipment Name")]
+        public string? NameAr { get; set; }
+
         [Required(ErrorMessage = "The Category field is required.")]
         public string Category { get; set; } = string.Empty;
 

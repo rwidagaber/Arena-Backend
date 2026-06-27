@@ -29,9 +29,23 @@
                     @foreach (var exercise in Model.Items)
                     {
                         <tr class="user-row">
-                            <td data-label="@Localizer["Name"]" class="user-name-cell">@exercise.Name</td>
+                            <td data-label="@Localizer["Name"]" class="user-name-cell">
+                                <div class="d-flex flex-column">
+                                    <span class="fw-semibold" style="color: var(--foreground);">@exercise.Name</span>
+                                    @if (!string.IsNullOrEmpty(exercise.NameAr))
+                                    {
+                                        <span class="text-muted small mt-1" dir="rtl" style="color: var(--muted-foreground) !important;">@exercise.NameAr</span>
+                                    }
+                                </div>
+                            </td>
                             <td data-label="@Localizer["MuscleGroup"]">
-                                <span class="badge bg-secondary">@exercise.MuscleGroup</span>
+                                <div class="d-flex flex-column align-items-start">
+                                    <span class="badge bg-secondary mb-1">@exercise.MuscleGroup</span>
+                                    @if (!string.IsNullOrEmpty(exercise.MuscleGroupAr))
+                                    {
+                                        <span class="badge bg-secondary opacity-75" dir="rtl">@exercise.MuscleGroupAr</span>
+                                    }
+                                </div>
                             </td>
                             <td data-label="@Localizer["DifficultyLevel"]" class="user-account-cell">
                                 @if (exercise.DifficultyLevel.Equals("Beginner", StringComparison.OrdinalIgnoreCase))

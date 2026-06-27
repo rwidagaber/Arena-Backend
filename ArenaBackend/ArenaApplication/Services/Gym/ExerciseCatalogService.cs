@@ -68,8 +68,11 @@ namespace ArenaApplication.Services.Gym
                 {
                     Id = e.Id,
                     Name = e.Name,
+                    NameAr = e.NameAr,
                     Description = e.Description,
+                    DescriptionAr = e.DescriptionAr,
                     MuscleGroup = e.MuscleGroup,
+                    MuscleGroupAr = e.MuscleGroupAr,
                     DifficultyLevel = e.DifficultyLevel,
                     EquipmentIds = e.EquipmentRequirements.Select(r => r.EquipmentId).ToList(),
                     EquipmentNames = string.Join(", ", e.EquipmentRequirements.Select(r => r.Equipment.Name))
@@ -109,8 +112,11 @@ namespace ArenaApplication.Services.Gym
                 {
                     Id = entity.Id,
                     Name = entity.Name,
+                    NameAr = entity.NameAr,
                     Description = entity.Description,
+                    DescriptionAr = entity.DescriptionAr,
                     MuscleGroup = entity.MuscleGroup,
+                    MuscleGroupAr = entity.MuscleGroupAr,
                     DifficultyLevel = entity.DifficultyLevel,
                     EquipmentIds = entity.EquipmentRequirements.Select(r => r.EquipmentId).ToList(),
                     EquipmentNames = string.Join(", ", entity.EquipmentRequirements.Select(r => r.Equipment.Name))
@@ -131,8 +137,11 @@ namespace ArenaApplication.Services.Gym
                 var entity = new ExerciseCatalogItem
                 {
                     Name = dto.Name,
+                    NameAr = dto.NameAr,
                     Description = dto.Description,
+                    DescriptionAr = dto.DescriptionAr,
                     MuscleGroup = dto.MuscleGroup,
+                    MuscleGroupAr = dto.MuscleGroupAr,
                     DifficultyLevel = dto.DifficultyLevel
                 };
 
@@ -168,8 +177,11 @@ namespace ArenaApplication.Services.Gym
                     return Result<bool>.Failure(_localizer["ExerciseCatalogItemNotFound"]);
 
                 entity.Name = dto.Name;
+                entity.NameAr = dto.NameAr;
                 entity.Description = dto.Description;
+                entity.DescriptionAr = dto.DescriptionAr;
                 entity.MuscleGroup = dto.MuscleGroup;
+                entity.MuscleGroupAr = dto.MuscleGroupAr;
                 entity.DifficultyLevel = dto.DifficultyLevel;
 
                 await _exerciseCatalogRepository.UpdateAsync(entity);

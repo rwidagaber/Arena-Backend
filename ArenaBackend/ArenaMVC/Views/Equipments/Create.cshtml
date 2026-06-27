@@ -46,6 +46,14 @@
                         </div>
 
                         <div class="subscription-form-group mb-4">
+                            <label asp-for="NameAr" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                @Html.DisplayNameFor(m => m.NameAr)
+                            </label>
+                            <input asp-for="NameAr" class="form-control" dir="rtl" placeholder="أدخل اسم المعدة بالعربية..." style="background-color: var(--body-bg); border-color: var(--border-color); color: var(--foreground);" />
+                            <span asp-validation-for="NameAr" class="text-danger small"></span>
+                        </div>
+
+                        <div class="subscription-form-group mb-4">
                             <label asp-for="Category" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
                                 @Html.DisplayNameFor(m => m.Category) <span class="text-danger">*</span>
                             </label>
