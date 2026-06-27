@@ -92,6 +92,18 @@
                         <span>@Localizer["GymSettings"]</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Equipments" ? "active" : "")" asp-area="" asp-controller="Equipments" asp-action="Index">
+                        <i data-lucide="dumbbell" class="nav-icon"></i>
+                        <span>@Localizer["Equipments"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "ExerciseCatalog" ? "active" : "")" asp-area="" asp-controller="ExerciseCatalog" asp-action="Index">
+                        <i data-lucide="book-open" class="nav-icon"></i>
+                        <span>@Localizer["ExerciseCatalog"]</span>
+                    </a>
+                </li>
             </ul>
 
             @* Logout at the bottom of the sidebar *@

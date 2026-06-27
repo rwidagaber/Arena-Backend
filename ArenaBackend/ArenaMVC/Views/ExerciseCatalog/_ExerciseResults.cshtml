@@ -1,0 +1,94 @@
+@model ArenaMVC.Models.ExerciseCatalogListPagedViewModel
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@if (Model != null && Model.Items != null && Model.Items.Any())
+{
+    <div class="usub-summary-bar">
+        <span>
+            @Localizer["Showing"]
+            <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>–<strong>@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))</strong>
+            @Localizer["Of"] <strong>@Model.TotalCount</strong> @Localizer["Records"]
+        </span>
+        <span class="usub-page-info">@Localizer["Page"] @Model.Page @Localizer["Of"] @Model.TotalPages</span>
+    </div>
+
+    <div class="user-table-wrap">
+        <div class="table-responsive">
+            <table class="subscription-table user-mgmt-table" id="exercisesTable">
+                <thead>
+                    <tr>
+                        <th>@Localizer["Name"]</th>
+                        <th>@Localizer["MuscleGroup"]</th>
+                        <th>@Localizer["DifficultyLevel"]</th>
+                        <th>@Localizer["RequiredEquipment"]</th>
+                        <th class="col-user-actions">@Localizer["Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var exercise in Model.Items)
+                    {
+                        <tr class="user-row">
+                            <td data-label="@Localizer["Name"]" class="user-name-cell">@exercise.Name</td>
+                            <td data-label="@Localizer["MuscleGroup"]">
+                                <span class="badge bg-secondary">@exercise.MuscleGroup</span>
+                            </td>
+                            <td data-label="@Localizer["DifficultyLevel"]" class="user-account-cell">
+                                @if (exercise.DifficultyLevel.Equals("Beginner", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="user-badge badge-emerald">@Localizer["Beginner"]</span>
+                                }
+                                else if (exercise.DifficultyLevel.Equals("Intermediate", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="user-badge badge-amber-warm">@Localizer["Intermediate"]</span>
+                                }
+                                else
+                                {
+                                    <span class="user-badge badge-crimson">@Localizer["Advanced"]</span>
+                                }
+                            </td>
+                            <td data-label="@Localizer["RequiredEquipment"]">
+                                @if (string.IsNullOrWhiteSpace(exercise.EquipmentNames))
+                                {
+                                    <span class="badge bg-light text-dark">@Localizer["None"]</span>
+                                }
+                                else
+                                {
+                                    @exercise.EquipmentNames
+                                }
+                            </td>
+                            <td data-label="@Localizer["Actions"]" class="user-actions-cell">
+                                <div class="d-flex justify-content-center gap-2 align-items-center actions-cell">
+                                    <a href="@Url.Action("Edit", "ExerciseCatalog", new { id = exercise.Id })" class="action-icon-btn btn-action-settings" data-tooltip="@Localizer["Edit"]">
+                                        <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
+                                    </a>
+                                    <button type="button" class="action-icon-btn btn-action-delete" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" data-id="@exercise.Id" data-tooltip="@Localizer["Delete"]">
+                                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @await Html.PartialAsync("_Pagination", new PaginationInfo { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, TotalPages = Model.TotalPages, HasPreviousPage = Model.HasPreviousPage, HasNextPage = Model.HasNextPage })
+    </div>
+}
+else if (Model != null && !string.IsNullOrWhiteSpace(Model.Search))
+{
+    <div class="subscription-empty-state">
+        <div class="subscription-empty-state-icon"><i data-lucide="search" style="width: 48px; height: 48px; color: var(--autonomous);"></i></div>
+        <h3>@Localizer["NoMatchingExercisesFound"]</h3>
+        <p>@Localizer["TryDifferentSearch"]</p>
+    </div>
+}
+else
+{
+    <div class="subscription-empty-state">
+        <div class="subscription-empty-state-icon"><i data-lucide="book-open" style="width: 48px; height: 48px; color: var(--autonomous);"></i></div>
+        <h3>@Localizer["NoExercisesFound"]</h3>
+        <p>@Localizer["StartByAddingExercise"]</p>
+    </div>
+}
