@@ -56,6 +56,7 @@ namespace ArenaApplication.Services
                     .ThenInclude(wd => wd.Exercises)
                         .ThenInclude(we => we.Exercise)
                 .Where(wp => wp.MemberProfileId == memberProfileId && !wp.IsDeleted)
+                .OrderBy(wp => wp.CreatedAt)
                 .ToListAsync();
 
             var dtos = _mapper.Map<List<WorkoutPlanDto>>(plans);
