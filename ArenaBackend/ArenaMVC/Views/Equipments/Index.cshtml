@@ -1,0 +1,218 @@
+@model ArenaMVC.Models.EquipmentListPagedViewModel
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = Localizer["Equipments"];
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1><i data-lucide="dumbbell" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["Equipments"]</h1>
+            <p>@Localizer["ManageGymEquipment"]</p>
+        </div>
+        <a asp-action="Create" class="btn btn-subscription-primary d-flex align-items-center gap-2" style="height: 42px;">
+            <i data-lucide="plus"></i>
+            @(Localizer["AddNew"]?.Value ?? "Add New")
+        </a>
+    </div>
+
+    <div class="mt-4">
+        @if (TempData["Success"] != null)
+        {
+            <div class="subscription-alert success">
+                <strong>@Localizer["Success"]</strong> @TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+
+        <!-- Search Card -->
+        <div class="booking-filters-card mb-4" style="background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--card-shadow);">
+            <div class="row g-2 align-items-center">
+                <div class="col-12">
+                    <div class="search-input-wrapper" id="searchWrapper" style="position: relative;">
+                        <span style="position: absolute; inset-inline-start: 16px; top: 50%; transform: translateY(-50%); color: var(--autonomous); display: flex; align-items: center; z-index: 10; pointer-events: none;">
+                            <i data-lucide="search" style="width: 20px; height: 20px;"></i>
+                        </span>
+                        <input class="form-control" id="searchInput" type="text" name="search"
+                               value="@Model.Search"
+                               placeholder="@(Localizer["SearchEquipments"]?.Value ?? "Search by Name or Category...")"
+                               autocomplete="off" style="padding-inline-start: 44px; height: 48px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--body-bg); color: var(--foreground);" />
+                        
+                        <span id="searchSpinner" style="display:none; position: absolute; inset-inline-end: 16px; top: 50%; transform: translateY(-50%); color: var(--autonomous);">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 0.8s linear infinite;">
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live-search results container – updated via AJAX -->
+        <div id="equipmentResultsContainer">
+            @await Html.PartialAsync("_EquipmentResults", Model)
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade modal-dark" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+            <div class="modal-header border-0">
+                <h5 class="modal-title d-inline-flex align-items-center gap-2" id="deleteConfirmModalLabel">
+                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: #ef4444;"></i> @Localizer["ConfirmDeletion"]
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-foreground">
+                @(Localizer["AreYouSureDeleteEquipment"]?.Value ?? "Are you sure you want to delete this equipment?")
+            </div>
+            <div class="modal-footer border-0">
+                <form id="deleteForm" method="post" style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-subscription-danger" style="height: 38px;">@Localizer["Confirm"]</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+    <script>
+        (function () {
+            function debounce(fn, delay) {
+                var timer;
+                return function () {
+                    clearTimeout(timer);
+                    timer = setTimeout(fn, delay);
+                };
+            }
+
+            function reinitLucide() {
+                if (window.lucide && typeof lucide.createIcons === 'function') {
+                    lucide.createIcons();
+                }
+            }
+
+            var currentSearch = @Html.Raw(Json.Serialize(Model.Search ?? ""));
+            var pageSize      = @Model.PageSize;
+            var searchUrl     = '@Url.Action("SearchPartial", "Equipments")';
+            var activeRequest = null;
+
+            function fetchResults(search, page) {
+                page = page || 1;
+
+                var spinner = document.getElementById('searchSpinner');
+                if (spinner) spinner.style.display = 'inline-flex';
+
+                var params = new URLSearchParams({ search: search || '', page: page, pageSize: pageSize });
+                var url    = searchUrl + '?' + params.toString();
+
+                if (activeRequest) { activeRequest.abort(); }
+                var controller = new AbortController();
+                activeRequest  = controller;
+
+                fetch(url, { signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (res) { return res.text(); })
+                    .then(function (html) {
+                        var container = document.getElementById('equipmentResultsContainer');
+                        if (container) {
+                            container.innerHTML = html;
+                            reinitLucide();
+                            bindDeleteModal();
+                            bindPaginationLinks();
+                        }
+                    })
+                    .catch(function (err) {
+                        if (err.name !== 'AbortError') {
+                            console.warn('Live search error:', err);
+                        }
+                    })
+                    .finally(function () {
+                        if (spinner) spinner.style.display = 'none';
+                        activeRequest = null;
+                    });
+            }
+
+            var debouncedFetch = debounce(function () {
+                var input = document.getElementById('searchInput');
+                if (!input) return;
+                var val = input.value.trim();
+                if (val === currentSearch) return;   
+                currentSearch = val;
+                fetchResults(val, 1);
+
+                var stateParams = new URLSearchParams(window.location.search);
+                if (val) { stateParams.set('search', val); } else { stateParams.delete('search'); }
+                stateParams.set('page', '1');
+                history.replaceState(null, '', window.location.pathname + '?' + stateParams.toString());
+            }, 350);
+
+            function bindPaginationLinks() {
+                var container = document.getElementById('equipmentResultsContainer');
+                if (!container) return;
+                container.querySelectorAll('.usub-pagination a.usub-page-btn').forEach(function (link) {
+                    link.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var href   = link.getAttribute('href') || '';
+                        var urlObj = new URL(href, window.location.origin);
+                        var page   = urlObj.searchParams.get('page') || '1';
+                        fetchResults(currentSearch, parseInt(page, 10));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                });
+            }
+
+            function bindDeleteModal() {
+                var modal = document.getElementById('deleteConfirmModal');
+                if (!modal) return;
+                
+                var clone = modal.cloneNode(true);
+                modal.parentNode.replaceChild(clone, modal);
+                clone.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    if (!button) return;
+                    var equipmentId = button.getAttribute('data-id');
+                    var form   = document.getElementById('deleteForm');
+                    if (form) form.action = '@Url.Action("DeleteConfirmed", "Equipments")?id=' + equipmentId;
+                });
+            }
+
+            function initInput() {
+                var input = document.getElementById('searchInput');
+                if (!input) return;
+
+                if (input.value) {
+                    input.focus();
+                    var v = input.value;
+                    input.value = '';
+                    input.value = v;
+                }
+
+                input.addEventListener('input', debouncedFetch);
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                initInput();
+                bindDeleteModal();
+                bindPaginationLinks();
+            });
+        })();
+    </script>
+}

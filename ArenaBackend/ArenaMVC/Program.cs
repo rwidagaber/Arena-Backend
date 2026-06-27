@@ -1,4 +1,3 @@
-using System.Globalization;
 using ArenaApplication;
 using ArenaApplication.IServices;
 using ArenaApplication.IServices.User;
@@ -8,6 +7,7 @@ using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure;
+using ArenaInfrastructure.AI;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Localization;
@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,6 +112,13 @@ builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
 // Booking service
 builder.Services.AddScoped<IBookingService, BookingService>();
+
+
+builder.Services.AddScoped<IAttendanceSuggestionService, AttendanceSuggestionService>();
+
+// 2. FIX: Add the missing dependency right here!
+//builder.Services.AddScoped<IGeminiCompletionService, GeminiService>();
+builder.Services.AddHttpClient<IGeminiCompletionService, GeminiService>();
 
 var app = builder.Build();
 
