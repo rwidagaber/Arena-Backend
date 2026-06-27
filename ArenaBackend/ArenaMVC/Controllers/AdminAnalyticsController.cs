@@ -28,9 +28,20 @@ public class AdminAnalyticsController : Controller
 
   [HttpGet("/admin/dashboard")]
   [HttpGet("/admin/analytics")]
-  public IActionResult Dashboard()
+  public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
   {
-    return View();
+      var endDate = DateTime.UtcNow;
+      var startDate = endDate.AddDays(-29); // 30 days inclusive
+
+      var query = new AnalyticsQueryWindowDto
+      {
+          StartDateUtc = startDate,
+          EndDateUtc = endDate,
+          Timezone = "Africa/Cairo" // Default UI timezone
+      };
+
+      var response = await _dashboardService.GetAnalyticsV2Async(query, cancellationToken);
+      return View(response.Data);
   }
 
   [HttpPost("/admin/analytics/generate-demo-data")]

@@ -1,3 +1,4 @@
+@model ArenaApplication.Dtos.Dashboard.Analytics.AdminAnalyticsV2Dto
 @using System.Globalization
 @using System.Text.Json
 
@@ -57,27 +58,27 @@
     <section class="kpi-grid" aria-label="@Localizer["Kpis"]">
         <article class="kpi-card">
             <div class="kpi-label">@Localizer["TotalMembers"]</div>
-            <div class="kpi-value" id="kpiTotalMembers">-</div>
+            <div class="kpi-value" id="kpiTotalMembers">@Model.Executive.TotalMembers.ToString("N0", CultureInfo.InvariantCulture)</div>
         </article>
         <article class="kpi-card">
             <div class="kpi-label">@Localizer["ActiveSubscriptions"]</div>
-            <div class="kpi-value" id="kpiActiveSubscriptions">-</div>
+            <div class="kpi-value" id="kpiActiveSubscriptions">@Model.Executive.ActiveSubscriptions.ToString("N0", CultureInfo.InvariantCulture)</div>
         </article>
         <article class="kpi-card">
             <div class="kpi-label">@Localizer["ExpiringSubscriptions7Days"]</div>
-            <div class="kpi-value" id="kpiExpiringSoon">-</div>
+            <div class="kpi-value" id="kpiExpiringSoon">@Model.Executive.ExpiringSubscriptionsNext7Days.ToString("N0", CultureInfo.InvariantCulture)</div>
         </article>
         <article class="kpi-card">
             <div class="kpi-label">@Localizer["AttendanceToday"]</div>
-            <div class="kpi-value" id="kpiAttendanceToday">-</div>
+            <div class="kpi-value" id="kpiAttendanceToday">@Model.Executive.AttendanceToday.ToString("N0", CultureInfo.InvariantCulture)</div>
         </article>
         <article class="kpi-card">
             <div class="kpi-label">@Localizer["RevenueInWindow"]</div>
-            <div class="kpi-value" id="kpiRevenueWindow">-</div>
+            <div class="kpi-value" id="kpiRevenueWindow">@Model.Financial.RevenueInWindow.ToString("N0", CultureInfo.InvariantCulture) @Localizer["Currency"]</div>
         </article>
         <article class="kpi-card">
             <div class="kpi-label">@Localizer["RevenueGrowth"]</div>
-            <div class="kpi-value" id="kpiRevenueGrowth">-</div>
+            <div class="kpi-value" id="kpiRevenueGrowth">@Model.Financial.RevenueGrowthPercent.ToString("0.#", CultureInfo.InvariantCulture)%</div>
         </article>
     </section>
 
@@ -111,15 +112,15 @@
             <div class="funnel-grid">
                 <div>
                     <div class="funnel-label">@Localizer["BookingsInWindow"]</div>
-                    <div class="funnel-value" id="bookingsWindow">-</div>
+                    <div class="funnel-value" id="bookingsWindow">@Model.Operational.BookingsInWindow.ToString("N0", CultureInfo.InvariantCulture)</div>
                 </div>
                 <div>
                     <div class="funnel-label">@Localizer["CheckInsInWindow"]</div>
-                    <div class="funnel-value" id="checkInsWindow">-</div>
+                    <div class="funnel-value" id="checkInsWindow">@Model.Operational.CheckInsInWindow.ToString("N0", CultureInfo.InvariantCulture)</div>
                 </div>
                 <div>
                     <div class="funnel-label">@Localizer["CompletedSessionsInWindow"]</div>
-                    <div class="funnel-value" id="completedWindow">-</div>
+                    <div class="funnel-value" id="completedWindow">@Model.Operational.CompletedSessionsInWindow.ToString("N0", CultureInfo.InvariantCulture)</div>
                 </div>
             </div>
             <div class="funnel-bars">
@@ -170,7 +171,8 @@
                 checkInRate: @Html.Raw(JsonSerializer.Serialize(Localizer["CheckInRate"].Value)),
                 revenue: @Html.Raw(JsonSerializer.Serialize(Localizer["Revenue"].Value)),
                 attendance: @Html.Raw(JsonSerializer.Serialize(Localizer["Attendance"].Value)),
-                date: @Html.Raw(JsonSerializer.Serialize(Localizer["Date"].Value))
+                date: @Html.Raw(JsonSerializer.Serialize(Localizer["Date"].Value)),
+                currencyLabel: @Html.Raw(JsonSerializer.Serialize(Localizer["Currency"].Value))
             };
 
             const el = {
@@ -191,11 +193,10 @@
             }
 
             function formatCurrency(value) {
-                return new Intl.NumberFormat(culture, {
-                    style: 'currency',
-                    currency: 'EGP',
-                    maximumFractionDigits: 2
+                const formattedNumber = new Intl.NumberFormat(culture, {
+                    maximumFractionDigits: 0
                 }).format(Number(value || 0));
+                return `${formattedNumber} ${strings.currencyLabel}`;
             }
 
             function formatDateTime(isoDate) {
@@ -580,8 +581,18 @@
                 el.refreshBtn.addEventListener('click', loadDashboard);
             }
 
+            // Initialize with Server-Side Rendered Data (30 Days)
             setRange(30);
-            loadDashboard();
+            const initialData = @Html.Raw(JsonSerializer.Serialize(new {
+                meta = new {
+                    startDateUtc = DateTime.UtcNow.AddDays(-29),
+                    endDateUtc = DateTime.UtcNow,
+                    timezone = "Africa/Cairo"
+                },
+                data = Model
+            }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+            
+            renderDashboard(initialData);
         })();
     </script>
 }

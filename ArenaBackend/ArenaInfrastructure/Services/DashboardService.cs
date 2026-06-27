@@ -52,7 +52,11 @@ namespace ArenaInfrastructure.Services
                 .CountAsync(u => !u.IsDeleted, cancellationToken);
 
             var membersWithActiveSubs = await _context.UserSubscriptions
-                .Where(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted)
+                .Where(s => s.Status == SubscriptionStatus.Active 
+                            && !s.IsDeleted 
+                            && s.MemberProfile != null 
+                            && s.MemberProfile.User != null 
+                            && !s.MemberProfile.User.IsDeleted)
                 .Select(s => s.MemberProfileId)
                 .Distinct()
                 .CountAsync(cancellationToken);
