@@ -233,6 +233,192 @@ namespace ArenaInfrastructure.AI
             };
         }
 
+        public async Task<NutritionPlanResponseDto> ModifyNutritionPlanAsync(
+            Guid memberProfileId, string userMessage)
+        {
+            var profile = await _context.MemberProfiles
+                .FirstOrDefaultAsync(p => p.Id == memberProfileId || p.UserId == memberProfileId);
+
+            if (profile == null)
+                throw new Exception($"MemberProfile not found for Id: {memberProfileId}");
+
+            var activePlan = await _context.NutritionPlans
+                .Include(p => p.Meals)
+                .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (activePlan == null)
+            {
+                return await GenerateNutritionPlanAsync(memberProfileId, userMessage);
+            }
+
+            var currentPlanData = new
+            {
+                dailyCalories = activePlan.DailyCalories,
+                proteinGrams = activePlan.ProteinGrams,
+                carbsGrams = activePlan.CarbsGrams,
+                fatGrams = activePlan.FatGrams,
+                meals = activePlan.Meals.Select(m => new
+                {
+                    mealType = m.MealType,
+                    name = m.Name,
+                    calories = m.Calories,
+                    proteinGrams = m.Protein,
+                    carbsGrams = m.Carbs,
+                    fatGrams = m.Fat,
+                    ingredients = m.Ingredients
+                }).ToList()
+            };
+
+            var currentPlanJson = JsonSerializer.Serialize(currentPlanData, new JsonSerializerOptions { WriteIndented = true });
+
+            HealthProfileDto healthProfile = new HealthProfileDto();
+            if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+            {
+                healthProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+            }
+
+            var prompt = $"""
+            You are a certified nutritionist and dietitian.
+            
+            The user has an ACTIVE nutrition plan:
+            {currentPlanJson}
+            
+            === USER REQUEST ===
+            The user wants to modify their nutrition plan with the following request:
+            "{userMessage}"
+            
+            === INSTRUCTIONS ===
+            1. Apply the user's modification request to the plan.
+            2. Preserve as much of the existing meals, calories, ingredients, and structures as possible. Only make changes necessary to satisfy the request (e.g. swap foods, adjust macros slightly if needed, remove ingredients, etc.).
+            3. Respect the user's health profile and conditions.
+            4. Completely exclude any foods or ingredients they request to avoid/replace.
+            5. Return the updated plan in the EXACT same JSON format.
+            6. Return ONLY the valid JSON response. No extra text, no markdown.
+            """;
+
+            NutritionPlanAIResponse planData = null;
+            int retries = 0;
+            bool isValid = false;
+            string currentPrompt = prompt;
+
+            while (retries < 3 && !isValid)
+            {
+                try
+                {
+                    var jsonResponse = await _gemini.GetCompletionAsync(
+                        currentPrompt, new List<ChatMessageDto>(), "Modify the plan");
+
+                    var cleanJson = AIHelper.CleanJson(jsonResponse);
+                    planData = JsonSerializer.Deserialize<NutritionPlanAIResponse>(
+                        cleanJson,
+                        CreateJsonOptions());
+
+                    var validationResult = await _healthIntelligence.ValidatePlanAsync(healthProfile, cleanJson, "Nutrition");
+                    
+                    if (validationResult.IsValid)
+                    {
+                        isValid = true;
+                    }
+                    else
+                    {
+                        retries++;
+                        currentPrompt = prompt + $"\n\n[CRITICAL FEEDBACK - REGENERATION REQUIRED]: Your modified plan was REJECTED by the Medical Validation Layer for the following reason:\n{validationResult.RejectionReason}\nYou MUST fix this immediately and provide a safe plan.";
+                    }
+                }
+                catch (Exception)
+                {
+                    retries++;
+                }
+            }
+
+            if (!isValid || planData == null)
+            {
+                return await GenerateNutritionPlanAsync(memberProfileId, userMessage);
+            }
+
+            NormalizeNutritionPlan(planData);
+
+            var activeNutritionPlans = await _context.NutritionPlans
+                .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
+                    && existingPlan.IsActive
+                    && !existingPlan.IsDeleted)
+                .ToListAsync();
+
+            foreach (var existingPlan in activeNutritionPlans)
+            {
+                existingPlan.IsActive = false;
+                existingPlan.UpdatedAt = DateTime.UtcNow;
+            }
+
+            var plan = new NutritionPlan
+            {
+                Id = Guid.NewGuid(),
+                MemberProfileId = profile.Id,
+                DailyCalories = planData.DailyCalories,
+                ProteinGrams = planData.ProteinGrams,
+                CarbsGrams = planData.CarbsGrams,
+                FatGrams = planData.FatGrams,
+                IsActive = true
+            };
+
+            _context.NutritionPlans.Add(plan);
+
+            var mealDtos = new List<MealResponseDto>();
+
+            foreach (var meal in planData.Meals ?? [])
+            {
+                var mealEntity = new Meal
+                {
+                    Id = Guid.NewGuid(),
+                    NutritionPlanId = plan.Id,
+                    MealType = meal.MealType,
+                    Name = meal.Name,
+                    Calories = meal.Calories,
+                    Ingredients = meal.Ingredients,
+                    Protein = meal.ProteinGrams,
+                    Carbs = meal.CarbsGrams,
+                    Fat = meal.FatGrams
+                };
+
+                _context.Meals.Add(mealEntity);
+
+                mealDtos.Add(new MealResponseDto
+                {
+                    Id = mealEntity.Id,
+                    MealType = meal.MealType,
+                    Name = meal.Name,
+                    Calories = meal.Calories,
+                    ProteinGrams = meal.ProteinGrams,
+                    CarbsGrams = meal.CarbsGrams,
+                    FatGrams = meal.FatGrams,
+                    Ingredients = meal.Ingredients
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            var savedPlan = await _context.NutritionPlans.FirstOrDefaultAsync(p => p.Id == plan.Id);
+            if (savedPlan == null)
+            {
+                throw new Exception("Persistence verification failed: nutrition plan was not correctly saved.");
+            }
+
+            await _notificationService.NotifyNutritionPlanReadyAsync(profile.Id);
+
+            return new NutritionPlanResponseDto
+            {
+                Id = plan.Id,
+                DailyCalories = plan.DailyCalories,
+                ProteinGrams = plan.ProteinGrams,
+                CarbsGrams = plan.CarbsGrams,
+                FatGrams = plan.FatGrams,
+                IsActive = plan.IsActive,
+                Meals = mealDtos
+            };
+        }
+
         private static JsonSerializerOptions CreateJsonOptions()
         {
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

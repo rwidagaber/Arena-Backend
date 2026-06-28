@@ -342,6 +342,236 @@ namespace ArenaInfrastructure.AI
             };
         }
 
+        public async Task<WorkoutPlanDto> ModifyWorkoutPlanAsync(Guid memberProfileId, string userMessage)
+        {
+            var profile = await _context.MemberProfiles
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.Id == memberProfileId || p.UserId == memberProfileId);
+
+            if (profile == null)
+                throw new Exception($"Profile not found: {memberProfileId}");
+
+            var activePlan = await _context.WorkoutPlans
+                .Include(p => p.WorkoutDays)
+                    .ThenInclude(d => d.Exercises)
+                        .ThenInclude(e => e.Exercise)
+                .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (activePlan == null)
+            {
+                return await GenerateWorkoutPlanAsync(memberProfileId, userMessage);
+            }
+
+            var currentPlanData = new
+            {
+                name = activePlan.Name,
+                durationWeeks = activePlan.DurationWeeks,
+                days = activePlan.WorkoutDays.Select(d => new
+                {
+                    dayName = d.DayName,
+                    exercises = d.Exercises.Select(ex => new
+                    {
+                        name = !string.IsNullOrWhiteSpace(ex.ExrciseName) ? ex.ExrciseName : ex.Exercise?.Name ?? "Exercise",
+                        sets = ex.Sets,
+                        reps = ex.Reps
+                    }).ToList()
+                }).ToList()
+            };
+
+            var currentPlanJson = JsonSerializer.Serialize(currentPlanData, new JsonSerializerOptions { WriteIndented = true });
+
+            var effectiveGoal = profile.Goal ?? "General Fitness";
+            var memberName = GetMemberName(profile);
+            var goalAwareUserMessage = BuildGoalAwareUserMessage(userMessage, effectiveGoal);
+            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, goalAwareUserMessage);
+
+            HealthProfileDto healthProfile = new HealthProfileDto();
+            if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+            {
+                healthProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+            }
+
+            var availableEquipments = await _context.Equipments
+                .Where(e => e.IsAvailable)
+                .Select(e => e.Name)
+                .ToListAsync();
+            var equipmentStr = string.Join(", ", availableEquipments);
+            if (string.IsNullOrEmpty(equipmentStr)) equipmentStr = "Bodyweight only";
+
+            var catalogItems = await _context.ExerciseCatalogItems
+                .Include(c => c.EquipmentRequirements)
+                .ThenInclude(er => er.Equipment)
+                .ToListAsync();
+
+            var validCatalogItems = catalogItems.Where(c => c.EquipmentRequirements.All(er => er.Equipment.IsAvailable)).ToList();
+
+            var prompt = $"""
+            You are an expert personal trainer with 20 years of experience.
+            
+            The user has an ACTIVE workout plan:
+            {currentPlanJson}
+            
+            === USER REQUEST ===
+            The user wants to modify their workout plan with the following request:
+            "{userMessage}"
+            
+            === INSTRUCTIONS ===
+            1. Apply the user's modification request to the plan.
+            2. Preserve as much of the existing exercises, sets, reps, and structure as possible. Only make changes necessary to satisfy the request (e.g. replace exercises, adjust workout days/volume, etc.).
+            3. Respect the user's injuries and health conditions.
+            4. Completely exclude any exercises or movements they request to avoid/replace.
+            5. Return the updated plan in the EXACT same JSON format.
+            6. Return ONLY the valid JSON response. No extra text, no markdown.
+            """;
+
+            WorkoutPlanAIResponse planData = null;
+            int retries = 0;
+            bool isValid = false;
+            string currentPrompt = prompt;
+
+            while (retries < 3 && !isValid)
+            {
+                try
+                {
+                    var jsonResponse = await _gemini.GetCompletionAsync(currentPrompt, new List<ChatMessageDto>(), "Modify the plan");
+                    var cleanJson = AIHelper.CleanJson(jsonResponse);
+                    planData = JsonSerializer.Deserialize<WorkoutPlanAIResponse>(
+                        cleanJson,
+                        CreateJsonOptions());
+
+                    var validationResult = await _healthIntelligence.ValidatePlanAsync(healthProfile, cleanJson, "Workout");
+                    
+                    if (validationResult.IsValid)
+                    {
+                        isValid = true;
+                    }
+                    else
+                    {
+                        retries++;
+                        currentPrompt = prompt + $"\n\n[CRITICAL FEEDBACK - REGENERATION REQUIRED]: Your modified plan was REJECTED by the Medical Validation Layer for the following reason:\n{validationResult.RejectionReason}\nYou MUST fix this immediately and provide a safe plan.";
+                    }
+                }
+                catch
+                {
+                    retries++;
+                }
+            }
+
+            if (!isValid || planData == null)
+            {
+                return await GenerateWorkoutPlanAsync(memberProfileId, userMessage);
+            }
+
+            NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
+            ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
+
+            var activeWorkoutPlans = await _context.WorkoutPlans
+                .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
+                    && existingPlan.IsActive
+                    && !existingPlan.IsDeleted)
+                .ToListAsync();
+
+            foreach (var existingPlan in activeWorkoutPlans)
+            {
+                existingPlan.IsActive = false;
+                existingPlan.UpdatedAt = DateTime.UtcNow;
+            }
+
+            var plan = new WorkoutPlan
+            {
+                Id = Guid.NewGuid(),
+                MemberProfileId = profile.Id,
+                Name = planData.Name,
+                DurationWeeks = planData.DurationWeeks,
+                IsActive = true
+            };
+            _context.WorkoutPlans.Add(plan);
+
+            var dayDtos = new List<WorkoutDayDto>();
+
+            foreach (var day in planData.Days ?? [])
+            {
+                var workoutDay = new WorkoutDay
+                {
+                    Id = Guid.NewGuid(),
+                    WorkoutPlanId = plan.Id,
+                    DayName = day.DayName
+                };
+                _context.WorkoutDays.Add(workoutDay);
+
+                var exerciseDtos = new List<WorkoutExerciseDto>();
+
+                foreach (var ex in day.Exercises ?? [])
+                {
+                    var existingExercise = _context.Exercises.Local
+                        .FirstOrDefault(e => e.Name == ex.Name && e.MemberProfileId == profile.Id)
+                        ?? await _context.Exercises
+                            .FirstOrDefaultAsync(e => e.Name == ex.Name && e.MemberProfileId == profile.Id);
+
+                    if (existingExercise == null)
+                    {
+                        existingExercise = new Exercise
+                        {
+                            Id = Guid.NewGuid(),
+                            Name = ex.Name,
+                            MuscleGroup = ex.MuscleGroup,
+                            Description = ex.Name,
+                            Equipment = "None",
+                            MemberProfileId = profile.Id
+                        };
+                        _context.Exercises.Add(existingExercise);
+                    }
+
+                    _context.WorkoutExercises.Add(new WorkoutExercise
+                    {
+                        WorkoutDayId = workoutDay.Id,
+                        ExerciseId = existingExercise.Id,
+                        ExrciseName = ex.Name,
+                        Sets = ex.Sets,
+                        Reps = ex.Reps
+                    });
+
+                    exerciseDtos.Add(new WorkoutExerciseDto
+                    {
+                        Name = ex.Name,
+                        Sets = ex.Sets,
+                        Reps = ex.Reps
+                    });
+                }
+
+                dayDtos.Add(new WorkoutDayDto
+                {
+                    Id = workoutDay.Id,
+                    WorkoutPlanId = plan.Id,
+                    DayName = day.DayName,
+                    Exercises = exerciseDtos
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            var savedPlan = await _context.WorkoutPlans.FirstOrDefaultAsync(p => p.Id == plan.Id);
+            if (savedPlan == null)
+            {
+                throw new Exception("Persistence verification failed: workout plan was not correctly saved.");
+            }
+
+            await _notificationService.NotifyWorkoutPlanReadyAsync(profile.Id, plan.Name);
+
+            return new WorkoutPlanDto
+            {
+                Id = plan.Id,
+                MemberProfileId = plan.MemberProfileId,
+                AssignedTrainerId = plan.AssignedTrainerId,
+                Name = plan.Name,
+                DurationWeeks = plan.DurationWeeks,
+                IsActive = plan.IsActive,
+                Days = dayDtos
+            };
+        }
+
         private static JsonSerializerOptions CreateJsonOptions()
         {
             var options = new JsonSerializerOptions
