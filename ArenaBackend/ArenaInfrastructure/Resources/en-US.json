@@ -91,6 +91,7 @@
   "Active": "Active",
   "Inactive": "Inactive",
   "Expired": "Expired",
+  "NoSubscription": "No subscription",
   "Disabled": "Disabled",
   "Pending": "Pending",
   "Confirmed": "Confirmed",

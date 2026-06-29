@@ -6,6 +6,8 @@ using ArenaApplication.Dtos.HealthIntelligence;
 using ArenaApplication.IServices;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
+using ArenaDomain.Entities.Workout;
+using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
 using ArenaInfrastructure.AI;
@@ -551,6 +553,436 @@ namespace ArenaInfrastructure.AI
 
             switch (intent?.Intent)
             {
+                case "GET_USER_INJURIES":
+                    {
+                        var injuries = !string.IsNullOrWhiteSpace(profile.Injuries) ? profile.Injuries : null;
+                        var conditions = !string.IsNullOrWhiteSpace(profile.HealthConditions) ? profile.HealthConditions : null;
+
+                        if (injuries == null && conditions == null)
+                        {
+                            return isArabic
+                                ? "🩺 ليس لديك أي إصابات أو مشاكل صحية مسجلة حالياً."
+                                : "🩺 You have no registered injuries or medical conditions currently.";
+                        }
+
+                        var sb = new StringBuilder();
+                        if (isArabic)
+                        {
+                            sb.AppendLine("📋 حالتك الصحية والإصابات المسجلة عندي:");
+                            sb.AppendLine();
+                            sb.AppendLine($"• **الإصابات:** {injuries ?? "لا يوجد"}");
+                            sb.AppendLine($"• **المشاكل الصحية:** {conditions ?? "لا يوجد"}");
+                        }
+                        else
+                        {
+                            sb.AppendLine("📋 Your registered injuries and health conditions:");
+                            sb.AppendLine();
+                            sb.AppendLine($"• **Injuries:** {injuries ?? "None"}");
+                            sb.AppendLine($"• **Medical Conditions:** {conditions ?? "None"}");
+                        }
+                        return sb.ToString().Trim();
+                    }
+
+                case "GET_ACTIVE_PLAN":
+                    {
+                        var activeWorkout = await _context.WorkoutPlans
+                            .Include(p => p.WorkoutDays)
+                                .ThenInclude(d => d.Exercises)
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        var activeNutrition = await _context.NutritionPlans
+                            .Include(p => p.Meals)
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activeWorkout == null && activeNutrition == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك أي خطط نشطة حالياً (تمرين أو تغذية). هل تود أن أنشئ لك خطة؟"
+                                : "You don't have any active plans (workout or nutrition) yet. Would you like me to generate one?";
+                        }
+
+                        var sb = new StringBuilder();
+                        if (activeWorkout != null)
+                        {
+                            var trainingDaysCount = activeWorkout.WorkoutDays
+                                .Count(d => d.Exercises != null && d.Exercises.Any() &&
+                                            !d.Exercises.Any(ex => (!string.IsNullOrEmpty(ex.ExrciseName) && ex.ExrciseName.ToLowerInvariant().Contains("rest"))));
+
+                            if (isArabic)
+                            {
+                                sb.AppendLine($"🏋️ **خطة التمرين النشطة: {activeWorkout.Name}**");
+                                sb.AppendLine($"• **المدة:** {activeWorkout.DurationWeeks} أسابيع");
+                                sb.AppendLine($"• **الهدف:** {profile.Goal ?? "لياقة عامة"}");
+                                sb.AppendLine($"• **أيام التدريب:** {trainingDaysCount} أيام في الأسبوع");
+                            }
+                            else
+                            {
+                                sb.AppendLine($"🏋️ **Active Workout Plan: {activeWorkout.Name}**");
+                                sb.AppendLine($"• **Duration:** {activeWorkout.DurationWeeks} weeks");
+                                sb.AppendLine($"• **Goal:** {profile.Goal ?? "General Fitness"}");
+                                sb.AppendLine($"• **Training Days:** {trainingDaysCount} days/week");
+                            }
+                            sb.AppendLine();
+                        }
+
+                        if (activeNutrition != null)
+                        {
+                            var calories = activeNutrition.DailyCalories.ToString("0.##");
+                            var protein = activeNutrition.ProteinGrams.ToString("0.##");
+                            var carbs = activeNutrition.CarbsGrams.ToString("0.##");
+                            var fat = activeNutrition.FatGrams.ToString("0.##");
+
+                            if (isArabic)
+                            {
+                                sb.AppendLine($"🥗 **خطة التغذية النشطة:**");
+                                sb.AppendLine($"• **السعرات الحرارية:** {calories} سعرة");
+                                sb.AppendLine($"• **البروتين:** {protein} جرام | **الكربوهيدرات:** {carbs} جرام | **الدهون:** {fat} جرام");
+                            }
+                            else
+                            {
+                                sb.AppendLine($"🥗 **Active Nutrition Plan:**");
+                                sb.AppendLine($"• **Calories:** {calories} kcal");
+                                sb.AppendLine($"• **Protein:** {protein} g | **Carbs:** {carbs} g | **Fat:** {fat} g");
+                            }
+                        }
+
+                        return sb.ToString().Trim();
+                    }
+
+                case "GET_NUTRITION_TARGETS":
+                    {
+                        var activePlan = await _context.NutritionPlans
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activePlan == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك خطة تغذية نشطة حالياً. هل تود أن أنشئ لك واحدة؟"
+                                : "You don't have an active nutrition plan yet. Would you like me to generate one?";
+                        }
+
+                        var calories = activePlan.DailyCalories.ToString("0.##");
+                        var protein = activePlan.ProteinGrams.ToString("0.##");
+                        var carbs = activePlan.CarbsGrams.ToString("0.##");
+                        var fat = activePlan.FatGrams.ToString("0.##");
+
+                        return isArabic
+                            ? $"🔥 هدف السعرات الحرارية اليومي الخاص بك هو {calories} سعرة حرارية.\n\nأهداف التغذية اليومية:\n• البروتين: {protein} جرام\n• الكربوهيدرات: {carbs} جرام\n• الدهون: {fat} جرام"
+                            : $"🔥 Your daily calorie target is {calories} kcal.\n\nDaily nutrition targets:\n• Protein: {protein} g\n• Carbohydrates: {carbs} g\n• Fat: {fat} g";
+                    }
+
+                case "GET_WORKOUT_TODAY":
+                    {
+                        var activePlan = await _context.WorkoutPlans
+                            .Include(p => p.WorkoutDays)
+                                .ThenInclude(d => d.Exercises)
+                                    .ThenInclude(e => e.Exercise)
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activePlan == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك خطة تمرين نشطة حالياً. هل تود أن أنشئ لك واحدة؟"
+                                : "You don't have an active workout plan yet. Would you like me to generate one?";
+                        }
+
+                        var egyptNow = DateTime.UtcNow.AddHours(3);
+                        var todayWeekday = egyptNow.DayOfWeek;
+                        var todayDay = activePlan.WorkoutDays.FirstOrDefault(d => WorkoutDayMatchesWeekday(d, todayWeekday));
+
+                        bool isRestDay = todayDay == null || todayDay.Exercises == null || !todayDay.Exercises.Any()
+                            || todayDay.Exercises.Any(ex => (!string.IsNullOrEmpty(ex.ExrciseName) && ex.ExrciseName.ToLowerInvariant().Contains("rest"))
+                                                            || (ex.Exercise != null && !string.IsNullOrEmpty(ex.Exercise.Name) && ex.Exercise.Name.ToLowerInvariant().Contains("rest")));
+
+                        if (isRestDay)
+                        {
+                            return isArabic
+                                ? "😴 اليوم هو يوم راحة. استمتع بالاستشفاء! 💪"
+                                : "😴 Today is a rest day. Enjoy your recovery! 💪";
+                        }
+
+                        var goal = profile.Goal ?? activePlan.Name;
+                        var sb = new StringBuilder();
+                        sb.AppendLine(isArabic ? "🏋️ تمرين اليوم" : "🏋️ Today's Workout");
+                        sb.AppendLine();
+                        sb.AppendLine(isArabic ? $"الهدف: {goal}" : $"Goal: {goal}");
+                        sb.AppendLine();
+                        sb.AppendLine(isArabic ? "التمارين:" : "Exercises:");
+                        sb.AppendLine();
+                        foreach (var ex in todayDay.Exercises)
+                        {
+                            var name = !string.IsNullOrWhiteSpace(ex.ExrciseName) ? ex.ExrciseName : ex.Exercise?.Name ?? "Exercise";
+                            sb.AppendLine($"• {name} — {ex.Sets} × {ex.Reps}");
+                        }
+                        sb.AppendLine();
+                        sb.AppendLine(isArabic ? "تمرينًا سعيدًا! 💪" : "Have a great workout! 💪");
+
+                        return sb.ToString().Trim();
+                    }
+
+                case "GET_WORKOUT_DAY":
+                    {
+                        var activePlan = await _context.WorkoutPlans
+                            .Include(p => p.WorkoutDays)
+                                .ThenInclude(d => d.Exercises)
+                                    .ThenInclude(e => e.Exercise)
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activePlan == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك خطة تمرين نشطة حالياً. هل تود أن أنشئ لك واحدة؟"
+                                : "You don't have an active workout plan yet. Would you like me to generate one?";
+                        }
+
+                        var weekday = GetRequestedWeekday(userMessage, history);
+                        if (!weekday.HasValue)
+                        {
+                            return isArabic
+                                ? "ما هو اليوم الذي تود الاستفسار عن تمرينه؟ (مثال: الاثنين)"
+                                : "Which day would you like to check? (e.g. Monday)";
+                        }
+
+                        var targetDay = activePlan.WorkoutDays.FirstOrDefault(d => WorkoutDayMatchesWeekday(d, weekday.Value));
+                        bool isRestDay = targetDay == null || targetDay.Exercises == null || !targetDay.Exercises.Any()
+                            || targetDay.Exercises.Any(ex => (!string.IsNullOrEmpty(ex.ExrciseName) && ex.ExrciseName.ToLowerInvariant().Contains("rest"))
+                                                            || (ex.Exercise != null && !string.IsNullOrEmpty(ex.Exercise.Name) && ex.Exercise.Name.ToLowerInvariant().Contains("rest")));
+
+                        var weekdayNameEn = weekday.Value.ToString();
+                        var weekdayNameAr = weekday.Value switch
+                        {
+                            DayOfWeek.Monday => "الاثنين",
+                            DayOfWeek.Tuesday => "الثلاثاء",
+                            DayOfWeek.Wednesday => "الأربعاء",
+                            DayOfWeek.Thursday => "الخميس",
+                            DayOfWeek.Friday => "الجمعة",
+                            DayOfWeek.Saturday => "السبت",
+                            DayOfWeek.Sunday => "الأحد",
+                            _ => weekdayNameEn
+                        };
+
+                        if (isRestDay)
+                        {
+                            return isArabic
+                                ? $"😴 يوم {weekdayNameAr} هو يوم راحة. استمتع بالاستشفاء! 💪"
+                                : $"😴 {weekdayNameEn} is a rest day. Enjoy your recovery! 💪";
+                        }
+
+                        var sb = new StringBuilder();
+                        var displayDayName = !string.IsNullOrWhiteSpace(targetDay.DayName) ? targetDay.DayName : (isArabic ? weekdayNameAr : weekdayNameEn);
+                        sb.AppendLine($"🏋️ {displayDayName}");
+                        sb.AppendLine();
+                        sb.AppendLine(isArabic ? "التمارين:" : "Exercises:");
+                        sb.AppendLine();
+                        foreach (var ex in targetDay.Exercises)
+                        {
+                            var name = !string.IsNullOrWhiteSpace(ex.ExrciseName) ? ex.ExrciseName : ex.Exercise?.Name ?? "Exercise";
+                            sb.AppendLine($"• {name}");
+                        }
+
+                        return sb.ToString().Trim();
+                    }
+
+                case "GET_WORKOUT_DURATION":
+                    {
+                        var activePlan = await _context.WorkoutPlans
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activePlan == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك خطة تمرين نشطة حالياً. هل تود أن أنشئ لك واحدة؟"
+                                : "You don't have an active workout plan yet. Would you like me to generate one?";
+                        }
+
+                        var duration = activePlan.DurationWeeks;
+                        return isArabic
+                            ? $"📅 مدة خطة التمرين الخاصة بك هي:\n\n{duration} أسابيع"
+                            : $"📅 Your workout plan duration is:\n\n{duration} weeks";
+                    }
+
+                case "GET_WORKOUT_GOAL":
+                    {
+                        var activePlan = await _context.WorkoutPlans
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        var goal = profile.Goal ?? activePlan?.Name ?? "General Fitness";
+                        
+                        return isArabic
+                            ? $"🎯 هدفك الحالي هو:\n\n{goal}"
+                            : $"🎯 Your current goal is:\n\n{goal}";
+                    }
+
+                case "GET_WORKOUT_SCHEDULE":
+                    {
+                        var activePlan = await _context.WorkoutPlans
+                            .Include(p => p.WorkoutDays)
+                                .ThenInclude(d => d.Exercises)
+                                    .ThenInclude(e => e.Exercise)
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activePlan == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك خطة تمرين نشطة حالياً. هل تود أن أنشئ لك واحدة؟"
+                                : "You don't have an active workout plan yet. Would you like me to generate one?";
+                        }
+
+                        var trainingDays = activePlan.WorkoutDays
+                            .Where(d => d.Exercises != null && d.Exercises.Any() &&
+                                        !d.Exercises.Any(ex => (!string.IsNullOrEmpty(ex.ExrciseName) && ex.ExrciseName.ToLowerInvariant().Contains("rest"))
+                                                                || (ex.Exercise != null && !string.IsNullOrEmpty(ex.Exercise.Name) && ex.Exercise.Name.ToLowerInvariant().Contains("rest"))))
+                            .OrderBy(d => d.DayNumber)
+                            .ToList();
+
+                        var count = trainingDays.Count;
+
+                        var sb = new StringBuilder();
+                        if (isArabic)
+                        {
+                            sb.AppendLine($"📅 تحتوي خطة التمرين الحالية الخاصة بك على {count} أيام تدريب في الأسبوع:");
+                            foreach (var d in trainingDays)
+                            {
+                                sb.AppendLine($"• {d.DayName}");
+                            }
+                        }
+                        else
+                        {
+                            sb.AppendLine($"📅 Your current workout plan contains {count} training days per week:");
+                            foreach (var d in trainingDays)
+                            {
+                                sb.AppendLine($"• {d.DayName}");
+                            }
+                        }
+
+                        return sb.ToString().Trim();
+                    }
+
+                case "GET_WORKOUT_SUMMARY":
+                    {
+                        var activePlan = await _context.WorkoutPlans
+                            .Include(p => p.WorkoutDays)
+                                .ThenInclude(d => d.Exercises)
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activePlan == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك خطة تمرين نشطة حالياً. هل تود أن أنشئ لك واحدة؟"
+                                : "You don't have an active workout plan yet. Would you like me to generate one?";
+                        }
+
+                        var trainingDaysCount = activePlan.WorkoutDays
+                            .Count(d => d.Exercises != null && d.Exercises.Any() &&
+                                        !d.Exercises.Any(ex => (!string.IsNullOrEmpty(ex.ExrciseName) && ex.ExrciseName.ToLowerInvariant().Contains("rest"))));
+
+                        var sb = new StringBuilder();
+                        if (isArabic)
+                        {
+                            sb.AppendLine($"🏋️ **ملخص خطة التمرين الحالية:**");
+                            sb.AppendLine($"• **الاسم:** {activePlan.Name}");
+                            sb.AppendLine($"• **المدة:** {activePlan.DurationWeeks} أسابيع");
+                            sb.AppendLine($"• **الهدف:** {profile.Goal ?? "لياقة عامة"}");
+                            sb.AppendLine($"• **أيام التدريب:** {trainingDaysCount} أيام في الأسبوع");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"🏋️ **Active Workout Plan Summary:**");
+                            sb.AppendLine($"• **Name:** {activePlan.Name}");
+                            sb.AppendLine($"• **Duration:** {activePlan.DurationWeeks} weeks");
+                            sb.AppendLine($"• **Goal:** {profile.Goal ?? "General Fitness"}");
+                            sb.AppendLine($"• **Training Days:** {trainingDaysCount} days/week");
+                        }
+
+                        return sb.ToString().Trim();
+                    }
+
+                case "GET_WORKOUT_EXERCISES":
+                    {
+                        var activePlan = await _context.WorkoutPlans
+                            .Include(p => p.WorkoutDays)
+                                .ThenInclude(d => d.Exercises)
+                                    .ThenInclude(e => e.Exercise)
+                            .Where(p => p.MemberProfileId == profile.Id && p.IsActive && !p.IsDeleted)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .FirstOrDefaultAsync();
+
+                        if (activePlan == null)
+                        {
+                            return isArabic
+                                ? "ليس لديك خطة تمرين نشطة حالياً. هل تود أن أنشئ لك واحدة؟"
+                                : "You don't have an active workout plan yet. Would you like me to generate one?";
+                        }
+
+                        var sb = new StringBuilder();
+                        if (isArabic)
+                        {
+                            sb.AppendLine($"🏋️ **التمارين في خطتك التدريبية:**");
+                            sb.AppendLine();
+                            foreach (var d in activePlan.WorkoutDays.OrderBy(day => day.DayNumber))
+                            {
+                                sb.AppendLine($"**{d.DayName}:**");
+                                if (d.Exercises == null || !d.Exercises.Any() || 
+                                    d.Exercises.Any(ex => (!string.IsNullOrEmpty(ex.ExrciseName) && ex.ExrciseName.ToLowerInvariant().Contains("rest"))))
+                                {
+                                    sb.AppendLine("• راحة 😴");
+                                }
+                                else
+                                {
+                                    foreach (var ex in d.Exercises)
+                                    {
+                                        var name = !string.IsNullOrWhiteSpace(ex.ExrciseName) ? ex.ExrciseName : ex.Exercise?.Name ?? "Exercise";
+                                        sb.AppendLine($"• {name} ({ex.Sets} × {ex.Reps})");
+                                    }
+                                }
+                                sb.AppendLine();
+                            }
+                        }
+                        else
+                        {
+                            sb.AppendLine($"🏋️ **Exercises in your workout plan:**");
+                            sb.AppendLine();
+                            foreach (var d in activePlan.WorkoutDays.OrderBy(day => day.DayNumber))
+                            {
+                                sb.AppendLine($"**{d.DayName}:**");
+                                if (d.Exercises == null || !d.Exercises.Any() || 
+                                    d.Exercises.Any(ex => (!string.IsNullOrEmpty(ex.ExrciseName) && ex.ExrciseName.ToLowerInvariant().Contains("rest"))))
+                                {
+                                    sb.AppendLine("• Rest Day 😴");
+                                }
+                                else
+                                {
+                                    foreach (var ex in d.Exercises)
+                                    {
+                                        var name = !string.IsNullOrWhiteSpace(ex.ExrciseName) ? ex.ExrciseName : ex.Exercise?.Name ?? "Exercise";
+                                        sb.AppendLine($"• {name} ({ex.Sets} x {ex.Reps})");
+                                    }
+                                }
+                                sb.AppendLine();
+                            }
+                        }
+
+                        return sb.ToString().Trim();
+                    }
+
                 case "both":
                     {
                         var workoutPlan = await _workoutAI
@@ -594,6 +1026,42 @@ namespace ArenaInfrastructure.AI
 
                         return combined.ToString();
                     }
+
+                case "MODIFY_WORKOUT_PLAN":
+                    {
+                        var workoutPlan = await _workoutAI
+                            .ModifyWorkoutPlanAsync(profile.Id, userMessage);
+
+                        var sb = new StringBuilder();
+                        sb.AppendLine(isArabic
+                            ? $"✅ تم تعديل خطة التمرين '{workoutPlan.Name}' بناءً على طلبك! 💪"
+                            : $"✅ Your workout plan '{workoutPlan.Name}' has been successfully modified! Let's go! 💪");
+                        sb.AppendLine(isArabic
+                            ? $"📅 المدة: {workoutPlan.DurationWeeks} أسابيع\n"
+                            : $"📅 Plan Duration: {workoutPlan.DurationWeeks} weeks\n");
+
+                        foreach (var day in workoutPlan.Days)
+                        {
+                            sb.AppendLine($"🏋️ {day.DayName}:");
+                            foreach (var ex in day.Exercises)
+                            {
+                                if (ex.Name.ToLower().Contains("rest"))
+                                    sb.AppendLine($"   • {ex.Name} 😴");
+                                else if (ex.Sets <= 1 && ex.Reps >= 20)
+                                    sb.AppendLine(isArabic
+                                        ? $"   • {ex.Name} — {ex.Reps} دقيقة"
+                                        : $"   • {ex.Name} — {ex.Reps} minutes");
+                                else
+                                    sb.AppendLine(isArabic
+                                        ? $"   • {ex.Name} — {ex.Sets} مجموعات × {ex.Reps}"
+                                        : $"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
+                            }
+                            sb.AppendLine();
+                        }
+
+                        return sb.ToString();
+                    }
+
                 case "workout":
                     {
                         var workoutPlan = await _workoutAI
@@ -679,6 +1147,31 @@ namespace ArenaInfrastructure.AI
                             : "💡 If you'd like a fresh nutrition plan to match your new goal, I'm ready whenever you are!");
 
                         return sb.ToString();
+                    }
+
+                case "MODIFY_NUTRITION_PLAN":
+                    {
+                        var nutritionPlan = await _nutritionAI
+                            .ModifyNutritionPlanAsync(profile.Id, userMessage);
+
+                        var nb = new StringBuilder();
+                        nb.AppendLine(isArabic
+                            ? $"✅ تم تعديل نظامك الغذائي بناءً على طلبك يا {memberName}! 🥗 تفضل النسخة المحدثة:"
+                            : $"✅ I've updated your nutrition plan according to your request, {memberName}! 🥗 Here is the modified version:");
+                        nb.AppendLine(isArabic
+                            ? $"🔥 هدفك اليومي: {nutritionPlan.DailyCalories} سعر حراري | 💪 بروتين: {nutritionPlan.ProteinGrams}g | 🍚 كارب: {nutritionPlan.CarbsGrams}g | 🥑 دهون: {nutritionPlan.FatGrams}g\n"
+                            : $"🔥 Daily Goal: {nutritionPlan.DailyCalories} kcal | 💪 Protein: {nutritionPlan.ProteinGrams}g | 🍚 Carbs: {nutritionPlan.CarbsGrams}g | 🥑 Fat: {nutritionPlan.FatGrams}g\n");
+
+                        foreach (var meal in nutritionPlan.Meals)
+                        {
+                            nb.AppendLine($"🍽️ **{meal.MealType}** — {meal.Name}");
+                            nb.AppendLine(isArabic
+                                ? $"   {meal.Calories} سعر حراري | بروتين: {meal.ProteinGrams}g | كارب: {meal.CarbsGrams}g"
+                                : $"   {meal.Calories} kcal | P: {meal.ProteinGrams}g | C: {meal.CarbsGrams}g | F: {meal.FatGrams}g");
+                            nb.AppendLine($"   *{meal.Ingredients}*\n");
+                        }
+
+                        return nb.ToString();
                     }
 
                 case "nutrition":
@@ -1048,8 +1541,8 @@ namespace ArenaInfrastructure.AI
             {
                 "GENERATE_WORKOUT_PLAN" => "workout",
                 "GENERATE_NUTRITION_PLAN" => "nutrition",
-                "MODIFY_WORKOUT_PLAN" => "chat",
-                "MODIFY_NUTRITION_PLAN" => "chat",
+                "MODIFY_WORKOUT_PLAN" => "MODIFY_WORKOUT_PLAN",
+                "MODIFY_NUTRITION_PLAN" => "MODIFY_NUTRITION_PLAN",
                 "ASK_ABOUT_INJURY_COMPATIBILITY" => "ask_about_injury_compatibility",
                 "ASK_ABOUT_EXERCISE" => "chat",
                 "ASK_ABOUT_NUTRITION" => "chat",
@@ -1060,6 +1553,16 @@ namespace ArenaInfrastructure.AI
                 "ASK_BOOKING_DETAILS" => "booking",
                 "GENERAL_FITNESS_QUESTION" => "chat",
                 "GREETING" => "chat",
+                "GET_NUTRITION_TARGETS" => "GET_NUTRITION_TARGETS",
+                "GET_WORKOUT_TODAY" => "GET_WORKOUT_TODAY",
+                "GET_WORKOUT_DAY" => "GET_WORKOUT_DAY",
+                "GET_WORKOUT_DURATION" => "GET_WORKOUT_DURATION",
+                "GET_WORKOUT_GOAL" => "GET_WORKOUT_GOAL",
+                "GET_WORKOUT_SUMMARY" => "GET_WORKOUT_SUMMARY",
+                "GET_WORKOUT_EXERCISES" => "GET_WORKOUT_EXERCISES",
+                "GET_WORKOUT_SCHEDULE" => "GET_WORKOUT_SCHEDULE",
+                "GET_USER_INJURIES" => "GET_USER_INJURIES",
+                "GET_ACTIVE_PLAN" => "GET_ACTIVE_PLAN",
                 _ => string.IsNullOrWhiteSpace(normalized) ? "chat" : normalized
             };
 
@@ -1080,6 +1583,36 @@ namespace ArenaInfrastructure.AI
             }
 
             return normalized;
+        }
+
+        private static bool WorkoutDayMatchesWeekday(WorkoutDay day, DayOfWeek weekday)
+        {
+            if (string.IsNullOrEmpty(day.DayName)) return false;
+            var name = day.DayName.ToLowerInvariant();
+            return weekday switch
+            {
+                DayOfWeek.Monday => name.Contains("monday") || name.Contains("الاثنين") || name.Contains("الإثنين") || name.Contains("الاتنين"),
+                DayOfWeek.Tuesday => name.Contains("tuesday") || name.Contains("الثلاثاء") || name.Contains("التلات") || name.Contains("التلاتاء"),
+                DayOfWeek.Wednesday => name.Contains("wednesday") || name.Contains("الأربعاء") || name.Contains("الاربعاء") || name.Contains("الأربع") || name.Contains("الاربع"),
+                DayOfWeek.Thursday => name.Contains("thursday") || name.Contains("الخميس"),
+                DayOfWeek.Friday => name.Contains("friday") || name.Contains("الجمعة") || name.Contains("الجمعه"),
+                DayOfWeek.Saturday => name.Contains("saturday") || name.Contains("السبت"),
+                DayOfWeek.Sunday => name.Contains("sunday") || name.Contains("الأحد") || name.Contains("الاحد") || name.Contains("الحد"),
+                _ => false
+            };
+        }
+
+        private static DayOfWeek? GetRequestedWeekday(string userMessage, List<ChatMessageDto> history)
+        {
+            var weekday = DetectWeekday(userMessage);
+            if (weekday.HasValue) return weekday;
+
+            foreach (var msg in history.Where(m => m.Sender == "user").Reverse().Take(3))
+            {
+                var wd = DetectWeekday(msg.MessageText);
+                if (wd.HasValue) return wd;
+            }
+            return null;
         }
 
         /// <summary>
@@ -1787,16 +2320,14 @@ namespace ArenaInfrastructure.AI
 
         private string BuildAssistantUnavailableReply(bool isArabic, Exception ex)
         {
-            if (_environment.IsDevelopment())
-            {
-                return isArabic
-                    ? $"مش قادر أوصل لخدمة المساعد دلوقتي. سبب الخطأ: {ex.Message}"
-                    : $"I could not reach the assistant service right now. Error: {ex.Message}";
-            }
+            // Always include error details for diagnosis
+            var errorDetail = ex.Message;
+            if (ex.InnerException != null)
+                errorDetail += $" | Inner: {ex.InnerException.Message}";
 
             return isArabic
-                ? "مش قادر أوصل لخدمة المساعد دلوقتي. جرب تاني كمان لحظة."
-                : "I could not reach the assistant service right now. Please try again in a moment.";
+                ? $"مش قادر أوصل لخدمة المساعد دلوقتي. سبب الخطأ: {errorDetail}"
+                : $"I could not reach the assistant service right now. Error: {errorDetail}";
         }
 
         private static string GetMemberFirstName(ArenaDomain.Entities.MemberProfile profile)

@@ -4,7 +4,7 @@ The user may write in English OR Arabic OR both mixed.
 Analyze the user message carefully based on MEANING not exact words.
 Return ONLY this JSON, no extra text, no markdown:
 {
-  "intent": "GENERATE_WORKOUT_PLAN" | "GENERATE_NUTRITION_PLAN" | "MODIFY_WORKOUT_PLAN" | "MODIFY_NUTRITION_PLAN" | "ASK_ABOUT_INJURY_COMPATIBILITY" | "ASK_ABOUT_EXERCISE" | "ASK_ABOUT_NUTRITION" | "REQUEST_ALTERNATIVE_EXERCISE" | "REQUEST_MEAL_SUGGESTION" | "REQUEST_FOOD_ANALYSIS" | "BOOK_SESSION" | "ASK_BOOKING_DETAILS" | "GENERAL_FITNESS_QUESTION" | "GREETING" | "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat",
+  "intent": "GENERATE_WORKOUT_PLAN" | "GENERATE_NUTRITION_PLAN" | "MODIFY_WORKOUT_PLAN" | "MODIFY_NUTRITION_PLAN" | "ASK_ABOUT_INJURY_COMPATIBILITY" | "ASK_ABOUT_EXERCISE" | "ASK_ABOUT_NUTRITION" | "REQUEST_ALTERNATIVE_EXERCISE" | "REQUEST_MEAL_SUGGESTION" | "REQUEST_FOOD_ANALYSIS" | "BOOK_SESSION" | "ASK_BOOKING_DETAILS" | "GENERAL_FITNESS_QUESTION" | "GREETING" | "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat" | "GET_NUTRITION_TARGETS" | "GET_WORKOUT_TODAY" | "GET_WORKOUT_DAY" | "GET_WORKOUT_DURATION" | "GET_WORKOUT_GOAL" | "GET_WORKOUT_SUMMARY" | "GET_WORKOUT_EXERCISES" | "GET_WORKOUT_SCHEDULE" | "GET_USER_INJURIES" | "GET_ACTIVE_PLAN",
   "action": "create" | "cancel" | "reschedule" | null,
   "date": "YYYY-MM-DD or null",
   "time": "HH:mm or null",
@@ -67,6 +67,48 @@ Intent rules:
               → "generate nutrition plan", "create meal plan", "اعمل نظام غذائي", "خطة تغذية", "عاوز نظام غذائي"
               → NOT for general food questions
 
+- "GET_NUTRITION_TARGETS" → user asks about their active calorie targets, macros, protein, carbs, or fats.
+                         → "What are my calories?", "What is my daily calorie target?", "How much protein should I eat?", "What are my macros?"
+                         → Arabic/Egyptian: "الكالوريز بتاعتي كام؟", "البروتين بتاعي كام؟", "الكارب كام؟", "الدهون كام؟", "السعرات بتاعتي كام؟"
+                         → NOT for general nutrition questions or food analysis.
+
+- "GET_WORKOUT_TODAY" → user asks about today's workout or exercises, or what to train today.
+                     → "What is today's workout?", "What should I train today?", "Show today's exercises."
+                     → Arabic/Egyptian: "تمريني النهاردة ايه؟", "هتمرن ايه النهاردة؟", "عندي تمرين النهاردة؟", "ايه التمرين بتاعي؟"
+
+- "GET_WORKOUT_DAY" → user asks what to train on a specific day of the week (e.g. Monday).
+                   → "What do I have on Monday?", "What do I train on Wednesday?"
+                   → Arabic/Egyptian: "عندي ايه يوم الاثنين؟", "هتمرن ايه يوم الاثنين؟"
+
+- "GET_WORKOUT_DURATION" → user asks how long/duration of their active workout plan.
+                         → "How long is my plan?", "How long is my workout plan?"
+                         → Arabic/Egyptian: "الخطة كام أسبوع؟", "الخطة مدتها قد ايه؟"
+
+- "GET_WORKOUT_GOAL" → user asks about their active workout plan's goal.
+                     → "What is my workout goal?", "What is my training goal?"
+                     → Arabic/Egyptian: "هدفي ايه؟", "انا بتمرن ليه؟", "الهدف من الخطة ايه؟"
+
+- "GET_WORKOUT_SUMMARY" → user asks for a summary of their active workout plan.
+                       → "Show my workout summary."
+                       → Arabic/Egyptian: "ملخص تمريني", "قولي ملخص الخطة"
+
+- "GET_WORKOUT_EXERCISES" → user asks about what exercises are in the active plan.
+                         → "What exercises are in my plan?", "What exercises do I have?"
+                         → Arabic/Egyptian: "ايه التمارين اللي عندي؟", "وريني التمارين"
+
+- "GET_WORKOUT_SCHEDULE" → user asks about their workout schedule, training days, or number of days they train.
+                         → "What is my workout schedule?", "How many workout days do I have?"
+                         → Arabic/Egyptian: "جدول تمريني ايه؟", "بتمرن كام يوم في الاسبوع؟"
+
+- "GET_USER_INJURIES" → user asks if you know or remember their injuries, medical conditions, health status, or physical limitations.
+                     → "Do you know my injuries?", "What injuries do I have?", "What medical conditions do I have?"
+                     → Arabic/Egyptian: "انت تعرف اصابتي؟", "فاكر اصابتي؟", "عندي اي اصابات؟", "تعرف انا مصاب في ايه؟", "ايه الاصابات المسجلة عندي؟", "ايه الامراض اللي عندي؟", "تعرف حالتي الصحية؟", "فاكر انا عندي ايه؟", "عارف عندي اي اصابات؟"
+                     → NEVER generate a workout or nutrition plan for this.
+
+- "GET_ACTIVE_PLAN" → user asks to see, open, show, or retrieve their current active plan (workout, nutrition, or both).
+                   → "Show my active plan", "Open my plan", "Show my workouts and meals"
+                   → Arabic/Egyptian: "وريني خطتي", "اعرض الخطة", "افتح الخطة", "رجعلي الخطة"
+                   → ONLY show the active plan, do NOT generate a new plan.
 
 - "booking"   → user wants to reserve, cancel, or reschedule a gym session, OR asks which times/slots are available/open to book
 → reserve, schedule, coming to gym, specific time/date,
@@ -165,3 +207,145 @@ Examples:
 "ركبتي بتوجعني وعايز خطة تمرين" => {"intent":"workout","injuries":"ركبتي بتوجعني (knee pain)"}
 "b2ali fatra mabl3bsh" => {"intent":"chat","fitnessExperience":"b2ali fatra mabl3bsh (hasn't trained in a while)"}
 "hello" => {"intent":"chat"}
+
+"What is my daily calorie limit?" => {"intent":"GET_NUTRITION_TARGETS"}
+"How much protein should I eat?" => {"intent":"GET_NUTRITION_TARGETS"}
+"What is my daily calorie target?" => {"intent":"GET_NUTRITION_TARGETS"}
+"What are my carbs?" => {"intent":"GET_NUTRITION_TARGETS"}
+"What is today's workout?" => {"intent":"GET_WORKOUT_TODAY"}
+"What should I train today?" => {"intent":"GET_WORKOUT_TODAY"}
+"What exercises are in my plan?" => {"intent":"GET_WORKOUT_EXERCISES"}
+"Show my workout summary." => {"intent":"GET_WORKOUT_SUMMARY"}
+"What exercises do I have on Monday?" => {"intent":"GET_WORKOUT_DAY"}
+"What do I train on Monday?" => {"intent":"GET_WORKOUT_DAY"}
+"How many workout days do I have?" => {"intent":"GET_WORKOUT_SCHEDULE"}
+"What is my workout schedule?" => {"intent":"GET_WORKOUT_SCHEDULE"}
+"What is my training goal?" => {"intent":"GET_WORKOUT_GOAL"}
+"What is my workout goal?" => {"intent":"GET_WORKOUT_GOAL"}
+"How long is my workout plan?" => {"intent":"GET_WORKOUT_DURATION"}
+"How long is my plan?" => {"intent":"GET_WORKOUT_DURATION"}
+
+"Do you know my injuries?" => {"intent":"GET_USER_INJURIES"}
+"What injuries do I have?" => {"intent":"GET_USER_INJURIES"}
+"Show my injuries." => {"intent":"GET_USER_INJURIES"}
+"What medical conditions do I have?" => {"intent":"GET_USER_INJURIES"}
+"ما هي إصاباتي؟" => {"intent":"GET_USER_INJURIES"}
+"ما هي الأمراض المسجلة لدي؟" => {"intent":"GET_USER_INJURIES"}
+"هل تعرف إصاباتي؟" => {"intent":"GET_USER_INJURIES"}
+"هل تعرف حالتي الصحية؟" => {"intent":"GET_USER_INJURIES"}
+"اعرض إصاباتي." => {"intent":"GET_USER_INJURIES"}
+"انت تعرف اصابتي؟" => {"intent":"GET_USER_INJURIES"}
+"تعرف عندي ايه؟" => {"intent":"GET_USER_INJURIES"}
+"فاكر اصابتي؟" => {"intent":"GET_USER_INJURIES"}
+"ايه الاصابات اللي عندي؟" => {"intent":"GET_USER_INJURIES"}
+"انا عندي اي اصابات؟" => {"intent":"GET_USER_INJURIES"}
+"تعرف الامراض بتاعتي؟" => {"intent":"GET_USER_INJURIES"}
+"عندي اي مشاكل صحية؟" => {"intent":"GET_USER_INJURIES"}
+"فاكر انا قولتلك ايه عن اصابتي؟" => {"intent":"GET_USER_INJURIES"}
+
+"الكالوريز بتاعتي كام؟" => {"intent":"GET_NUTRITION_TARGETS"}
+"البروتين بتاعي كام؟" => {"intent":"GET_NUTRITION_TARGETS"}
+"الكارب كام؟" => {"intent":"GET_NUTRITION_TARGETS"}
+"الدهون كام؟" => {"intent":"GET_NUTRITION_TARGETS"}
+"السعرات بتاعتي كام؟" => {"intent":"GET_NUTRITION_TARGETS"}
+
+"تمريني النهاردة ايه؟" => {"intent":"GET_WORKOUT_TODAY"}
+"هتمرن ايه النهاردة؟" => {"intent":"GET_WORKOUT_TODAY"}
+"عندي تمرين النهاردة؟" => {"intent":"GET_WORKOUT_TODAY"}
+"ايه التمرين بتاعي؟" => {"intent":"GET_WORKOUT_TODAY"}
+
+"هدفي ايه؟" => {"intent":"GET_WORKOUT_GOAL"}
+"انا بتمرن ليه؟" => {"intent":"GET_WORKOUT_GOAL"}
+"الهدف من الخطة ايه؟" => {"intent":"GET_WORKOUT_GOAL"}
+
+"الخطة كام أسبوع؟" => {"intent":"GET_WORKOUT_DURATION"}
+"الخطة مدتها قد ايه؟" => {"intent":"GET_WORKOUT_DURATION"}
+
+"وريني خطتي." => {"intent":"GET_ACTIVE_PLAN"}
+"اعرض الخطة." => {"intent":"GET_ACTIVE_PLAN"}
+"افتح الخطة." => {"intent":"GET_ACTIVE_PLAN"}
+"رجعلي الخطة." => {"intent":"GET_ACTIVE_PLAN"}
+
+"عندي فراخ ورز." => {"intent":"GET_FOOD_ANALYSIS"}
+"معايا بيض وشوفان." => {"intent":"GET_FOOD_ANALYSIS"}
+"ممكن اعمل اكل من الموجود؟" => {"intent":"GET_FOOD_ANALYSIS"}
+
+"احجزلي سيشن." => {"intent":"BOOK_SESSION"}
+"عايز احجز تمرين." => {"intent":"BOOK_SESSION"}
+"احجز مع كوتش." => {"intent":"BOOK_SESSION"}
+"احجز بكرة الساعة ٦." => {"intent":"BOOK_SESSION"}
+
+"Give me another nutrition plan." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Create an alternative meal plan." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"I don't have these ingredients." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Replace breakfast." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Replace lunch." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Replace dinner." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Replace chicken." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Replace rice." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"I don't eat eggs." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"I don't drink milk." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"I am allergic to peanuts." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"I am allergic to pea protein." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Make it vegetarian." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Make it vegan." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Make it cheaper." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Use foods I already have." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Use available ingredients." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Reduce carbohydrates." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Increase protein." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"Make it suitable for diabetes." => {"intent":"MODIFY_NUTRITION_PLAN"}
+
+"اعملي نظام غذائي تاني." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"اعملي خطة غذائية بديلة." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"عايز نظام غذائي مختلف." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"عايزة خطة مختلفة." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"غير الفطار." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"غير الغدا." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"غير العشا." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"استبدل الدجاج." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"استبدل الرز." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"استبدل السمك." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"عندي حساسية من البازلاء." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"عندي حساسية من الفول السوداني." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"مش بحب البيض." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"مش عندي المكونات دي." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"استخدم مكونات موجودة عندي." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"اعملها بمكونات مختلفة." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"قلل الكارب." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"زود البروتين." => {"intent":"MODIFY_NUTRITION_PLAN"}
+"اعملها مناسبة للسكر." => {"intent":"MODIFY_NUTRITION_PLAN"}
+
+"Give me another workout." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Create another workout plan." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Replace today's workout." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Replace squats." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Replace deadlifts." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Add more cardio." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Reduce cardio." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Reduce workout days." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Increase workout days." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Make it easier." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Make it harder." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"I only have dumbbells." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"I don't have gym machines." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"I have a knee injury." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"I have shoulder pain." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"Modify my workout." => {"intent":"MODIFY_WORKOUT_PLAN"}
+
+"اعملي خطة تمرين تانية." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"اعملي خطة بديلة." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"عايز خطة تمرين مختلفة." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"غير تمرين النهاردة." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"غير السكوات." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"شيل الديدليفت." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"زود كارديو." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"قلل الكارديو." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"قلل عدد الأيام." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"زود عدد الأيام." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"عندي دامبلز بس." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"معنديش أجهزة." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"عندي إصابة في الركبة." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"عندي إصابة في الكتف." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"عدل الخطة." => {"intent":"MODIFY_WORKOUT_PLAN"}
+"غير التمارين." => {"intent":"MODIFY_WORKOUT_PLAN"}
