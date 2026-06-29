@@ -118,6 +118,8 @@ namespace ArenaApplication.Services.UserSubscription
             return result;
         }
 
+        private const int MaxActivePlans = 2;
+
         public async Task<UserSubscriptionDto> CreateAsync(
             CreateUserSubscriptionDto createDto, CancellationToken cancellationToken = default)
         {
@@ -130,6 +132,16 @@ namespace ArenaApplication.Services.UserSubscription
             if (member == null)
                 throw new KeyNotFoundException(
                     string.Format(_localizer["EntityNotFoundById"], "Member profile", createDto.MemberProfileId));
+
+            // Enforce maximum active plans limit
+            var activePlans = await _repository.FindAsync(
+                s => s.MemberProfileId == createDto.MemberProfileId
+                     && !s.IsDeleted
+                     && s.EndDate > DateTime.UtcNow,
+                cancellationToken);
+
+            if (activePlans.Count >= MaxActivePlans)
+                throw new InvalidOperationException(_localizer["MaxActivePlansReached"]);
 
             var subscription = new ArenaDomain.Entities.Subscription.UserSubscription
             {
