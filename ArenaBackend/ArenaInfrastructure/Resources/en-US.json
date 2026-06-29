@@ -412,5 +412,6 @@
   "ManageGymEquipment": "Manage gym equipment.",
   "SearchEquipments": "Search by Name or Category...",
   "AreYouSureDeleteEquipment": "Are you sure you want to delete this equipment?",
-  "Category": "Category"
+  "Category": "Category",
+  "MaxActivePlansReached": "You cannot have more than 2 active subscription plans at the same time. Please wait for an existing plan to expire before subscribing to a new one."
 }
