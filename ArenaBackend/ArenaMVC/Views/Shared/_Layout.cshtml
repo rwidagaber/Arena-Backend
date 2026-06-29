@@ -185,6 +185,15 @@
                     overlay.classList.remove('active');
                 });
             }
+
+            // Auto-hide success alerts after 4 seconds
+            setTimeout(function () {
+                if (window.jQuery) {
+                    window.jQuery('.subscription-alert.success').fadeOut(500, function () {
+                        window.jQuery(this).remove();
+                    });
+                }
+            }, 4000);
         });
         document.addEventListener('click', function (e) {
             document.querySelectorAll('.culture-dropdown.open').forEach(function (dd) {
