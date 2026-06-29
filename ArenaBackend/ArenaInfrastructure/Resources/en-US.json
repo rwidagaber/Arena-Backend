@@ -411,5 +411,11 @@
   "ManageGymEquipment": "Manage gym equipment.",
   "SearchEquipments": "Search by Name or Category...",
   "AreYouSureDeleteEquipment": "Are you sure you want to delete this equipment?",
-  "Category": "Category"
+  "Category": "Category",
+  "EquipmentCreatedSuccessfully": "Equipment created successfully!",
+  "EquipmentUpdatedSuccessfully": "Equipment updated successfully!",
+  "EquipmentDeletedSuccessfully": "Equipment deleted successfully!",
+  "ExerciseCatalogItemCreatedSuccessfully": "Exercise catalog item created successfully!",
+  "ExerciseCatalogItemUpdatedSuccessfully": "Exercise catalog item updated successfully!",
+  "ExerciseCatalogItemDeletedSuccessfully": "Exercise catalog item deleted successfully!"
 }
