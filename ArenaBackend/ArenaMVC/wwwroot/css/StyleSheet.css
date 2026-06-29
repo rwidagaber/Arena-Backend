@@ -3,18 +3,29 @@
 /* Color Palette */
 :root {
     color-scheme: dark;
-    --yellow: #d5eb45; /* Neon Green Accent */
-    --accent-color: #d5eb45; /* Accent alias — Dark Mode = neon green */
-    --accent-hover: #e2f574; /* Lighter accent hover */
-    --teal: #6F8786; /* Hammock / Muted Blue-Gray Accent */
-    --dark-gray: #414039; /* November Storms / Warm Charcoal */
-    --whiteout: #FBFBFB; /* Light Text & Highlights */
-    --black: #0F0F11; /* Sooty / Deep Charcoal Background */
-    --card-bg: #16161A; /* Premium Dark Card Background */
-    --border-color: #252529; /* Clean Component Borders */
-    --sidebar-bg: #121214; /* Sidebar Background */
+    --yellow: #d5eb45;
+    /* Neon Green Accent */
+    --accent-color: #d5eb45;
+    /* Accent alias — Dark Mode = neon green */
+    --accent-hover: #e2f574;
+    /* Lighter accent hover */
+    --teal: #6F8786;
+    /* Hammock / Muted Blue-Gray Accent */
+    --dark-gray: #414039;
+    /* November Storms / Warm Charcoal */
+    --whiteout: #FBFBFB;
+    /* Light Text & Highlights */
+    --black: #0F0F11;
+    /* Sooty / Deep Charcoal Background */
+    --card-bg: #16161A;
+    /* Premium Dark Card Background */
+    --border-color: #252529;
+    /* Clean Component Borders */
+    --sidebar-bg: #121214;
+    /* Sidebar Background */
     --sidebar-width: 260px;
-    --nav-text: #d5eb45; /* Subtle Text for Navigation */
+    --nav-text: #d5eb45;
+    /* Subtle Text for Navigation */
     /* Theme Variable Mapping (Default Dark Mode) */
     --bg-color: #0F0F11;
     --text-primary: #FBFBFB;
@@ -51,6 +62,9 @@
     --arena-bg: #0F0F11;
     --arena-text: #FBFBFB;
     --autonomous-color: #A0A0AB;
+    /* Custom Scrollbar Colors */
+    --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+    --scrollbar-thumb-hover: var(--yellow);
 }
 
 html[data-theme="light"] {
@@ -102,6 +116,9 @@ html[data-theme="light"] {
     --arena-bg: #e6e7e2;
     --arena-text: #181818;
     --autonomous-color: #5f5f5c;
+    /* Custom Scrollbar Colors */
+    --scrollbar-thumb: rgba(0, 0, 0, 0.18);
+    --scrollbar-thumb-hover: var(--yellow);
 }
 
 [dir="rtl"] {
@@ -140,6 +157,26 @@ body {
     overflow-y: auto !important;
     box-shadow: var(--sidebar-shadow) !important;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* Custom scrollbar styling for WebKit browsers */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
 }
 
 .sidebar-brand {
@@ -335,7 +372,7 @@ a:hover {
 }
 
 .nav-pills .nav-link.active,
-.nav-pills .show > .nav-link {
+.nav-pills .show>.nav-link {
     color: var(--black);
     background-color: var(--yellow);
     border-color: var(--yellow);
@@ -419,6 +456,7 @@ html[data-theme="light"] .dashboard-card:hover {
     .sidebar-toggle {
         display: none !important;
     }
+
     .header-brand {
         display: none !important;
     }
@@ -453,12 +491,15 @@ html[data-theme="light"] .dashboard-card:hover {
 html[data-theme="light"] .theme-toggle-btn .sun-icon {
     display: none;
 }
+
 html[data-theme="light"] .theme-toggle-btn .moon-icon {
     display: block;
 }
+
 html:not([data-theme="light"]) .theme-toggle-btn .sun-icon {
     display: block;
 }
+
 html:not([data-theme="light"]) .theme-toggle-btn .moon-icon {
     display: none;
 }
@@ -562,7 +603,8 @@ html:not([data-theme="light"]) .theme-toggle-btn .moon-icon {
 }
 
 /* Form inputs & controls global styling */
-.form-control, .form-select {
+.form-control,
+.form-select {
     background-color: var(--input-bg) !important;
     border: 1px solid var(--border-color) !important;
     color: var(--whiteout) !important;
@@ -575,7 +617,8 @@ html:not([data-theme="light"]) .theme-toggle-btn .moon-icon {
     color: var(--whiteout) !important;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     background-color: var(--input-bg-focus) !important;
     border-color: var(--accent-color) !important;
     box-shadow: 0 0 0 3px rgba(198, 239, 46, 0.18) !important;
@@ -651,6 +694,7 @@ html[data-theme="light"] .lang-switcher-btn:hover {
     background-color: rgba(198, 239, 46, 0.06);
     box-shadow: 0 0 0 3px rgba(198, 239, 46, 0.18);
 }
+
 html[data-theme="light"] .lang-switcher-btn:hover .lang-arrow {
     color: #4d7c0f;
 }
@@ -661,6 +705,7 @@ html:not([data-theme="light"]) .lang-switcher-btn:hover {
     background-color: rgba(213, 235, 69, 0.05);
     box-shadow: 0 0 10px rgba(213, 235, 69, 0.15), 0 0 0 3px rgba(213, 235, 69, 0.1);
 }
+
 html:not([data-theme="light"]) .lang-switcher-btn:hover .lang-arrow {
     color: var(--yellow);
 }
@@ -671,7 +716,8 @@ html:not([data-theme="light"]) .lang-switcher-btn:hover .lang-arrow {
     top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%) translateY(10px);
-    min-width: 68px; /* Compact width since there are only flags */
+    min-width: 68px;
+    /* Compact width since there are only flags */
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -681,9 +727,9 @@ html:not([data-theme="light"]) .lang-switcher-btn:hover .lang-arrow {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-                opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-                visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* RTL positioning */
@@ -762,6 +808,7 @@ html[data-theme="light"] .lang-option:hover {
     background-color: rgba(198, 239, 46, 0.08);
     border-color: rgba(198, 239, 46, 0.25);
 }
+
 html[data-theme="light"] .lang-option.active {
     background-color: rgba(198, 239, 46, 0.14);
     border-color: rgba(198, 239, 46, 0.35);
@@ -772,6 +819,7 @@ html:not([data-theme="light"]) .lang-option:hover {
     background-color: rgba(213, 235, 69, 0.06);
     border-color: rgba(213, 235, 69, 0.2);
 }
+
 html:not([data-theme="light"]) .lang-option.active {
     background-color: rgba(213, 235, 69, 0.12);
     border-color: rgba(213, 235, 69, 0.3);
