@@ -12,5 +12,8 @@ namespace ArenaMVC.Models
         public bool HasPreviousPage => Page > 1;
         public bool HasNextPage => Page < TotalPages;
         public string? Search { get; set; }
+        public bool? IsActive { get; set; }
+        public ArenaDomain.Enums.MembershipStatus? MembershipStatusFilter { get; set; }
+        public string? SubscriptionStatusFilter { get; set; }
     }
 }

@@ -11,14 +11,17 @@ namespace ArenaApplication.AI
         {
             
             var baseDir = Directory.GetCurrentDirectory();
+            var appBaseDir = AppDomain.CurrentDomain.BaseDirectory;
 
            
             var possiblePaths = new[]
             {
-        Path.Combine(baseDir, "AI", "Prompts", fileName),
-        Path.Combine(baseDir, "..", "ArenaApplication", "AI", "Prompts", fileName),
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Prompts", fileName)
-    };
+                Path.Combine(appBaseDir, "AI", "Prompts", fileName),
+                Path.Combine(baseDir, "AI", "Prompts", fileName),
+                Path.Combine(baseDir, "..", "ArenaApplication", "AI", "Prompts", fileName),
+                Path.Combine(appBaseDir, "Prompts", fileName),
+                Path.Combine(appBaseDir, "wwwroot", "AI", "Prompts", fileName),
+            };
 
             foreach (var path in possiblePaths)
             {
@@ -28,7 +31,7 @@ namespace ArenaApplication.AI
             }
 
             throw new FileNotFoundException(
-                $"Prompt file not found. Searched in:\n{string.Join("\n", possiblePaths)}");
+                $"Prompt file not found. Searched in:\n{string.Join("\n", possiblePaths.Select(Path.GetFullPath))}");
         }
 
         public static string GetWorkoutPrompt(

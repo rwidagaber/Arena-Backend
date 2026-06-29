@@ -30,16 +30,22 @@ namespace ArenaMVC.Controllers
 
         // GET: UserManagement/SearchPartial  – AJAX live-search endpoint
         [HttpGet]
-        public async Task<IActionResult> SearchPartial(string? search, int page = 1, int pageSize = DefaultPageSize)
+        public async Task<IActionResult> SearchPartial(
+            string? search, 
+            bool? isActive, 
+            ArenaDomain.Enums.MembershipStatus? membershipStatus, 
+            string? subscriptionStatus, 
+            int page = 1, 
+            int pageSize = DefaultPageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
 
             try
             {
-                var result = await _userService.GetUsers(search, page, pageSize);
+                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize);
                 if (!result.IsSuccess)
-                    return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search });
+                    return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
 
                 var pagedResult = result.Value;
 
@@ -61,31 +67,40 @@ namespace ArenaMVC.Controllers
                     TotalCount = pagedResult.TotalCount,
                     Page = page,
                     PageSize = pageSize,
-                    Search = search
+                    Search = search,
+                    IsActive = isActive,
+                    MembershipStatusFilter = membershipStatus,
+                    SubscriptionStatusFilter = subscriptionStatus
                 };
 
                 return PartialView("_UserResults", viewModel);
             }
             catch (Exception)
             {
-                return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search });
+                return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
             }
         }
 
         // GET: UserManagement
         [HttpGet]
-        public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = DefaultPageSize)
+        public async Task<IActionResult> Index(
+            string? search, 
+            bool? isActive, 
+            ArenaDomain.Enums.MembershipStatus? membershipStatus, 
+            string? subscriptionStatus, 
+            int page = 1, 
+            int pageSize = DefaultPageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
 
             try
             {
-                var result = await _userService.GetUsers(search, page, pageSize);
+                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize);
                 if (!result.IsSuccess)
                 {
                     TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUsers"].Value;
-                    return View(new UserListPagedViewModel { Page = page, PageSize = pageSize });
+                    return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
                 }
 
                 var pagedResult = result.Value;
@@ -108,7 +123,10 @@ namespace ArenaMVC.Controllers
                     TotalCount = pagedResult.TotalCount,
                     Page = page,
                     PageSize = pageSize,
-                    Search = search
+                    Search = search,
+                    IsActive = isActive,
+                    MembershipStatusFilter = membershipStatus,
+                    SubscriptionStatusFilter = subscriptionStatus
                 };
 
                 ViewBag.SearchString = search;
@@ -117,7 +135,7 @@ namespace ArenaMVC.Controllers
             catch (Exception)
             {
                 TempData["Error"] = _localizer["AnErrorOccurredRetrievingUsers"].Value;
-                return View(new UserListPagedViewModel { Page = page, PageSize = pageSize });
+                return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
             }
         }
 

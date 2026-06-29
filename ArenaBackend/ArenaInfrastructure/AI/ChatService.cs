@@ -2320,16 +2320,14 @@ namespace ArenaInfrastructure.AI
 
         private string BuildAssistantUnavailableReply(bool isArabic, Exception ex)
         {
-            if (_environment.IsDevelopment())
-            {
-                return isArabic
-                    ? $"مش قادر أوصل لخدمة المساعد دلوقتي. سبب الخطأ: {ex.Message}"
-                    : $"I could not reach the assistant service right now. Error: {ex.Message}";
-            }
+            // Always include error details for diagnosis
+            var errorDetail = ex.Message;
+            if (ex.InnerException != null)
+                errorDetail += $" | Inner: {ex.InnerException.Message}";
 
             return isArabic
-                ? "مش قادر أوصل لخدمة المساعد دلوقتي. جرب تاني كمان لحظة."
-                : "I could not reach the assistant service right now. Please try again in a moment.";
+                ? $"مش قادر أوصل لخدمة المساعد دلوقتي. سبب الخطأ: {errorDetail}"
+                : $"I could not reach the assistant service right now. Error: {errorDetail}";
         }
 
         private static string GetMemberFirstName(ArenaDomain.Entities.MemberProfile profile)

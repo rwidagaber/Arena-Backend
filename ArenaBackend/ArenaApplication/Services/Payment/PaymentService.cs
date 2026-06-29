@@ -67,6 +67,15 @@ namespace ArenaApplication.Services.Payment
             if (memberProfile is null)
                 return Result<PaymentDto>.Failure("Member Profile NotFound.");
 
+            // Enforce maximum of 2 active plans per member
+            var activePlansCount = await _subscriptionRepo.GetAll()
+                .CountAsync(s => s.MemberProfileId == memberProfile.Id
+                                 && !s.IsDeleted
+                                 && s.EndDate > DateTime.UtcNow);
+
+            if (activePlansCount >= 2)
+                return Result<PaymentDto>.Failure("You cannot have more than 2 active subscription plans at the same time. Please wait for an existing plan to expire before subscribing to a new one.");
+
             var activeSubscription = await _subscriptionRepo.GetAll()
                 .FirstOrDefaultAsync(s => s.MemberProfileId == memberProfile.Id && s.PlanId == dto.PlanId && s.Status == SubscriptionStatus.Active);
 
