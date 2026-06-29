@@ -1,0 +1,62 @@
+@model ArenaApplication.Dtos.Workout.MuscleGroupDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = Localizer["DeleteMuscleGroup"]?.Value ?? "Delete Muscle Group";
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1><i data-lucide="alert-triangle" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px; color: #ef4444;"></i>@ViewData["Title"]</h1>
+            <p>@(Localizer["ConfirmDeleteMuscleGroupDescription"]?.Value ?? "Verify before permanently removing this muscle group.")</p>
+        </div>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" asp-action="Index">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>@(Localizer["BackToList"]?.Value ?? "Back to List")
+            </a>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <div class="row justify-content-center" style="padding-top: 2rem; padding-bottom: 4rem;">
+            <div class="col-lg-6 col-md-8">
+                <div class="manage-user-card text-center" style="background-color: var(--card-bg); padding: 3rem 2rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--card-shadow);">
+                    <div class="mb-4">
+                        <i data-lucide="trash-2" style="width: 64px; height: 64px; color: #ef4444;"></i>
+                    </div>
+                    <h3 style="color: var(--foreground); font-weight: 700; margin-bottom: 1rem;">@Localizer["AreYouSureDeleteMuscleGroup"]</h3>
+                    <p class="text-muted mb-4" style="line-height: 1.6;">
+                        @(Localizer["MuscleGroupDeletionImpactWarning"]?.Value ?? "Deleting this muscle group will permanently remove it from the master list. It will also be removed from any associated exercises.")
+                    </p>
+
+                    <div class="p-3 mb-4 rounded" style="background-color: var(--body-bg); border: 1px solid var(--border-color);">
+                        <div class="row">
+                            <div class="col-6 border-end" style="border-color: var(--border-color) !important;">
+                                <span class="small text-muted d-block">@Localizer["EnglishName"]</span>
+                                <strong style="color: var(--foreground); font-size: 1.1rem;">@Model.Name</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="small text-muted d-block">@Localizer["ArabicName"]</span>
+                                <strong style="color: var(--yellow); font-size: 1.1rem;">@Model.NameAr</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <div class="d-flex gap-3 justify-content-center">
+                            <button type="submit" class="btn btn-subscription-danger" style="padding: 0.75rem 2rem; font-weight: 600;">@Localizer["Delete"]</button>
+                            <a asp-action="Index" class="btn btn-ghost" style="padding: 0.75rem 2rem;">@Localizer["Cancel"]</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

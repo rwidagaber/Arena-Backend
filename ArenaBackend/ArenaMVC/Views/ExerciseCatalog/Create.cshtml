@@ -62,20 +62,41 @@
                             <div class="col-md-6 mb-4">
                                 <div class="subscription-form-group">
                                     <label asp-for="MuscleGroup" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
-                                        @Html.DisplayNameFor(m => m.MuscleGroup) <span class="text-danger">*</span>
+                                        @Localizer["MuscleGroup"] <span class="text-danger">*</span>
                                     </label>
-                                    <input asp-for="MuscleGroup" class="form-control" placeholder="@Localizer["EnterMuscleGroup"]" style="background-color: var(--body-bg); border-color: var(--border-color); color: var(--foreground);" />
+                                    
+                                    <div class="custom-multiselect" id="muscleGroupMultiselect">
+                                        <div class="multiselect-trigger" id="muscleGroupTrigger">
+                                            <span id="selectedMuscleGroupsText">
+                                                <span class="text-muted">@Localizer["SelectMuscleGroups"]</span>
+                                            </span>
+                                            <i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i>
+                                        </div>
+                                        <div class="multiselect-dropdown" id="muscleGroupDropdown">
+                                            <div class="multiselect-options">
+                                                @if (ViewBag.MuscleGroups != null)
+                                                {
+                                                    var isArabic = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("ar", StringComparison.OrdinalIgnoreCase);
+                                                    @foreach (var mg in (System.Collections.Generic.List<ArenaApplication.Dtos.Workout.MuscleGroupDto>)ViewBag.MuscleGroups)
+                                                    {
+                                                        var displayName = isArabic && !string.IsNullOrEmpty(mg.NameAr) ? mg.NameAr : mg.Name;
+                                                        var safeId = "mg_" + mg.Name.Replace(" ", "_");
+                                                        <div class="form-check multiselect-option">
+                                                            <input class="form-check-input mg-checkbox gym-checkbox" type="checkbox" value="@mg.Name" data-name-ar="@mg.NameAr" id="@safeId" />
+                                                            <label class="form-check-label" for="@safeId">@displayName</label>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <div class="p-2 text-muted">@Localizer["NoMuscleGroupsAvailable"]</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" asp-for="MuscleGroup" id="MuscleGroupHiddenInput" />
+                                    <input type="hidden" asp-for="MuscleGroupAr" id="MuscleGroupArHiddenInput" />
                                     <span asp-validation-for="MuscleGroup" class="text-danger small"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-4">
-                                <div class="subscription-form-group">
-                                    <label asp-for="MuscleGroupAr" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
-                                        @Html.DisplayNameFor(m => m.MuscleGroupAr)
-                                    </label>
-                                    <input asp-for="MuscleGroupAr" class="form-control" dir="rtl" placeholder="أدخل العضلة المستهدفة بالعربية..." style="background-color: var(--body-bg); border-color: var(--border-color); color: var(--foreground);" />
-                                    <span asp-validation-for="MuscleGroupAr" class="text-danger small"></span>
                                 </div>
                             </div>
                         </div>
@@ -127,11 +148,13 @@
                                 <div class="row g-3">
                                     @foreach (var eq in equipments)
                                     {
+                                        var isArabic = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("ar", StringComparison.OrdinalIgnoreCase);
+                                        var eqName = isArabic && !string.IsNullOrEmpty(eq.NameAr) ? eq.NameAr : eq.Name;
                                         <div class="col-md-4 col-sm-6">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="EquipmentIds" value="@eq.Id" id="eq_@eq.Id" @(Model.EquipmentIds.Contains(eq.Id) ? "checked" : "") style="background-color: var(--body-bg); border-color: var(--border-color);" />
+                                            <div class="form-check equipment-check-container">
+                                                <input class="form-check-input gym-checkbox" type="checkbox" name="EquipmentIds" value="@eq.Id" id="eq_@eq.Id" @(Model.EquipmentIds.Contains(eq.Id) ? "checked" : "") />
                                                 <label class="form-check-label text-foreground" for="eq_@eq.Id">
-                                                    @eq.Name
+                                                    @eqName
                                                 </label>
                                             </div>
                                         </div>
@@ -153,4 +176,169 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <style>
+        /* Custom multiselect styling */
+        .custom-multiselect {
+            position: relative;
+            width: 100%;
+        }
+        .multiselect-trigger {
+            background-color: var(--body-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            min-height: 45px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--foreground);
+        }
+        .multiselect-trigger:hover {
+            border-color: var(--yellow);
+        }
+        .multiselect-trigger .text-muted {
+            color: var(--foreground) !important;
+            opacity: 0.6;
+        }
+        .multiselect-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0.75rem;
+        }
+        .multiselect-dropdown.show {
+            display: block;
+        }
+        .multiselect-options {
+            max-height: 220px;
+            overflow-y: auto;
+            padding-inline-start: 0.25rem;
+        }
+        .multiselect-option {
+            margin-bottom: 0.5rem;
+            color: var(--foreground);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        .multiselect-option label {
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 0;
+        }
+        .gym-checkbox {
+            width: 18px !important;
+            height: 18px !important;
+            min-width: 18px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            float: none !important;
+            cursor: pointer;
+            border-radius: 4px !important;
+            border: 1px solid var(--border-color) !important;
+            background-color: var(--body-bg) !important;
+        }
+        .gym-checkbox:checked {
+            background-color: var(--yellow) !important;
+            border-color: var(--yellow) !important;
+        }
+        .equipment-check-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        .equipment-check-container label {
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+    </style>
+    <script>
+        window.SelectMuscleGroupsText = '@(Localizer["SelectMuscleGroups"]?.Value ?? "Select Muscle Groups")';
+
+        function updateSelectedMuscleGroups() {
+            const checkedEng = [];
+            const checkedAr = [];
+            const displayNames = [];
+
+            document.querySelectorAll('.mg-checkbox:checked').forEach(cb => {
+                checkedEng.push(cb.value);
+                checkedAr.push(cb.getAttribute('data-name-ar') || cb.value);
+                const label = document.querySelector(`label[for="${cb.id}"]`);
+                displayNames.push(label ? label.textContent.trim() : cb.value);
+            });
+            
+            const hiddenEngInput = document.getElementById('MuscleGroupHiddenInput');
+            const hiddenArInput = document.getElementById('MuscleGroupArHiddenInput');
+            if (hiddenEngInput) hiddenEngInput.value = checkedEng.join(', ');
+            if (hiddenArInput) hiddenArInput.value = checkedAr.join(', ');
+
+            const triggerText = document.getElementById('selectedMuscleGroupsText');
+            if (checkedEng.length === 0) {
+                triggerText.innerHTML = `<span class="text-muted">${window.SelectMuscleGroupsText}</span>`;
+            } else {
+                triggerText.innerHTML = displayNames.map(name => `<span class="badge bg-warning text-dark me-1" style="background-color: var(--yellow) !important; color: #1a1a1a !important; font-weight: 600;">${name}</span>`).join('');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const trigger = document.getElementById('muscleGroupTrigger');
+            const dropdown = document.getElementById('muscleGroupDropdown');
+            if (trigger && dropdown) {
+                trigger.addEventListener('click', function (e) {
+                    dropdown.classList.toggle('show');
+                    e.stopPropagation();
+                });
+            }
+
+            document.addEventListener('click', function (e) {
+                const multiselect = document.getElementById('muscleGroupMultiselect');
+                if (multiselect && dropdown && !multiselect.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            if (dropdown) {
+                dropdown.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+
+            const multiselectContainer = document.getElementById('muscleGroupMultiselect');
+            if (multiselectContainer) {
+                multiselectContainer.addEventListener('change', function (e) {
+                    if (e.target.classList.contains('mg-checkbox')) {
+                        updateSelectedMuscleGroups();
+                    }
+                });
+            }
+
+            const hiddenEngInput = document.getElementById('MuscleGroupHiddenInput');
+            if (hiddenEngInput && hiddenEngInput.value) {
+                const checkedMGs = hiddenEngInput.value.split(',').map(s => s.trim().toLowerCase());
+                document.querySelectorAll('.mg-checkbox').forEach(cb => {
+                    if (checkedMGs.includes(cb.value.toLowerCase())) {
+                        cb.checked = true;
+                    }
+                });
+            }
+
+            updateSelectedMuscleGroups();
+        });
+    </script>
 }

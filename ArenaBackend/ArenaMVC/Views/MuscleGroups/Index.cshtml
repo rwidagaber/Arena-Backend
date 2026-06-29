@@ -1,0 +1,93 @@
+@model IEnumerable<ArenaApplication.Dtos.Workout.MuscleGroupDto>
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = Localizer["ManageMuscleGroups"]?.Value ?? "Manage Muscle Groups";
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1><i data-lucide="dumbbell" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@ViewData["Title"]</h1>
+            <p>@(Localizer["ManageMuscleGroupsDescription"]?.Value ?? "Add, update, or remove muscle groups.")</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="ExerciseCatalog" asp-action="Index" class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" style="height: 42px;">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>@(Localizer["BackToExercises"]?.Value ?? "Back to Exercises")
+            </a>
+            <a asp-action="Create" class="btn btn-subscription-primary d-flex align-items-center gap-2" style="height: 42px;">
+                <i data-lucide="plus"></i>
+                @(Localizer["AddNew"]?.Value ?? "Add New")
+            </a>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        @if (TempData["Success"] != null)
+        {
+            <div class="subscription-alert success">
+                <strong>@Localizer["Success"]</strong> @TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+
+        <div class="user-table-wrap mt-3">
+            <div class="table-responsive">
+                <table class="subscription-table user-mgmt-table" id="muscleGroupsTable">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["EnglishName"]</th>
+                            <th>@Localizer["ArabicName"]</th>
+                            <th class="col-user-actions">@Localizer["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr class="user-row">
+                                    <td data-label="@Localizer["EnglishName"]" class="user-name-cell">
+                                        <span class="fw-semibold" style="color: var(--foreground);">@item.Name</span>
+                                    </td>
+                                    <td data-label="@Localizer["ArabicName"]" class="user-name-cell">
+                                        <span class="fw-semibold text-warning" style="color: var(--yellow);" dir="rtl">@item.NameAr</span>
+                                    </td>
+                                    <td data-label="@Localizer["Actions"]" class="user-actions-cell">
+                                        <div class="d-flex justify-content-center gap-2 align-items-center actions-cell">
+                                            <a href="@Url.Action("Edit", "MuscleGroups", new { id = item.Id })" class="action-icon-btn btn-action-settings" data-tooltip="@Localizer["Edit"]">
+                                                <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
+                                            </a>
+                                            <a href="@Url.Action("Delete", "MuscleGroups", new { id = item.Id })" class="action-icon-btn btn-action-delete" data-tooltip="@Localizer["Delete"]">
+                                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center p-5 text-muted">
+                                    <i data-lucide="dumbbell" style="width: 48px; height: 48px; display: block; margin: 0 auto 15px auto; opacity: 0.5;"></i>
+                                    @(Localizer["NoMuscleGroupsFound"]?.Value ?? "No muscle groups found. Click 'Add New' to create one.")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

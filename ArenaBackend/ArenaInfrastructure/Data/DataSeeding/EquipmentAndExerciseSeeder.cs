@@ -1,10 +1,10 @@
-using ArenaDomain.Entities.Gym;
-using ArenaDomain.Entities.Workout;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ArenaDomain.Entities.Gym;
+using ArenaDomain.Entities.Workout;
+using Microsoft.EntityFrameworkCore;
 
 namespace ArenaInfrastructure.Data.DataSeeding
 {
@@ -13,15 +13,20 @@ namespace ArenaInfrastructure.Data.DataSeeding
         public static async Task SeedAsync(AppDbContext context)
         {
             // 1. Delete test equipment
-            var testEquipments = await context.Equipments
-                .Where(e => e.Name == "eqtest" || e.Name == "testing" || e.Category == "test" || e.Category == "تجريبي")
+            var testEquipments = await context
+                .Equipments.Where(e =>
+                    e.Name == "eqtest"
+                    || e.Name == "testing"
+                    || e.Category == "test"
+                    || e.Category == "تجريبي"
+                )
                 .ToListAsync();
 
             if (testEquipments.Any())
             {
                 var testEquipIds = testEquipments.Select(te => te.Id).ToList();
-                var associatedReqs = await context.ExerciseEquipmentRequirements
-                    .Where(r => testEquipIds.Contains(r.EquipmentId))
+                var associatedReqs = await context
+                    .ExerciseEquipmentRequirements.Where(r => testEquipIds.Contains(r.EquipmentId))
                     .ToListAsync();
                 if (associatedReqs.Any())
                 {
@@ -29,42 +34,254 @@ namespace ArenaInfrastructure.Data.DataSeeding
                 }
                 context.Equipments.RemoveRange(testEquipments);
                 await context.SaveChangesAsync();
-                Console.WriteLine($"[Seeder] Deleted {testEquipments.Count} test equipment records.");
+                Console.WriteLine(
+                    $"[Seeder] Deleted {testEquipments.Count} test equipment records."
+                );
             }
 
             // 2. Define expected professional equipment list (30 items)
             var targetEquipments = new List<Equipment>
             {
-                new Equipment { Id = Guid.Parse("FBDCD689-292F-4559-AE52-66CACE391E73"), Name = "Dumbbells", NameAr = "دمبلز", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("DCADCF2D-76CF-455B-9488-4E19FE68B2DA"), Name = "Barbell", NameAr = "بار الحديد", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("A62D9450-CD51-4A16-B6EA-325338145AFD"), Name = "Bench", NameAr = "بنش مستوٍ", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("6A34FF46-0B3D-4F7A-8F65-AFF9113933B5"), Name = "Squat Rack", NameAr = "حامل السكوات", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("AA6CA8B6-1A7A-479B-BCC9-91E3D152A9BE"), Name = "Cable Machine", NameAr = "جهاز الكابل", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("AAC80680-787C-47D5-A1C3-B83EAAF76C12"), Name = "Leg Press Machine", NameAr = "جهاز دفع الأرجل", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("BC993E4F-3517-4679-BD87-95B88D8F2675"), Name = "Treadmill", NameAr = "مشاية كهربائية", Category = "Cardio", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("B244F0D7-C7F9-42D6-AE3A-DC5925AD0261"), Name = "Stationary Bike", NameAr = "دراجة ثابتة", Category = "Cardio", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("04D53FB2-D639-46F0-8987-D4FF070A2593"), Name = "Kettlebell", NameAr = "كيتل بيل", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("A7E03BD6-80A6-489D-BAA9-E1352B42D80F"), Name = "Pull-up Bar", NameAr = "شريط العقلة", Category = "Bodyweight", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("E8A81144-884A-485D-AC82-2C5E78DCA3F2"), Name = "Smith Machine", NameAr = "جهاز سميث", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("3BB6783B-D5A8-4D2A-83B1-9988C78FA25D"), Name = "Lat Pulldown Machine", NameAr = "جهاز السحب العالي للظهر", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("8F8BC95B-883F-44FA-BA2F-D0308C99CEE2"), Name = "Leg Extension Machine", NameAr = "جهاز رفرفة أرجل أمامي", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("2D0E6A2B-F730-4C90-8EA2-3F95C48A14E1"), Name = "Leg Curl Machine", NameAr = "جهاز رفرفة أرجل خلفي", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("5C71AE8F-BDCA-4E38-AA03-518DCA0FFCE9"), Name = "Pec Deck Machine", NameAr = "جهاز الفراشة للصدر", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("6D9EAA0A-5A1D-4952-B582-F8D279E11F24"), Name = "Elliptical Trainer", NameAr = "جهاز الأوربتراك", Category = "Cardio", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("9A8CBEF8-BD03-45AF-A281-7DC4C9AE5E33"), Name = "Dips Bar", NameAr = "جهاز المتوازي", Category = "Bodyweight", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("BC87114A-C9E1-4DAF-83B2-DF8A9CE40AA2"), Name = "Rowing Machine", NameAr = "جهاز التجديف", Category = "Cardio", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("11B7C163-7182-429D-83A1-C182B12F073C"), Name = "EZ Bar", NameAr = "بار متعرج EZ", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("22B8C174-8193-439E-93A2-C293C23D084D"), Name = "Preacher Curl Bench", NameAr = "دكة بايسبس لاري", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("33B9C185-91A4-44AF-A3B3-C3A4D34E095E"), Name = "Calf Raise Machine", NameAr = "جهاز الساق / بطات", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("44BAC196-A1B5-45B0-B3C4-C4B5E45F0A6F"), Name = "Cable Crossover Machine", NameAr = "جهاز الكابل المزدوج", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("55BBC1A7-B1C6-46C1-C3C5-C5C6F56A0B7F"), Name = "Abdominal Crunch Machine", NameAr = "جهاز بطن", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("66BCC1B8-C1D7-47C2-D3C6-C6D7067B0C8F"), Name = "Assisted Pull-up / Dip Machine", NameAr = "جهاز العقلة والمتوازي المساعد", Category = "Strength Machine", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("77BDC1C9-D1E8-48D3-E3D7-C7D8078C0D9F"), Name = "Medicine Ball", NameAr = "كرة طبية", Category = "Free Weights", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("88BEC1DA-E1F9-49E4-F3D8-C8D9079D0EAF"), Name = "Battle Ropes", NameAr = "حبال المقاومة الثقيلة", Category = "Cardio", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("99BFC1EB-F20A-4AF5-A3E9-C9DA08AE0FBF"), Name = "Hyperextension Bench", NameAr = "دكة قطنية", Category = "Bodyweight", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("AABFC2FC-031B-4BF6-B3FA-DAEA09BF1FCF"), Name = "Foam Roller", NameAr = "فوم رولر", Category = "Flexibility", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("BBBFC3FD-142C-4CF7-C3FB-DBEB0ABF2FDF"), Name = "TRXs / Suspension Trainer", NameAr = "حبال تي آر إكس", Category = "Bodyweight", IsAvailable = true },
-                new Equipment { Id = Guid.Parse("CCCFC4FE-253D-4DF8-D3FC-DCEC0CFA3FEF"), Name = "Yoga Mat", NameAr = "سجادة يوجا", Category = "Flexibility", IsAvailable = true }
+                new Equipment
+                {
+                    Id = Guid.Parse("FBDCD689-292F-4559-AE52-66CACE391E73"),
+                    Name = "Dumbbells",
+                    NameAr = "دمبلز",
+                    Category = "Free Weights",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("DCADCF2D-76CF-455B-9488-4E19FE68B2DA"),
+                    Name = "Barbell",
+                    NameAr = "بار الحديد",
+                    Category = "Free Weights",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("A62D9450-CD51-4A16-B6EA-325338145AFD"),
+                    Name = "Bench",
+                    NameAr = "بنش مستوٍ",
+                    Category = "Free Weights",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("6A34FF46-0B3D-4F7A-8F65-AFF9113933B5"),
+                    Name = "Squat Rack",
+                    NameAr = "حامل السكوات",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("AA6CA8B6-1A7A-479B-BCC9-91E3D152A9BE"),
+                    Name = "Cable Machine",
+                    NameAr = "جهاز الكابل",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("AAC80680-787C-47D5-A1C3-B83EAAF76C12"),
+                    Name = "Leg Press Machine",
+                    NameAr = "جهاز دفع الأرجل",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("BC993E4F-3517-4679-BD87-95B88D8F2675"),
+                    Name = "Treadmill",
+                    NameAr = "مشاية كهربائية",
+                    Category = "Cardio",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("B244F0D7-C7F9-42D6-AE3A-DC5925AD0261"),
+                    Name = "Stationary Bike",
+                    NameAr = "دراجة ثابتة",
+                    Category = "Cardio",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("04D53FB2-D639-46F0-8987-D4FF070A2593"),
+                    Name = "Kettlebell",
+                    NameAr = "كيتل بيل",
+                    Category = "Free Weights",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("A7E03BD6-80A6-489D-BAA9-E1352B42D80F"),
+                    Name = "Pull-up Bar",
+                    NameAr = "شريط العقلة",
+                    Category = "Bodyweight",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("E8A81144-884A-485D-AC82-2C5E78DCA3F2"),
+                    Name = "Smith Machine",
+                    NameAr = "جهاز سميث",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("3BB6783B-D5A8-4D2A-83B1-9988C78FA25D"),
+                    Name = "Lat Pulldown Machine",
+                    NameAr = "جهاز السحب العالي للظهر",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("8F8BC95B-883F-44FA-BA2F-D0308C99CEE2"),
+                    Name = "Leg Extension Machine",
+                    NameAr = "جهاز رفرفة أرجل أمامي",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("2D0E6A2B-F730-4C90-8EA2-3F95C48A14E1"),
+                    Name = "Leg Curl Machine",
+                    NameAr = "جهاز رفرفة أرجل خلفي",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("5C71AE8F-BDCA-4E38-AA03-518DCA0FFCE9"),
+                    Name = "Pec Deck Machine",
+                    NameAr = "جهاز الفراشة للصدر",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("6D9EAA0A-5A1D-4952-B582-F8D279E11F24"),
+                    Name = "Elliptical Trainer",
+                    NameAr = "جهاز الأوربتراك",
+                    Category = "Cardio",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("9A8CBEF8-BD03-45AF-A281-7DC4C9AE5E33"),
+                    Name = "Dips Bar",
+                    NameAr = "جهاز المتوازي",
+                    Category = "Bodyweight",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("BC87114A-C9E1-4DAF-83B2-DF8A9CE40AA2"),
+                    Name = "Rowing Machine",
+                    NameAr = "جهاز التجديف",
+                    Category = "Cardio",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("11B7C163-7182-429D-83A1-C182B12F073C"),
+                    Name = "EZ Bar",
+                    NameAr = "بار متعرج EZ",
+                    Category = "Free Weights",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("22B8C174-8193-439E-93A2-C293C23D084D"),
+                    Name = "Preacher Curl Bench",
+                    NameAr = "دكة بايسبس لاري",
+                    Category = "Free Weights",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("33B9C185-91A4-44AF-A3B3-C3A4D34E095E"),
+                    Name = "Calf Raise Machine",
+                    NameAr = "جهاز الساق / بطات",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("44BAC196-A1B5-45B0-B3C4-C4B5E45F0A6F"),
+                    Name = "Cable Crossover Machine",
+                    NameAr = "جهاز الكابل المزدوج",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("55BBC1A7-B1C6-46C1-C3C5-C5C6F56A0B7F"),
+                    Name = "Abdominal Crunch Machine",
+                    NameAr = "جهاز بطن",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("66BCC1B8-C1D7-47C2-D3C6-C6D7067B0C8F"),
+                    Name = "Assisted Pull-up / Dip Machine",
+                    NameAr = "جهاز العقلة والمتوازي المساعد",
+                    Category = "Strength Machine",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("77BDC1C9-D1E8-48D3-E3D7-C7D8078C0D9F"),
+                    Name = "Medicine Ball",
+                    NameAr = "كرة طبية",
+                    Category = "Free Weights",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("88BEC1DA-E1F9-49E4-F3D8-C8D9079D0EAF"),
+                    Name = "Battle Ropes",
+                    NameAr = "حبال المقاومة الثقيلة",
+                    Category = "Cardio",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("99BFC1EB-F20A-4AF5-A3E9-C9DA08AE0FBF"),
+                    Name = "Hyperextension Bench",
+                    NameAr = "دكة قطنية",
+                    Category = "Bodyweight",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("AABFC2FC-031B-4BF6-B3FA-DAEA09BF1FCF"),
+                    Name = "Foam Roller",
+                    NameAr = "فوم رولر",
+                    Category = "Flexibility",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("BBBFC3FD-142C-4CF7-C3FB-DBEB0ABF2FDF"),
+                    Name = "TRXs / Suspension Trainer",
+                    NameAr = "حبال تي آر إكس",
+                    Category = "Bodyweight",
+                    IsAvailable = true,
+                },
+                new Equipment
+                {
+                    Id = Guid.Parse("CCCFC4FE-253D-4DF8-D3FC-DCEC0CFA3FEF"),
+                    Name = "Yoga Mat",
+                    NameAr = "سجادة يوجا",
+                    Category = "Flexibility",
+                    IsAvailable = true,
+                },
             };
 
             // 3. Upsert Equipments
@@ -84,7 +301,9 @@ namespace ArenaInfrastructure.Data.DataSeeding
                 }
                 else
                 {
-                    var existingByName = existingEquipments.FirstOrDefault(e => e.Name.Equals(target.Name, StringComparison.OrdinalIgnoreCase));
+                    var existingByName = existingEquipments.FirstOrDefault(e =>
+                        e.Name.Equals(target.Name, StringComparison.OrdinalIgnoreCase)
+                    );
                     if (existingByName != null)
                     {
                         existingByName.Name = target.Name;
@@ -116,7 +335,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "اضغط الدمبلز لأعلى أثناء الاستلقاء على بنش مستوٍ.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -127,7 +346,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "أرجح الكيتل بيل بين الأرجل وحتى مستوى الصدر.",
                     MuscleGroup = "Full Body",
                     MuscleGroupAr = "الجسم بالكامل",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -138,7 +357,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "تمرين القرفصاء مع وضع بار الحديد على الكتفين.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -149,7 +368,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "اسحب جسمك لأعلى حتى يتجاوز ذقنك شريط العقلة.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -160,7 +379,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "ادفع جسمك لأعلى من الأرض مع الحفاظ على استقامة ظهرك.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -171,7 +390,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "اسحب مقبض الكابل نحو الجذع أثناء الجلوس.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -182,7 +401,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "الركض أو المشي السريع على المشاية الكهربائية.",
                     MuscleGroup = "Cardio",
                     MuscleGroupAr = "كارديو",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -193,7 +412,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "الهبوط بوضعية القرفصاء باستخدام وزن الجسم فقط.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -204,7 +423,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "ادفع منصة الأوزان بعيداً باستخدام الأرجل.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -215,7 +434,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "تبديل الدراجة الثابتة لتحسين اللياقة البدنية وحرق السعرات.",
                     MuscleGroup = "Cardio",
                     MuscleGroupAr = "كارديو",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -223,21 +442,23 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Lat Pulldown",
                     NameAr = "سحب عالي للظهر",
                     Description = "Pull the bar down towards your chest.",
-                    DescriptionAr = "اسحب البار لأسفل باتجاه أعلى الصدر لتقوية عضلات الظهر العريضة.",
+                    DescriptionAr =
+                        "اسحب البار لأسفل باتجاه أعلى الصدر لتقوية عضلات الظهر العريضة.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
                     Id = Guid.Parse("DCA29A7F-78A1-4B9F-83B0-D1FA8BE39DC3"),
                     Name = "Smith Machine Incline Bench Press",
                     NameAr = "ضغط بنش مائل على جهاز سميث",
-                    Description = "Press the bar upward on an incline bench using the Smith machine.",
+                    Description =
+                        "Press the bar upward on an incline bench using the Smith machine.",
                     DescriptionAr = "اضغط البار لأعلى على بنش مائل باستخدام جهاز سميث.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -245,10 +466,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Leg Extension",
                     NameAr = "تمديد الأرجل على الجهاز",
                     Description = "Extend your legs outward against the machine's pad.",
-                    DescriptionAr = "قم بفرد رجليك بالكامل ضد منصة المقاومة لتقوية عضلات الفخذ الأمامية.",
+                    DescriptionAr =
+                        "قم بفرد رجليك بالكامل ضد منصة المقاومة لتقوية عضلات الفخذ الأمامية.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -259,7 +481,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "قم بثني رجليك لأعلى باتجاه الأرداف أثناء الاستلقاء على البطن.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -270,7 +492,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "ضم ذراعي الجهاز معاً أمام صدرك لتركيز الجهد على عضلات الصدر.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -278,10 +500,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Tricep Pushdown",
                     NameAr = "سحب ترايسبس بالكابل",
                     Description = "Push the cable attachment down until arms are fully extended.",
-                    DescriptionAr = "ادفع ملحق الكابل لأسفل حتى فرد الذراعين بالكامل لتقوية الترايسبس.",
+                    DescriptionAr =
+                        "ادفع ملحق الكابل لأسفل حتى فرد الذراعين بالكامل لتقوية الترايسبس.",
                     MuscleGroup = "Arms",
                     MuscleGroupAr = "الذراعين",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -292,18 +515,20 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "اثنِ الكوع لرفع الدمبلز نحو الكتفين لتقوية عضلة البايسبس.",
                     MuscleGroup = "Arms",
                     MuscleGroupAr = "الذراعين",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
                     Id = Guid.Parse("7DA8E2BC-839A-48FA-A7E1-CD8FFA3E9E2C"),
                     Name = "Barbell Deadlift",
                     NameAr = "الرفعة المميتة بالبار",
-                    Description = "Lift the barbell from the floor to hip level with a straight back.",
-                    DescriptionAr = "ارفع البار من الأرض حتى مستوى الورك مع الحفاظ على استقامة الظهر.",
+                    Description =
+                        "Lift the barbell from the floor to hip level with a straight back.",
+                    DescriptionAr =
+                        "ارفع البار من الأرض حتى مستوى الورك مع الحفاظ على استقامة الظهر.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Advanced"
+                    DifficultyLevel = "Advanced",
                 },
                 new ExerciseCatalogItem
                 {
@@ -314,7 +539,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "اخفض وارفع جسمك على قضبان المتوازي لتقوية الصدر والترايسبس.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -325,7 +550,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "أداء حركة التجديف على جهاز التجديف لتقوية الظهر والقلب.",
                     MuscleGroup = "Cardio",
                     MuscleGroupAr = "كارديو",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -336,7 +561,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "قم بثني البايسبس باستخدام بار متعرج على دكة الواعظ (لاري).",
                     MuscleGroup = "Arms",
                     MuscleGroupAr = "الذراعين",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -344,21 +569,24 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Standing Calf Raise",
                     NameAr = "تمرين بطات واقفاً على الجهاز",
                     Description = "Raise your heels while standing with weight on shoulders.",
-                    DescriptionAr = "ارفع كعبيك أثناء الوقوف على جهاز ربلة الساق لتقوية عضلات الساق.",
+                    DescriptionAr =
+                        "ارفع كعبيك أثناء الوقوف على جهاز ربلة الساق لتقوية عضلات الساق.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
                     Id = Guid.Parse("A3B9C185-91A4-44AF-A3B3-C3A4D34E095E"),
                     Name = "Cable Crossover Chest Fly",
                     NameAr = "تجميع الصدر كابل كروس",
-                    Description = "Pull cables in a downward/forward arc to target chest chest fly.",
-                    DescriptionAr = "ضم مقابض الكابلات معاً أمام أسفل صدرك لبناء عضلات الصدر الجانبية.",
+                    Description =
+                        "Pull cables in a downward/forward arc to target chest chest fly.",
+                    DescriptionAr =
+                        "ضم مقابض الكابلات معاً أمام أسفل صدرك لبناء عضلات الصدر الجانبية.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -369,7 +597,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "قم بطحن عضلات البطن ضد المقاومة باستخدام جهاز البطن المخصص.",
                     MuscleGroup = "Core",
                     MuscleGroupAr = "البطن والوسط",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -380,7 +608,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "قم بأداء تمرين العقلة بمساعدة الوزن المعاكس لتخفيف وزن الجسم.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -391,7 +619,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "تمرن على جهاز المتوازي بمساعدة الوزن المعاكس لتسهيل الحركة.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -399,10 +627,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Medicine Ball Russian Twist",
                     NameAr = "التواء روسي بالكرة الطبية",
                     Description = "Rotate your torso side-to-side holding a medicine ball.",
-                    DescriptionAr = "قم بتدوير الجذع من جانب لآخر أثناء الجلوس مع مسك الكرة الطبية لتقوية الخواصر.",
+                    DescriptionAr =
+                        "قم بتدوير الجذع من جانب لآخر أثناء الجلوس مع مسك الكرة الطبية لتقوية الخواصر.",
                     MuscleGroup = "Core",
                     MuscleGroupAr = "البطن والوسط",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -410,10 +639,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Battle Ropes Waves",
                     NameAr = "موجات حبل المقاومة",
                     Description = "Perform wave motion with heavy battle ropes.",
-                    DescriptionAr = "حرك حبال المقاومة الثقيلة لإنشاء موجات متتالية لتحسين اللياقة والقدرة الانفجارية.",
+                    DescriptionAr =
+                        "حرك حبال المقاومة الثقيلة لإنشاء موجات متتالية لتحسين اللياقة والقدرة الانفجارية.",
                     MuscleGroup = "Cardio",
                     MuscleGroupAr = "كارديو",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -424,7 +654,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "اخفض وارفع جذعك على دكة القطنية لتقوية أسفل الظهر والأرداف.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -432,10 +662,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Foam Roller IT Band Roll",
                     NameAr = "مساج الفخذ بالرولر",
                     Description = "Use a foam roller to massage the outer thigh (IT band).",
-                    DescriptionAr = "استخدم أسطوانة الفوم (الرولر) لتدليك الفخذ الخارجي وتخفيف الشد العضلي.",
+                    DescriptionAr =
+                        "استخدم أسطوانة الفوم (الرولر) لتدليك الفخذ الخارجي وتخفيف الشد العضلي.",
                     MuscleGroup = "Flexibility",
                     MuscleGroupAr = "المرونة والاستشفاء",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -446,7 +677,7 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     DescriptionAr = "قم بأداء تمرين السحب المائل باستخدام حبال الـ TRX المعلقة.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -454,10 +685,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Yoga Mat Plank",
                     NameAr = "تمرين البلانك على السجادة",
                     Description = "Hold a pushup position on elbows for core stability.",
-                    DescriptionAr = "ثبّت جسمك على المرفقين وأطراف الأصابع لتقوية عضلات البطن والعمود الفقري.",
+                    DescriptionAr =
+                        "ثبّت جسمك على المرفقين وأطراف الأصابع لتقوية عضلات البطن والعمود الفقري.",
                     MuscleGroup = "Core",
                     MuscleGroupAr = "البطن والوسط",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -465,10 +697,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Dumbbell Incline Bench Press",
                     NameAr = "ضغط الصدر بالدمبلز على بنش مائل",
                     Description = "Press dumbbells upward while lying on an incline bench.",
-                    DescriptionAr = "اضغط الدمبلز لأعلى أثناء الاستلقاء على بنش مائل لاستهداف عضلات الصدر العلوي.",
+                    DescriptionAr =
+                        "اضغط الدمبلز لأعلى أثناء الاستلقاء على بنش مائل لاستهداف عضلات الصدر العلوي.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -476,10 +709,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Dumbbell Fly",
                     NameAr = "تجميع الصدر بالدمبلز مستوٍ",
                     Description = "Perform chest flies using dumbbells on a flat bench.",
-                    DescriptionAr = "قم بتفتيح وتجميع الصدر بالدمبلز على بنش مستوٍ لعزل عضلات الصدر.",
+                    DescriptionAr =
+                        "قم بتفتيح وتجميع الصدر بالدمبلز على بنش مستوٍ لعزل عضلات الصدر.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -487,10 +721,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Barbell Bench Press",
                     NameAr = "تمرين بنش برس بالبار",
                     Description = "Press a barbell while lying on a flat bench.",
-                    DescriptionAr = "اضغط البار لأعلى أثناء الاستلقاء على البنش المستوي لتقوية عضلات الصدر الكبرى.",
+                    DescriptionAr =
+                        "اضغط البار لأعلى أثناء الاستلقاء على البنش المستوي لتقوية عضلات الصدر الكبرى.",
                     MuscleGroup = "Chest",
                     MuscleGroupAr = "الصدر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -498,10 +733,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Dumbbell Shoulder Press",
                     NameAr = "ضغط الأكتاف بالدمبلز جالساً",
                     Description = "Press dumbbells overhead while seated on a bench.",
-                    DescriptionAr = "اضغط الدمبلز لأعلى فوق الرأس أثناء الجلوس لتقوية عضلات الأكتاف.",
+                    DescriptionAr =
+                        "اضغط الدمبلز لأعلى فوق الرأس أثناء الجلوس لتقوية عضلات الأكتاف.",
                     MuscleGroup = "Shoulders",
                     MuscleGroupAr = "الأكتاف",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -509,10 +745,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Dumbbell Lateral Raise",
                     NameAr = "رفرفة أكتاف جانبي بالدمبلز",
                     Description = "Raise dumbbells out to the sides to target side delts.",
-                    DescriptionAr = "ارفع الدمبلز جانباً حتى مستوى الكتفين لتقوية عضلات الأكتاف الجانبية.",
+                    DescriptionAr =
+                        "ارفع الدمبلز جانباً حتى مستوى الكتفين لتقوية عضلات الأكتاف الجانبية.",
                     MuscleGroup = "Shoulders",
                     MuscleGroupAr = "الأكتاف",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -520,10 +757,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Barbell Overhead Press",
                     NameAr = "ضغط عسكري بالبار واقفاً",
                     Description = "Press a barbell overhead while standing.",
-                    DescriptionAr = "اضغط بار الحديد لأعلى فوق الرأس من وضع الوقوف لبناء القوة العامة للأكتاف والجسم.",
+                    DescriptionAr =
+                        "اضغط بار الحديد لأعلى فوق الرأس من وضع الوقوف لبناء القوة العامة للأكتاف والجسم.",
                     MuscleGroup = "Shoulders",
                     MuscleGroupAr = "الأكتاف",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -531,10 +769,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Face Pull",
                     NameAr = "سحب الوجه بالكابل",
                     Description = "Pull cable towards face to target rear delts and upper back.",
-                    DescriptionAr = "اسحب الكابل باتجاه الوجه مع تفتيح المرفقين لتقوية الأكتاف الخلفية وأعلى الظهر.",
+                    DescriptionAr =
+                        "اسحب الكابل باتجاه الوجه مع تفتيح المرفقين لتقوية الأكتاف الخلفية وأعلى الظهر.",
                     MuscleGroup = "Shoulders",
                     MuscleGroupAr = "الأكتاف",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -542,10 +781,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Dumbbell Hammer Curl",
                     NameAr = "تبادل بايسبس مطرقة بالدمبلز",
                     Description = "Perform bicep curls with a neutral grip.",
-                    DescriptionAr = "اثنِ الذراع بالدمبل مع إبقاء راحة اليد متواجهة (قبضة المطرقة) لتقوية الساعد والبايسبس.",
+                    DescriptionAr =
+                        "اثنِ الذراع بالدمبل مع إبقاء راحة اليد متواجهة (قبضة المطرقة) لتقوية الساعد والبايسبس.",
                     MuscleGroup = "Arms",
                     MuscleGroupAr = "الذراعين",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -553,21 +793,24 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Overhead Dumbbell Tricep Extension",
                     NameAr = "تمديد ترايسبس بالدمبل خلف الرأس",
                     Description = "Extend dumbbell overhead to target the triceps.",
-                    DescriptionAr = "ارفع الدمبل بكلتا اليدين ثم اخفضه خلف رأسك وافرده للأعلى لتقوية الترايسبس.",
+                    DescriptionAr =
+                        "ارفع الدمبل بكلتا اليدين ثم اخفضه خلف رأسك وافرده للأعلى لتقوية الترايسبس.",
                     MuscleGroup = "Arms",
                     MuscleGroupAr = "الذراعين",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
                     Id = Guid.Parse("C2BFCEF8-2FD7-4F8B-7AFF-666666666666"),
                     Name = "Cable Tricep Overhead Extension",
                     NameAr = "تمديد ترايسبس كابل خلف الرأس",
-                    Description = "Extend cable attachment overhead while facing away from the machine.",
-                    DescriptionAr = "اسحب الكابل من خلف رأسك للأمام أثناء الانحناء قليلاً لتفجير عضلات الترايسبس.",
+                    Description =
+                        "Extend cable attachment overhead while facing away from the machine.",
+                    DescriptionAr =
+                        "اسحب الكابل من خلف رأسك للأمام أثناء الانحناء قليلاً لتفجير عضلات الترايسبس.",
                     MuscleGroup = "Arms",
                     MuscleGroupAr = "الذراعين",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -575,10 +818,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Barbell Bent-Over Row",
                     NameAr = "تجديف بالبار للظهر",
                     Description = "Pull barbell towards abdomen while bending forward.",
-                    DescriptionAr = "انحنِ للأمام واسحب البار نحو أسفل البطن لتقوية عضلات الظهر وسماكتها.",
+                    DescriptionAr =
+                        "انحنِ للأمام واسحب البار نحو أسفل البطن لتقوية عضلات الظهر وسماكتها.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -586,10 +830,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Dumbbell One-Arm Row",
                     NameAr = "منشار بالدمبل للظهر",
                     Description = "Pull dumbbell towards hip with one arm on a bench.",
-                    DescriptionAr = "ارتكز بركبتك ويدك على البنش واسحب الدمبل بذراع واحدة نحو وركك لتقوية اللاتس.",
+                    DescriptionAr =
+                        "ارتكز بركبتك ويدك على البنش واسحب الدمبل بذراع واحدة نحو وركك لتقوية اللاتس.",
                     MuscleGroup = "Back",
                     MuscleGroupAr = "الظهر",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -597,10 +842,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Bulgarian Split Squat",
                     NameAr = "سكوات بلغاري بالدمبل",
                     Description = "Perform single-leg squats with rear foot elevated on a bench.",
-                    DescriptionAr = "ضع قدماً واحدة على البنش بالخلف واهبط بالأخرى لتقوية الأفخاذ الأمامية والأرداف بشكل مكثف.",
+                    DescriptionAr =
+                        "ضع قدماً واحدة على البنش بالخلف واهبط بالأخرى لتقوية الأفخاذ الأمامية والأرداف بشكل مكثف.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -608,10 +854,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Dumbbell Romanian Deadlift",
                     NameAr = "رفعة مميتة رومانية بالدمبلز",
                     Description = "Perform Romanian deadlifts holding dumbbells.",
-                    DescriptionAr = "انحنِ للأمام مع إبقاء الظهر مستقيماً والركبتين شبه مفرودتين لتشغيل عضلات الفخذ الخلفية والقطنية.",
+                    DescriptionAr =
+                        "انحنِ للأمام مع إبقاء الظهر مستقيماً والركبتين شبه مفرودتين لتشغيل عضلات الفخذ الخلفية والقطنية.",
                     MuscleGroup = "Legs",
                     MuscleGroupAr = "الأرجل",
-                    DifficultyLevel = "Intermediate"
+                    DifficultyLevel = "Intermediate",
                 },
                 new ExerciseCatalogItem
                 {
@@ -619,10 +866,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Lying Leg Raise",
                     NameAr = "رفع الأرجل مستلقياً للبطن",
                     Description = "Raise your legs from the floor while lying flat.",
-                    DescriptionAr = "استلقِ على ظهرك تماماً وارفع رجليك للأعلى ببطء لاستهداف عضلات أسفل البطن.",
+                    DescriptionAr =
+                        "استلقِ على ظهرك تماماً وارفع رجليك للأعلى ببطء لاستهداف عضلات أسفل البطن.",
                     MuscleGroup = "Core",
                     MuscleGroupAr = "البطن والوسط",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -630,10 +878,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Bicycle Crunch",
                     NameAr = "طحن البطن بالتبادل",
                     Description = "Perform crunches alternating elbows to opposite knees.",
-                    DescriptionAr = "حرك قدميك كالدراجة مع لمس الكوع الأيمن للركبة اليسرى بالتبادل لتشغيل عضلات البطن والخواصر.",
+                    DescriptionAr =
+                        "حرك قدميك كالدراجة مع لمس الكوع الأيمن للركبة اليسرى بالتبادل لتشغيل عضلات البطن والخواصر.",
                     MuscleGroup = "Core",
                     MuscleGroupAr = "البطن والوسط",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -641,10 +890,11 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Mountain Climbers",
                     NameAr = "تمرين تسلق الجبل",
                     Description = "Drive knees to chest rapidly from a plank position.",
-                    DescriptionAr = "من وضعية البلانك، ادفع ركبتيك نحو صدرك بالتناوب بسرعة عالية لتنشيط عضلات البطن وحرق السعرات.",
+                    DescriptionAr =
+                        "من وضعية البلانك، ادفع ركبتيك نحو صدرك بالتناوب بسرعة عالية لتنشيط عضلات البطن وحرق السعرات.",
                     MuscleGroup = "Cardio",
                     MuscleGroupAr = "كارديو",
-                    DifficultyLevel = "Beginner"
+                    DifficultyLevel = "Beginner",
                 },
                 new ExerciseCatalogItem
                 {
@@ -652,11 +902,12 @@ namespace ArenaInfrastructure.Data.DataSeeding
                     Name = "Elliptical Cross Training",
                     NameAr = "التدريب على جهاز الأوربتراك",
                     Description = "Exercise on the elliptical cross trainer.",
-                    DescriptionAr = "تمرن على جهاز الأوربتراك (Cross Trainer) لكارديو متكامل للجسم ومنخفض التأثير على المفاصل.",
+                    DescriptionAr =
+                        "تمرن على جهاز الأوربتراك (Cross Trainer) لكارديو متكامل للجسم ومنخفض التأثير على المفاصل.",
                     MuscleGroup = "Cardio",
                     MuscleGroupAr = "كارديو",
-                    DifficultyLevel = "Beginner"
-                }
+                    DifficultyLevel = "Beginner",
+                },
             };
 
             // 5. Upsert Exercises
@@ -679,7 +930,9 @@ namespace ArenaInfrastructure.Data.DataSeeding
                 }
                 else
                 {
-                    var existingByName = existingExercises.FirstOrDefault(e => e.Name.Equals(target.Name, StringComparison.OrdinalIgnoreCase));
+                    var existingByName = existingExercises.FirstOrDefault(e =>
+                        e.Name.Equals(target.Name, StringComparison.OrdinalIgnoreCase)
+                    );
                     if (existingByName != null)
                     {
                         existingByName.Name = target.Name;
@@ -706,8 +959,16 @@ namespace ArenaInfrastructure.Data.DataSeeding
             var currentEquipments = await context.Equipments.ToListAsync();
             var currentExercises = await context.ExerciseCatalogItems.ToListAsync();
 
-            var eqDict = currentEquipments.ToDictionary(e => e.Name, e => e.Id, StringComparer.OrdinalIgnoreCase);
-            var exDict = currentExercises.ToDictionary(e => e.Name, e => e.Id, StringComparer.OrdinalIgnoreCase);
+            var eqDict = currentEquipments.ToDictionary(
+                e => e.Name,
+                e => e.Id,
+                StringComparer.OrdinalIgnoreCase
+            );
+            var exDict = currentExercises.ToDictionary(
+                e => e.Name,
+                e => e.Id,
+                StringComparer.OrdinalIgnoreCase
+            );
 
             // 6. Define required links
             var expectedRequirements = new List<(string ExerciseName, string EquipmentName)>
@@ -768,20 +1029,25 @@ namespace ArenaInfrastructure.Data.DataSeeding
                 ("Lying Leg Raise", "Yoga Mat"),
                 ("Bicycle Crunch", "Yoga Mat"),
                 ("Mountain Climbers", "Yoga Mat"),
-                ("Elliptical Cross Training", "Elliptical Trainer")
+                ("Elliptical Cross Training", "Elliptical Trainer"),
             };
 
             // Build list of target relationships
             var targetReqList = new List<ExerciseEquipmentRequirement>();
             foreach (var req in expectedRequirements)
             {
-                if (exDict.TryGetValue(req.ExerciseName, out var exerciseId) && eqDict.TryGetValue(req.EquipmentName, out var equipmentId))
+                if (
+                    exDict.TryGetValue(req.ExerciseName, out var exerciseId)
+                    && eqDict.TryGetValue(req.EquipmentName, out var equipmentId)
+                )
                 {
-                    targetReqList.Add(new ExerciseEquipmentRequirement
-                    {
-                        ExerciseCatalogItemId = exerciseId,
-                        EquipmentId = equipmentId
-                    });
+                    targetReqList.Add(
+                        new ExerciseEquipmentRequirement
+                        {
+                            ExerciseCatalogItemId = exerciseId,
+                            EquipmentId = equipmentId,
+                        }
+                    );
                 }
             }
 
@@ -792,7 +1058,10 @@ namespace ArenaInfrastructure.Data.DataSeeding
             foreach (var req in currentRequirements)
             {
                 // If it doesn't match any target relationship, delete it
-                var isTarget = targetReqList.Any(t => t.ExerciseCatalogItemId == req.ExerciseCatalogItemId && t.EquipmentId == req.EquipmentId);
+                var isTarget = targetReqList.Any(t =>
+                    t.ExerciseCatalogItemId == req.ExerciseCatalogItemId
+                    && t.EquipmentId == req.EquipmentId
+                );
                 if (!isTarget)
                 {
                     toDelete.Add(req);
@@ -812,7 +1081,10 @@ namespace ArenaInfrastructure.Data.DataSeeding
 
             foreach (var target in targetReqList)
             {
-                var exists = currentRequirements.Any(r => r.ExerciseCatalogItemId == target.ExerciseCatalogItemId && r.EquipmentId == target.EquipmentId);
+                var exists = currentRequirements.Any(r =>
+                    r.ExerciseCatalogItemId == target.ExerciseCatalogItemId
+                    && r.EquipmentId == target.EquipmentId
+                );
                 if (!exists)
                 {
                     target.Id = Guid.NewGuid();
