@@ -26,6 +26,23 @@ namespace ArenaInfrastructure.Data.DataSeeding
                 await context.SaveChangesAsync();
             }
 
+            // Seed muscle groups if not present
+            if (!await context.MuscleGroups.AnyAsync())
+            {
+                var seedMuscleGroups = new List<MuscleGroup>
+                {
+                    new MuscleGroup { Id = Guid.NewGuid(), Name = "Chest", NameAr = "الصدر" },
+                    new MuscleGroup { Id = Guid.NewGuid(), Name = "Back", NameAr = "الظهر" },
+                    new MuscleGroup { Id = Guid.NewGuid(), Name = "Legs", NameAr = "الأرجل" },
+                    new MuscleGroup { Id = Guid.NewGuid(), Name = "Cardio", NameAr = "كارديو" },
+                    new MuscleGroup { Id = Guid.NewGuid(), Name = "Full Body", NameAr = "الجسم بالكامل" },
+                    new MuscleGroup { Id = Guid.NewGuid(), Name = "Shoulders", NameAr = "الأكتاف" },
+                    new MuscleGroup { Id = Guid.NewGuid(), Name = "Arms", NameAr = "الذراعين" }
+                };
+                await context.MuscleGroups.AddRangeAsync(seedMuscleGroups);
+                await context.SaveChangesAsync();
+            }
+
             if (await context.Equipments.AnyAsync() || await context.ExerciseCatalogItems.AnyAsync())
             {
                 return; // Already seeded

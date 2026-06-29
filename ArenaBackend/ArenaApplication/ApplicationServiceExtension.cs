@@ -28,6 +28,7 @@ namespace ArenaApplication
             services.AddScoped<IEquipmentService, EquipmentService>();
             services.AddScoped<IEquipmentCategoryService, EquipmentCategoryService>();
             services.AddScoped<IExerciseCatalogService, ExerciseCatalogService>();
+            services.AddScoped<IMuscleGroupService, MuscleGroupService>();
 
             return services;
         }

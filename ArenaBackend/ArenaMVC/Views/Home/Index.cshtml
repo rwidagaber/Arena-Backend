@@ -461,6 +461,16 @@
             <span class="metric-change">@Localizer["CheckInsToday"]</span>
         </div>
     </div>
+
+    <!-- Gym Equipments -->
+    <div class="metric-card">
+        <div class="metric-icon"><i data-lucide="dumbbell"></i></div>
+        <div class="metric-info">
+            <span class="metric-label">@Localizer["Equipments"]</span>
+            <span class="metric-value">@Model.TotalEquipments.ToString(CultureInfo.InvariantCulture)</span>
+            <span class="metric-change">@Localizer["TotalGymEquipments"]</span>
+        </div>
+    </div>
 </div>
 
 <!-- Main Layout Grid -->

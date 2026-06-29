@@ -28,11 +28,11 @@ public class ExerciseCatalogItemConfiguration : IEntityTypeConfiguration<Exercis
 
         builder.Property(e => e.MuscleGroup)
                .IsRequired()
-               .HasMaxLength(100);
+               .HasMaxLength(500);
 
         builder.Property(e => e.MuscleGroupAr)
                .IsRequired(false)
-               .HasMaxLength(100);
+               .HasMaxLength(500);
 
         builder.ToTable("ExerciseCatalogItems");
     }

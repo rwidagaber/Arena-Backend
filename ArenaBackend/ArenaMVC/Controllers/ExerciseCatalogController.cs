@@ -18,15 +18,18 @@ namespace ArenaMVC.Controllers
     {
         private readonly IExerciseCatalogService _exerciseCatalogService;
         private readonly IEquipmentService _equipmentService;
+        private readonly IMuscleGroupService _muscleGroupService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public ExerciseCatalogController(
             IExerciseCatalogService exerciseCatalogService,
             IEquipmentService equipmentService,
+            IMuscleGroupService muscleGroupService,
             IStringLocalizer<ArenaLocalization> localizer)
         {
             _exerciseCatalogService = exerciseCatalogService;
             _equipmentService = equipmentService;
+            _muscleGroupService = muscleGroupService;
             _localizer = localizer;
         }
 
@@ -101,6 +104,7 @@ namespace ArenaMVC.Controllers
         public async Task<IActionResult> Create()
         {
             await PopulateEquipmentsViewBag();
+            await PopulateMuscleGroupsViewBag();
             return View(new ExerciseCatalogItemDto());
         }
 
@@ -120,6 +124,7 @@ namespace ArenaMVC.Controllers
             }
 
             await PopulateEquipmentsViewBag();
+            await PopulateMuscleGroupsViewBag();
             return View(dto);
         }
 
@@ -136,6 +141,7 @@ namespace ArenaMVC.Controllers
             }
 
             await PopulateEquipmentsViewBag();
+            await PopulateMuscleGroupsViewBag();
             return View(result.Value);
         }
 
@@ -157,6 +163,7 @@ namespace ArenaMVC.Controllers
             }
 
             await PopulateEquipmentsViewBag();
+            await PopulateMuscleGroupsViewBag();
             return View(dto);
         }
 
@@ -186,6 +193,19 @@ namespace ArenaMVC.Controllers
             else
             {
                 ViewBag.Equipments = new List<EquipmentDto>();
+            }
+        }
+
+        private async Task PopulateMuscleGroupsViewBag()
+        {
+            var muscleGroupResult = await _muscleGroupService.GetAllMuscleGroupsAsync();
+            if (muscleGroupResult.IsSuccess)
+            {
+                ViewBag.MuscleGroups = muscleGroupResult.Value.ToList();
+            }
+            else
+            {
+                ViewBag.MuscleGroups = new List<MuscleGroupDto>();
             }
         }
     }

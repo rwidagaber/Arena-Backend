@@ -81,18 +81,6 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
-                        <i data-lucide="shield" class="nav-icon"></i>
-                        <span>@Localizer["PrivacyPolicy"]</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link @(currentController == "GymSettings" ? "active" : "")" asp-area="" asp-controller="GymSettings" asp-action="Index">
-                        <i data-lucide="settings" class="nav-icon"></i>
-                        <span>@Localizer["GymSettings"]</span>
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link @(currentController == "Equipments" ? "active" : "")" asp-area="" asp-controller="Equipments" asp-action="Index">
                         <i data-lucide="dumbbell" class="nav-icon"></i>
                         <span>@Localizer["Equipments"]</span>
@@ -102,6 +90,18 @@
                     <a class="nav-link @(currentController == "ExerciseCatalog" ? "active" : "")" asp-area="" asp-controller="ExerciseCatalog" asp-action="Index">
                         <i data-lucide="book-open" class="nav-icon"></i>
                         <span>@Localizer["ExerciseCatalog"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
+                        <i data-lucide="shield" class="nav-icon"></i>
+                        <span>@Localizer["PrivacyPolicy"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "GymSettings" ? "active" : "")" asp-area="" asp-controller="GymSettings" asp-action="Index">
+                        <i data-lucide="settings" class="nav-icon"></i>
+                        <span>@Localizer["GymSettings"]</span>
                     </a>
                 </li>
             </ul>

@@ -15,10 +15,15 @@
             <h1><i data-lucide="book-open" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["ExerciseCatalog"]</h1>
             <p>@Localizer["ManageExerciseItems"]</p>
         </div>
-        <a asp-action="Create" class="btn btn-subscription-primary d-flex align-items-center gap-2" style="height: 42px;">
-            <i data-lucide="plus"></i>
-            @(Localizer["AddNew"]?.Value ?? "Add New")
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-controller="MuscleGroups" asp-action="Index" class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" style="height: 42px;">
+                <i data-lucide="dumbbell" style="width: 14px; height: 14px;"></i>@(Localizer["ManageMuscleGroups"]?.Value ?? "Manage Muscle Groups")
+            </a>
+            <a asp-action="Create" class="btn btn-subscription-primary d-flex align-items-center gap-2" style="height: 42px;">
+                <i data-lucide="plus"></i>
+                @(Localizer["AddNew"]?.Value ?? "Add New")
+            </a>
+        </div>
     </div>
 
     <div class="mt-4">

@@ -97,6 +97,10 @@ namespace ArenaInfrastructure.Services
             dto.TotalPlans = plans.Count;
             dto.ActivePlans = plans.Count(p => p.IsActive);
 
+            // ── KPI: Total Equipments ───────────────────────────────────────────
+            dto.TotalEquipments = await _context.Equipments
+                .CountAsync(e => !e.IsDeleted, cancellationToken);
+
             // ── Growth: Members (current month vs previous month) ──────────────
             var currentMonthMembers = await _context.Users
                 .CountAsync(u => !u.IsDeleted && u.CreatedAt >= currentMonthStart, cancellationToken);
