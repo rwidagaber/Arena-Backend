@@ -25,7 +25,14 @@
                             @Html.DisplayNameFor(model => model.Name)
                         </dt>
                         <dd class="col-sm-8 text-foreground fw-medium">
-                            @Html.DisplayFor(model => model.Name)
+                            @if (System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("ar", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(Model.NameAr))
+                            {
+                                <span dir="rtl">@Model.NameAr</span>
+                            }
+                            else
+                            {
+                                @Model.Name
+                            }
                         </dd>
                         
                         <dt class="col-sm-4 text-muted fw-medium mt-2">

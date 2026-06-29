@@ -37,5 +37,6 @@ namespace ArenaApplication.Dtos.Workout
 
         // For display purposes in the list
         public string EquipmentNames { get; set; } = string.Empty;
+        public string EquipmentNamesAr { get; set; } = string.Empty;
     }
 }

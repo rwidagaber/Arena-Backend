@@ -75,7 +75,8 @@ namespace ArenaApplication.Services.Gym
                     MuscleGroupAr = e.MuscleGroupAr,
                     DifficultyLevel = e.DifficultyLevel,
                     EquipmentIds = e.EquipmentRequirements.Select(r => r.EquipmentId).ToList(),
-                    EquipmentNames = string.Join(", ", e.EquipmentRequirements.Select(r => r.Equipment.Name))
+                    EquipmentNames = string.Join(", ", e.EquipmentRequirements.Select(r => r.Equipment.Name)),
+                    EquipmentNamesAr = string.Join(", ", e.EquipmentRequirements.Select(r => !string.IsNullOrEmpty(r.Equipment.NameAr) ? r.Equipment.NameAr : r.Equipment.Name))
                 }).ToList();
 
                 var pagedResult = new PagedResult<ExerciseCatalogItemDto>
@@ -119,7 +120,8 @@ namespace ArenaApplication.Services.Gym
                     MuscleGroupAr = entity.MuscleGroupAr,
                     DifficultyLevel = entity.DifficultyLevel,
                     EquipmentIds = entity.EquipmentRequirements.Select(r => r.EquipmentId).ToList(),
-                    EquipmentNames = string.Join(", ", entity.EquipmentRequirements.Select(r => r.Equipment.Name))
+                    EquipmentNames = string.Join(", ", entity.EquipmentRequirements.Select(r => r.Equipment.Name)),
+                    EquipmentNamesAr = string.Join(", ", entity.EquipmentRequirements.Select(r => !string.IsNullOrEmpty(r.Equipment.NameAr) ? r.Equipment.NameAr : r.Equipment.Name))
                 };
 
                 return Result<ExerciseCatalogItemDto>.Success(dto);
