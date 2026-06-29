@@ -1,4 +1,4 @@
-﻿using ArenaApplication.Dtos.ChatDtos;
+using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +19,20 @@ public class ChatController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> SendMessage([FromBody] SendMessageDto dto)
     {
-        var result = await _chatService.SendMessageAsync(
-            dto.MemberProfileId,
-            dto.ConversationId,
-            dto.Message);
-        return Ok(result);
+        try
+        {
+            var result = await _chatService.SendMessageAsync(
+                dto.MemberProfileId,
+                dto.ConversationId,
+                dto.Message);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            var inner = ex.InnerException?.Message;
+            var errorMsg = inner != null ? $"{ex.Message} | Inner: {inner}" : ex.Message;
+            return StatusCode(500, new { reply = $"Chat error: {errorMsg}", error = errorMsg });
+        }
     }
 
     // Send a voice note (recorded on device, uploaded on Send) — Gemini transcribes it
