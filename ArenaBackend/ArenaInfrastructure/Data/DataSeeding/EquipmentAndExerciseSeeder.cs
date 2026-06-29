@@ -12,6 +12,20 @@ namespace ArenaInfrastructure.Data.DataSeeding
     {
         public static async Task SeedAsync(AppDbContext context)
         {
+            // Seed categories if not present
+            if (!await context.EquipmentCategories.AnyAsync())
+            {
+                var seedCategories = new List<EquipmentCategory>
+                {
+                    new EquipmentCategory { Id = Guid.NewGuid(), Name = "Free Weights", NameAr = "أوزان حرة" },
+                    new EquipmentCategory { Id = Guid.NewGuid(), Name = "Strength Machine", NameAr = "أجهزة قوة" },
+                    new EquipmentCategory { Id = Guid.NewGuid(), Name = "Bodyweight", NameAr = "وزن الجسم" },
+                    new EquipmentCategory { Id = Guid.NewGuid(), Name = "Cardio", NameAr = "كارديو" }
+                };
+                await context.EquipmentCategories.AddRangeAsync(seedCategories);
+                await context.SaveChangesAsync();
+            }
+
             if (await context.Equipments.AnyAsync() || await context.ExerciseCatalogItems.AnyAsync())
             {
                 return; // Already seeded

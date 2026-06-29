@@ -16,13 +16,16 @@ namespace ArenaApplication.Services.Gym
     public class EquipmentService : IEquipmentService
     {
         private readonly IGenericRepository<Equipment, Guid> _equipmentRepository;
+        private readonly IGenericRepository<EquipmentCategory, Guid> _categoryRepository;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public EquipmentService(
             IGenericRepository<Equipment, Guid> equipmentRepository,
+            IGenericRepository<EquipmentCategory, Guid> categoryRepository,
             IStringLocalizer<ArenaLocalization> localizer)
         {
             _equipmentRepository = equipmentRepository;
+            _categoryRepository = categoryRepository;
             _localizer = localizer;
         }
 
@@ -38,9 +41,18 @@ namespace ArenaApplication.Services.Gym
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     var cleanSearch = search.Trim().ToLower();
+                    
+                    var matchingCategories = await _categoryRepository.GetAll()
+                        .AsNoTracking()
+                        .Where(c => c.Name.ToLower().Contains(cleanSearch) || c.NameAr.ToLower().Contains(cleanSearch))
+                        .Select(c => c.Name.ToLower())
+                        .ToListAsync();
+
                     query = query.Where(e => 
                         e.Name.ToLower().Contains(cleanSearch) || 
-                        e.Category.ToLower().Contains(cleanSearch));
+                        (e.NameAr != null && e.NameAr.ToLower().Contains(cleanSearch)) ||
+                        e.Category.ToLower().Contains(cleanSearch) ||
+                        matchingCategories.Any(mc => e.Category.ToLower().Contains(mc)));
                 }
 
                 int totalCount = await query.CountAsync();
@@ -51,13 +63,35 @@ namespace ArenaApplication.Services.Gym
                     .Take(pageSize)
                     .ToListAsync();
 
-                var dtos = equipments.Select(e => new EquipmentDto
+                var categoriesList = await _categoryRepository.GetAll().AsNoTracking().ToListAsync();
+                var currentCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                var isArabic = currentCulture.StartsWith("ar", StringComparison.OrdinalIgnoreCase);
+
+                var categoryMap = categoriesList.ToDictionary(
+                    c => c.Name,
+                    c => isArabic && !string.IsNullOrEmpty(c.NameAr) ? c.NameAr : c.Name,
+                    StringComparer.OrdinalIgnoreCase
+                );
+
+                var dtos = equipments.Select(e =>
                 {
-                    Id = e.Id,
-                    Name = e.Name,
-                    NameAr = e.NameAr,
-                    Category = e.Category,
-                    IsAvailable = e.IsAvailable
+                    var localizedCategory = string.Empty;
+                    if (!string.IsNullOrWhiteSpace(e.Category))
+                    {
+                        var parts = e.Category.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                              .Select(p => p.Trim());
+                        var localizedParts = parts.Select(p => categoryMap.TryGetValue(p, out var loc) ? loc : p);
+                        localizedCategory = string.Join(", ", localizedParts);
+                    }
+
+                    return new EquipmentDto
+                    {
+                        Id = e.Id,
+                        Name = e.Name,
+                        NameAr = e.NameAr,
+                        Category = localizedCategory,
+                        IsAvailable = e.IsAvailable
+                    };
                 }).ToList();
 
                 var pagedResult = new PagedResult<EquipmentDto>
@@ -159,6 +193,24 @@ namespace ArenaApplication.Services.Gym
             catch (Exception)
             {
                 return Result<bool>.Failure(_localizer["AnErrorOccurredDeletingEquipment"]);
+            }
+        }
+
+        public async Task<Result<List<string>>> GetCategoriesAsync()
+        {
+            try
+            {
+                var categories = await _categoryRepository.GetAll()
+                    .AsNoTracking()
+                    .OrderBy(c => c.Name)
+                    .Select(c => c.Name)
+                    .ToListAsync();
+
+                return Result<List<string>>.Success(categories);
+            }
+            catch (Exception)
+            {
+                return Result<List<string>>.Failure(_localizer["AnErrorOccurredRetrievingCategories"]);
             }
         }
     }

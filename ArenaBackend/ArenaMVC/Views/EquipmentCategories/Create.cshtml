@@ -1,0 +1,69 @@
+@model ArenaApplication.Dtos.Gym.EquipmentCategoryDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = Localizer["CreateCategory"]?.Value ?? "Create Category";
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1><i data-lucide="plus-circle" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@ViewData["Title"]</h1>
+            <p>@(Localizer["EnterCategoryDetails"]?.Value ?? "Create a new equipment category.")</p>
+        </div>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" asp-action="Index">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>@(Localizer["BackToList"]?.Value ?? "Back to List")
+            </a>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+
+        <div class="row justify-content-center" style="padding-top: 2rem; padding-bottom: 4rem;">
+            <div class="col-lg-6 col-md-8">
+                <div class="manage-user-card" style="background-color: var(--card-bg); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--card-shadow);">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="subscription-form-group mb-4">
+                            <label asp-for="Name" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                @Localizer["EnglishName"] <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Name" class="form-control" placeholder="@(Localizer["EnterCategoryName"]?.Value ?? "e.g. Cardio")" style="background-color: var(--body-bg); border-color: var(--border-color); color: var(--foreground);" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="subscription-form-group mb-4">
+                            <label asp-for="NameAr" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                @Localizer["ArabicName"] <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="NameAr" class="form-control" dir="rtl" placeholder="@(Localizer["EnterCategoryNameAr"]?.Value ?? "مثال: كارديو")" style="background-color: var(--body-bg); border-color: var(--border-color); color: var(--foreground);" />
+                            <span asp-validation-for="NameAr" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4 pt-4 border-top" style="border-color: var(--border-color) !important;">
+                            <button type="submit" class="btn btn-subscription-primary" style="flex: 1; padding: 0.75rem 1.5rem; font-weight: 600;">@(Localizer["Create"]?.Value ?? "Create")</button>
+                            <a asp-action="Index" class="btn btn-ghost" style="flex: 1;">@(Localizer["Cancel"]?.Value ?? "Cancel")</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

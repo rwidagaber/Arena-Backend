@@ -16,11 +16,16 @@ namespace ArenaMVC.Controllers
     public class EquipmentsController : Controller
     {
         private readonly IEquipmentService _equipmentService;
+        private readonly IEquipmentCategoryService _categoryService;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
-        public EquipmentsController(IEquipmentService equipmentService, IStringLocalizer<ArenaLocalization> localizer)
+        public EquipmentsController(
+            IEquipmentService equipmentService,
+            IEquipmentCategoryService categoryService,
+            IStringLocalizer<ArenaLocalization> localizer)
         {
             _equipmentService = equipmentService;
+            _categoryService = categoryService;
             _localizer = localizer;
         }
 
@@ -91,8 +96,15 @@ namespace ArenaMVC.Controllers
             }
         }
 
-        public IActionResult Create()
+        private async Task PopulateCategoriesAsync()
         {
+            var categoriesResult = await _categoryService.GetAllCategoriesAsync();
+            ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new System.Collections.Generic.List<EquipmentCategoryDto>();
+        }
+
+        public async Task<IActionResult> Create()
+        {
+            await PopulateCategoriesAsync();
             return View();
         }
 
@@ -110,6 +122,7 @@ namespace ArenaMVC.Controllers
                 }
                 ModelState.AddModelError(string.Empty, result.Errors?.FirstOrDefault() ?? "An error occurred");
             }
+            await PopulateCategoriesAsync();
             return View(dto);
         }
 
@@ -120,6 +133,7 @@ namespace ArenaMVC.Controllers
             var result = await _equipmentService.GetEquipmentByIdAsync(id);
             if (result.IsSuccess)
             {
+                await PopulateCategoriesAsync();
                 return View(result.Value);
             }
             TempData["Error"] = result.Errors?.FirstOrDefault() ?? "An error occurred";
@@ -142,6 +156,7 @@ namespace ArenaMVC.Controllers
                 }
                 ModelState.AddModelError(string.Empty, result.Errors?.FirstOrDefault() ?? "An error occurred");
             }
+            await PopulateCategoriesAsync();
             return View(dto);
         }
 

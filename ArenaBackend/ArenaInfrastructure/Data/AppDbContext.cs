@@ -74,6 +74,7 @@ namespace ArenaInfrastructure.Data
         public DbSet<Exercise> Exercises { get; set; }
 
         public DbSet<Equipment> Equipments { get; set; }
+        public DbSet<EquipmentCategory> EquipmentCategories { get; set; }
         public DbSet<ExerciseCatalogItem> ExerciseCatalogItems { get; set; }
         public DbSet<ExerciseEquipmentRequirement> ExerciseEquipmentRequirements { get; set; }
 

@@ -26,6 +26,7 @@ namespace ArenaApplication
             services.AddScoped<IGymSettingsService, GymSettingsService>();
             services.AddScoped<INoShowPenaltyService, NoShowPenaltyService>();
             services.AddScoped<IEquipmentService, EquipmentService>();
+            services.AddScoped<IEquipmentCategoryService, EquipmentCategoryService>();
             services.AddScoped<IExerciseCatalogService, ExerciseCatalogService>();
 
             return services;

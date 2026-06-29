@@ -15,5 +15,6 @@ namespace ArenaApplication.IServices
         Task<Result<Guid>> CreateEquipmentAsync(EquipmentDto equipmentDto);
         Task<Result<bool>> UpdateEquipmentAsync(EquipmentDto equipmentDto);
         Task<Result<bool>> DeleteEquipmentAsync(Guid id);
+        Task<Result<List<string>>> GetCategoriesAsync();
     }
 }
