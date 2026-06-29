@@ -1,11 +1,13 @@
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.IServices;
+using ArenaApi.Configurations.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/chat")]
-//[Authorize]
+[Authorize]
+[TypeFilter(typeof(RequireAIPlanFilter))]
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;

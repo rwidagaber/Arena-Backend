@@ -1,5 +1,6 @@
 using ArenaApplication.Dtos.Attendance;
 using ArenaApplication.IServices;
+using ArenaApi.Configurations.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +12,7 @@ namespace ArenaApi.Controllers
     [ApiController]
     [Route("api/attendance")]
     [Authorize]
+    [TypeFilter(typeof(RequireAIPlanFilter))]
     public class AttendanceSuggestionController : ControllerBase
     {
         private readonly IAttendanceSuggestionService _attendanceSuggestionService;

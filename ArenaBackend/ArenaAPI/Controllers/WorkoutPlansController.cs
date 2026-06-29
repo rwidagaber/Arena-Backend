@@ -1,4 +1,5 @@
 using ArenaApplication.IServices;
+using ArenaApi.Configurations.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -9,6 +10,7 @@ namespace ArenaApi.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [TypeFilter(typeof(RequireAIPlanFilter))]
     public class WorkoutPlansController : ControllerBase
     {
         private readonly IWorkoutPlanService _workoutPlanService;
