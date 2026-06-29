@@ -27,7 +27,13 @@ namespace ArenaApplication.Services
             _localizer = localizer;
         }
 
-        public async Task<Result<PagedResult<UserManagementDto>>> GetUsers(string search, int page, int pageSize)
+        public async Task<Result<PagedResult<UserManagementDto>>> GetUsers(
+            string? search, 
+            bool? isActive, 
+            MembershipStatus? membershipStatus, 
+            string? subscriptionStatus, 
+            int page, 
+            int pageSize)
         {
             try
             {
@@ -51,6 +57,43 @@ namespace ArenaApplication.Services
                         ((u.FirstName ?? "") + " " + (u.LastName ?? "")).ToLower().Contains(cleanSearch) ||
                         (u.Email != null && u.Email.ToLower().Contains(cleanSearch))
                     );
+                }
+
+                if (isActive.HasValue)
+                {
+                    query = query.Where(u => u.IsActive == isActive.Value);
+                }
+
+                if (membershipStatus.HasValue)
+                {
+                    if (membershipStatus.Value == MembershipStatus.User)
+                    {
+                        query = query.Where(u => u.MemberProfile == null || !u.MemberProfile.Subscriptions.Any());
+                    }
+                    else if (membershipStatus.Value == MembershipStatus.ActiveMembership)
+                    {
+                        query = query.Where(u => u.MemberProfile != null && u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active));
+                    }
+                    else if (membershipStatus.Value == MembershipStatus.ExpiredMembership)
+                    {
+                        query = query.Where(u => u.MemberProfile != null && u.MemberProfile.Subscriptions.Any() && !u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active));
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(subscriptionStatus))
+                {
+                    if (subscriptionStatus.Equals("NoSubscription", StringComparison.OrdinalIgnoreCase))
+                    {
+                        query = query.Where(u => u.MemberProfile == null || !u.MemberProfile.Subscriptions.Any());
+                    }
+                    else if (subscriptionStatus.Equals("Active", StringComparison.OrdinalIgnoreCase))
+                    {
+                        query = query.Where(u => u.MemberProfile != null && u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active));
+                    }
+                    else if (subscriptionStatus.Equals("Expired", StringComparison.OrdinalIgnoreCase))
+                    {
+                        query = query.Where(u => u.MemberProfile != null && u.MemberProfile.Subscriptions.Any() && !u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active));
+                    }
                 }
 
                 int totalCount = await query.CountAsync();

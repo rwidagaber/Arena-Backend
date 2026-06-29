@@ -90,6 +90,7 @@
   "Active": "نشط",
   "Inactive": "غير نشط",
   "Expired": "منتهي الصلاحية",
+  "NoSubscription": "بدون اشتراك",
   "Disabled": "معطل",
   "Pending": "معلق",
   "Confirmed": "مؤكد",
