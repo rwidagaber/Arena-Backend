@@ -139,16 +139,22 @@ namespace ArenaApi.Controllers
         public IActionResult Callback([FromQuery] bool success)
         {
             var frontendUrl = _config["EmailSettings:FrontendUrl"] ?? "http://localhost:4200";
-            var frontendCheckoutUrl = $"{frontendUrl.TrimEnd('/')}/checkout";
-            
-            if (success)
+            var frontendHomeUrl = GetFrontendHomeUrl(frontendUrl);
+            var successValue = success.ToString().ToLowerInvariant();
+
+            return Redirect($"{frontendHomeUrl}/?success={successValue}");
+        }
+
+        private static string GetFrontendHomeUrl(string frontendUrl)
+        {
+            var trimmedUrl = frontendUrl.TrimEnd('/');
+
+            if (Uri.TryCreate(trimmedUrl, UriKind.Absolute, out var uri))
             {
-                return Redirect($"{frontendCheckoutUrl}?success=true");
+                return uri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
             }
-            else
-            {
-                return Redirect($"{frontendCheckoutUrl}?success=false");
-            }
+
+            return trimmedUrl;
         }
     }
 }
