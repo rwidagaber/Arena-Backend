@@ -161,8 +161,7 @@ namespace ArenaApplication.Services
 
             // Google account بدون باسورد
             if (user.IsGoogleAccount && !await _userManager.HasPasswordAsync(user))
-                return Result<AuthResponseDto>.Failure(
-                    "This account uses Google Sign-In. Use Forgot Password to set a password, or login with Google.");
+                return Result<AuthResponseDto>.Failure("GOOGLE_ACCOUNT_ONLY");
 
             if (!await _userManager.CheckPasswordAsync(user, dto.Password))
                 return Result<AuthResponseDto>.Failure(_localizer["InvalidEmailOrPassword"]);
