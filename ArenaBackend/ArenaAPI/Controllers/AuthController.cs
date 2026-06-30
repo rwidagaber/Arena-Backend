@@ -49,7 +49,12 @@ namespace ArenaApi.Controllers
         {
             var result = await _authService.LoginAsync(dto);
             if (!result.IsSuccess)
+            {
+                if (result.Errors?.Contains("GOOGLE_ACCOUNT_ONLY") == true)
+                    return Unauthorized(new { code = "GOOGLE_ACCOUNT_ONLY" });
+
                 return Unauthorized(result.Errors);
+            }
             return Ok(result.Value);
         }
 
