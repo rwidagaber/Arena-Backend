@@ -141,7 +141,7 @@ namespace ArenaApplication.Services
         {
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
             var encodedEmail = Uri.EscapeDataString(userEmail);
-            var resetLink = $"{_emailSettings.FrontendUrl.TrimEnd('/')}/reset-password?token={encodedToken}&email={encodedEmail}";
+            var resetLink = $"{_emailSettings.FrontendUrl}/reset-password?token={encodedToken}&email={encodedEmail}";
 
             var body = $@"
 <!DOCTYPE html>
