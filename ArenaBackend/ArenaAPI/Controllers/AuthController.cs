@@ -101,6 +101,17 @@ namespace ArenaApi.Controllers
             return NoContent();
         }
 
+        [Authorize]
+        [HttpPost("delete-account")]
+        public async Task<IActionResult> DeleteAccount(DeleteAccountDto dto)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await _authService.DeleteAccountAsync(userId, dto);
+            if (!result.IsSuccess)
+                return BadRequest(result.Errors);
+            return NoContent();
+        }
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
         {
