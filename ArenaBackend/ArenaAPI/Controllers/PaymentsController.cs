@@ -142,7 +142,7 @@ namespace ArenaApi.Controllers
             var frontendHomeUrl = GetFrontendHomeUrl(frontendUrl);
             var successValue = success.ToString().ToLowerInvariant();
 
-            return Redirect($"{frontendHomeUrl}/?success={successValue}");
+            return Redirect($"{frontendHomeUrl}/checkout?success={successValue}");
         }
 
         private static string GetFrontendHomeUrl(string frontendUrl)

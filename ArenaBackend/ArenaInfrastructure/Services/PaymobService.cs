@@ -154,7 +154,7 @@ namespace ArenaInfrastructure.Services
                     currency = "EGP",
                     integration_id = _integrationId,
                     redirection_url = GetFrontendHomeUrl(
-                        _config["EmailSettings:FrontendUrl"] ?? "http://localhost:4200")
+                        _config["EmailSettings:FrontendUrl"] ?? "http://localhost:4200") + "/checkout"
                 });
 
             var json = await response.Content.ReadAsStringAsync();
