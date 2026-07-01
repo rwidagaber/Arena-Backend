@@ -1,4 +1,4 @@
-﻿using ArenaApplication.Dtos;
+using ArenaApplication.Dtos;
 using ArenaApplication.Dtos.AuthDtos;
 using ArenaApplication.Dtos.AuthDtos.loginDto;
 using ArenaApplication.Dtos.ProfileDtos;
@@ -27,6 +27,5 @@ namespace ArenaApplication.IServices
         Task<Result<AuthResponseDto>> GoogleLoginAsync(string idToken);
         Task<Result> CompleteProfileAsync(Guid userId, CompleteProfileDto dto);
         Task<Result> ResendConfirmationAsync(Guid userId);
-        Task<Result> DeleteAccountAsync(Guid userId, DeleteAccountDto dto);
     }
 }
