@@ -16,8 +16,6 @@ using Microsoft.Extensions.Options;
 using System.Data;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.WebUtilities;
-using System.Text;
 using ArenaApplication.Dtos.AuthDtos.loginDto;
 
 
@@ -34,6 +32,7 @@ namespace ArenaApplication.Services
         private readonly IGoogleTokenValidator _googleTokenValidator;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
         private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService; // ✅ تمت الإضافة
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -43,8 +42,9 @@ namespace ArenaApplication.Services
             IOtpService otpService,
             IOptions<JWTSettings> jwtSettings,
             IStringLocalizer<ArenaLocalization> localizer,
-             IGoogleTokenValidator googleTokenValidator,
-             INotificationService notificationService   )
+            IGoogleTokenValidator googleTokenValidator,
+            INotificationService notificationService,
+            IEmailService emailService) // ✅ تمت الإضافة
         {
             _userManager = userManager;
             _authRepository = authRepository;
@@ -55,6 +55,7 @@ namespace ArenaApplication.Services
             _localizer = localizer;
             _googleTokenValidator = googleTokenValidator;
             _notificationService = notificationService;
+            _emailService = emailService; // ✅ تمت الإضافة
         }
 
         // =========================
@@ -101,7 +102,7 @@ namespace ArenaApplication.Services
                     otp
                 );
 
-                return Result<Guid>.Success(user.Id); // ← رجّع الـ userId
+                return Result<Guid>.Success(user.Id);
             }
             catch (Exception ex)
             {
@@ -113,43 +114,36 @@ namespace ArenaApplication.Services
             }
         }
 
-        // ✅ الميثود الجديدة — بتأكد الإيميل وترجع tokens مباشرة
         public async Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto)
-{
-    var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
-    if (user is null)
-        return Result<AuthResponseDto>.Failure("User not found");
+        {
+            var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
+            if (user is null)
+                return Result<AuthResponseDto>.Failure("User not found");
 
-    if (user.EmailConfirmed)
-        return Result<AuthResponseDto>.Failure("Email is already confirmed");
+            if (user.EmailConfirmed)
+                return Result<AuthResponseDto>.Failure("Email is already confirmed");
 
-    var isValid = await _otpService.ValidateOtpAsync(dto.UserId, dto.Otp);
-    if (!isValid)
-        return Result<AuthResponseDto>.Failure("Invalid or expired OTP");
+            var isValid = await _otpService.ValidateOtpAsync(dto.UserId, dto.Otp);
+            if (!isValid)
+                return Result<AuthResponseDto>.Failure("Invalid or expired OTP");
 
-    // ✅ نكمل الـ setup بعد التأكيد
-    user.IsActive = true;
-    user.EmailConfirmed = true;
-    await _userManager.UpdateAsync(user);
+            user.IsActive = true;
+            user.EmailConfirmed = true;
+            await _userManager.UpdateAsync(user);
 
-    await _userManager.AddToRoleAsync(user, "GymMember");
+            await _userManager.AddToRoleAsync(user, "GymMember");
 
-    // 🆕 إشعار ترحيب بالعضو الجديد
-    var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
-    if (userWithProfile?.MemberProfile != null)
-    {
-        await _notificationService.NotifyWelcomeAsync(
-            userWithProfile.MemberProfile.Id,
-            user.FirstName);
-    }
+            var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
+            if (userWithProfile?.MemberProfile != null)
+            {
+                await _notificationService.NotifyWelcomeAsync(
+                    userWithProfile.MemberProfile.Id,
+                    user.FirstName);
+            }
 
-    var response = await GenerateAuthResponseAsync(user);
-    return Result<AuthResponseDto>.Success(response);
-}
-
-
-
-
+            var response = await GenerateAuthResponseAsync(user);
+            return Result<AuthResponseDto>.Success(response);
+        }
 
         // ── LoginAsync ────────────────────────────────────────────
         public async Task<Result<AuthResponseDto>> LoginAsync(UserloginDto dto)
@@ -159,7 +153,6 @@ namespace ArenaApplication.Services
             if (user is null)
                 return Result<AuthResponseDto>.Failure(_localizer["InvalidEmailOrPassword"]);
 
-            // Google account بدون باسورد
             if (user.IsGoogleAccount && !await _userManager.HasPasswordAsync(user))
                 return Result<AuthResponseDto>.Failure("GOOGLE_ACCOUNT_ONLY");
 
@@ -185,7 +178,6 @@ namespace ArenaApplication.Services
 
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
-            // ✅ Guard
             if (string.IsNullOrWhiteSpace(dto.AccessToken) || string.IsNullOrWhiteSpace(dto.RefreshToken))
                 return Result<AuthResponseDto>.Failure(_localizer["InvalidToken"]);
 
@@ -332,18 +324,12 @@ namespace ArenaApplication.Services
             if (user is null)
                 return Result.Success();
 
-            // مش محتاج OTP خالص
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            await _backgroundJobService.EnqueuePasswordResetTokenEmailAsync(
-                user.Email!,
-                resetToken,
-                dto.Email);
+            await _emailService.SendPasswordResetTokenAsync(user.Email!, resetToken, dto.Email);
 
             return Result.Success();
         }
-
-
 
         // ── ResetPasswordAsync ────────────────────────────────────
         public async Task<Result> ResetPasswordAsync(ResetPasswordDto dto)
@@ -361,12 +347,10 @@ namespace ArenaApplication.Services
 
                 if (user.IsGoogleAccount && !await _userManager.HasPasswordAsync(user))
                 {
-                    // Google account بدون باسورد — ضيف باسورد جديد
                     result = await _userManager.AddPasswordAsync(user, dto.NewPassword);
                 }
                 else
                 {
-                    // Normal account — reset الباسورد
                     result = await _userManager.ResetPasswordAsync(
                         user, decodedToken, dto.NewPassword);
                 }
@@ -381,6 +365,7 @@ namespace ArenaApplication.Services
                 return Result.Failure("Invalid or malformed reset token.");
             }
         }
+
         private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user, bool isGoogleUser = false)
         {
             var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
@@ -425,7 +410,6 @@ namespace ArenaApplication.Services
 
             if (user is null)
             {
-                // يوزر جديد
                 user = new ApplicationUser
                 {
                     FirstName = firstName,
@@ -457,7 +441,6 @@ namespace ArenaApplication.Services
                 return Result<AuthResponseDto>.Success(newUserResponse);
             }
 
-            // يوزر موجود — ربط الأكونت بـ Google لو مش مربوط
             if (!user.IsGoogleAccount)
             {
                 user.IsGoogleAccount = true;
@@ -477,27 +460,23 @@ namespace ArenaApplication.Services
             return Result<AuthResponseDto>.Success(response);
         }
 
-
         public async Task<Result> CompleteProfileAsync(Guid userId, CompleteProfileDto dto)
         {
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
                 return Result.Failure(_localizer["UserNotFound"]);
 
-            // تحديث الـ phone
             user.PhoneNumber = dto.PhoneNumber;
             await _userManager.UpdateAsync(user);
 
             if (user.MemberProfile is null)
                 return Result.Failure("Profile not found");
 
-            // تحديث الـ profile
             user.MemberProfile.DateOfBirth = dto.DateOfBirth;
             user.MemberProfile.Weight = dto.Weight;
             user.MemberProfile.Height = dto.Height;
             user.MemberProfile.Gender = dto.Gender;
 
-            // حساب الـ BMI
             if (dto.Height > 0)
             {
                 var heightInMeters = dto.Height / 100;
