@@ -132,7 +132,7 @@
 .search-input-wrapper input:focus {
     border-color: var(--accent-color) !important;
     background-color: var(--input-bg-focus) !important;
-    box-shadow: 0 0 0 3px rgba(54, 127, 221, 0.15), var(--card-shadow) !important;
+    box-shadow: 0 0 0 3px rgba(198, 239, 46, 0.18), var(--card-shadow) !important;
     outline: none;
 }
 
@@ -167,7 +167,7 @@ html:not([data-theme="light"]) .search-input-wrapper input:focus {
 }
 
 html[data-theme="light"] .user-details-card:hover {
-    border-color: rgba(54, 127, 221, 0.25);
+    border-color: rgba(198, 239, 46, 0.35);
 }
 
 .user-details-card h3 {
@@ -205,7 +205,7 @@ html[data-theme="light"] .user-details-card:hover {
 }
 
 html[data-theme="light"] .user-detail-row:hover {
-    border-left-color: rgba(54, 127, 221, 0.5) !important;
+    border-left-color: rgba(198, 239, 46, 0.5) !important;
 }
 
 [dir="rtl"] .user-detail-row {
@@ -219,7 +219,7 @@ html[data-theme="light"] .user-detail-row:hover {
 }
 
 html[data-theme="light"][dir="rtl"] .user-detail-row:hover {
-    border-right-color: rgba(54, 127, 221, 0.5) !important;
+    border-right-color: rgba(198, 239, 46, 0.5) !important;
 }
 
 .user-detail-label {
@@ -236,7 +236,7 @@ html[data-theme="light"][dir="rtl"] .user-detail-row:hover {
 }
 
 html[data-theme="light"] .user-detail-row:hover .user-detail-label {
-    color: #367FDD !important;
+    color: #4d7c0f !important;
 }
 
 .user-detail-value {
@@ -282,7 +282,7 @@ html[data-theme="light"] .user-detail-row:hover .user-detail-value {
 }
 
 html[data-theme="light"] .switch-container:hover {
-    border-color: rgba(54, 127, 221, 0.3);
+    border-color: rgba(198, 239, 46, 0.35);
 }
 
 .switch-label-text {
@@ -372,7 +372,7 @@ input:checked+.slider:before {
 }
 
 html[data-theme="light"] .manage-user-card:hover {
-    border-color: rgba(54, 127, 221, 0.25);
+    border-color: rgba(198, 239, 46, 0.35);
 }
 
 /* Read-Only Fields Visual State */
@@ -409,6 +409,7 @@ html[data-theme="light"] .manage-user-card:hover {
 .action-icon-btn {
     width: 34px !important;
     height: 34px !important;
+    flex-shrink: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -602,7 +603,7 @@ html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover .user-contac
 }
 
 html[data-theme="light"] .user-mgmt-table tbody tr:hover td:first-child {
-    border-left-color: rgba(54, 127, 221, 0.4) !important;
+    border-left-color: rgba(198, 239, 46, 0.45) !important;
 }
 
 .subscription-table tbody tr:hover td {
@@ -622,7 +623,7 @@ html[data-theme="light"] .subscription-table tbody tr:hover td:nth-child(-n+4) {
 }
 
 html[data-theme="light"] .subscription-table tbody tr:hover td:first-child {
-    border-left-color: rgba(54, 127, 221, 0.4) !important;
+    border-left-color: rgba(198, 239, 46, 0.45) !important;
 }
 
 [dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child {
@@ -630,11 +631,11 @@ html[data-theme="light"] .subscription-table tbody tr:hover td:first-child {
 }
 
 html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-child {
-    border-right-color: rgba(54, 127, 221, 0.4) !important;
+    border-right-color: rgba(198, 239, 46, 0.45) !important;
 }
 
 /* Desktop column widths */
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
     .col-user-name {
         width: 18%;
     }
@@ -690,38 +691,6 @@ html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-chi
 
 /* Tablet adjustments */
 @media (min-width: 768px) and (max-width: 1024px) {
-    .user-mgmt-table th {
-        font-size: 0.65rem !important;
-        padding: 0.75rem 0.6rem !important;
-    }
-
-    .user-mgmt-table tbody tr td {
-        padding: 0.75rem 0.6rem !important;
-        font-size: 0.85rem !important;
-    }
-
-    .user-name-cell {
-        font-size: 0.9rem !important;
-    }
-
-    .user-contact-cell a {
-        font-size: 0.8rem !important;
-    }
-
-    .user-contact-cell .contact-phone {
-        font-size: 0.75rem !important;
-    }
-
-    .action-icon-btn {
-        width: 30px !important;
-        height: 30px !important;
-    }
-
-    .actions-cell .action-icon-btn svg {
-        width: 14px;
-        height: 14px;
-    }
-
     .user-details-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
@@ -733,9 +702,9 @@ html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-chi
 }
 
 /* ----------------------------------------------------
-   MOBILE RESPONSIVE CARDS (< 768px)
+   MOBILE & TABLET RESPONSIVE CARDS (<= 1024px)
    ---------------------------------------------------- */
-@media (max-width: 767.98px) {
+@media (max-width: 1024px) {
 
     /* Table wrapper becomes transparent */
     .user-table-wrap {
@@ -1063,7 +1032,7 @@ html[data-theme="light"][dir="rtl"] .user-mgmt-table tbody tr:hover td:first-chi
 }
 
 html[data-theme="light"] .user-history-table tbody tr:hover td {
-    background-color: rgba(54, 127, 221, 0.05) !important;
+    background-color: rgba(198, 239, 46, 0.06) !important;
     color: var(--accent-color) !important;
 }
 
@@ -1090,7 +1059,7 @@ html[data-theme="light"] .user-history-table tbody tr:hover td {
 }
 
 html[data-theme="light"] .user-history-table tbody tr:hover td:first-child {
-    border-left-color: rgba(54, 127, 221, 0.4) !important;
+    border-left-color: rgba(198, 239, 46, 0.5) !important;
 }
 
 [dir="rtl"] .user-history-table tbody tr:hover td:first-child {
@@ -1098,11 +1067,11 @@ html[data-theme="light"] .user-history-table tbody tr:hover td:first-child {
 }
 
 html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-child {
-    border-right-color: rgba(54, 127, 221, 0.4) !important;
+    border-right-color: rgba(198, 239, 46, 0.5) !important;
 }
 
 /* Desktop styles for subscription history table */
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
     .user-history-table {
         table-layout: fixed !important;
     }
@@ -1294,7 +1263,7 @@ html[data-theme="light"] .user-history-table tbody tr td {
 
 html[data-theme="light"] .user-mgmt-table tbody tr:hover td,
 html[data-theme="light"] .user-history-table tbody tr:hover td {
-    background-color: rgba(54, 127, 221, 0.05) !important;
+    background-color: rgba(198, 239, 46, 0.06) !important;
     color: var(--accent-color) !important;
 }
 
@@ -1310,8 +1279,8 @@ html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-
     border-right-color: var(--accent-color) !important;
 }
 
-/* Mobile & Tablet Overrides for Light Mode Tables (< 768px) */
-@media (max-width: 767.98px) {
+/* Mobile & Tablet Overrides for Light Mode Tables (<= 1024px) */
+@media (max-width: 1024px) {
     html[data-theme="light"] .user-mgmt-table tbody tr,
     html[data-theme="light"] .user-history-table tbody tr {
         background-color: var(--card-bg) !important;
@@ -1321,9 +1290,9 @@ html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-
 
     html[data-theme="light"] .user-mgmt-table tbody tr:hover,
     html[data-theme="light"] .user-history-table tbody tr:hover {
-        background-color: rgba(54, 127, 221, 0.05) !important;
-        border-color: var(--border-color) !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+        background-color: rgba(198, 239, 46, 0.06) !important;
+        border-color: rgba(198, 239, 46, 0.25) !important;
+        box-shadow: 0 6px 16px rgba(198, 239, 46, 0.10) !important;
         transform: translateY(-2px) !important;
     }
 
@@ -1354,7 +1323,7 @@ html[data-theme="light"][dir="rtl"] .user-history-table tbody tr:hover td:first-
 /* 5. Tooltip system overrides for Light Mode */
 html[data-theme="light"] [data-tooltip]::after {
     background-color: #ffffff !important;
-    border: 1px solid rgba(54, 127, 221, 0.5) !important;
-    color: rgb(54, 126, 221) !important;
+    border: 1px solid rgba(198, 239, 46, 0.45) !important;
+    color: #4d7c0f !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }

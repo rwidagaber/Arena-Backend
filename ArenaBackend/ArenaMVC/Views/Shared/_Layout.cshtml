@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @Localizer["Arena"]</title>
+    <link rel="icon" type="image/png" href="~/favicon.png" />
     <script type="importmap"></script>
     <script>
         (function () {
@@ -33,7 +34,9 @@
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
+            <a asp-area="" asp-controller="Home" asp-action="Index" style="display: flex; justify-content: center; align-items: center; text-decoration: none;">
+                <img src="~/favicon.png" alt="Arena Logo" style="height: 100px; width: 180px; border-radius: 4px;" />
+            </a>
         </div>
         <nav class="sidebar-nav">
             @{
@@ -48,9 +51,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
-                        <i data-lucide="shield" class="nav-icon"></i>
-                        <span>@Localizer["Privacy"]</span>
+                    <a class="nav-link @(currentController == "AdminAnalytics" && currentAction == "Dashboard" ? "active" : "")" asp-area="" asp-controller="AdminAnalytics" asp-action="Dashboard">
+                        <i data-lucide="chart-line" class="nav-icon"></i>
+                        <span>@Localizer["AnalyticsDashboard"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "WorkingHours" ? "active" : "")" asp-area="" asp-controller="WorkingHours" asp-action="Index">
+                        <i data-lucide="clock" class="nav-icon"></i>
+                        <span>@Localizer["WorkingHours"]</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -72,12 +81,38 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "AdminAnalytics" && currentAction == "Dashboard" ? "active" : "")" asp-area="" asp-controller="AdminAnalytics" asp-action="Dashboard">
-                        <i data-lucide="chart-line" class="nav-icon"></i>
-                        <span>@Localizer["AnalyticsDashboard"]</span>
+                    <a class="nav-link @(currentController == "Equipments" ? "active" : "")" asp-area="" asp-controller="Equipments" asp-action="Index">
+                        <i data-lucide="dumbbell" class="nav-icon"></i>
+                        <span>@Localizer["Equipments"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "ExerciseCatalog" ? "active" : "")" asp-area="" asp-controller="ExerciseCatalog" asp-action="Index">
+                        <i data-lucide="book-open" class="nav-icon"></i>
+                        <span>@Localizer["ExerciseCatalog"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">
+                        <i data-lucide="shield" class="nav-icon"></i>
+                        <span>@Localizer["PrivacyPolicy"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "GymSettings" ? "active" : "")" asp-area="" asp-controller="GymSettings" asp-action="Index">
+                        <i data-lucide="settings" class="nav-icon"></i>
+                        <span>@Localizer["GymSettings"]</span>
                     </a>
                 </li>
             </ul>
+
+            @* Logout at the bottom of the sidebar *@
+            <div class="sidebar-footer">
+                <a asp-controller="Auth" asp-action="Logout" class="nav-link nav-link-logout">
+                    <i data-lucide="log-out" class="nav-icon"></i>
+                    <span>@Localizer["Logout"]</span>
+                </a>
+            </div>
         </nav>
     </aside>
     <div class="main-content">
@@ -86,9 +121,11 @@
                 <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
                     <i data-lucide="menu"></i>
                 </button>
-                <div class="header-brand">
-                    <a asp-area="" asp-controller="Home" asp-action="Index">@Localizer["Arena"]</a>
-                </div>
+            </div>
+            <div class="header-brand" style="position: absolute; left: 50%; transform: translateX(-50%);">
+                <a asp-area="" asp-controller="Home" asp-action="Index" style="display: flex; align-items: center; text-decoration: none;">
+                    <img src="~/favicon.png" alt="Arena Logo" style="height: 48px; width: auto; border-radius: 4px;" />
+                </a>
             </div>
             <div class="header-right">
                 <!-- Theme Toggle Button -->
@@ -148,6 +185,15 @@
                     overlay.classList.remove('active');
                 });
             }
+
+            // Auto-hide success alerts after 4 seconds
+            setTimeout(function () {
+                if (window.jQuery) {
+                    window.jQuery('.subscription-alert.success').fadeOut(500, function () {
+                        window.jQuery(this).remove();
+                    });
+                }
+            }, 4000);
         });
         document.addEventListener('click', function (e) {
             document.querySelectorAll('.culture-dropdown.open').forEach(function (dd) {

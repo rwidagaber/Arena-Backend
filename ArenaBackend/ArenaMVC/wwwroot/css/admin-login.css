@@ -1,0 +1,500 @@
+/* ==========================================================================
+   Arena Admin — Login Page Styles
+   Mirrors the Angular frontend login design:
+   Left: frosted-glass card | Right: gym background image
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Login Body — full-viewport, background image
+   -------------------------------------------------------------------------- */
+.login-body {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    display: flex !important;
+    align-items: stretch;
+    background-color: var(--bg-color) !important;
+    position: relative;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Dark-mode gym background */
+.login-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('/images/gym-bg-dark.png');
+    background-size: cover;
+    background-position: right center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    pointer-events: none;
+    transition: background-image 0.3s ease;
+}
+
+/* Light-mode gym background */
+html[data-theme="light"] .login-body::before {
+    background-image: url('/images/gym-bg-light.png');
+}
+
+/* RTL: flip image position so subject faces inward */
+[dir="rtl"] .login-body::before {
+    background-position: left center;
+    transform: scaleX(-1);
+}
+
+/* --------------------------------------------------------------------------
+   2. Floating Controls (top-right corner)
+   -------------------------------------------------------------------------- */
+.login-controls {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+}
+
+[dir="rtl"] .login-controls {
+    right: auto;
+    left: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Login Card — frosted-glass, left panel
+   -------------------------------------------------------------------------- */
+.login-card {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 460px;
+    min-height: 100vh;
+    height: 100vh;
+    padding: 48px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+    overflow-y: auto;
+    /* Glass effect */
+    background: rgba(213, 235, 69, 0.05) !important;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    /* Right border (LTR) */
+    border-right: 1px solid var(--border-color);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.20), inset 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* RTL: flip border to left side */
+.login-card[dir="rtl"] {
+    border-right: none;
+    border-left: 1px solid var(--border-color);
+    box-shadow:
+        -4px 0 32px rgba(0, 0, 0, 0.20),
+        inset -1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   4. Brand
+   -------------------------------------------------------------------------- */
+.login-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+}
+
+.login-brand-text {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--accent-color);
+}
+
+.login-brand-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    background: var(--hover-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   5. Typography
+   -------------------------------------------------------------------------- */
+.login-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary) !important;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary) !important;
+    margin: 0 0 28px 0;
+    line-height: 1.5;
+}
+
+/* RTL text alignment */
+.login-card[dir="rtl"] .login-title,
+.login-card[dir="rtl"] .login-subtitle {
+    text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   6. Error Banner
+   -------------------------------------------------------------------------- */
+.login-banner.error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(239, 68, 68, 0.10) !important;
+    border: 1px solid rgba(239, 68, 68, 0.25) !important;
+    color: #ef4444 !important;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* --------------------------------------------------------------------------
+   7. Form Fields
+   -------------------------------------------------------------------------- */
+.login-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.login-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary) !important;
+    margin-bottom: 7px;
+    opacity: 0.9;
+}
+
+.login-card[dir="rtl"] .login-field label {
+    text-align: right;
+}
+
+.login-field input[type="email"],
+.login-field input[type="password"],
+.login-field input[type="text"] {
+    width: 100%;
+    padding: 11px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    color: var(--text-primary) !important;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.login-field input:focus {
+    border-color: var(--accent-color) !important;
+    background-color: var(--input-bg-focus) !important;
+    box-shadow: 0 0 0 4px rgba(213, 235, 69, 0.12) !important;
+}
+
+html[data-theme="light"] .login-field input:focus {
+    box-shadow: 0 0 0 4px rgba(198, 239, 46, 0.18) !important;
+}
+
+.login-field input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+/* Autofill styling override */
+.login-field input:-webkit-autofill,
+.login-field input:-webkit-autofill:hover,
+.login-field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary) !important;
+    box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Invalid state */
+.login-field.invalid input {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+
+/* Validation error text */
+.login-err {
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.login-card[dir="rtl"] .login-err {
+    text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   8. Password Input Wrap
+   -------------------------------------------------------------------------- */
+.login-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.login-input-wrap input {
+    padding-right: 46px !important;
+}
+
+.login-card[dir="rtl"] .login-input-wrap input {
+    padding-right: 16px !important;
+    padding-left: 46px !important;
+}
+
+.toggle-pw {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.login-card[dir="rtl"] .toggle-pw {
+    right: auto;
+    left: 12px;
+}
+
+.toggle-pw svg {
+    width: 18px;
+    height: 18px;
+}
+
+.toggle-pw:hover {
+    background: var(--hover-bg);
+    color: var(--accent-color);
+}
+
+/* --------------------------------------------------------------------------
+   9. Options Row (Remember Me)
+   -------------------------------------------------------------------------- */
+.login-options-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.login-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.login-remember input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.login-custom-checkbox {
+    width: 16px;
+    height: 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.login-remember:hover .login-custom-checkbox {
+    border-color: var(--accent-color);
+}
+
+.login-remember input:checked ~ .login-custom-checkbox {
+    background: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 8px rgba(213, 235, 69, 0.30);
+}
+
+html[data-theme="light"] .login-remember input:checked ~ .login-custom-checkbox {
+    box-shadow: 0 0 8px rgba(198, 239, 46, 0.35);
+}
+
+.login-custom-checkbox::after {
+    content: '';
+    position: absolute;
+    display: none;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid #0F0F11;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.login-remember input:checked ~ .login-custom-checkbox::after {
+    display: block;
+}
+
+.login-label-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   10. Submit Button
+   -------------------------------------------------------------------------- */
+.login-btn-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    background: var(--accent-color) !important;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(213, 235, 69, 0.25);
+    margin-top: 8px;
+    text-decoration: none;
+}
+
+.login-btn-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0F0F11 !important;
+    pointer-events: none;
+}
+
+.login-btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(213, 235, 69, 0.40);
+}
+
+html[data-theme="light"] .login-btn-submit {
+    box-shadow: 0 4px 16px rgba(198, 239, 46, 0.30);
+}
+
+html[data-theme="light"] .login-btn-submit:hover:not(:disabled) {
+    box-shadow: 0 8px 24px rgba(198, 239, 46, 0.45);
+}
+
+.login-btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   11. Access Denied Card Extras
+   -------------------------------------------------------------------------- */
+.access-denied-card {
+    align-items: center;
+    text-align: center;
+    gap: 0;
+}
+
+.access-denied-icon {
+    width: 72px;
+    height: 72px;
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    color: #ef4444;
+}
+
+.access-denied-icon svg {
+    width: 36px;
+    height: 36px;
+}
+
+.access-denied-card .login-title {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.access-denied-card .login-subtitle {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.access-denied-back {
+    max-width: 260px;
+    margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   12. Responsive — Mobile (≤900px): card goes full-width
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .login-card {
+        max-width: 100%;
+        padding: 48px 24px;
+        border-right: none;
+        border-left: none;
+        background: rgba(213, 235, 69, 0.05) !important;
+        /* Slight opacity so background peeks through on mobile */
+        opacity: 0.97;
+    }
+
+    .login-card[dir="rtl"] {
+        border-right: none;
+        border-left: none;
+    }
+
+    .login-controls {
+        top: 12px;
+        right: 12px;
+    }
+
+    [dir="rtl"] .login-controls {
+        right: auto;
+        left: 12px;
+    }
+}
+
+@media (max-width: 420px) {
+    .login-card {
+        padding: 40px 20px;
+    }
+
+    .login-brand {
+        flex-wrap: wrap;
+    }
+}

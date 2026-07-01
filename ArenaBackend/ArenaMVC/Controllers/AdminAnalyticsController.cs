@@ -1,26 +1,56 @@
 using ArenaApplication.Dtos.Dashboard.Analytics;
 using ArenaApplication.IServices;
+using ArenaMVC.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArenaMVC.Controllers;
 
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("admin/analytics/v2")]
 [Route("api/admin/analytics/v2")]
 public class AdminAnalyticsController : Controller
 {
   private readonly IDashboardService _dashboardService;
+  private readonly IDashboardDataSeeder _seeder;
+  private readonly IAnalyticsCacheVersionService _cacheVersion;
 
-  public AdminAnalyticsController(IDashboardService dashboardService)
+  public AdminAnalyticsController(
+      IDashboardService dashboardService,
+      IDashboardDataSeeder seeder,
+      IAnalyticsCacheVersionService cacheVersion)
   {
     _dashboardService = dashboardService;
+    _seeder = seeder;
+    _cacheVersion = cacheVersion;
   }
 
   [HttpGet("/admin/dashboard")]
   [HttpGet("/admin/analytics")]
-  public IActionResult Dashboard()
+  public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
   {
-    return View();
+      var endDate = DateTime.UtcNow;
+      var startDate = endDate.AddDays(-29); // 30 days inclusive
+
+      var query = new AnalyticsQueryWindowDto
+      {
+          StartDateUtc = startDate,
+          EndDateUtc = endDate,
+          Timezone = "Africa/Cairo" // Default UI timezone
+      };
+
+      var response = await _dashboardService.GetAnalyticsV2Async(query, cancellationToken);
+      return View(response.Data);
+  }
+
+  [HttpPost("/admin/analytics/generate-demo-data")]
+  public async Task<IActionResult> GenerateDemoData()
+  {
+    await _seeder.SeedAsync(forceReseed: true);
+    _cacheVersion.BumpVersion();   // invalidate all cached analytics immediately
+    TempData["DemoDataSuccess"] = "Dashboard demo data generated successfully.";
+    return Redirect("/admin/dashboard");
   }
 
   [HttpGet("overview")]

@@ -14,154 +14,255 @@ namespace ArenaInfrastructure.Data.DataSeeding
 {
     public static class DashboardDataSeeder
     {
-        public static async Task SeedAsync(AppDbContext context)
+        public static async Task SeedAsync(AppDbContext context, bool forceReseed = false)
         {
-            // Guard: only seed if no subscriptions exist yet
-            if (await context.UserSubscriptions.AnyAsync())
+            // Guard: only seed if no subscriptions exist yet (skip guard when forced)
+            if (!forceReseed && await context.UserSubscriptions.AnyAsync())
                 return;
 
+            // Clear existing demo data when reseeding
+            if (forceReseed)
+            {
+                context.Attendances.RemoveRange(context.Attendances);
+                context.Bookings.RemoveRange(context.Bookings);
+                context.Payments.RemoveRange(context.Payments);
+                context.UserSubscriptions.RemoveRange(context.UserSubscriptions);
+                await context.SaveChangesAsync();
+            }
+
+            var rng = new Random();
             var now = DateTime.UtcNow;
             var today = now.Date;
 
-            // ── Load existing member profiles ──────────────────────────────────
-            var memberProfiles = await context.MemberProfiles
-                .Include(mp => mp.User)
-                .ToListAsync();
+            // ── Load existing member profiles ─────────────────────────────────────
+            var memberProfiles = await context.MemberProfiles.Include(mp => mp.User).ToListAsync();
 
             if (memberProfiles.Count == 0)
-                return; // nothing to attach to
+                return;
 
-            // ── Load existing subscription plans (Basic / Premium / Elite) ─────
-            var plans = await context.SubscriptionPlans
-                .Where(p => p.IsActive && !p.IsDeleted)
+            // ── Load subscription plans ───────────────────────────────────────────
+            var plans = await context
+                .SubscriptionPlans.Where(p => p.IsActive && !p.IsDeleted)
                 .ToListAsync();
 
             if (plans.Count == 0)
                 return;
 
-            var basicPlan   = plans.FirstOrDefault(p => p.NameEn.Contains("Basic"))   ?? plans[0];
-            var premiumPlan = plans.FirstOrDefault(p => p.NameEn.Contains("Premium")) ?? plans[Math.Min(1, plans.Count - 1)];
-            var elitePlan   = plans.FirstOrDefault(p => p.NameEn.Contains("Elite"))   ?? plans[Math.Min(2, plans.Count - 1)];
+            var allPlans = plans.ToArray();
+            var highestPlan =
+                plans.OrderByDescending(p => p.Price).FirstOrDefault() ?? allPlans.Last();
 
             var subscriptions = new List<UserSubscription>();
-            var payments      = new List<Payment>();
-            var bookings      = new List<Booking>();
-            var attendances   = new List<Attendance>();
+            var payments = new List<Payment>();
+            var bookings = new List<Booking>();
+            var attendances = new List<Attendance>();
 
-            // ── Subscription data layout (up to 8 members, 10 total subscriptions) ─
-            // Index 0-1: Active, expire in ~6 days (Expiring Soon)
-            // Index 2:   Active, expire in ~5 days (Expiring Soon)
-            // Index 3-6: Active, expire next month
-            // Index 7:   Expired
-            // Extra:     Expired + Cancelled (reuse last two members if < 10 total profiles)
+            SubscriptionPlan GetRandomPlan() =>
+                rng.Next(10) < 8 ? highestPlan : allPlans[rng.Next(allPlans.Length)];
 
-            var subDefs = new[]
+            // ═══════════════════════════════════════════════════════════════════════
+            // SUBSCRIPTIONS — per-member history + up to 2 active subscriptions
+            // ═══════════════════════════════════════════════════════════════════════
+
+            var shuffled = memberProfiles.OrderBy(_ => rng.Next()).ToList();
+
+            PaymentMethod RandomPaymentMethod() =>
+                (PaymentMethod)new[] { 1, 2, 2, 2, 3, 4 }[rng.Next(6)]; // card-weighted
+
+            void AddSubscription(
+                MemberProfile mp,
+                SubscriptionPlan plan,
+                SubscriptionStatus status,
+                DateTime subStart,
+                DateTime subEnd
+            )
             {
-                // MemberIndex, Plan, Status, StartOffsetDays, EndOffsetDays, PayThisMonth
-                (0, basicPlan,   SubscriptionStatus.Active,     -24,   6,  true),   // expiring soon
-                (1, premiumPlan, SubscriptionStatus.Active,     -23,   5,  true),   // expiring soon
-                (2, elitePlan,   SubscriptionStatus.Active,     -22,   4,  true),   // expiring soon
-                (3, basicPlan,   SubscriptionStatus.Active,     -10,  20,  true),   // healthy
-                (4, premiumPlan, SubscriptionStatus.Active,      -5,  25,  true),   // healthy
-                (5, elitePlan,   SubscriptionStatus.Active,      -2,  28,  true),   // healthy
-                (6, basicPlan,   SubscriptionStatus.Active,      -1,  29,  true),   // healthy
-                (Math.Min(7, memberProfiles.Count - 1), premiumPlan, SubscriptionStatus.Expired,  -60, -1,  false),  // expired
-                (Math.Min(7, memberProfiles.Count - 1), elitePlan,   SubscriptionStatus.Expired,  -90,-30,  false),  // expired (prev month payment)
-                (Math.Min(6, memberProfiles.Count - 1), basicPlan,   SubscriptionStatus.Cancelled,-45,-15,  false),  // cancelled
-            };
-
-            foreach (var (memberIdx, plan, status, startOffset, endOffset, payThisMonth) in subDefs)
-            {
-                var mp = memberProfiles[memberIdx];
-                var subStart = now.AddDays(startOffset);
-                var subEnd   = now.AddDays(endOffset);
-
                 var sub = new UserSubscription
                 {
-                    Id               = Guid.NewGuid(),
-                    MemberProfileId  = mp.Id,
-                    PlanId           = plan.Id,
-                    StartDate        = subStart,
-                    EndDate          = subEnd,
-                    Status           = status,
-                    RemainingSessions = 0,
-                    ReminderSent     = false,
-                    CreatedAt        = subStart
+                    Id = Guid.NewGuid(),
+                    MemberProfileId = mp.Id,
+                    PlanId = plan.Id,
+                    StartDate = subStart,
+                    EndDate = subEnd,
+                    Status = status,
+                    RemainingSessions = status == SubscriptionStatus.Active ? rng.Next(0, 20) : 0,
+                    ReminderSent = false,
+                    CreatedAt = subStart,
                 };
                 subscriptions.Add(sub);
 
-                // Payment for every subscription
-                DateTime? payDate = payThisMonth
-                    ? now.AddDays(-Math.Abs(startOffset) % 10)     // spread in current month
-                    : now.AddMonths(-1).AddDays(startOffset + 30); // previous month
+                // Payment date within first 3 days of subscription start
+                var payDate = subStart.AddDays(rng.Next(0, 3));
+                // ±5% price noise so revenue chart has daily variation
+                var amount = Math.Round(plan.Price * (decimal)(0.95 + rng.NextDouble() * 0.10), 2);
 
-                var payment = new Payment
-                {
-                    Id                  = Guid.NewGuid(),
-                    UserId              = mp.UserId,
-                    UserSubscriptionId  = sub.Id,
-                    Amount              = plan.Price,
-                    Currency            = "EGP",
-                    PaymentMethod       = PaymentMethod.Card,
-                    Status              = PaymentStatus.Paid,
-                    PaymentDate         = payDate,
-                    CreatedAt           = payDate ?? now
-                };
-                payments.Add(payment);
+                payments.Add(
+                    new Payment
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = mp.UserId,
+                        UserSubscriptionId = sub.Id,
+                        Amount = amount,
+                        Currency = "EGP",
+                        PaymentMethod = RandomPaymentMethod(),
+                        Status = PaymentStatus.Paid,
+                        PaymentDate = payDate,
+                        CreatedAt = payDate,
+                    }
+                );
             }
 
-            // ── Attendance seed: distribute across Mon-Sun of current week + today ─
-            // Monday of current week
-            var daysSinceMonday = ((int)today.DayOfWeek + 6) % 7;
-            var weekMonday = today.AddDays(-daysSinceMonday);
+            // How many members get Active subscriptions (make generated data more optimistic)
+            int activeCount = Math.Max(1, (int)(shuffled.Count * 0.95));
+            int expiringCount = rng.Next(2, Math.Min(5, activeCount)); // expiring-soon subset
 
-            // Attendance counts per day: Mon=3, Tue=4, Wed=5, Thu=3, Fri=2, Sat=1, Sun=0
-            //   + make sure TODAY has 4 entries (overrides the day's default)
-            var attendanceCounts = new[] { 3, 4, 5, 3, 2, 1, 0 }; // Mon...Sun
-            var todayDayIndex = daysSinceMonday; // 0=Mon … 6=Sun
-            attendanceCounts[todayDayIndex] = 4; // ensure today always shows 4
-
-            var profileCycle = 0;
-            for (int dayIdx = 0; dayIdx < 7; dayIdx++)
+            // ── Step 1: Give EVERY member 1–3 past subscriptions (renewal history) ──
+            foreach (var mp in shuffled)
             {
-                var day   = weekMonday.AddDays(dayIdx);
-                var count = attendanceCounts[dayIdx];
+                int historyCount = rng.Next(1, 4); // 1, 2, or 3 past subs per member
+                // Build a chain ending ~1–30 days before today
+                int endDaysAgo = rng.Next(1, 31);
 
-                for (int k = 0; k < count; k++)
+                for (int h = historyCount - 1; h >= 0; h--)
                 {
-                    var mp = memberProfiles[profileCycle % memberProfiles.Count];
-                    profileCycle++;
+                    int durationDays = rng.Next(28, 91); // 1–3 month duration
+                    var subEnd = today.AddDays(-endDaysAgo);
+                    var subStart = subEnd.AddDays(-durationDays);
 
-                    var checkinHour = 8 + (k * 2); // 08:00, 10:00, 12:00, 14:00…
-                    var checkIn = day.AddHours(checkinHour);
+                    // Occasionally cancelled, mostly expired
+                    var pastStatus =
+                        rng.Next(10) < 2
+                            ? SubscriptionStatus.Cancelled
+                            : SubscriptionStatus.Expired;
 
-                    // Don't create future check-ins (for days that haven't happened yet this week)
-                    if (checkIn > now) checkIn = now.AddMinutes(-((dayIdx + 1) * 10));
+                    AddSubscription(mp, GetRandomPlan(), pastStatus, subStart, subEnd);
 
-                    var booking = new Booking
-                    {
-                        Id              = Guid.NewGuid(),
-                        MemberProfileId = mp.Id,
-                        BookingDate     = day,
-                        StartTime       = TimeSpan.FromHours(checkinHour),
-                        Status          = BookingStatus.Confirmed,
-                        CreatedAt       = day
-                    };
-                    bookings.Add(booking);
-
-                    var att = new Attendance
-                    {
-                        Id              = Guid.NewGuid(),
-                        BookingId       = booking.Id,
-                        MemberProfileId = mp.Id,
-                        CheckInTime     = checkIn,
-                        CreatedAt       = checkIn
-                    };
-                    attendances.Add(att);
+                    // Next (older) sub ends where this one started, with a small gap
+                    endDaysAgo += durationDays + rng.Next(1, 15);
                 }
             }
 
-            // ── Persist ────────────────────────────────────────────────────────
+            // ── Step 2: Assign Active subscriptions ───────────────────────────────
+            var activeMembers = shuffled.Take(activeCount).ToList();
+
+            for (int i = 0; i < activeMembers.Count; i++)
+            {
+                var mp = activeMembers[i];
+                bool isExpiringSoon = i < expiringCount;
+
+                int durationDays = rng.Next(28, 91);
+                int daysLeft = isExpiringSoon ? rng.Next(1, 7) : rng.Next(10, 46);
+                int startDaysAgo = Math.Max(1, durationDays - daysLeft);
+
+                var subStart = today.AddDays(-startDaysAgo);
+                var subEnd = subStart.AddDays(durationDays);
+
+                var plan1 = GetRandomPlan();
+                AddSubscription(mp, plan1, SubscriptionStatus.Active, subStart, subEnd);
+
+                // All members can have up to 2 plans active (give 80% a second plan)
+                if (rng.Next(10) < 8)
+                {
+                    int dur2 = rng.Next(14, 61);
+                    int left2 = rng.Next(5, 30);
+                    int ago2 = Math.Max(1, dur2 - left2);
+                    var start2 = today.AddDays(-ago2);
+                    var end2 = start2.AddDays(dur2);
+
+                    // Pick a different plan for the second subscription
+                    var otherPlans = allPlans.Where(p => p.Id != plan1.Id).ToArray();
+                    var plan2 =
+                        otherPlans.Length > 0
+                            ? otherPlans[rng.Next(otherPlans.Length)]
+                            : GetRandomPlan();
+
+                    AddSubscription(mp, plan2, SubscriptionStatus.Active, start2, end2);
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════════
+            // ATTENDANCE + BOOKINGS — 90 days, randomized with weekly patterns
+            // ═══════════════════════════════════════════════════════════════════════
+
+            // Random base attendance level each run (optimistic)
+            int baseAttendance = rng.Next(8, 15);
+
+            // Optimistic growth scenario: always growing
+            int scenario = 0;
+
+            // Weights by day-of-week: Mon–Sun (gym is quieter on weekends)
+            double[] dayWeights = { 1.1, 1.2, 1.3, 1.1, 0.9, 0.6, 0.4 };
+
+            for (int daysAgo = 89; daysAgo >= 0; daysAgo--)
+            {
+                var day = today.AddDays(-daysAgo);
+                var dowIdx = ((int)day.DayOfWeek + 6) % 7; // 0=Mon…6=Sun
+                var progress = (89.0 - daysAgo) / 89.0; // 0→1 over 90 days
+
+                // Growth/decline factor depending on scenario
+                double trendFactor = scenario switch
+                {
+                    0 => 1.0 + 0.4 * progress, // growing +40%
+                    1 => 1.3 - 0.4 * progress, // declining
+                    2 => 1.0 + 0.15 * Math.Sin(progress * Math.PI * 4), // wave / volatile
+                    _ => 1.0, // flat
+                };
+
+                // Random daily spike/dip ±30%
+                double noise = 0.7 + rng.NextDouble() * 0.6;
+
+                int count = (int)
+                    Math.Round(baseAttendance * dayWeights[dowIdx] * trendFactor * noise);
+                count = Math.Max(0, Math.Min(count, memberProfiles.Count));
+
+                // No future attendances
+                if (day > today)
+                    continue;
+
+                var dayMembers = memberProfiles.OrderBy(_ => rng.Next()).Take(count).ToList();
+
+                foreach (var mp in dayMembers)
+                {
+                    var hour = rng.Next(7, 21); // gym open 07:00–21:00
+                    var checkIn = day.AddHours(hour).AddMinutes(rng.Next(0, 60));
+                    if (checkIn > now)
+                        checkIn = now.AddMinutes(-rng.Next(5, 30));
+
+                    // Mostly Confirmed/Completed; small chance Cancelled (no-show)
+                    var bStatus =
+                        rng.Next(10) < 2
+                            ? BookingStatus.Cancelled
+                            : (day < today ? BookingStatus.Completed : BookingStatus.Confirmed);
+
+                    var booking = new Booking
+                    {
+                        Id = Guid.NewGuid(),
+                        MemberProfileId = mp.Id,
+                        BookingDate = day,
+                        StartTime = TimeSpan.FromHours(hour),
+                        Status = bStatus,
+                        CreatedAt = day,
+                    };
+                    bookings.Add(booking);
+
+                    // Only confirmed/completed bookings get an attendance record
+                    if (bStatus != BookingStatus.Cancelled)
+                    {
+                        attendances.Add(
+                            new Attendance
+                            {
+                                Id = Guid.NewGuid(),
+                                BookingId = booking.Id,
+                                MemberProfileId = mp.Id,
+                                CheckInTime = checkIn,
+                                CreatedAt = checkIn,
+                            }
+                        );
+                    }
+                }
+            }
+
+            // ── Persist ────────────────────────────────────────────────────────────
             await context.UserSubscriptions.AddRangeAsync(subscriptions);
             await context.Payments.AddRangeAsync(payments);
             await context.Bookings.AddRangeAsync(bookings);

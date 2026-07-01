@@ -1,20 +1,26 @@
-using System.Globalization;
 using ArenaApplication;
 using ArenaApplication.IServices;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
 using ArenaDomain.Entities.Bookings;
+using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure;
+using ArenaInfrastructure.AI;
+using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Data.DataSeeding;
 using ArenaInfrastructure.Localization;
 using ArenaInfrastructure.Repositories;
 using ArenaInfrastructure.Services;
+using ArenaMVC.Services;
 using Hangfire;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,11 +49,44 @@ builder
     });
 
 builder.Services.ConfigureDbContext(builder.Configuration);
+// register Mapster IMapper and config
+builder.Services.AddMapsterConfiguration();
 builder.Services.AddApplicationServices();
+
+// ── ASP.NET Identity (for UserManager / role checks only — no sign-in manager) ──
+// AddIdentityCore does NOT register its own cookie scheme,
+// so our /Auth/Login path is preserved.
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+})
+.AddRoles<IdentityRole<Guid>>()
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+// ── Cookie Authentication for MVC Admin Portal ────────────────────
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath        = "/Auth/Login";
+        options.AccessDeniedPath = "/Auth/AccessDenied";
+        options.ExpireTimeSpan   = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.Cookie.HttpOnly  = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.Name      = "ArenaAdminAuth";
+    });
+
+// ── Admin Login Service (lightweight — no JWT) ────────────────────
+builder.Services.AddScoped<IMvcAdminLoginService, MvcAdminLoginService>();
 
 // User-related services
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<ArenaMVC.Services.IDashboardDataSeeder, ArenaMVC.Services.DashboardDataSeederService>();
 builder.Services.AddSingleton<IAnalyticsCacheVersionService, AnalyticsCacheVersionService>();
 
 // Booking dependencies (MVC Admin pages)
@@ -61,11 +100,12 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
 
-// Provide a no-op NotificationHub implementation for the MVC app (admin UI doesn't need realtime pushes)
+// Provide no-op implementations for the MVC app (admin UI doesn't need realtime/push notifications)
 builder.Services.AddScoped<INotificationHub, ArenaMVC.Services.NoopNotificationHub>();
+builder.Services.AddScoped<IPushNotificationService, ArenaMVC.Services.NoopPushNotificationService>();
+// ── Hangfire ──────────────────────────────────────────────────
 builder.Services.AddHangfire(config =>
-               config.UseSqlServerStorage(
-                   builder.Configuration.GetConnectionString("DefaultConnection")));
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
@@ -73,25 +113,35 @@ builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 // Booking service
 builder.Services.AddScoped<IBookingService, BookingService>();
 
-// ── Hangfire ──────────────────────────────────────────────────
-builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
-builder.Services.AddHangfireServer();
-builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
-builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
+
+builder.Services.AddScoped<IAttendanceSuggestionService, AttendanceSuggestionService>();
+
+// 2. FIX: Add the missing dependency right here!
+//builder.Services.AddScoped<IGeminiCompletionService, GeminiService>();
+builder.Services.AddHttpClient<IGeminiCompletionService, GeminiService>();
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ArenaInfrastructure.Data.AppDbContext>();
+    var context     = scope.ServiceProvider.GetRequiredService<ArenaInfrastructure.Data.AppDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
     await context.Database.MigrateAsync();
     await TranslationSeeder.SeedAsync(context);
-    if (app.Environment.IsDevelopment())
-    {
-        await DashboardDataSeeder.SeedAsync(context);
-    }
+
+    // Seed roles + admin user (required for cookie-based admin login)
+    await DataSeeder.SeedAsync(context, userManager, roleManager);
+
+    // ── Hangfire Recurring No-Show Penalty Job ────────────────────
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<INoShowPenaltyService>(
+        "NoShowPenaltyJob",
+        service => service.ProcessNoShowPenaltiesAsync(CancellationToken.None),
+        Cron.Minutely());
+
+    // Dashboard demo data is now seeded on-demand via Admin Dashboard > Generate Demo Data
 }
 
 // Configure the HTTP request pipeline.
@@ -103,16 +153,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var supportedCultures = new[] { "en-US", "ar-EG" };
-var localizationOptions = new RequestLocalizationOptions()
-    .SetDefaultCulture(supportedCultures[0])
-    .AddSupportedCultures(supportedCultures)
-    .AddSupportedUICultures(supportedCultures);
-
-app.UseRequestLocalization(localizationOptions);
+app.UseRequestLocalization(
+    app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value
+);
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

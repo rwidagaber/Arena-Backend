@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities.Bookings;
+using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
 using ArenaDomain.Entities.Health;
 using ArenaDomain.Entities.Notifications;
@@ -10,6 +10,7 @@ using ArenaDomain.Enums;
 using ArenaDomain.Shared;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace ArenaDomain.Entities
@@ -26,6 +27,9 @@ namespace ArenaDomain.Entities
 
         public decimal? Height { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? MuscleMass { get; set; }
+
         public decimal? BMI { get; set; }
 
         public Gender Gender { get; set; }
@@ -37,6 +41,9 @@ namespace ArenaDomain.Entities
 
         public string? Goal { get; set; }
         // "WeightLoss" | "MuscleGain" | "Endurance" | "GeneralFitness"
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetWeight { get; set; }
 
         public string? ActivityLevel { get; set; }
         // "Sedentary" | "Light" | "Moderate" | "Active" | "VeryActive"
@@ -54,8 +61,22 @@ namespace ArenaDomain.Entities
         // "Vegetarian, Lactose Intolerant"
 
         public string? Equipment { get; set; }
-       
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetCalories { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetProtein { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetCarbs { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TargetFat { get; set; }
+
+        public string? CurrentPlanFramework { get; set; }
+
+        public string? HealthProfileJson { get; set; } // For Health Intelligence Layer
 
         // Navigation Properties
         public virtual ICollection<UserSubscription> Subscriptions { get; set; } = [];
@@ -75,6 +96,7 @@ namespace ArenaDomain.Entities
 
         public virtual ICollection<ChatConversation> ChatConversations { get; set; } = [];
 
+        public virtual ICollection<MemberHealthVector> HealthVectors { get; set; } = [];
 
 
 

@@ -1,6 +1,7 @@
-using ArenaApplication.IServices.User;
 using ArenaApplication.Dtos.UserSubscription;
-using ArenaDomain.Entities.Subscription;
+using ArenaApplication.Dtos.UserSupscriptionDto;
+using ArenaApplication.IServices;
+using ArenaApplication.IServices.User;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
 using ArenaInfrastructure.Repositories;
@@ -16,22 +17,26 @@ namespace ArenaApplication.Services.UserSubscription
         private readonly IMemberProfileRepository _memberProfileRepository;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
         private readonly IUserQueryService _userQueryService;
+        private readonly IBackgroundJobService _backgroundJobService;
 
         public UserSubscriptionService(
             IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> repository,
             IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> planRepository,
             IMemberProfileRepository memberProfileRepository,
             IStringLocalizer<ArenaLocalization> localizer,
-            IUserQueryService userQueryService)
+            IUserQueryService userQueryService,
+            IBackgroundJobService backgroundJobService)
         {
             _repository = repository;
             _planRepository = planRepository;
             _memberProfileRepository = memberProfileRepository;
             _localizer = localizer;
             _userQueryService = userQueryService;
+            _backgroundJobService = backgroundJobService;
         }
 
-        public async Task<IEnumerable<UserSubscriptionDto>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<UserSubscriptionDto>> GetAllAsync(
+            CancellationToken cancellationToken = default)
         {
             var subscriptions = await _repository.GetAllAsync(cancellationToken);
             var activeSubscriptions = subscriptions.Where(s => !s.IsDeleted).ToList();
@@ -48,7 +53,8 @@ namespace ArenaApplication.Services.UserSubscription
             return result;
         }
 
-        public async Task<PagedResult<UserSubscriptionDto>> GetAllPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<PagedResult<UserSubscriptionDto>> GetAllPagedAsync(
+            int page, int pageSize, CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
@@ -57,11 +63,7 @@ namespace ArenaApplication.Services.UserSubscription
             var activeSubscriptions = subscriptions.Where(s => !s.IsDeleted).ToList();
 
             int totalCount = activeSubscriptions.Count;
-
-            var paged = activeSubscriptions
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var paged = activeSubscriptions.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             var result = new List<UserSubscriptionDto>();
             foreach (var s in paged)
@@ -77,11 +79,12 @@ namespace ArenaApplication.Services.UserSubscription
                 Items = result,
                 TotalCount = totalCount,
                 Page = page,
-                PageSize = pageSize
+                PageSize = pageSize,
             };
         }
 
-        public async Task<UserSubscriptionDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<UserSubscriptionDto> GetByIdAsync(
+            Guid id, CancellationToken cancellationToken = default)
         {
             var subscriptions = await _repository.GetAllAsync(cancellationToken);
             var subscription = subscriptions.FirstOrDefault(s => s.Id == id && !s.IsDeleted);
@@ -96,9 +99,12 @@ namespace ArenaApplication.Services.UserSubscription
             return MapToDto(subscription, plan, user);
         }
 
-        public async Task<IEnumerable<UserSubscriptionDto>> GetByMemberIdAsync(Guid memberProfileId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<UserSubscriptionDto>> GetByMemberIdAsync(
+            Guid memberProfileId, CancellationToken cancellationToken = default)
         {
-            var subscriptions = await _repository.FindAsync(s => s.MemberProfileId == memberProfileId && !s.IsDeleted, cancellationToken);
+            var subscriptions = await _repository.FindAsync(
+                s => s.MemberProfileId == memberProfileId && !s.IsDeleted, cancellationToken);
+
             var member = await _memberProfileRepository.GetByIdAsync(memberProfileId, cancellationToken);
             var user = member != null ? await _userQueryService.GetByIdAsync(member.UserId) : null;
 
@@ -112,15 +118,30 @@ namespace ArenaApplication.Services.UserSubscription
             return result;
         }
 
-        public async Task<UserSubscriptionDto> CreateAsync(CreateUserSubscriptionDto createDto, CancellationToken cancellationToken = default)
+        private const int MaxActivePlans = 2;
+
+        public async Task<UserSubscriptionDto> CreateAsync(
+            CreateUserSubscriptionDto createDto, CancellationToken cancellationToken = default)
         {
             var plan = await _planRepository.GetByIdAsync(createDto.SubscriptionPlanId, cancellationToken);
             if (plan == null)
-                throw new KeyNotFoundException(string.Format(_localizer["EntityNotFoundById"], "Subscription plan", createDto.SubscriptionPlanId));
+                throw new KeyNotFoundException(
+                    string.Format(_localizer["EntityNotFoundById"], "Subscription plan", createDto.SubscriptionPlanId));
 
             var member = await _memberProfileRepository.GetByIdAsync(createDto.MemberProfileId, cancellationToken);
             if (member == null)
-                throw new KeyNotFoundException(string.Format(_localizer["EntityNotFoundById"], "Member profile", createDto.MemberProfileId));
+                throw new KeyNotFoundException(
+                    string.Format(_localizer["EntityNotFoundById"], "Member profile", createDto.MemberProfileId));
+
+            // Enforce maximum active plans limit
+            var activePlans = await _repository.FindAsync(
+                s => s.MemberProfileId == createDto.MemberProfileId
+                     && !s.IsDeleted
+                     && s.EndDate > DateTime.UtcNow,
+                cancellationToken);
+
+            if (activePlans.Count >= MaxActivePlans)
+                throw new InvalidOperationException(_localizer["MaxActivePlansReached"]);
 
             var subscription = new ArenaDomain.Entities.Subscription.UserSubscription
             {
@@ -132,15 +153,28 @@ namespace ArenaApplication.Services.UserSubscription
                 Status = ArenaDomain.Enums.SubscriptionStatus.Active,
                 RemainingSessions = plan.SessionLimit ?? 0,
                 ReminderSent = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
             };
 
             await _repository.AddAsync(subscription, cancellationToken);
+
+            // ✅ Payment confirmation — SignalR + Email
+            await _backgroundJobService.EnqueueSubscriptionPaymentJobAsync(
+                createDto.MemberProfileId,
+                plan.Price,
+                plan.NameEn);
+
+            // ✅ Expiry reminder — 3 days before end date
+            await _backgroundJobService.ScheduleSubscriptionExpiryReminderAsync(
+                createDto.MemberProfileId,
+                subscription.EndDate);
+
             var user = await _userQueryService.GetByIdAsync(member.UserId);
             return MapToDto(subscription, plan, user);
         }
 
-        public async Task<UserSubscriptionDto> UpdateStatusAsync(Guid id, UpdateUserSubscriptionStatusDto updateDto, CancellationToken cancellationToken = default)
+        public async Task<UserSubscriptionDto> UpdateStatusAsync(
+            Guid id, UpdateUserSubscriptionStatusDto updateDto, CancellationToken cancellationToken = default)
         {
             var subscriptions = await _repository.GetAllAsync(cancellationToken);
             var subscription = subscriptions.FirstOrDefault(s => s.Id == id && !s.IsDeleted);
@@ -152,6 +186,13 @@ namespace ArenaApplication.Services.UserSubscription
             subscription.UpdatedAt = DateTime.UtcNow;
 
             await _repository.UpdateAsync(subscription, cancellationToken);
+
+            // ✅ لو الـ admin عمل expire يدوي
+            if (updateDto.Status == ArenaDomain.Enums.SubscriptionStatus.Expired)
+            {
+                await _backgroundJobService.EnqueueSubscriptionExpiredAsync(
+                    subscription.MemberProfileId);
+            }
 
             var plan = await _planRepository.GetByIdAsync(subscription.PlanId, cancellationToken);
             var member = await _memberProfileRepository.GetByIdAsync(subscription.MemberProfileId, cancellationToken);
@@ -171,23 +212,23 @@ namespace ArenaApplication.Services.UserSubscription
             await _repository.SoftDeleteAsync(subscription, cancellationToken);
         }
 
-        private UserSubscriptionDto MapToDto(ArenaDomain.Entities.Subscription.UserSubscription subscription, ArenaDomain.Entities.Subscription.SubscriptionPlan? plan, ArenaDomain.Entities.User.ApplicationUser? user)
+        private UserSubscriptionDto MapToDto(
+            ArenaDomain.Entities.Subscription.UserSubscription subscription,
+            ArenaDomain.Entities.Subscription.SubscriptionPlan? plan,
+            ArenaDomain.Entities.User.ApplicationUser? user)
         {
-            string memberName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : _localizer["UnknownMember"];
-
             return new UserSubscriptionDto
             {
                 Id = subscription.Id,
-                MemberName = memberName,
-                PlanName = plan != null
-                    ? (CultureInfo.CurrentUICulture.Name.StartsWith("ar") ? plan.NameAr : plan.NameEn)
-                    : string.Empty,
-                PlanPrice = plan?.Price ?? 0,
+                PlanNameEn = plan?.NameEn ?? string.Empty,
+                PlanNameAr = plan?.NameAr ?? string.Empty,
                 StartDate = subscription.StartDate,
                 EndDate = subscription.EndDate,
                 Status = subscription.Status.ToString(),
                 RemainingSessions = subscription.RemainingSessions,
-                ReminderSent = subscription.ReminderSent
+                TotalSessions = plan?.SessionLimit ?? 0,
+                PaymentAmount = plan?.Price ?? 0,
+                ReminderSent = subscription.ReminderSent,
             };
         }
     }

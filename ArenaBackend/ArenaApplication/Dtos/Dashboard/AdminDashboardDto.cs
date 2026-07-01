@@ -10,6 +10,8 @@ namespace ArenaApplication.Dtos.Dashboard
         public decimal MonthlyRevenue { get; set; }
         public int ActivePlans { get; set; }
         public int TotalPlans { get; set; }
+        public int MembersWithoutActiveSubscriptions { get; set; }
+        public int TotalEquipments { get; set; }
 
         // ── Growth Percentages (vs previous period) ────────────────────────────
         public decimal MemberGrowthPercent { get; set; }

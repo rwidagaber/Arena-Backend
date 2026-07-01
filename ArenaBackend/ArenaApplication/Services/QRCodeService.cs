@@ -1,6 +1,7 @@
 ﻿using ArenaApplication.Dtos.AttendanceDtos;
 using ArenaApplication.Dtos.QrCodeDtos;
 using ArenaApplication.IServices;
+using ArenaApplication.Services;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Enums;
@@ -19,6 +20,7 @@ namespace ArenaInfrastructure.Services
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
+        private readonly INotificationService _notificationService;
 
         public QRCodeService(
             IGenericRepository<QRCode, Guid> qrRepo,
@@ -26,7 +28,8 @@ namespace ArenaInfrastructure.Services
             IGenericRepository<Attendance, Guid> attendanceRepo,
             IGenericRepository<UserSubscription, Guid> subscriptionRepo,
             IUnitOfWork unitOfWork,
-            IStringLocalizer<ArenaLocalization> localizer)
+            IStringLocalizer<ArenaLocalization> localizer,
+            INotificationService notificationService)
         {
             _qrRepo = qrRepo;
             _bookingRepo = bookingRepo;
@@ -34,6 +37,7 @@ namespace ArenaInfrastructure.Services
             _subscriptionRepo = subscriptionRepo;
             _unitOfWork = unitOfWork;
             _localizer = localizer;
+            _notificationService = notificationService;
         }
 
         public async Task<QrDto> GenerateAsync(Guid bookingId)
@@ -59,6 +63,7 @@ namespace ArenaInfrastructure.Services
                     BookingId = existingQr.BookingId
                 };
             }
+
             // 3. Generate unique code
             var code = $"ARENA-{bookingId.ToString().ToUpper().Substring(0, 8)}-{DateTime.UtcNow.Ticks}";
 
@@ -74,7 +79,13 @@ namespace ArenaInfrastructure.Services
             };
 
             await _qrRepo.AddAsync(qr);
+
+            // Save the core transaction first
             await _unitOfWork.SaveChangesAsync();
+
+            await _notificationService.NotifyQrCodeGeneratedAsync(
+                booking.MemberProfileId,
+                booking.BookingDate);
 
             return new QrDto
             {
@@ -87,7 +98,7 @@ namespace ArenaInfrastructure.Services
             };
         }
 
-        public async Task<QrScanResultDto> ScanAsync(string code, Guid scannedById)
+        public async Task<QrScanResultDto> ScanAsync(string code, Guid? scannedById)
         {
             // 1. Find QR by code
             var qrList = await _qrRepo.FindAsync(q => q.Code == code);
@@ -143,20 +154,46 @@ namespace ArenaInfrastructure.Services
             booking.Status = BookingStatus.Completed;
             await _bookingRepo.UpdateAsync(booking);
 
-            // 8. Deduct session from subscription
+            // 8. Deduct session from subscription (no notifications inside this block)
             var subscriptions = await _subscriptionRepo.FindAsync(
                 s => s.MemberProfileId == booking.MemberProfileId
                   && s.Status == SubscriptionStatus.Active
                   && s.EndDate > DateTime.UtcNow);
 
             var subscription = subscriptions.FirstOrDefault();
+
+            bool shouldNotifyExpiringSoon = false;
+            bool shouldNotifyExpired = false;
+            int remainingSessionsAfterDeduction = 0;
+
             if (subscription != null && subscription.RemainingSessions > 0)
             {
                 subscription.RemainingSessions--;
+                remainingSessionsAfterDeduction = subscription.RemainingSessions;
+
+                if (subscription.RemainingSessions == 2)
+                {
+                    shouldNotifyExpiringSoon = true;
+                }
+                else if (subscription.RemainingSessions == 0)
+                {
+                    subscription.Status = SubscriptionStatus.Expired;
+                    shouldNotifyExpired = true;
+                }
+
                 await _subscriptionRepo.UpdateAsync(subscription);
             }
 
+            // Single save for the whole core transaction
             await _unitOfWork.SaveChangesAsync();
+
+            if (shouldNotifyExpiringSoon)
+                await _notificationService.NotifySessionsExpiringSoonAsync(
+                    booking.MemberProfileId, remainingSessionsAfterDeduction);
+
+            if (shouldNotifyExpired)
+                await _notificationService.NotifySubscriptionExpiredAsync(
+                    booking.MemberProfileId);
 
             return new QrScanResultDto
             {

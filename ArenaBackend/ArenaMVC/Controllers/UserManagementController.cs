@@ -2,6 +2,7 @@ using ArenaApplication.Dtos.UserManagement;
 using ArenaApplication.IServices;
 using ArenaDomain.Shared;
 using ArenaMVC.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using System;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace ArenaMVC.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class UserManagementController : Controller
     {
         private readonly IUserManagementService _userService;
@@ -28,16 +30,22 @@ namespace ArenaMVC.Controllers
 
         // GET: UserManagement/SearchPartial  – AJAX live-search endpoint
         [HttpGet]
-        public async Task<IActionResult> SearchPartial(string? search, int page = 1, int pageSize = DefaultPageSize)
+        public async Task<IActionResult> SearchPartial(
+            string? search, 
+            bool? isActive, 
+            ArenaDomain.Enums.MembershipStatus? membershipStatus, 
+            string? subscriptionStatus, 
+            int page = 1, 
+            int pageSize = DefaultPageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
 
             try
             {
-                var result = await _userService.GetUsers(search, page, pageSize);
+                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize);
                 if (!result.IsSuccess)
-                    return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search });
+                    return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
 
                 var pagedResult = result.Value;
 
@@ -59,31 +67,40 @@ namespace ArenaMVC.Controllers
                     TotalCount = pagedResult.TotalCount,
                     Page = page,
                     PageSize = pageSize,
-                    Search = search
+                    Search = search,
+                    IsActive = isActive,
+                    MembershipStatusFilter = membershipStatus,
+                    SubscriptionStatusFilter = subscriptionStatus
                 };
 
                 return PartialView("_UserResults", viewModel);
             }
             catch (Exception)
             {
-                return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search });
+                return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
             }
         }
 
         // GET: UserManagement
         [HttpGet]
-        public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = DefaultPageSize)
+        public async Task<IActionResult> Index(
+            string? search, 
+            bool? isActive, 
+            ArenaDomain.Enums.MembershipStatus? membershipStatus, 
+            string? subscriptionStatus, 
+            int page = 1, 
+            int pageSize = DefaultPageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
 
             try
             {
-                var result = await _userService.GetUsers(search, page, pageSize);
+                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUsers"];
-                    return View(new UserListPagedViewModel { Page = page, PageSize = pageSize });
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUsers"].Value;
+                    return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
                 }
 
                 var pagedResult = result.Value;
@@ -106,7 +123,10 @@ namespace ArenaMVC.Controllers
                     TotalCount = pagedResult.TotalCount,
                     Page = page,
                     PageSize = pageSize,
-                    Search = search
+                    Search = search,
+                    IsActive = isActive,
+                    MembershipStatusFilter = membershipStatus,
+                    SubscriptionStatusFilter = subscriptionStatus
                 };
 
                 ViewBag.SearchString = search;
@@ -114,8 +134,8 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredRetrievingUsers"];
-                return View(new UserListPagedViewModel { Page = page, PageSize = pageSize });
+                TempData["Error"] = _localizer["AnErrorOccurredRetrievingUsers"].Value;
+                return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
             }
         }
 
@@ -128,7 +148,7 @@ namespace ArenaMVC.Controllers
                 var result = await _userService.GetUserDetails(id);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUserDetails"];
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUserDetails"].Value;
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -166,7 +186,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredRetrievingUserDetails"];
+                TempData["Error"] = _localizer["AnErrorOccurredRetrievingUserDetails"].Value;
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -180,7 +200,7 @@ namespace ArenaMVC.Controllers
                 var result = await _userService.GetUserForManage(id);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredLoadingManageUser"];
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredLoadingManageUser"].Value;
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -197,7 +217,7 @@ namespace ArenaMVC.Controllers
             }
             catch (Exception)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredLoadingManageUser"];
+                TempData["Error"] = _localizer["AnErrorOccurredLoadingManageUser"].Value;
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -211,23 +231,23 @@ namespace ArenaMVC.Controllers
             {
                 if (id != model.Id)
                 {
-                    TempData["Error"] = _localizer["InvalidUserId"];
+                    TempData["Error"] = _localizer["InvalidUserId"].Value;
                     return RedirectToAction(nameof(Index));
                 }
 
                 var result = await _userService.UpdateUserStatus(id, model.IsActive);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredSavingUserStatus"];
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredSavingUserStatus"].Value;
                     return View(model);
                 }
 
-                TempData["Success"] = _localizer["UserStatusUpdatedSuccessfully"];
+                TempData["Success"] = _localizer["UserStatusUpdatedSuccessfully"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredSavingUserStatus"];
+                TempData["Error"] = _localizer["AnErrorOccurredSavingUserStatus"].Value;
                 return View(model);
             }
         }
@@ -242,16 +262,16 @@ namespace ArenaMVC.Controllers
                 var result = await _userService.SoftDeleteUser(id);
                 if (!result.IsSuccess)
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredDeletingUser"];
+                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredDeletingUser"].Value;
                     return RedirectToAction(nameof(Index));
                 }
 
-                TempData["Success"] = _localizer["UserDeletedSuccessfully"];
+                TempData["Success"] = _localizer["UserDeletedSuccessfully"].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception)
             {
-                TempData["Error"] = _localizer["AnErrorOccurredDeletingUser"];
+                TempData["Error"] = _localizer["AnErrorOccurredDeletingUser"].Value;
                 return RedirectToAction(nameof(Index));
             }
         }

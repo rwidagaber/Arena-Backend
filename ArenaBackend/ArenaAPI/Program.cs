@@ -6,12 +6,14 @@ using ArenaApi.Configurations.ValidatorConfig;
 using ArenaApi.Hubs;
 using ArenaApplication;
 using ArenaApplication.IServices;
+using ArenaApplication.IServices.IProgressServices;
 using ArenaApplication.IServices.Payment;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
-using ArenaApplication.Services.AI;
+
 using ArenaApplication.Services.Payment;
-using ArenaApplication.settings;
+
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
@@ -26,6 +28,7 @@ using ArenaInfrastructure.Services;
 using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Scalar.AspNetCore;
 using System.Globalization;
@@ -81,11 +84,13 @@ namespace ArenaAPI
             builder.Services.AddScoped<IMemberProfileRepository, MemberProfileRepository>();
             builder.Services.AddScoped<INotificationHub, NotificationHubService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 
             builder.Services.Configure<EmailSettings>(
                 builder.Configuration.GetSection("EmailSettings"));
 
             // ── Database ──────────────────────────────────────────────────
+            // Registers: AppDbContext (SQL Server) + NpgsqlDataSource + NeonVectorStore (Neon)
             builder.Services.ConfigureDbContext(builder.Configuration);
             builder.Services.AddRepositories();
             builder.Services.AddApplicationServices();
@@ -94,7 +99,10 @@ namespace ArenaAPI
             builder.Services.AddHangfire(config =>
                 config.UseSqlServerStorage(
                     builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddHangfireServer();
+            builder.Services.AddHangfireServer(options =>
+            {
+                options.SchedulePollingInterval = TimeSpan.FromSeconds(1);
+            });
             builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
             builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
@@ -140,18 +148,29 @@ namespace ArenaAPI
                 GenericRepository<Booking, Guid>>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
+            // ── Progress ───────────────────────────────────────────────────
+            builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
+            builder.Services.AddScoped<IProgressService, ProgressService>();
+
             // ── Payment ───────────────────────────────────────────────────
             builder.Services.AddScoped<IUserQueryService, ArenaInfrastructure.Services.UserQueryService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddHttpClient<IPaymentGatewayService, ArenaInfrastructure.Services.PaymobService>();
 
             // ── AI / Chatbot Features ─────────────────────────────────────
-            builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAISettings"));
-            builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWorkoutAIService, WorkoutAIService>();
             builder.Services.AddScoped<INutritionAIService, NutritionAIService>();
+            builder.Services.AddScoped<IHealthIntelligenceService, HealthIntelligenceService>();
             builder.Services.AddScoped<IBookingAIService, BookingAIService>();
+            builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
+            builder.Services.AddScoped<IRAGService, SimpleRAGService>();
+            builder.Services.AddScoped<IMemberHealthRAGService, MemberHealthRAGService>();
+            builder.Services.Configure<GeminiSettings>(
+                builder.Configuration.GetSection("GeminiSettings"));
+
+            builder.Services.AddHttpClient<IGeminiCompletionService, GeminiService>();
+            builder.Services.AddHttpClient<IEmbeddingService, GeminiEmbeddingService>();
 
             // ── Authorization Policies ────────────────────────────────────
             builder.Services.AddAuthorization(options =>
@@ -168,16 +187,23 @@ namespace ArenaAPI
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(
+    "http://localhost:4200",
+    "https://localhost:4200",
+    "https://arena-frontend-r3nh.vercel.app",
+    "https://arena-frontend-r3nh-git-dev-rwidagabers-projects.vercel.app",
+    "https://arena-frontend-r3nh-bmvg1y355-rwidagabers-projects.vercel.app"
+)
                           .AllowAnyMethod()
-                          .AllowAnyHeader());
+                          .AllowAnyHeader()
+                          .AllowCredentials());
             });
 
             // ═════════════════════════════════════════════════════════════
             var app = builder.Build();
             // ═════════════════════════════════════════════════════════════
 
-            // ── Seed Database ─────────────────────────────────────────────
+            // ── Seed Database + Init Vector Schema ────────────────────────
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -185,9 +211,35 @@ namespace ArenaAPI
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
                 if (app.Environment.IsDevelopment())
-                    context.Database.EnsureCreated();
+                    await context.Database.MigrateAsync();
 
                 await DataSeeder.SeedAsync(context, userManager, roleManager);
+
+                // ── Backfill missing Exercise localizations (MyMemory, no API key needed) ──
+                try
+                {
+                    await ExerciseLocalizationSeeder.SeedAsync(context);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Startup] ExerciseLocalizationSeeder failed (non-fatal): {ex.Message}");
+                }
+
+                // ── Hangfire Recurring No-Show Penalty Job ────────────────────
+                var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+                recurringJobManager.AddOrUpdate<INoShowPenaltyService>(
+                    "NoShowPenaltyJob",
+                    service => service.ProcessNoShowPenaltiesAsync(CancellationToken.None),
+                    Cron.Minutely());
+
+                // ── Init pgvector schema on Neon (idempotent) ────────────
+                // Creates the MemberHealthVectors table + HNSW index if they don't exist.
+                var vectorStore = scope.ServiceProvider.GetService<NeonVectorStore>();
+                if (vectorStore != null)
+                {
+                    try { await vectorStore.EnsureSchemaAsync(); }
+                    catch (Exception ex) { Console.WriteLine($"[VectorStore] Schema init failed: {ex.Message}"); }
+                }
             }
 
             // ── Middleware Pipeline ───────────────────────────────────────
@@ -215,7 +267,8 @@ namespace ArenaAPI
             app.UseAuthorization();
 
             app.MapControllers();
-            app.MapHub<NotificationHub>("/hubs/notifications");
+            app.MapHub<NotificationHub>("/hubs/notifications")
+                .RequireAuthorization();
 
             app.Run();
         }

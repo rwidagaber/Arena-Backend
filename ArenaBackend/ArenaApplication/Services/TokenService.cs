@@ -71,6 +71,10 @@ namespace ArenaApplication.Services
 
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
+            // ✅ Guard clause
+            if (string.IsNullOrWhiteSpace(token))
+                throw new ArgumentException("Token cannot be null or empty.", nameof(token));
+
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_jwtSettings.Key));
 

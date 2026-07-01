@@ -33,6 +33,7 @@ namespace ArenaApplication.Services
         private readonly IBackgroundJobService _backgroundJobService;
         private readonly IGoogleTokenValidator _googleTokenValidator;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
+        private readonly INotificationService _notificationService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -42,7 +43,8 @@ namespace ArenaApplication.Services
             IOtpService otpService,
             IOptions<JWTSettings> jwtSettings,
             IStringLocalizer<ArenaLocalization> localizer,
-             IGoogleTokenValidator googleTokenValidator)
+             IGoogleTokenValidator googleTokenValidator,
+             INotificationService notificationService   )
         {
             _userManager = userManager;
             _authRepository = authRepository;
@@ -52,7 +54,7 @@ namespace ArenaApplication.Services
             _otpService = otpService;
             _localizer = localizer;
             _googleTokenValidator = googleTokenValidator;
-
+            _notificationService = notificationService;
         }
 
         // =========================
@@ -113,28 +115,37 @@ namespace ArenaApplication.Services
 
         // ✅ الميثود الجديدة — بتأكد الإيميل وترجع tokens مباشرة
         public async Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto)
-        {
-            var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
-            if (user is null)
-                return Result<AuthResponseDto>.Failure("User not found");
+{
+    var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
+    if (user is null)
+        return Result<AuthResponseDto>.Failure("User not found");
 
-            if (user.EmailConfirmed)
-                return Result<AuthResponseDto>.Failure("Email is already confirmed");
+    if (user.EmailConfirmed)
+        return Result<AuthResponseDto>.Failure("Email is already confirmed");
 
-            var isValid = await _otpService.ValidateOtpAsync(dto.UserId, dto.Otp);
-            if (!isValid)
-                return Result<AuthResponseDto>.Failure("Invalid or expired OTP");
+    var isValid = await _otpService.ValidateOtpAsync(dto.UserId, dto.Otp);
+    if (!isValid)
+        return Result<AuthResponseDto>.Failure("Invalid or expired OTP");
 
-            // ✅ نكمل الـ setup بعد التأكيد
-            user.IsActive = true;
-            user.EmailConfirmed = true;
-            await _userManager.UpdateAsync(user);
+    // ✅ نكمل الـ setup بعد التأكيد
+    user.IsActive = true;
+    user.EmailConfirmed = true;
+    await _userManager.UpdateAsync(user);
 
-            await _userManager.AddToRoleAsync(user, "GymMember");
+    await _userManager.AddToRoleAsync(user, "GymMember");
 
-            var response = await GenerateAuthResponseAsync(user);
-            return Result<AuthResponseDto>.Success(response);
-        }
+    // 🆕 إشعار ترحيب بالعضو الجديد
+    var userWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
+    if (userWithProfile?.MemberProfile != null)
+    {
+        await _notificationService.NotifyWelcomeAsync(
+            userWithProfile.MemberProfile.Id,
+            user.FirstName);
+    }
+
+    var response = await GenerateAuthResponseAsync(user);
+    return Result<AuthResponseDto>.Success(response);
+}
 
 
 
@@ -150,8 +161,7 @@ namespace ArenaApplication.Services
 
             // Google account بدون باسورد
             if (user.IsGoogleAccount && !await _userManager.HasPasswordAsync(user))
-                return Result<AuthResponseDto>.Failure(
-                    "This account uses Google Sign-In. Use Forgot Password to set a password, or login with Google.");
+                return Result<AuthResponseDto>.Failure("GOOGLE_ACCOUNT_ONLY");
 
             if (!await _userManager.CheckPasswordAsync(user, dto.Password))
                 return Result<AuthResponseDto>.Failure(_localizer["InvalidEmailOrPassword"]);
@@ -163,13 +173,32 @@ namespace ArenaApplication.Services
                 user = await _authRepository.GetByIdWithProfileAsync(user.Id) ?? user;
 
             var response = await GenerateAuthResponseAsync(user);
+
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
+            response.IsSubscribed = activeSubscription is not null;
+
             return Result<AuthResponseDto>.Success(response);
         }
 
-
         public async Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto dto)
         {
-            var principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
+            // ✅ Guard
+            if (string.IsNullOrWhiteSpace(dto.AccessToken) || string.IsNullOrWhiteSpace(dto.RefreshToken))
+                return Result<AuthResponseDto>.Failure(_localizer["InvalidToken"]);
+
+            ClaimsPrincipal principal;
+            try
+            {
+                principal = _tokenService.GetPrincipalFromExpiredToken(dto.AccessToken);
+            }
+            catch (Exception)
+            {
+                return Result<AuthResponseDto>.Failure(_localizer["InvalidToken"]);
+            }
+
             var userIdStr = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (userIdStr is null)
@@ -186,11 +215,13 @@ namespace ArenaApplication.Services
             var user = await _authRepository.GetByIdWithProfileAsync(userId);
             if (user is null)
                 return Result<AuthResponseDto>.Failure(_localizer["UserNotFound"]);
+
             var response = await GenerateAuthResponseAsync(user);
 
-            // Check if user has active subscription
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
             response.IsSubscribed = activeSubscription is not null;
 
             return Result<AuthResponseDto>.Success(response);
@@ -209,11 +240,14 @@ namespace ArenaApplication.Services
                 return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
 
             var profile = new GetProfileDto
             {
                 Id = user.Id,
+                MemberProfileId = user.MemberProfile?.Id ?? Guid.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email!,
@@ -235,9 +269,12 @@ namespace ArenaApplication.Services
                     PlanNameAr = activeSubscription.Plan.NameAr,
                     StartDate = activeSubscription.StartDate,
                     EndDate = activeSubscription.EndDate,
-                    Status = activeSubscription.Status,
+                    Status = activeSubscription.Status.ToString(),
                     RemainingSessions = activeSubscription.RemainingSessions,
-                    ReminderSent = activeSubscription.ReminderSent
+                    TotalSessions = activeSubscription.Plan?.SessionLimit ?? 0,
+                    PaymentAmount = activeSubscription.Plan?.Price ?? 0,
+                    ReminderSent = activeSubscription.ReminderSent,
+                    HasAI = activeSubscription.Plan?.HasAI ?? false
                 }
             };
 
@@ -379,6 +416,13 @@ namespace ArenaApplication.Services
                 var memberProfile = new MemberProfile { UserId = user.Id };
                 await _authRepository.CreateMemberProfileAsync(memberProfile);
                 await _userManager.AddToRoleAsync(user, "GymMember");
+                var newUserWithProfile = await _authRepository.GetByIdWithProfileAsync(user.Id);
+                if (newUserWithProfile?.MemberProfile != null)
+                {
+                    await _notificationService.NotifyWelcomeAsync(
+                        newUserWithProfile.MemberProfile.Id,
+                        firstName);
+                }
 
                 var newUserResponse = await GenerateAuthResponseAsync(user, isGoogleUser: true);
                 return Result<AuthResponseDto>.Success(newUserResponse);
@@ -394,6 +438,13 @@ namespace ArenaApplication.Services
             }
 
             var response = await GenerateAuthResponseAsync(user, isGoogleUser: false);
+
+            var activeSubscription = user.MemberProfile?.Subscriptions
+                .Where(s => s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.Plan?.HasAI == true)
+                .FirstOrDefault();
+            response.IsSubscribed = activeSubscription is not null;
+
             return Result<AuthResponseDto>.Success(response);
         }
 

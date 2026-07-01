@@ -1,6 +1,7 @@
 using ArenaApplication.Dtos.Payment;
 using ArenaApplication.IServices.Payment;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -10,15 +11,17 @@ namespace ArenaInfrastructure.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
+        private readonly ILogger<PaymobService> _logger;
 
         private readonly string _apiKey;
         private readonly int _integrationId;
         private readonly int _iframeId;
 
-        public PaymobService(HttpClient httpClient, IConfiguration config)
+        public PaymobService(HttpClient httpClient, IConfiguration config, ILogger<PaymobService> logger)
         {
             _httpClient = httpClient;
             _config = config;
+            _logger = logger;
 
             _apiKey = config["PaymobSettings:ApiKey"]!;
             _integrationId = int.Parse(config["PaymobSettings:IntegrationId"]!);
@@ -28,14 +31,36 @@ namespace ArenaInfrastructure.Services
         // ── Step 1: Get Auth Token ───────────────────────────────
         private async Task<string> GetAuthTokenAsync()
         {
+            _logger.LogInformation("Paymob Step 1: Requesting auth token from /api/auth/tokens");
+
             var response = await _httpClient.PostAsJsonAsync(
                 "https://accept.paymob.com/api/auth/tokens",
                 new { api_key = _apiKey });
 
             var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    "Paymob auth token request failed. StatusCode={StatusCode}, Response={Response}",
+                    (int)response.StatusCode, json);
+                throw new InvalidOperationException(
+                    $"Paymob authentication failed (HTTP {(int)response.StatusCode}). Response: {json}");
+            }
+
             var doc = JsonDocument.Parse(json);
 
-            return doc.RootElement.GetProperty("token").GetString()!;
+            if (!doc.RootElement.TryGetProperty("token", out var tokenElement))
+            {
+                _logger.LogError(
+                    "Paymob auth response does not contain 'token' property. Response={Response}", json);
+                throw new InvalidOperationException(
+                    $"Paymob auth response missing 'token'. Full response: {json}");
+            }
+
+            var token = tokenElement.GetString();
+            _logger.LogInformation("Paymob Step 1 complete: Auth token obtained successfully.");
+            return token!;
         }
 
         // ── Step 2: Create Order ─────────────────────────────────
@@ -43,6 +68,9 @@ namespace ArenaInfrastructure.Services
         {
             // PayMob بيشتغل بـ cents — نضرب في 100
             int amountCents = (int)(amount * 100);
+
+            _logger.LogInformation(
+                "Paymob Step 2: Creating order. AmountCents={AmountCents}", amountCents);
 
             var response = await _httpClient.PostAsJsonAsync(
                 "https://accept.paymob.com/api/ecommerce/orders",
@@ -56,9 +84,29 @@ namespace ArenaInfrastructure.Services
                 });
 
             var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    "Paymob create order failed. StatusCode={StatusCode}, Response={Response}",
+                    (int)response.StatusCode, json);
+                throw new InvalidOperationException(
+                    $"Paymob order creation failed (HTTP {(int)response.StatusCode}). Response: {json}");
+            }
+
             var doc = JsonDocument.Parse(json);
 
-            return doc.RootElement.GetProperty("id").GetInt32();
+            if (!doc.RootElement.TryGetProperty("id", out var idElement))
+            {
+                _logger.LogError(
+                    "Paymob order response does not contain 'id' property. Response={Response}", json);
+                throw new InvalidOperationException(
+                    $"Paymob order response missing 'id'. Full response: {json}");
+            }
+
+            var orderId = idElement.GetInt32();
+            _logger.LogInformation("Paymob Step 2 complete: Order created. OrderId={OrderId}", orderId);
+            return orderId;
         }
 
         // ── Step 3: Get Payment Key ──────────────────────────────
@@ -74,6 +122,10 @@ namespace ArenaInfrastructure.Services
             var nameParts = userName.Split(' ');
             var firstName = nameParts.FirstOrDefault() ?? "User";
             var lastName = nameParts.LastOrDefault() ?? "User";
+
+            _logger.LogInformation(
+                "Paymob Step 3: Requesting payment key. OrderId={OrderId}, AmountCents={AmountCents}, IntegrationId={IntegrationId}",
+                orderId, amountCents, _integrationId);
 
             var response = await _httpClient.PostAsJsonAsync(
                 "https://accept.paymob.com/api/acceptance/payment_keys",
@@ -100,13 +152,35 @@ namespace ArenaInfrastructure.Services
                         state = "N/A"
                     },
                     currency = "EGP",
-                    integration_id = _integrationId
+                    integration_id = _integrationId,
+                    redirection_url = GetFrontendHomeUrl(
+                        _config["EmailSettings:FrontendUrl"] ?? "http://localhost:4200")
                 });
 
             var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    "Paymob payment key request failed. StatusCode={StatusCode}, Response={Response}",
+                    (int)response.StatusCode, json);
+                throw new InvalidOperationException(
+                    $"Paymob payment key request failed (HTTP {(int)response.StatusCode}). Response: {json}");
+            }
+
             var doc = JsonDocument.Parse(json);
 
-            return doc.RootElement.GetProperty("token").GetString()!;
+            if (!doc.RootElement.TryGetProperty("token", out var tokenElement))
+            {
+                _logger.LogError(
+                    "Paymob payment key response does not contain 'token' property. Response={Response}", json);
+                throw new InvalidOperationException(
+                    $"Paymob payment key response missing 'token'. Full response: {json}");
+            }
+
+            var paymentKey = tokenElement.GetString();
+            _logger.LogInformation("Paymob Step 3 complete: Payment key obtained successfully.");
+            return paymentKey!;
         }
 
         // ── Main Method: كل الـ Steps في واحدة ──────────────────
@@ -184,6 +258,18 @@ namespace ArenaInfrastructure.Services
             );
 
             return VerifyHmac(data, receivedHmac);
+        }
+
+        private static string GetFrontendHomeUrl(string frontendUrl)
+        {
+            var trimmedUrl = frontendUrl.TrimEnd('/');
+
+            if (System.Uri.TryCreate(trimmedUrl, System.UriKind.Absolute, out var uri))
+            {
+                return uri.GetLeftPart(System.UriPartial.Authority).TrimEnd('/');
+            }
+
+            return trimmedUrl;
         }
     }
 }

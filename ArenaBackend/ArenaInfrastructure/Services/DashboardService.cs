@@ -5,6 +5,7 @@ using ArenaDomain.Enums;
 using ArenaInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.Globalization;
 
 namespace ArenaInfrastructure.Services
 {
@@ -26,6 +27,13 @@ namespace ArenaInfrastructure.Services
 
         public async Task<AdminDashboardDto> GetDashboardDataAsync(CancellationToken cancellationToken = default)
         {
+            // ── Cache gate: expensive path runs at most once every 5 minutes ──
+            var bucket   = (DateTime.UtcNow.Minute / 5) * 5;
+            var cacheKey = $"admin-dashboard|{DateTime.UtcNow:yyyy-MM-dd-HH}-{bucket:D2}";
+
+            if (_memoryCache.TryGetValue(cacheKey, out AdminDashboardDto? cached) && cached is not null)
+                return cached;
+
             var now = DateTime.UtcNow;
             var today = now.Date;
             var currentMonthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -42,6 +50,18 @@ namespace ArenaInfrastructure.Services
             // ── KPI: Total Members ─────────────────────────────────────────────
             dto.TotalMembers = await _context.Users
                 .CountAsync(u => !u.IsDeleted, cancellationToken);
+
+            var membersWithActiveSubs = await _context.UserSubscriptions
+                .Where(s => s.Status == SubscriptionStatus.Active 
+                            && !s.IsDeleted 
+                            && s.MemberProfile != null 
+                            && s.MemberProfile.User != null 
+                            && !s.MemberProfile.User.IsDeleted)
+                .Select(s => s.MemberProfileId)
+                .Distinct()
+                .CountAsync(cancellationToken);
+
+            dto.MembersWithoutActiveSubscriptions = dto.TotalMembers - membersWithActiveSubs;
 
             // ── KPI: Active Subscriptions ──────────────────────────────────────
             dto.ActiveSubscriptions = await _context.UserSubscriptions
@@ -76,6 +96,10 @@ namespace ArenaInfrastructure.Services
                 .ToListAsync(cancellationToken);
             dto.TotalPlans = plans.Count;
             dto.ActivePlans = plans.Count(p => p.IsActive);
+
+            // ── KPI: Total Equipments ───────────────────────────────────────────
+            dto.TotalEquipments = await _context.Equipments
+                .CountAsync(e => !e.IsDeleted, cancellationToken);
 
             // ── Growth: Members (current month vs previous month) ──────────────
             var currentMonthMembers = await _context.Users
@@ -113,30 +137,31 @@ namespace ArenaInfrastructure.Services
                 ? Math.Round((dto.MonthlyRevenue - previousMonthRevenue) / previousMonthRevenue * 100, 1)
                 : (dto.MonthlyRevenue > 0 ? 100m : 0m);
 
-            // ── Weekly Attendance (Mon–Sun) ────────────────────────────────────
+            // ── Last 7 Days Attendance ────────────────────────────────────
+            var last7DaysStart = today.AddDays(-6);
+            var last7DaysEnd = today.AddDays(1); // To include today up to 23:59:59
+
             var weeklyCheckIns = await _context.Attendances
                 .Where(a => a.CheckInTime != null
-                            && a.CheckInTime >= weekStart
-                            && a.CheckInTime < weekEnd)
+                            && a.CheckInTime >= last7DaysStart
+                            && a.CheckInTime < last7DaysEnd)
                 .Select(a => a.CheckInTime!.Value)
                 .ToListAsync(cancellationToken);
 
             var weeklyData = weeklyCheckIns
-                .GroupBy(t => t.DayOfWeek)
-                .Select(g => new { DayOfWeek = g.Key, Count = g.Count() })
+                .GroupBy(t => t.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
                 .ToList();
 
-            var dayNames = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-            var dayOfWeekOrder = new[]
-            {
-                DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
-            };
+            var last7DaysOrder = Enumerable.Range(0, 7)
+                .Select(i => last7DaysStart.AddDays(i).Date)
+                .ToList();
 
-            dto.WeeklyAttendance = dayOfWeekOrder.Select((dow, i) => new DailyAttendanceDto
+            dto.WeeklyAttendance = last7DaysOrder.Select(date => new DailyAttendanceDto
             {
-                DayName = dayNames[i],
-                Count = weeklyData.FirstOrDefault(w => w.DayOfWeek == dow)?.Count ?? 0
+                DayName = date.ToString("ddd", CultureInfo.InvariantCulture),
+                Date = date,
+                Count = weeklyData.FirstOrDefault(w => w.Date == date)?.Count ?? 0
             }).ToList();
 
             // ── Recent Check-ins (last 5) ──────────────────────────────────────
@@ -173,6 +198,8 @@ namespace ArenaInfrastructure.Services
                 };
             }).ToList();
 
+            // ── Store in cache and return ──────────────────────────────────
+            _memoryCache.Set(cacheKey, dto, TimeSpan.FromMinutes(5));
             return dto;
         }
 

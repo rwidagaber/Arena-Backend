@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Chat;
 using ArenaDomain.Entities.Health;
@@ -9,6 +9,7 @@ using ArenaDomain.Entities.Payments;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Entities.Workout;
+using ArenaDomain.Entities.Gym;
 using ArenaDomain.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -31,9 +32,12 @@ namespace ArenaInfrastructure.Data
 
         // ── Health ────────────────────────────────────────────────────────────────
         public DbSet<ProgressLog> ProgressLogs { get; set; }
+        //public DbSet<MemberHealthVector> MemberHealthVectors { get; set; }
 
         // ── Notifications ─────────────────────────────────────────────────────────
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<PushSubscription> PushSubscriptions { get; set; } 
+
 
         // ── Nutrition ─────────────────────────────────────────────────────────────
         public DbSet<NutritionPlan> NutritionPlans { get; set; }
@@ -57,7 +61,9 @@ namespace ArenaInfrastructure.Data
         // ── Localization ──────────────────────────────────────────────────────────
         public DbSet<Translation> Translations { get; set; }
 
-
+        // ── Gym ───────────────────────────────────────────────────────────────────
+        public DbSet<WorkingHours> WorkingHours { get; set; }
+        public DbSet<GymSetting> GymSettings { get; set; }
         // ── Workout ───────────────────────────────────────────────────────────────
 
 
@@ -66,6 +72,12 @@ namespace ArenaInfrastructure.Data
         public DbSet<WorkoutExercise> WorkoutExercises { get; set; }
         public DbSet<WorkoutLog> WorkoutLogs { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
+
+        public DbSet<Equipment> Equipments { get; set; }
+        public DbSet<EquipmentCategory> EquipmentCategories { get; set; }
+        public DbSet<MuscleGroup> MuscleGroups { get; set; }
+        public DbSet<ExerciseCatalogItem> ExerciseCatalogItems { get; set; }
+        public DbSet<ExerciseEquipmentRequirement> ExerciseEquipmentRequirements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

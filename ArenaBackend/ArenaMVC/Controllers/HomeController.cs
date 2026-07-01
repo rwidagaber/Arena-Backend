@@ -5,9 +5,11 @@ using ArenaApplication.IServices;
 using ArenaDomain.Shared;
 using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ArenaMVC.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class HomeController : Controller
 {
     private readonly IDashboardService _dashboardService;
@@ -20,6 +22,7 @@ public class HomeController : Controller
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public IActionResult SetCulture(string culture, string returnUrl)
     {
         var response = CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture));

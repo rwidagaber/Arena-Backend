@@ -1,4 +1,4 @@
-﻿namespace ArenaApplication.AI
+namespace ArenaApplication.AI
 {
     public static class PromptLoader
     {
@@ -11,14 +11,17 @@
         {
             
             var baseDir = Directory.GetCurrentDirectory();
+            var appBaseDir = AppDomain.CurrentDomain.BaseDirectory;
 
            
             var possiblePaths = new[]
             {
-        Path.Combine(baseDir, "AI", "Prompts", fileName),
-        Path.Combine(baseDir, "..", "ArenaApplication", "AI", "Prompts", fileName),
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Prompts", fileName)
-    };
+                Path.Combine(appBaseDir, "AI", "Prompts", fileName),
+                Path.Combine(baseDir, "AI", "Prompts", fileName),
+                Path.Combine(baseDir, "..", "ArenaApplication", "AI", "Prompts", fileName),
+                Path.Combine(appBaseDir, "Prompts", fileName),
+                Path.Combine(appBaseDir, "wwwroot", "AI", "Prompts", fileName),
+            };
 
             foreach (var path in possiblePaths)
             {
@@ -28,7 +31,7 @@
             }
 
             throw new FileNotFoundException(
-                $"Prompt file not found. Searched in:\n{string.Join("\n", possiblePaths)}");
+                $"Prompt file not found. Searched in:\n{string.Join("\n", possiblePaths.Select(Path.GetFullPath))}");
         }
 
         public static string GetWorkoutPrompt(
@@ -39,6 +42,7 @@
             string healthConditions,
             string experience,
             string equipment,
+            string exerciseCatalog,
             string userMessage)
         {
             return Load("workout_prompt.txt")
@@ -49,6 +53,7 @@
                 .Replace("{healthConditions}", healthConditions)
                 .Replace("{experience}", experience)
                 .Replace("{equipment}", equipment)
+                .Replace("{exerciseCatalog}", exerciseCatalog)
                 .Replace("{userMessage}", userMessage);
         }
 
@@ -99,11 +104,30 @@
                 .Replace("{afterTomorrow}", afterTomorrow);
         }
 
-        public static string GetChatSystemPrompt(string userContext, string name)
+        public static string GetChatSystemPrompt(string userContext, string name, string languageInstruction)
         {
             return Load("chat_system_prompt.txt")
                 .Replace("{userContext}", userContext)
-                .Replace("{name}", name);
+                .Replace("{name}", name)
+                .Replace("{languageInstruction}", languageInstruction);
+        }
+
+
+        public static string GetFoodAnalysisPrompt(
+    string name,
+    string goal,
+    string healthConditions,
+    string dietaryRestrictions,
+    string weight,
+    string userMessage)
+        {
+            return Load("food_analysis_prompt.txt")
+                .Replace("{name}", name)
+                .Replace("{goal}", goal)
+                .Replace("{healthConditions}", healthConditions)
+                .Replace("{dietaryRestrictions}", dietaryRestrictions)
+                .Replace("{weight}", weight)
+                .Replace("{userMessage}", userMessage);
         }
     }
 }

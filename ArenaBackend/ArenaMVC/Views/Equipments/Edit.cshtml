@@ -1,0 +1,296 @@
+@model ArenaApplication.Dtos.Gym.EquipmentDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = Localizer["EditEquipment"]?.Value ?? "Edit Equipment";
+}
+
+<link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-admin.css" asp-append-version="true" />
+
+<div class="subscription-admin-container">
+    <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+            <h1><i data-lucide="edit" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@ViewData["Title"]</h1>
+            <p>@(Localizer["UpdateEquipmentDetails"]?.Value ?? "Modify the details of the selected equipment.")</p>
+        </div>
+        <div class="booking-header-actions">
+            <a class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" asp-controller="Equipments" asp-action="Index">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>@(Localizer["BackToList"]?.Value ?? "Back to List")
+            </a>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        @if (TempData["Error"] != null)
+        {
+            <div class="subscription-alert error">
+                <strong>@Localizer["Error"]</strong> @TempData["Error"]
+            </div>
+        }
+
+        <div class="row justify-content-center" style="padding-top: 2rem; padding-bottom: 4rem;">
+            <div class="col-lg-6 col-md-8">
+                <div class="manage-user-card" style="background-color: var(--card-bg); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--card-shadow);">
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="subscription-form-group mb-4">
+                            <label asp-for="Name" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                @(Localizer["EquipmentName"]?.Value ?? "Equipment Name") <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Name" class="form-control" style="background-color: var(--body-bg); border-color: var(--border-color); color: var(--foreground);" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="subscription-form-group mb-4">
+                            <label asp-for="NameAr" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                @(Localizer["ArabicEquipmentName"]?.Value ?? "Arabic Equipment Name")
+                            </label>
+                            <input asp-for="NameAr" class="form-control" dir="rtl" style="background-color: var(--body-bg); border-color: var(--border-color); color: var(--foreground);" />
+                            <span asp-validation-for="NameAr" class="text-danger small"></span>
+                        </div>
+
+                        <div class="subscription-form-group mb-4">
+                            <label asp-for="Category" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                @(Localizer["Category"]?.Value ?? "Category") <span class="text-danger">*</span>
+                            </label>
+                            
+                            <div class="custom-multiselect" id="categoryMultiselect">
+                                <div class="multiselect-trigger" id="multiselectTrigger">
+                                    <span id="selectedCategoriesText">
+                                        <span class="text-muted">@(Localizer["SelectCategories"]?.Value ?? "Select Categories")</span>
+                                    </span>
+                                    <i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i>
+                                </div>
+                                <div class="multiselect-dropdown" id="multiselectDropdown">
+                                    <div class="multiselect-options">
+                                        @if (ViewBag.Categories != null)
+                                        {
+                                            var isArabic = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("ar", StringComparison.OrdinalIgnoreCase);
+                                            @foreach (var category in (System.Collections.Generic.List<ArenaApplication.Dtos.Gym.EquipmentCategoryDto>)ViewBag.Categories)
+                                            {
+                                                var displayName = isArabic && !string.IsNullOrEmpty(category.NameAr) ? category.NameAr : category.Name;
+                                                var safeId = "cat_" + category.Name.Replace(" ", "_");
+                                                <div class="form-check multiselect-option">
+                                                    <input class="form-check-input category-checkbox" type="checkbox" value="@category.Name" id="@safeId" />
+                                                    <label class="form-check-label" for="@safeId">@displayName</label>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" asp-for="Category" id="CategoryHiddenInput" />
+                            <span asp-validation-for="Category" class="text-danger small"></span>
+                        </div>
+
+                        <div class="subscription-form-group mb-4">
+                            <label style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                @Html.DisplayNameFor(m => m.IsAvailable)
+                            </label>
+                            <div class="switch-container d-flex align-items-center gap-3">
+                                <span class="switch-label-text">
+                                    <span id="statusLabelText" class="slider-status-text @(Model?.IsAvailable ?? true ? "active" : "inactive")" style="color: @(Model?.IsAvailable ?? true ? "#10b981" : "#ef4444"); font-weight: 600;">
+                                        @(Model?.IsAvailable ?? true ? Localizer["Available"]?.Value ?? "Available" : Localizer["Unavailable"]?.Value ?? "Unavailable")
+                                    </span>
+                                </span>
+                                <label class="switch" for="isAvailableToggle" style="position: relative; display: inline-block; width: 50px; height: 26px;">
+                                    <input type="checkbox" asp-for="IsAvailable" id="isAvailableToggle" style="opacity: 0; width: 0; height: 0;" />
+                                    <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4 pt-4 border-top" style="border-color: var(--border-color) !important;">
+                            <button type="submit" class="btn btn-subscription-primary" style="flex: 1; padding: 0.75rem 1.5rem; font-weight: 600;">@(Localizer["SaveChanges"]?.Value ?? "Save Changes")</button>
+                            <a asp-action="Index" class="btn btn-ghost" style="flex: 1;">@(Localizer["Cancel"]?.Value ?? "Cancel")</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <style>
+        /* Custom multiselect styling */
+        .custom-multiselect {
+            position: relative;
+            width: 100%;
+        }
+        .multiselect-trigger {
+            background-color: var(--body-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            min-height: 45px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--foreground);
+        }
+        .multiselect-trigger:hover {
+            border-color: var(--yellow);
+        }
+        .multiselect-trigger .text-muted {
+            color: var(--foreground) !important;
+            opacity: 0.6;
+        }
+        .multiselect-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0.75rem;
+        }
+        .multiselect-dropdown.show {
+            display: block;
+        }
+        .multiselect-options {
+            max-height: 220px;
+            overflow-y: auto;
+            padding-inline-start: 0.25rem;
+        }
+        .multiselect-option {
+            margin-bottom: 0.5rem;
+            color: var(--foreground);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        .multiselect-option label {
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 0;
+        }
+        .category-checkbox {
+            width: 18px !important;
+            height: 18px !important;
+            min-width: 18px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            float: none !important;
+            cursor: pointer;
+        }
+        .category-checkbox:checked {
+            background-color: var(--yellow) !important;
+            border-color: var(--yellow) !important;
+        }
+
+        /* Basic switch styling fallback if user-admin.css doesn't apply it to these specific elements */
+        .switch input:checked + .slider { background-color: #10b981; }
+        .switch input:focus + .slider { box-shadow: 0 0 1px #10b981; }
+        .switch input:checked + .slider:before { transform: translateX(24px); }
+        .switch .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+        }
+    </style>
+    <script>
+        window.SelectCategoriesText = '@(Localizer["SelectCategories"]?.Value ?? "Select Categories")';
+
+        function updateSelectedCategories() {
+            const checked = [];
+            const displayNames = [];
+            document.querySelectorAll('.category-checkbox:checked').forEach(cb => {
+                checked.push(cb.value);
+                const label = document.querySelector(`label[for="${cb.id}"]`);
+                displayNames.push(label ? label.textContent.trim() : cb.value);
+            });
+            
+            const hiddenInput = document.getElementById('CategoryHiddenInput');
+            hiddenInput.value = checked.join(', ');
+
+            const triggerText = document.getElementById('selectedCategoriesText');
+            if (checked.length === 0) {
+                triggerText.innerHTML = `<span class="text-muted">${window.SelectCategoriesText}</span>`;
+            } else {
+                triggerText.innerHTML = displayNames.map(name => `<span class="badge bg-warning text-dark me-1" style="background-color: var(--yellow) !important; color: #1a1a1a !important; font-weight: 600;">${name}</span>`).join('');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Dropdown Toggle
+            const trigger = document.getElementById('multiselectTrigger');
+            const dropdown = document.getElementById('multiselectDropdown');
+            if (trigger && dropdown) {
+                trigger.addEventListener('click', function (e) {
+                    dropdown.classList.toggle('show');
+                    e.stopPropagation();
+                });
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                const multiselect = document.getElementById('categoryMultiselect');
+                if (multiselect && dropdown && !multiselect.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // Prevent dropdown closure when clicking inside the dropdown content
+            if (dropdown) {
+                dropdown.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+
+            // Handle checkbox changes (Event delegation)
+            const multiselectContainer = document.getElementById('categoryMultiselect');
+            if (multiselectContainer) {
+                multiselectContainer.addEventListener('change', function (e) {
+                    if (e.target.classList.contains('category-checkbox')) {
+                        updateSelectedCategories();
+                    }
+                });
+            }
+
+            // Pre-populate checked categories from hidden input value
+            const hiddenInput = document.getElementById('CategoryHiddenInput');
+            if (hiddenInput && hiddenInput.value) {
+                const checkedCategories = hiddenInput.value.split(',').map(s => s.trim().toLowerCase());
+                
+                document.querySelectorAll('.category-checkbox').forEach(cb => {
+                    if (checkedCategories.includes(cb.value.toLowerCase())) {
+                        cb.checked = true;
+                    }
+                });
+            }
+
+            updateSelectedCategories();
+
+            // Availability Switch
+            const toggle = document.getElementById('isAvailableToggle');
+            const statusLabel = document.getElementById('statusLabelText');
+            if (toggle && statusLabel) {
+                toggle.addEventListener('change', function () {
+                    if (this.checked) {
+                        statusLabel.textContent = '@(Localizer["Available"]?.Value ?? "Available")';
+                        statusLabel.style.color = '#10b981';
+                    } else {
+                        statusLabel.textContent = '@(Localizer["Unavailable"]?.Value ?? "Unavailable")';
+                        statusLabel.style.color = '#ef4444';
+                    }
+                });
+            }
+        });
+    </script>
+}

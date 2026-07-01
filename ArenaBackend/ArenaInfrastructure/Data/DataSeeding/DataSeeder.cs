@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -100,6 +100,9 @@ namespace ArenaInfrastructure.Data.DataSeeding
                      await context.SaveChangesAsync();
                  }
              }
+             
+             // ── Seed Equipment & Exercises ───────────────────────────────
+             await EquipmentAndExerciseSeeder.SeedAsync(context);
            }
       }
 }

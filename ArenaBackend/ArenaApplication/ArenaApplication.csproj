@@ -29,11 +29,14 @@
 	<ItemGroup>
 		<Content Include="AI\Prompts\*.txt">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>true</Pack>
+			<PackagePath>contentFiles\any\any\AI\Prompts</PackagePath>
 		</Content>
 	</ItemGroup>
 
   <ItemGroup>
     <Folder Include="Dtos\ProfileDto\" />
+    <Folder Include="Dtos\UserSubscriptionDto\" />
     <Folder Include="Interfacees\" />
     <Folder Include="Mappers\" />
   </ItemGroup>

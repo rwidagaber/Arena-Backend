@@ -1,11 +1,13 @@
-﻿using ArenaApplication.Dtos.ChatDtos;
+using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.IServices;
+using ArenaApi.Configurations.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/chat")]
-//[Authorize]
+[Authorize]
+[TypeFilter(typeof(RequireAIPlanFilter))]
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
@@ -19,10 +21,40 @@ public class ChatController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> SendMessage([FromBody] SendMessageDto dto)
     {
-        var result = await _chatService.SendMessageAsync(
-            dto.MemberProfileId,
-            dto.ConversationId,
-            dto.Message);
+        try
+        {
+            var result = await _chatService.SendMessageAsync(
+                dto.MemberProfileId,
+                dto.ConversationId,
+                dto.Message);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            var inner = ex.InnerException?.Message;
+            var errorMsg = inner != null ? $"{ex.Message} | Inner: {inner}" : ex.Message;
+            return StatusCode(500, new { reply = $"Chat error: {errorMsg}", error = errorMsg });
+        }
+    }
+
+    // Send a voice note (recorded on device, uploaded on Send) — Gemini transcribes it
+    [HttpPost("voice")]
+    [RequestSizeLimit(20 * 1024 * 1024)]
+    public async Task<IActionResult> SendVoiceMessage(
+        [FromForm] IFormFile audio,
+        [FromForm] Guid memberProfileId,
+        [FromForm] Guid? conversationId)
+    {
+        if (audio is null || audio.Length == 0)
+            return BadRequest("No audio file provided.");
+
+        await using var stream = audio.OpenReadStream();
+        var result = await _chatService.SendVoiceMessageAsync(
+            memberProfileId,
+            conversationId,
+            stream,
+            audio.ContentType);
+
         return Ok(result);
     }
 

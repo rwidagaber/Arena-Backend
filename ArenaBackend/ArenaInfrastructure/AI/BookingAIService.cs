@@ -1,12 +1,13 @@
-﻿using ArenaApplication.AI;
+using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
 using ArenaApplication.Dtos.Booking;
 using ArenaApplication.IServices;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
-//using ArenaDomain.Interfaces;
+
 
 namespace ArenaInfrastructure.AI
 {
@@ -15,156 +16,64 @@ namespace ArenaInfrastructure.AI
         private readonly IBookingService _bookingService;
         private readonly IQRCodeService _qrService;
         private readonly IGenericRepository<UserSubscription, Guid> _subscriptionRepo;
-        private readonly IUnitOfWork _unitOfWork;
         private readonly IGenericRepository<Booking, Guid> _bookingRepo;
+        private readonly IGenericRepository<MemberProfile, Guid> _memberRepo;
+        private readonly IUnitOfWork _unitOfWork;
+
+        private readonly record struct QrCodeReply(string? Code)
+        {
+            public static QrCodeReply NotAvailableYet => new(null);
+        }
 
         public BookingAIService(
             IBookingService bookingService,
             IQRCodeService qrService,
             IGenericRepository<UserSubscription, Guid> subscriptionRepo,
-            IUnitOfWork unitOfWork,
-            IGenericRepository<Booking, Guid> bookingRepo)
+            IGenericRepository<Booking, Guid> bookingRepo,
+            IGenericRepository<MemberProfile, Guid> memberRepo,
+            IUnitOfWork unitOfWork)
         {
             _bookingService = bookingService;
             _qrService = qrService;
             _subscriptionRepo = subscriptionRepo;
-            _unitOfWork = unitOfWork;
             _bookingRepo = bookingRepo;
+            _memberRepo = memberRepo;
+            _unitOfWork = unitOfWork;
         }
 
-        //        public async Task<string> HandleBookingRequestAsync(
-        //       Guid memberProfileId,
-        //       IntentResult intent,
-        //       string userMessage)
-        //        {
-        //            bool isArabic = userMessage.Any(c => c >= 0x0600 && c <= 0x06FF);
-
-        //            var subscription = _subscriptionRepo.GetAll()
-        //                .FirstOrDefault(s => s.MemberProfileId == memberProfileId
-        //                                  && s.Status == SubscriptionStatus.Active
-        //                                  && s.EndDate > DateTime.UtcNow);
-
-        //            if (intent.Action == "cancel")
-        //                return await HandleCancelAsync(memberProfileId, intent, isArabic, subscription);
-
-        //            // ✅ Handle reschedule separately
-        //            if (intent.Action == "reschedule")
-        //                return await HandleRescheduleAsync(memberProfileId, intent, isArabic);
-
-        //            // ✅ Default: create booking
-        //            return await HandleCreateAsync(memberProfileId, intent, isArabic, subscription);
-
-        //            // ✅ Load booking prompt with member context
-        //            var bookingContext = PromptLoader.GetBookingPrompt(
-        //                name: "Member",
-        //                hasSubscription: subscription != null,
-        //                remainingSessions: subscription?.RemainingSessions ?? 0,
-        //                subscriptionExpiry: subscription?.EndDate.ToString("yyyy-MM-dd") ?? "N/A");
-
-
-        //            if (subscription == null)
-        //                return "❌ You need an active subscription to book a session. " +
-        //                       "Please subscribe to a plan first.";
-
-        //            if (subscription.RemainingSessions <= 0)
-        //                return "❌ You have no remaining sessions. " +
-        //                       "Please renew your subscription.";
-
-        //            // Step 2 — Validate date and time
-        //            if (intent.Date == null || intent.Time == null)
-        //                return "I'd love to book a session for you! " +
-        //                       "Please tell me the date and time. " +
-        //                       "Example: 'Book tomorrow at 6 PM'";
-
-        //            if (!DateTime.TryParse(intent.Date, out var bookingDate))
-        //                return "❌ I couldn't understand the date. " +
-        //                       "Please say something like 'tomorrow' or '2024-12-25'";
-
-        //            if (!TimeSpan.TryParse(intent.Time, out var startTime))
-        //                return "❌ I couldn't understand the time. " +
-        //                       "Please say something like '6 PM' or '18:00'";
-
-        //            if (bookingDate.Date < DateTime.Today)
-        //                return isArabic
-        //                    ? "❌ مينفعش تحجز في الماضي. اختار تاريخ في المستقبل."
-        //                    : "❌ You can't book a session in the past. Please choose a future date.";
-
-        //            // Step 2.5 — Check duplicate booking
-        //            var existingBooking = _bookingRepo
-        //                .GetAll()
-        //                .FirstOrDefault(b =>
-        //                    b.MemberProfileId == memberProfileId &&
-        //                    b.BookingDate.Date == bookingDate.Date &&
-        //                    b.StartTime == startTime &&
-        //                    b.Status != BookingStatus.Cancelled);
-
-        //            if (existingBooking != null)
-        //            {
-        //                return isArabic
-        //                    ? $"❌ عندك حجز بالفعل يوم {bookingDate:dddd} الساعة {startTime:hh\\:mm}\nاختار وقت تاني."
-        //                    : $"❌ You already have a booking on {bookingDate:dddd, MMMM dd yyyy} at {startTime:hh\\:mm}.\nPlease choose another time.";
-        //            }
-
-        //            // Step 3 — Create booking
-        //            var createDto = new CreateBookingDto
-        //            {
-        //                MemberProfileId = memberProfileId,
-        //                BookingDate = bookingDate,
-        //                StartTime = startTime,
-        //                EndTime = startTime.Add(TimeSpan.FromHours(1))
-        //            };
-
-        //            var result = await _bookingService.CreateBooking(createDto);
-
-        //            if (!result.IsSuccess)
-        //                return $"❌ Failed to create booking: {string.Join(", ", result.Errors)}";
-
-
-        //            var qr = await _qrService.GenerateAsync(result.Value.Id);
-
-
-
-        //            await _subscriptionRepo.UpdateAsync(subscription);
-        //            await _unitOfWork.SaveChangesAsync();
-
-        //            return $"""
-        //    ✅ Booking confirmed!
-        //    📅 Date: {bookingDate:dddd, MMMM dd yyyy}
-        //    ⏰ Time: {startTime:hh\:mm} — {startTime.Add(TimeSpan.FromHours(1)):hh\:mm}
-        //    🎫 Remaining sessions: {subscription.RemainingSessions}
-        //    🔑 QR Code: {qr.Code}
-        //    ⏳ QR expires at: {qr.ExpirationTime:hh\:mm}
-        //    """;
-        //        }
-        //        }
-        //}
-
-
         public async Task<string> HandleBookingRequestAsync(
-    Guid memberProfileId,
-    IntentResult intent,
-    string userMessage,
-    string memberName = "Member"
-    )
+            Guid memberProfileId,
+            IntentResult intent,
+            string userMessage,
+            string memberName = "Member")
         {
             bool isArabic = userMessage.Any(c => c >= 0x0600 && c <= 0x06FF);
+
+            // ✅ Get name from DB
+            var profile = _memberRepo.GetAll()
+                .FirstOrDefault(p => p.Id == memberProfileId
+                                  || p.UserId == memberProfileId);
+
+            var name = !string.IsNullOrEmpty(profile?.FirstName)
+                ? profile.FirstName
+                : memberName; // fallback to passed name
 
             var subscription = _subscriptionRepo.GetAll()
                 .FirstOrDefault(s => s.MemberProfileId == memberProfileId
                                   && s.Status == SubscriptionStatus.Active
                                   && s.EndDate > DateTime.UtcNow);
 
-            // ✅ Handle cancel separately
             if (intent.Action == "cancel")
-                return await HandleCancelAsync(memberProfileId, intent, isArabic, subscription);
+                return await HandleCancelAsync(memberProfileId, intent, isArabic, subscription, name);
 
-            // ✅ Handle reschedule separately
             if (intent.Action == "reschedule")
-                return await HandleRescheduleAsync(memberProfileId, intent, isArabic);
+                return await HandleRescheduleAsync(memberProfileId, intent, isArabic, name);
 
-            // ✅ Default: create booking
-            return await HandleCreateAsync(memberProfileId, intent, isArabic, subscription);
+            return await HandleCreateAsync(memberProfileId, intent, isArabic, subscription, name);
         }
+
+
+
 
         private async Task<string> HandleCancelAsync(
             Guid memberProfileId,
@@ -207,7 +116,7 @@ namespace ArenaInfrastructure.AI
             // ✅ Refund session
             if (subscription != null)
             {
-               
+
                 await _subscriptionRepo.UpdateAsync(subscription);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -231,7 +140,7 @@ namespace ArenaInfrastructure.AI
             bool isArabic,
             string memberName = "Member")
         {
-           
+
             return isArabic
                 ? "عشان تغير الحجز، قولي الغي الحجز القديم وبعدين احجز وقت جديد."
                 : "To reschedule, please cancel your existing booking first, then book a new time.";
@@ -244,6 +153,8 @@ namespace ArenaInfrastructure.AI
             UserSubscription? subscription,
             string memberName = "Member")
         {
+            var localTime = DateTime.UtcNow.AddHours(3);
+
             if (subscription == null)
                 return isArabic
                     ? "❌ محتاج اشتراك نشط عشان تحجز."
@@ -265,10 +176,15 @@ namespace ArenaInfrastructure.AI
             if (!TimeSpan.TryParse(intent.Time, out var startTime))
                 return isArabic ? "❌ الوقت مش واضح." : "❌ Couldn't understand the time.";
 
-            if (bookingDate.Date < DateTime.Today)
+            if (bookingDate.Date < localTime.Date)
                 return isArabic
                     ? "❌ مينفعش تحجز في الماضي."
                     : "❌ You can't book in the past.";
+
+            if (bookingDate.Date == localTime.Date && startTime <= localTime.TimeOfDay)
+                return isArabic
+                    ? "❌ الوقت ده عدى خلاص النهارده. اختار وقت لسه جاي."
+                    : "❌ That time has already passed today. Please choose a future time.";
 
             var existingBooking = _bookingRepo.GetAll()
                 .FirstOrDefault(b =>
@@ -282,21 +198,40 @@ namespace ArenaInfrastructure.AI
                     ? $"❌ عندك حجز بالفعل يوم {bookingDate:dddd} الساعة {startTime:hh\\:mm}.\nاختار وقت تاني."
                     : $"❌ You already have a booking on {bookingDate:dddd, MMMM dd yyyy} at {startTime:hh\\:mm}.\nPlease choose another time.";
 
+            // Same-day sessions must be at least 5 hours apart.
+            var sameDayStarts = _bookingRepo.GetAll()
+                .Where(b => b.MemberProfileId == memberProfileId
+                         && b.BookingDate.Date == bookingDate.Date
+                         && b.Status != BookingStatus.Cancelled)
+                .Select(b => b.StartTime)
+                .ToList();
+
+            foreach (var existingStart in sameDayStarts)
+            {
+                if (Math.Abs((startTime - existingStart).TotalHours) < 5)
+                    return isArabic
+                        ? $"❌ عندك حجز الساعة {existingStart:hh\\:mm} في نفس اليوم. لازم يكون بين الجلستين 5 ساعات على الأقل."
+                        : $"❌ You already have a session at {existingStart:hh\\:mm} that day. Same-day sessions must be at least 5 hours apart.";
+            }
+
             var createDto = new CreateBookingDto
             {
                 MemberProfileId = memberProfileId,
                 BookingDate = bookingDate,
                 StartTime = startTime,
-                EndTime = startTime.Add(TimeSpan.FromHours(1))
+                EndTime = startTime.Add(TimeSpan.FromHours(1)),
+                Source = BookingSource.Chatbot
             };
 
             var result = await _bookingService.CreateBooking(createDto);
             if (!result.IsSuccess)
                 return $"❌ Failed to create booking: {string.Join(", ", result.Errors)}";
 
-            var qr = await _qrService.GenerateAsync(result.Value.Id);
+            QrCodeReply qrReply = bookingDate.Date == localTime.Date
+                ? new QrCodeReply((await _qrService.GenerateAsync(result.Value.Id)).Code)
+                : QrCodeReply.NotAvailableYet;
 
-           
+
             await _subscriptionRepo.UpdateAsync(subscription);
             await _unitOfWork.SaveChangesAsync();
 
@@ -306,15 +241,25 @@ namespace ArenaInfrastructure.AI
         📅 التاريخ: {bookingDate:dddd, MMMM dd yyyy}
         ⏰ الوقت: {startTime:hh\:mm} — {startTime.Add(TimeSpan.FromHours(1)):hh\:mm}
         🎫 الجلسات المتبقية: {subscription.RemainingSessions}
-        🔑 QR Code: {qr.Code}
+        {FormatQrReply(qrReply, isArabic)}
         """
      : $"""
         ✅ Booking confirmed, {memberName}!
         📅 Date: {bookingDate:dddd, MMMM dd yyyy}
         ⏰ Time: {startTime:hh\:mm} — {startTime.Add(TimeSpan.FromHours(1)):hh\:mm}
         🎫 Remaining sessions: {subscription.RemainingSessions}
-        🔑 QR Code: {qr.Code}
+        {FormatQrReply(qrReply, isArabic)}
         """;
+        }
+
+        private static string FormatQrReply(QrCodeReply qrReply, bool isArabic)
+        {
+            if (!string.IsNullOrWhiteSpace(qrReply.Code))
+                return $"🔑 QR Code: {qrReply.Code}";
+
+            return isArabic
+                ? "🔑 الـ QR سيظهر في نفس يوم الحجز فقط."
+                : "🔑 QR code will be available only on the booking day.";
         }
     }
 }
