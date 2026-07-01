@@ -71,6 +71,7 @@ namespace ArenaApplication.Services.Payment
             var activePlansCount = await _subscriptionRepo.GetAll()
                 .CountAsync(s => s.MemberProfileId == memberProfile.Id
                                  && !s.IsDeleted
+                                 && s.Status == SubscriptionStatus.Active
                                  && s.EndDate > DateTime.UtcNow);
 
             if (activePlansCount >= 2)
