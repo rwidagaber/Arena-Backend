@@ -288,6 +288,35 @@ namespace ArenaApplication.Services
             return Result.Success();
         }
 
+        public async Task<Result> DeleteAccountAsync(Guid userId, DeleteAccountDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null || user.IsDeleted)
+                return Result.Failure(_localizer["UserNotFound"]);
+
+            // Verify the password before destroying the account. Google accounts
+            // that never set a password are the only ones exempt from this check.
+            var hasPassword = await _userManager.HasPasswordAsync(user);
+            if (hasPassword && !await _userManager.CheckPasswordAsync(user, dto.Password))
+                return Result.Failure(_localizer["IncorrectPassword"]);
+
+            // Soft delete: keep the row (and its FKs) intact but lock the account
+            // out. Login already rejects users with IsActive == false.
+            user.IsDeleted = true;
+            user.DeletedAt = DateTime.UtcNow;
+            user.IsActive = false;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+            // Kill every active session so the (now deleted) account can't keep using tokens.
+            await _authRepository.RevokeAllRefreshTokensAsync(userId);
+
+            return Result.Success();
+        }
+
         public async Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
             var user = await _authRepository.GetByEmailAsync(dto.Email);
@@ -476,6 +505,37 @@ namespace ArenaApplication.Services
                 user.Email!,
                 otp
             );
+
+            return Result.Success();
+        }
+
+        public async Task<Result> DeleteAccountAsync(Guid userId, DeleteAccountDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null)
+                return Result.Failure(_localizer["UserNotFound"]);
+
+            if (user.IsDeleted)
+                return Result.Failure("Account is already deleted");
+
+            if (await _userManager.HasPasswordAsync(user))
+            {
+                if (string.IsNullOrEmpty(dto.Password))
+                    return Result.Failure("Password is required to delete your account");
+
+                if (!await _userManager.CheckPasswordAsync(user, dto.Password))
+                    return Result.Failure("Invalid password");
+            }
+
+            user.IsDeleted = true;
+            user.DeletedAt = DateTime.UtcNow;
+            user.IsActive = false;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+            await _authRepository.RevokeAllRefreshTokensAsync(userId);
 
             return Result.Success();
         }

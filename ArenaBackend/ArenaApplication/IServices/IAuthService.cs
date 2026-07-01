@@ -20,11 +20,13 @@ namespace ArenaApplication.IServices
         Task<Result> LogoutAsync(Guid userId);
         Task<Result<GetProfileDto>> GetProfileAsync(Guid userId);
         Task<Result> ChangePasswordAsync(Guid userId, ChangePasswordDto dto);
+        Task<Result> DeleteAccountAsync(Guid userId, DeleteAccountDto dto);
         Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<Result> ResetPasswordAsync(ResetPasswordDto dto);
         Task<Result<AuthResponseDto>> ConfirmEmailAsync(ConfirmEmailDto dto);
         Task<Result<AuthResponseDto>> GoogleLoginAsync(string idToken);
         Task<Result> CompleteProfileAsync(Guid userId, CompleteProfileDto dto);
         Task<Result> ResendConfirmationAsync(Guid userId);
+        Task<Result> DeleteAccountAsync(Guid userId, DeleteAccountDto dto);
     }
 }
