@@ -6,6 +6,6 @@ namespace ArenaApplication.Dtos.AuthDtos
 {
     public class DeleteAccountDto
     {
-        public string Password { get; set; } = null!;
+        public string? Password { get; set; }
     }
 }
