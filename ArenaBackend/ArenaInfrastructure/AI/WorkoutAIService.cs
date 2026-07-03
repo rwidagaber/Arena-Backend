@@ -219,6 +219,7 @@ namespace ArenaInfrastructure.AI
 
             NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
             ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
+            LocalizeWorkoutPlan(planData, WorkoutLocalization.IsArabic(userMessage), effectiveGoal);
 
             var activeWorkoutPlans = await _context.WorkoutPlans
                 .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
@@ -466,6 +467,7 @@ namespace ArenaInfrastructure.AI
 
             NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
             ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
+            LocalizeWorkoutPlan(planData, WorkoutLocalization.IsArabic(userMessage), effectiveGoal);
 
             var activeWorkoutPlans = await _context.WorkoutPlans
                 .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
@@ -593,7 +595,7 @@ namespace ArenaInfrastructure.AI
             string effectiveGoal)
         {
             if (string.IsNullOrWhiteSpace(planData.Name))
-                planData.Name = $"{memberName} Workout Plan";
+                planData.Name = WorkoutLocalization.GetLocalizedPlanName(effectiveGoal, WorkoutLocalization.IsArabic(userMessage));
 
             if (planData.DurationWeeks <= 0)
                 planData.DurationWeeks = 4;
@@ -758,7 +760,7 @@ namespace ArenaInfrastructure.AI
 
             return new WorkoutPlanAIResponse
             {
-                Name = $"{memberName} {goal} Personalized Workout Plan",
+                Name = WorkoutLocalization.GetLocalizedPlanName(effectiveGoal, WorkoutLocalization.IsArabic(userMessage)),
                 DurationWeeks = defaults.DurationWeeks,
                 Days = days
             };
@@ -846,6 +848,26 @@ namespace ArenaInfrastructure.AI
             exercise.Sets = exercise.Sets <= 0 ? 3 : exercise.Sets;
             exercise.Reps = exercise.Reps <= 0 ? 12 : exercise.Reps;
             exercise.MuscleGroup = exercise.Name == "Seated Leg Curl" ? "Hamstrings" : "Glutes";
+        }
+
+        private static void LocalizeWorkoutPlan(WorkoutPlanAIResponse planData, bool isArabic, string effectiveGoal)
+        {
+            planData.Name = WorkoutLocalization.GetLocalizedPlanName(effectiveGoal, isArabic);
+
+            if (isArabic)
+            {
+                foreach (var day in planData.Days ?? [])
+                {
+                    day.DayName = WorkoutLocalization.TranslateDay(day.DayName);
+                    foreach (var ex in day.Exercises ?? [])
+                    {
+                        var englishName = ex.Name;
+                        ex.Name = WorkoutLocalization.TranslateExercise(englishName);
+                        ex.NameAr = ex.Name;
+                        ex.MuscleGroupAr = ex.MuscleGroup;
+                    }
+                }
+            }
         }
     }
 }

@@ -720,7 +720,15 @@ namespace ArenaInfrastructure.AI
                         foreach (var ex in todayDay.Exercises)
                         {
                             var name = !string.IsNullOrWhiteSpace(ex.ExrciseName) ? ex.ExrciseName : ex.Exercise?.Name ?? "Exercise";
-                            sb.AppendLine($"• {name} — {ex.Sets} × {ex.Reps}");
+                            if (isArabic)
+                            {
+                                name = WorkoutLocalization.TranslateExercise(name);
+                                sb.AppendLine($"• {name} — {ex.Sets} مجموعات × {ex.Reps} تكرار");
+                            }
+                            else
+                            {
+                                sb.AppendLine($"• {name} — {ex.Sets} × {ex.Reps}");
+                            }
                         }
                         sb.AppendLine();
                         sb.AppendLine(isArabic ? "تمرينًا سعيدًا! 💪" : "Have a great workout! 💪");
@@ -787,6 +795,10 @@ namespace ArenaInfrastructure.AI
                         foreach (var ex in targetDay.Exercises)
                         {
                             var name = !string.IsNullOrWhiteSpace(ex.ExrciseName) ? ex.ExrciseName : ex.Exercise?.Name ?? "Exercise";
+                            if (isArabic)
+                            {
+                                name = WorkoutLocalization.TranslateExercise(name);
+                            }
                             sb.AppendLine($"• {name}");
                         }
 
@@ -1001,8 +1013,9 @@ namespace ArenaInfrastructure.AI
                         combined.AppendLine($"🎯 {workoutPlan.Name} ({(isArabic ? $"{workoutPlan.DurationWeeks} أسابيع" : $"{workoutPlan.DurationWeeks} weeks")})");
                         foreach (var day in workoutPlan.Days)
                         {
-                            var exerciseNames = string.Join(", ", day.Exercises.Take(5).Select(ex => ex.Name));
-                            combined.AppendLine($"   • **{day.DayName}**: {exerciseNames}{(day.Exercises.Count > 5 ? "..." : "")}");
+                            var dayName = isArabic ? WorkoutLocalization.TranslateDay(day.DayName) : day.DayName;
+                            var exerciseNames = string.Join(", ", day.Exercises.Take(5).Select(ex => isArabic ? WorkoutLocalization.TranslateExercise(ex.Name) : ex.Name));
+                            combined.AppendLine($"   • **{dayName}**: {exerciseNames}{(day.Exercises.Count > 5 ? "..." : "")}");
                         }
                         combined.AppendLine();
 
@@ -1032,13 +1045,14 @@ namespace ArenaInfrastructure.AI
                         var workoutPlan = await _workoutAI
                             .ModifyWorkoutPlanAsync(profile.Id, userMessage);
 
+                        if (isArabic)
+                        {
+                            return WorkoutLocalization.FormatArabicWorkoutPlan(workoutPlan, "✅ تم تعديل خطة التمرين بنجاح! 💪", false);
+                        }
+
                         var sb = new StringBuilder();
-                        sb.AppendLine(isArabic
-                            ? $"✅ تم تعديل خطة التمرين '{workoutPlan.Name}' بناءً على طلبك! 💪"
-                            : $"✅ Your workout plan '{workoutPlan.Name}' has been successfully modified! Let's go! 💪");
-                        sb.AppendLine(isArabic
-                            ? $"📅 المدة: {workoutPlan.DurationWeeks} أسابيع\n"
-                            : $"📅 Plan Duration: {workoutPlan.DurationWeeks} weeks\n");
+                        sb.AppendLine($"✅ Your workout plan '{workoutPlan.Name}' has been successfully modified! Let's go! 💪");
+                        sb.AppendLine($"📅 Plan Duration: {workoutPlan.DurationWeeks} weeks\n");
 
                         foreach (var day in workoutPlan.Days)
                         {
@@ -1048,13 +1062,9 @@ namespace ArenaInfrastructure.AI
                                 if (ex.Name.ToLower().Contains("rest"))
                                     sb.AppendLine($"   • {ex.Name} 😴");
                                 else if (ex.Sets <= 1 && ex.Reps >= 20)
-                                    sb.AppendLine(isArabic
-                                        ? $"   • {ex.Name} — {ex.Reps} دقيقة"
-                                        : $"   • {ex.Name} — {ex.Reps} minutes");
+                                    sb.AppendLine($"   • {ex.Name} — {ex.Reps} minutes");
                                 else
-                                    sb.AppendLine(isArabic
-                                        ? $"   • {ex.Name} — {ex.Sets} مجموعات × {ex.Reps}"
-                                        : $"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
+                                    sb.AppendLine($"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
                             }
                             sb.AppendLine();
                         }
@@ -1067,13 +1077,14 @@ namespace ArenaInfrastructure.AI
                         var workoutPlan = await _workoutAI
                             .GenerateWorkoutPlanAsync(profile.Id, userMessage);
 
+                        if (isArabic)
+                        {
+                            return WorkoutLocalization.FormatArabicWorkoutPlan(workoutPlan, $"✅ {memberName}، تم إعداد خطة التمرين الخاصة بك بنجاح! 💪", true);
+                        }
+
                         var sb = new StringBuilder();
-                        sb.AppendLine(isArabic
-                            ? $"✅ يا {memberName}، تم إنشاء خطة التمرين '{workoutPlan.Name}' بنجاح! جاهز للتحدي؟ 💪"
-                            : $"✅ {memberName}, your custom workout plan '{workoutPlan.Name}' is ready to go! Let's crush those goals! 💪");
-                        sb.AppendLine(isArabic
-                            ? $"📅 المدة: {workoutPlan.DurationWeeks} أسابيع\n"
-                            : $"📅 Plan Duration: {workoutPlan.DurationWeeks} weeks\n");
+                        sb.AppendLine($"✅ {memberName}, your custom workout plan '{workoutPlan.Name}' is ready to go! Let's crush those goals! 💪");
+                        sb.AppendLine($"📅 Plan Duration: {workoutPlan.DurationWeeks} weeks\n");
 
                         foreach (var day in workoutPlan.Days)
                         {
@@ -1083,20 +1094,14 @@ namespace ArenaInfrastructure.AI
                                 if (ex.Name.ToLower().Contains("rest"))
                                     sb.AppendLine($"   • {ex.Name} 😴");
                                 else if (ex.Sets <= 1 && ex.Reps >= 20)
-                                    sb.AppendLine(isArabic
-                                        ? $"   • {ex.Name} — {ex.Reps} دقيقة"
-                                        : $"   • {ex.Name} — {ex.Reps} minutes");
+                                    sb.AppendLine($"   • {ex.Name} — {ex.Reps} minutes");
                                 else
-                                    sb.AppendLine(isArabic
-                                        ? $"   • {ex.Name} — {ex.Sets} مجموعات × {ex.Reps}"
-                                        : $"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
+                                    sb.AppendLine($"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
                             }
                             sb.AppendLine();
                         }
 
-                        sb.AppendLine(isArabic
-                            ? "💡 بالمناسبة، لو محتاج نظام غذائي يساعدك توصل لهدفك أسرع، أنا موجود في أي وقت!"
-                            : "💡 By the way, if you need a nutrition plan to complement your workouts, just let me know!");
+                        sb.AppendLine("💡 By the way, if you need a nutrition plan to complement your workouts, just let me know!");
 
                         return sb.ToString();
                     }
@@ -1115,13 +1120,14 @@ namespace ArenaInfrastructure.AI
                         // Generate a new workout plan aligned with the new goal
                         var workoutPlan = await _workoutAI.GenerateWorkoutPlanAsync(profile.Id, userMessage);
 
+                        if (isArabic)
+                        {
+                            return WorkoutLocalization.FormatArabicWorkoutPlan(workoutPlan, $"✅ رائع! لقد حدثنا هدفك إلى '{newGoal}'. وتم إعداد خطة التمرين الخاصة بك بنجاح! 💪", true);
+                        }
+
                         var sb = new StringBuilder();
-                        sb.AppendLine(isArabic
-                            ? $"✅ رائع يا {memberName}! لقد حدثنا هدفك إلى '{newGoal}'. وتم تصميم خطة التمرين الجديدة '{workoutPlan.Name}' خصيصاً لك! 🚀"
-                            : $"✅ Awesome {memberName}! I've updated your goal to '{newGoal}' and crafted a brand new workout plan '{workoutPlan.Name}' just for you! 🚀");
-                        sb.AppendLine(isArabic
-                            ? $"📅 المدة: {workoutPlan.DurationWeeks} أسابيع\n"
-                            : $"📅 Plan Duration: {workoutPlan.DurationWeeks} weeks\n");
+                        sb.AppendLine($"✅ Awesome {memberName}! I've updated your goal to '{newGoal}' and crafted a brand new workout plan '{workoutPlan.Name}' just for you! 🚀");
+                        sb.AppendLine($"📅 Plan Duration: {workoutPlan.DurationWeeks} weeks\n");
 
                         foreach (var day in workoutPlan.Days)
                         {
@@ -1131,20 +1137,12 @@ namespace ArenaInfrastructure.AI
                                 if (ex.Name.ToLower().Contains("rest"))
                                     sb.AppendLine($"   • {ex.Name} 😴");
                                 else if (ex.Sets <= 1 && ex.Reps >= 20)
-                                    sb.AppendLine(isArabic
-                                        ? $"   • {ex.Name} — {ex.Reps} دقيقة"
-                                        : $"   • {ex.Name} — {ex.Reps} minutes");
+                                    sb.AppendLine($"   • {ex.Name} — {ex.Reps} minutes");
                                 else
-                                    sb.AppendLine(isArabic
-                                        ? $"   • {ex.Name} — {ex.Sets} مجموعات × {ex.Reps}"
-                                        : $"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
+                                    sb.AppendLine($"   • {ex.Name} — {ex.Sets} sets x {ex.Reps} reps");
                             }
                             sb.AppendLine();
                         }
-
-                        sb.AppendLine(isArabic
-                            ? "💡 لو حابب نظام غذائي يناسب هدفك الجديد، اطلب مني في أي وقت!"
-                            : "💡 If you'd like a fresh nutrition plan to match your new goal, I'm ready whenever you are!");
 
                         return sb.ToString();
                     }
