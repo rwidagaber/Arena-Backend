@@ -44,7 +44,7 @@ namespace ArenaApplication.Services
             IStringLocalizer<ArenaLocalization> localizer,
             IGoogleTokenValidator googleTokenValidator,
             INotificationService notificationService,
-            IEmailService emailService) // ✅ تمت الإضافة
+            IEmailService emailService) 
         {
             _userManager = userManager;
             _authRepository = authRepository;
@@ -55,7 +55,7 @@ namespace ArenaApplication.Services
             _localizer = localizer;
             _googleTokenValidator = googleTokenValidator;
             _notificationService = notificationService;
-            _emailService = emailService; // ✅ تمت الإضافة
+            _emailService = emailService; 
         }
 
         // =========================
@@ -357,6 +357,8 @@ namespace ArenaApplication.Services
 
                 if (!result.Succeeded)
                     return Result.Failure(result.Errors.Select(e => e.Description).ToArray());
+
+                await _authRepository.RevokeAllRefreshTokensAsync(user.Id);
 
                 return Result.Success();
             }
