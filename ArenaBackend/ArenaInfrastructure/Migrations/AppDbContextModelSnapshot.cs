@@ -1166,6 +1166,12 @@ namespace ArenaInfrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("DiscountEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("DiscountPercentage")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<int>("DurationMonths")
                         .HasColumnType("int");
 

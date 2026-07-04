@@ -110,6 +110,43 @@ namespace ArenaApplication.Services.SubscriptionPlan
             await _repository.SoftDeleteAsync(plan, cancellationToken);
         }
 
+        public async Task ApplyDiscountAsync(List<Guid> planIds, decimal discountPercentage, DateTime? endDate, CancellationToken cancellationToken = default)
+        {
+            if (discountPercentage < 1 || discountPercentage > 99)
+                throw new ArgumentException(_localizer["InvalidDiscountPercentage"]);
+
+            if (planIds == null || !planIds.Any())
+                throw new ArgumentException(_localizer["NoPlansSelected"]);
+
+            var plans = await _repository.GetAllAsync(cancellationToken);
+            var activePlans = plans.Where(p => planIds.Contains(p.Id) && !p.IsDeleted).ToList();
+
+            foreach (var plan in activePlans)
+            {
+                plan.DiscountPercentage = discountPercentage;
+                plan.DiscountEndDate = endDate;
+                plan.UpdatedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(plan, cancellationToken);
+            }
+        }
+
+        public async Task RemoveDiscountAsync(List<Guid> planIds, CancellationToken cancellationToken = default)
+        {
+            if (planIds == null || !planIds.Any())
+                throw new ArgumentException(_localizer["NoPlansSelected"]);
+
+            var plans = await _repository.GetAllAsync(cancellationToken);
+            var activePlans = plans.Where(p => planIds.Contains(p.Id) && !p.IsDeleted).ToList();
+
+            foreach (var plan in activePlans)
+            {
+                plan.DiscountPercentage = null;
+                plan.DiscountEndDate = null;
+                plan.UpdatedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(plan, cancellationToken);
+            }
+        }
+
         private static SubscriptionPlanDto MapToDto(ArenaDomain.Entities.Subscription.SubscriptionPlan plan)
         {
             var isArabic = CultureInfo.CurrentUICulture.Name.StartsWith("ar");
@@ -127,7 +164,9 @@ namespace ArenaApplication.Services.SubscriptionPlan
                 Price = plan.Price,
                 SessionLimit = plan.SessionLimit ?? 0,
                 IsActive = plan.IsActive,
-                HasAI = plan.HasAI
+                HasAI = plan.HasAI,
+                DiscountPercentage = plan.DiscountPercentage,
+                DiscountEndDate = plan.DiscountEndDate
             };
         }
     }

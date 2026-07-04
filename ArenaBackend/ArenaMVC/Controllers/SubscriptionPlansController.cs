@@ -144,5 +144,49 @@ namespace ArenaMVC.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ApplyDiscount(
+            [FromForm] List<Guid> planIds,
+            [FromForm] decimal discountPercentage,
+            [FromForm] DateTime? endDate,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _subscriptionPlanService.ApplyDiscountAsync(planIds, discountPercentage, endDate, cancellationToken);
+                TempData["Success"] = _localizer["DiscountAppliedSuccessfully"].Value;
+            }
+            catch (ArgumentException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = _localizer["AnErrorOccurredApplyingDiscount"].Value;
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveDiscount(
+            [FromForm] List<Guid> planIds,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _subscriptionPlanService.RemoveDiscountAsync(planIds, cancellationToken);
+                TempData["Success"] = _localizer["DiscountRemovedSuccessfully"].Value;
+            }
+            catch (ArgumentException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = _localizer["AnErrorOccurredRemovingDiscount"].Value;
+            }
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
