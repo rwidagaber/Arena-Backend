@@ -20,6 +20,9 @@ namespace ArenaDomain.Entities.Subscription
         public bool IsActive { get; set; } = true;
         public bool HasAI { get; set; }
 
+        public decimal? DiscountPercentage { get; set; }
+        public DateTime? DiscountEndDate { get; set; }
+
         public virtual ICollection<UserSubscription> UserSubscriptions { get; set; } = [];
     }
 }

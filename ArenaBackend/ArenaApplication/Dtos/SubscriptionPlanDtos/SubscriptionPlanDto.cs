@@ -14,5 +14,9 @@ namespace ArenaApplication.Dtos.SubscriptionPlanDtos
         public int SessionLimit { get; set; }
         public bool IsActive { get; set; }
         public bool HasAI { get; set; }
+        public decimal? DiscountPercentage { get; set; }
+        public DateTime? DiscountEndDate { get; set; }
+        public decimal DiscountedPrice => DiscountPercentage.HasValue && DiscountPercentage.Value > 0 ? Price * (1 - DiscountPercentage.Value / 100) : Price;
+        public bool HasDiscount => DiscountPercentage.HasValue && DiscountPercentage.Value > 0;
     }
 }
