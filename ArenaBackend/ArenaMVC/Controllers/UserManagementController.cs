@@ -36,16 +36,17 @@ namespace ArenaMVC.Controllers
             ArenaDomain.Enums.MembershipStatus? membershipStatus, 
             string? subscriptionStatus, 
             int page = 1, 
-            int pageSize = DefaultPageSize)
+            int pageSize = DefaultPageSize,
+            bool isAscending = false)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
 
             try
             {
-                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize);
+                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize, "RegisterDate", isAscending);
                 if (!result.IsSuccess)
-                    return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
+                    return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus, IsAscending = isAscending });
 
                 var pagedResult = result.Value;
 
@@ -72,14 +73,15 @@ namespace ArenaMVC.Controllers
                     Search = search,
                     IsActive = isActive,
                     MembershipStatusFilter = membershipStatus,
-                    SubscriptionStatusFilter = subscriptionStatus
+                    SubscriptionStatusFilter = subscriptionStatus,
+                    IsAscending = isAscending
                 };
 
                 return PartialView("_UserResults", viewModel);
             }
             catch (Exception)
             {
-                return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
+                return PartialView("_UserResults", new UserListPagedViewModel { Page = page, PageSize = pageSize, Search = search, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus, IsAscending = isAscending });
             }
         }
 
@@ -91,18 +93,19 @@ namespace ArenaMVC.Controllers
             ArenaDomain.Enums.MembershipStatus? membershipStatus, 
             string? subscriptionStatus, 
             int page = 1, 
-            int pageSize = DefaultPageSize)
+            int pageSize = DefaultPageSize,
+            bool isAscending = false)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = DefaultPageSize;
 
             try
             {
-                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize);
+                var result = await _userService.GetUsers(search, isActive, membershipStatus, subscriptionStatus, page, pageSize, "RegisterDate", isAscending);
                 if (!result.IsSuccess)
                 {
                     TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredRetrievingUsers"].Value;
-                    return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
+                    return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus, IsAscending = isAscending });
                 }
 
                 var pagedResult = result.Value;
@@ -130,7 +133,8 @@ namespace ArenaMVC.Controllers
                     Search = search,
                     IsActive = isActive,
                     MembershipStatusFilter = membershipStatus,
-                    SubscriptionStatusFilter = subscriptionStatus
+                    SubscriptionStatusFilter = subscriptionStatus,
+                    IsAscending = isAscending
                 };
 
                 ViewBag.SearchString = search;
@@ -139,7 +143,7 @@ namespace ArenaMVC.Controllers
             catch (Exception)
             {
                 TempData["Error"] = _localizer["AnErrorOccurredRetrievingUsers"].Value;
-                return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus });
+                return View(new UserListPagedViewModel { Page = page, PageSize = pageSize, IsActive = isActive, MembershipStatusFilter = membershipStatus, SubscriptionStatusFilter = subscriptionStatus, IsAscending = isAscending });
             }
         }
 

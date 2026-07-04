@@ -52,7 +52,9 @@ namespace ArenaApplication.Services
             MembershipStatus? membershipStatus, 
             string? subscriptionStatus, 
             int page, 
-            int pageSize)
+            int pageSize,
+            string? sortBy = "RegisterDate",
+            bool isAscending = false)
         {
             try
             {
@@ -116,7 +118,14 @@ namespace ArenaApplication.Services
                     }
                 }
 
-                query = query.OrderByDescending(u => u.CreatedAt);
+                if (isAscending)
+                {
+                    query = query.OrderBy(u => u.CreatedAt);
+                }
+                else
+                {
+                    query = query.OrderByDescending(u => u.CreatedAt);
+                }
 
                 int totalCount = await query.CountAsync();
 
