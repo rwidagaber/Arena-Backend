@@ -417,6 +417,12 @@ namespace ArenaInfrastructure.AI
             === USER REQUEST ===
             The user wants to modify their workout plan with the following request:
             "{userMessage}"
+
+            === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+            {healthContext}
+
+            === STRICT MEDICAL GUIDELINES ===
+            {await _healthIntelligence.RetrieveMedicalGuidelinesAsync(healthProfile)}
             
             === INSTRUCTIONS ===
             1. Apply the user's modification request to the plan.
@@ -603,7 +609,16 @@ namespace ArenaInfrastructure.AI
             planData.Days ??= [];
             var avoidKneeStress = ContainsAny(profile.Injuries, "knee", "ركبة")
                 || ContainsAny(userMessage, "knee", "ركبة")
-                || ContainsAny(healthContext, "knee", "ركبة");
+                || ContainsAny(healthContext, "knee", "ركبة")
+                || ContainsAny(healthContext, "acl", "meniscus");
+
+            var avoidShoulderStress = ContainsAny(profile.Injuries, "shoulder", "rotator", "arm", "كتف", "ذراع")
+                || ContainsAny(userMessage, "shoulder", "rotator", "arm", "كتف", "ذراع")
+                || ContainsAny(healthContext, "shoulder", "rotator", "arm", "كتف", "ذراع");
+
+            var avoidBackStress = ContainsAny(profile.Injuries, "back", "spine", "lumber", "ظهر")
+                || ContainsAny(userMessage, "back", "spine", "lumber", "ظهر")
+                || ContainsAny(healthContext, "back", "spine", "lumber", "ظهر");
 
             foreach (var day in planData.Days)
             {
@@ -628,6 +643,12 @@ namespace ArenaInfrastructure.AI
 
                     if (avoidKneeStress && IsKneeStressExercise(exercise.Name))
                         ReplaceWithKneeFriendlyExercise(exercise);
+
+                    if (avoidShoulderStress && IsShoulderStressExercise(exercise.Name))
+                        ReplaceWithShoulderFriendlyExercise(exercise);
+
+                    if (avoidBackStress && IsBackStressExercise(exercise.Name))
+                        ReplaceWithBackFriendlyExercise(exercise);
                 }
             }
         }
@@ -826,7 +847,6 @@ namespace ArenaInfrastructure.AI
 
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
-
         private static bool IsKneeStressExercise(string? exerciseName) =>
             ContainsAny(
                 exerciseName,
@@ -838,6 +858,28 @@ namespace ArenaInfrastructure.AI
                 "jump",
                 "step-up",
                 "step up");
+
+        private static bool IsShoulderStressExercise(string? name) =>
+            ContainsAny(name, "shoulder press", "overhead press", "military press", "overhead", "ضغط كتف");
+
+        private static void ReplaceWithShoulderFriendlyExercise(WorkoutExerciseAIResponse ex)
+        {
+            ex.Name = "Cable Face Pull";
+            ex.MuscleGroup = "Shoulders";
+            ex.Sets = ex.Sets <= 0 ? 3 : ex.Sets;
+            ex.Reps = ex.Reps <= 0 ? 15 : ex.Reps;
+        }
+
+        private static bool IsBackStressExercise(string? name) =>
+            ContainsAny(name, "deadlift", "barbell squat", "heavy row", "t-bar row", "dead lift", "رفعة مميتة");
+
+        private static void ReplaceWithBackFriendlyExercise(WorkoutExerciseAIResponse ex)
+        {
+            ex.Name = "Hyperextension";
+            ex.MuscleGroup = "Lower Back";
+            ex.Sets = ex.Sets <= 0 ? 3 : ex.Sets;
+            ex.Reps = ex.Reps <= 0 ? 12 : ex.Reps;
+        }
 
         private static void ReplaceWithKneeFriendlyExercise(WorkoutExerciseAIResponse exercise)
         {

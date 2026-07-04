@@ -108,59 +108,7 @@ namespace ArenaInfrastructure.AI
             //    };
             //}
 
-            if (!IsProfileMemoryQuestion(userMessage))
-            {
-                try
-                {
-                    await _healthRAG.ExtractAndSaveFromChatAsync(profile.Id, userMessage);
-                    
-                    var extraction = await _healthIntelligence.ExtractHealthProfileAsync(userMessage);
-                    
-                    var currentProfile = new HealthProfileDto();
-                    if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
-                    {
-                        currentProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
-                    }
 
-                    // Merge newly extracted items
-                    currentProfile.Conditions.AddRange(extraction.Conditions);
-                    currentProfile.Allergies.AddRange(extraction.Allergies);
-                    currentProfile.Injuries.AddRange(extraction.Injuries);
-                    currentProfile.Restrictions.AddRange(extraction.Restrictions);
-                    currentProfile.Medications.AddRange(extraction.Medications);
-
-                    // Distinct
-                    currentProfile.Conditions = currentProfile.Conditions.Distinct().ToList();
-                    currentProfile.Allergies = currentProfile.Allergies.Distinct().ToList();
-                    currentProfile.Injuries = currentProfile.Injuries.Distinct().ToList();
-                    currentProfile.Restrictions = currentProfile.Restrictions.Distinct().ToList();
-                    currentProfile.Medications = currentProfile.Medications.Distinct().ToList();
-
-                    profile.HealthProfileJson = JsonSerializer.Serialize(currentProfile);
-
-                    // Sync to legacy fields for backward compatibility
-                    if (currentProfile.Conditions.Any() || currentProfile.Allergies.Any() || currentProfile.Medications.Any())
-                    {
-                        var allHealth = currentProfile.Conditions.Concat(currentProfile.Allergies).Concat(currentProfile.Medications);
-                        profile.HealthConditions = string.Join(", ", allHealth);
-                    }
-                    if (currentProfile.Injuries.Any())
-                    {
-                        profile.Injuries = string.Join(", ", currentProfile.Injuries);
-                    }
-                    if (currentProfile.Restrictions.Any())
-                    {
-                        profile.DietaryRestrictions = string.Join(", ", currentProfile.Restrictions);
-                    }
-
-                    _context.MemberProfiles.Update(profile);
-                    await _context.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to save health context for member profile {MemberProfileId}", profile.Id);
-                }
-            }
 
             // ✅ Step 1 — Get or Create conversation
             ChatConversation conversation;
@@ -245,6 +193,61 @@ namespace ArenaInfrastructure.AI
                     await _context.SaveChangesAsync();
                 }
             }
+            // ✅ Run health extraction ONLY if intent is NOT retrieval
+            if (intent?.Intent != "RETRIEVE_HEALTH_INFORMATION" && intent?.Intent != "GET_USER_INJURIES" && !IsProfileMemoryQuestion(userMessage))
+            {
+                try
+                {
+                    await _healthRAG.ExtractAndSaveFromChatAsync(profile.Id, userMessage);
+                    
+                    var extraction = await _healthIntelligence.ExtractHealthProfileAsync(userMessage);
+                    
+                    var currentProfile = new HealthProfileDto();
+                    if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+                    {
+                        currentProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+                    }
+
+                    // Merge newly extracted items
+                    currentProfile.Conditions.AddRange(extraction.Conditions);
+                    currentProfile.Allergies.AddRange(extraction.Allergies);
+                    currentProfile.Injuries.AddRange(extraction.Injuries);
+                    currentProfile.Restrictions.AddRange(extraction.Restrictions);
+                    currentProfile.Medications.AddRange(extraction.Medications);
+
+                    // Distinct
+                    currentProfile.Conditions = currentProfile.Conditions.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    currentProfile.Allergies = currentProfile.Allergies.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    currentProfile.Injuries = currentProfile.Injuries.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    currentProfile.Restrictions = currentProfile.Restrictions.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    currentProfile.Medications = currentProfile.Medications.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+                    profile.HealthProfileJson = JsonSerializer.Serialize(currentProfile);
+
+                    // Sync to legacy fields for backward compatibility
+                    if (currentProfile.Conditions.Any() || currentProfile.Allergies.Any() || currentProfile.Medications.Any())
+                    {
+                        var allHealth = currentProfile.Conditions.Concat(currentProfile.Allergies).Concat(currentProfile.Medications);
+                        profile.HealthConditions = string.Join(", ", allHealth);
+                    }
+                    if (currentProfile.Injuries.Any())
+                    {
+                        profile.Injuries = string.Join(", ", currentProfile.Injuries);
+                    }
+                    if (currentProfile.Restrictions.Any())
+                    {
+                        profile.DietaryRestrictions = string.Join(", ", currentProfile.Restrictions);
+                    }
+
+                    _context.MemberProfiles.Update(profile);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to save health context for member profile {MemberProfileId}", profile.Id);
+                }
+            }
+
             var memberName = GetMemberFirstName(profile);
 
             string reply;
@@ -286,7 +289,9 @@ namespace ArenaInfrastructure.AI
                 reply = reply.Replace(planDataMatch.Value, "").TrimEnd();
             }
 
-            reply = TruncateForStorage(FormatUserVisibleReply(reply, intent?.Intent, isArabic));
+            reply = FormatUserVisibleReply(reply, intent?.Intent, isArabic);
+            reply = await EnsureLanguageConsistencyAsync(reply, isArabic);
+            reply = TruncateForStorage(reply);
 
             // ✅ Step 6 — Save AI reply
             _context.ChatMessages.Add(new ChatMessage
@@ -553,34 +558,10 @@ namespace ArenaInfrastructure.AI
 
             switch (intent?.Intent)
             {
+                case "RETRIEVE_HEALTH_INFORMATION":
                 case "GET_USER_INJURIES":
                     {
-                        var injuries = !string.IsNullOrWhiteSpace(profile.Injuries) ? profile.Injuries : null;
-                        var conditions = !string.IsNullOrWhiteSpace(profile.HealthConditions) ? profile.HealthConditions : null;
-
-                        if (injuries == null && conditions == null)
-                        {
-                            return isArabic
-                                ? "🩺 ليس لديك أي إصابات أو مشاكل صحية مسجلة حالياً."
-                                : "🩺 You have no registered injuries or medical conditions currently.";
-                        }
-
-                        var sb = new StringBuilder();
-                        if (isArabic)
-                        {
-                            sb.AppendLine("📋 حالتك الصحية والإصابات المسجلة عندي:");
-                            sb.AppendLine();
-                            sb.AppendLine($"• **الإصابات:** {injuries ?? "لا يوجد"}");
-                            sb.AppendLine($"• **المشاكل الصحية:** {conditions ?? "لا يوجد"}");
-                        }
-                        else
-                        {
-                            sb.AppendLine("📋 Your registered injuries and health conditions:");
-                            sb.AppendLine();
-                            sb.AppendLine($"• **Injuries:** {injuries ?? "None"}");
-                            sb.AppendLine($"• **Medical Conditions:** {conditions ?? "None"}");
-                        }
-                        return sb.ToString().Trim();
+                        return await GenerateUnifiedHealthProfileResponseAsync(profile, isArabic);
                     }
 
                 case "GET_ACTIVE_PLAN":
@@ -1559,7 +1540,8 @@ namespace ArenaInfrastructure.AI
                 "GET_WORKOUT_SUMMARY" => "GET_WORKOUT_SUMMARY",
                 "GET_WORKOUT_EXERCISES" => "GET_WORKOUT_EXERCISES",
                 "GET_WORKOUT_SCHEDULE" => "GET_WORKOUT_SCHEDULE",
-                "GET_USER_INJURIES" => "GET_USER_INJURIES",
+                "GET_USER_INJURIES" => "RETRIEVE_HEALTH_INFORMATION",
+                "RETRIEVE_HEALTH_INFORMATION" => "RETRIEVE_HEALTH_INFORMATION",
                 "GET_ACTIVE_PLAN" => "GET_ACTIVE_PLAN",
                 _ => string.IsNullOrWhiteSpace(normalized) ? "chat" : normalized
             };
@@ -1651,16 +1633,16 @@ namespace ArenaInfrastructure.AI
 
             var cleaned = Regex.Replace(reply, @"<PLAN_DATA>\s*{.*?}\s*</PLAN_DATA>", string.Empty, RegexOptions.Singleline).Trim();
 
-            if (cleaned.Contains("\"foodPlan\"", StringComparison.OrdinalIgnoreCase))
-                return FormatNutritionJsonReply(cleaned, true);
+            if (cleaned.Contains("foodPlan", StringComparison.OrdinalIgnoreCase))
+                return FormatNutritionJsonReply(cleaned, isArabic);
 
             if (LooksLikeJson(cleaned))
             {
-                if (intent == "food_analysis" || cleaned.Contains("\"foodPlan\"", StringComparison.OrdinalIgnoreCase))
-                    return FormatNutritionJsonReply(cleaned, true);
+                if (intent == "food_analysis" || cleaned.Contains("foodPlan", StringComparison.OrdinalIgnoreCase))
+                    return FormatNutritionJsonReply(cleaned, isArabic);
 
                 return isArabic
-                    ? "\u062a\u0645\u0627\u0645\u060c \u062d\u0644\u0644\u062a \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0648\u062c\u0647\u0632\u062a \u0644\u0643 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0628\u0634\u0643\u0644 \u0648\u0627\u0636\u062d. \u0644\u0648 \u062d\u0627\u0628\u0628 \u062a\u0641\u0627\u0635\u064a\u0644 \u0623\u0643\u062b\u0631\u060c \u0627\u0633\u0623\u0644\u0646\u064a \u0639\u0646 \u0623\u064a \u062c\u0632\u0621."
+                    ? "تمام، حللت البيانات وجهزت لك النتيجة بشكل واضح. لو حابب تفاصيل أكثر، اسألني عن أي جزء."
                     : "I processed the result and can walk you through any part in simple terms.";
             }
 
@@ -1674,7 +1656,7 @@ namespace ArenaInfrastructure.AI
                    (trimmed.StartsWith("[") && trimmed.EndsWith("]"));
         }
 
-        private static string FormatNutritionJsonReply(string rawReply, bool forceArabic)
+        private static string FormatNutritionJsonReply(string rawReply, bool isArabic)
         {
             var clean = ExtractJsonObject(rawReply);
             try
@@ -1682,43 +1664,79 @@ namespace ArenaInfrastructure.AI
                 using var doc = JsonDocument.Parse(clean);
                 var root = doc.RootElement;
                 if (!root.TryGetProperty("foodPlan", out var foodPlan) || foodPlan.ValueKind != JsonValueKind.Array)
-                    return BuildJsonBlockedFallback();
+                    return isArabic ? "عذراً، لم أتمكن من معالجة خطة التغذية." : "Sorry, I could not process the nutrition plan.";
 
                 var sb = new StringBuilder();
-                AppendMealSection(sb, "\ud83c\udf73 \u0627\u0644\u0641\u0637\u0627\u0631", foodPlan, "breakfast");
-                AppendMealSection(sb, "\ud83c\udf57 \u0627\u0644\u063a\u062f\u0627\u0621", foodPlan, "lunch");
-                AppendMealSection(sb, "\ud83c\udfcb\ufe0f \u0642\u0628\u0644 \u0627\u0644\u062a\u0645\u0631\u064a\u0646", foodPlan, "pre-workout");
-                AppendMealSection(sb, "\ud83d\udcaa \u0628\u0639\u062f \u0627\u0644\u062a\u0645\u0631\u064a\u0646", foodPlan, "post-workout");
-
-                if (sb.Length == 0)
-                    AppendMealSection(sb, "\ud83c\udf7d\ufe0f \u0627\u0644\u0648\u062c\u0628\u0629 \u0627\u0644\u0645\u0642\u062a\u0631\u062d\u0629", foodPlan, null);
-
-                if (root.TryGetProperty("totals", out var totals))
+                if (isArabic)
                 {
-                    sb.AppendLine("\ud83d\udcca \u0645\u0644\u062e\u0635 \u0627\u0644\u064a\u0648\u0645");
-                    sb.AppendLine($"\u0627\u0644\u0633\u0639\u0631\u0627\u062a: {GetNumber(totals, "calories")} \u0633\u0639\u0631");
-                    sb.AppendLine($"\u0627\u0644\u0628\u0631\u0648\u062a\u064a\u0646: {GetNumber(totals, "proteinGrams")} \u062c\u0631\u0627\u0645");
-                    sb.AppendLine($"\u0627\u0644\u0643\u0627\u0631\u0628\u0648\u0647\u064a\u062f\u0631\u0627\u062a: {GetNumber(totals, "carbsGrams")} \u062c\u0631\u0627\u0645");
-                    sb.AppendLine($"\u0627\u0644\u062f\u0647\u0648\u0646: {GetNumber(totals, "fatGrams")} \u062c\u0631\u0627\u0645");
-                    sb.AppendLine();
+                    AppendMealSection(sb, "🍳 الفطار", foodPlan, "breakfast", true);
+                    AppendMealSection(sb, "🍗 الغداء", foodPlan, "lunch", true);
+                    AppendMealSection(sb, "🏋️ قبل التمرين", foodPlan, "pre-workout", true);
+                    AppendMealSection(sb, "💪 بعد التمرين", foodPlan, "post-workout", true);
+
+                    if (sb.Length == 0)
+                        AppendMealSection(sb, "🍽️ الوجبة المقترحة", foodPlan, null, true);
+
+                    if (root.TryGetProperty("totals", out var totals))
+                    {
+                        sb.AppendLine("📊 ملخص اليوم");
+                        sb.AppendLine($"السعرات: {GetNumber(totals, "calories")} سعر");
+                        sb.AppendLine($"البروتين: {GetNumber(totals, "proteinGrams")} جرام");
+                        sb.AppendLine($"الكربوهيدرات: {GetNumber(totals, "carbsGrams")} جرام");
+                        sb.AppendLine($"الدهون: {GetNumber(totals, "fatGrams")} جرام");
+                        sb.AppendLine();
+                    }
+
+                    sb.AppendLine("💡 توصية الكوتش");
+                }
+                else
+                {
+                    AppendMealSection(sb, "🍳 Breakfast", foodPlan, "breakfast", false);
+                    AppendMealSection(sb, "🍗 Lunch", foodPlan, "lunch", false);
+                    AppendMealSection(sb, "🏋️ Pre-Workout", foodPlan, "pre-workout", false);
+                    AppendMealSection(sb, "💪 Post-Workout", foodPlan, "post-workout", false);
+
+                    if (sb.Length == 0)
+                        AppendMealSection(sb, "🍽️ Suggested Meal", foodPlan, null, false);
+
+                    if (root.TryGetProperty("totals", out var totals))
+                    {
+                        sb.AppendLine("📊 Daily Summary");
+                        sb.AppendLine($"Calories: {GetNumber(totals, "calories")} kcal");
+                        sb.AppendLine($"Protein: {GetNumber(totals, "proteinGrams")} g");
+                        sb.AppendLine($"Carbs: {GetNumber(totals, "carbsGrams")} g");
+                        sb.AppendLine($"Fat: {GetNumber(totals, "fatGrams")} g");
+                        sb.AppendLine();
+                    }
+
+                    sb.AppendLine("💡 Coach Recommendation");
                 }
 
-                sb.AppendLine("\ud83d\udca1 \u062a\u0648\u0635\u064a\u0629 \u0627\u0644\u0643\u0648\u062a\u0634");
                 if (root.TryGetProperty("sufficiencyAssessment", out var assessment) &&
                     assessment.TryGetProperty("summary", out var summary))
-                    sb.AppendLine(summary.GetString());
+                {
+                    var summaryText = summary.GetString() ?? "";
+                    if (isArabic)
+                        summaryText = WorkoutLocalization.TranslatePhrase(summaryText);
+                    sb.AppendLine(summaryText);
+                }
 
                 if (root.TryGetProperty("recommendations", out var recommendations) && recommendations.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var item in recommendations.EnumerateArray())
-                        sb.AppendLine($"- {item.GetString()}");
+                    {
+                        var recText = item.GetString() ?? "";
+                        if (isArabic)
+                            recText = WorkoutLocalization.TranslatePhrase(recText);
+                        sb.AppendLine($"- {recText}");
+                    }
                 }
 
                 return sb.ToString().Trim();
             }
             catch
             {
-                return BuildJsonBlockedFallback();
+                return isArabic ? "عذراً، لم أتمكن من معالجة خطة التغذية." : "Sorry, I could not process the nutrition plan.";
             }
         }
 
@@ -1738,12 +1756,12 @@ namespace ArenaInfrastructure.AI
         private static string BuildJsonBlockedFallback() =>
             "\u062d\u0644\u0644\u062a \u0627\u0644\u0623\u0643\u0644 \u0644\u0643\u060c \u0628\u0633 \u0645\u062d\u062a\u0627\u062c \u0623\u0639\u064a\u062f \u0635\u064a\u0627\u063a\u0629 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0628\u0634\u0643\u0644 \u0623\u0648\u0636\u062d. \u0642\u0648\u0644\u064a \u0627\u0644\u0623\u0643\u0644 \u0627\u0644\u0645\u062a\u0627\u062d \u0639\u0646\u062f\u0643 \u0648\u0647\u0623\u0631\u062a\u0628\u0647 \u0644\u0643 \u0643\u0648\u062c\u0628\u0629 \u0639\u0631\u0628\u064a\u0629 \u0648\u0627\u0636\u062d\u0629.";
 
-        private static void AppendMealSection(StringBuilder sb, string title, JsonElement foodPlan, string? mealKey)
+        private static void AppendMealSection(StringBuilder sb, string title, JsonElement foodPlan, string? mealKey, bool isArabic)
         {
             var items = foodPlan.EnumerateArray()
                 .Where(item => mealKey == null ||
                                (item.TryGetProperty("mealTiming", out var timing) &&
-                                timing.GetString()?.Contains(mealKey, StringComparison.OrdinalIgnoreCase) == true))
+                                 timing.GetString()?.Contains(mealKey, StringComparison.OrdinalIgnoreCase) == true))
                 .ToList();
 
             if (items.Count == 0)
@@ -1752,9 +1770,28 @@ namespace ArenaInfrastructure.AI
             sb.AppendLine(title);
             foreach (var item in items)
             {
-                sb.AppendLine($"{GetString(item, "foodName")} - {GetString(item, "recommendedAmount")}");
-                sb.AppendLine($"\u0627\u0644\u0637\u0631\u064a\u0642\u0629: {GetString(item, "reason")}");
-                sb.AppendLine($"\u0627\u0644\u0633\u0639\u0631\u0627\u062a: {GetNumber(item, "calories")} | \u0628\u0631\u0648\u062a\u064a\u0646: {GetNumber(item, "proteinGrams")}g | \u0643\u0627\u0631\u0628: {GetNumber(item, "carbsGrams")}g");
+                var foodName = GetString(item, "foodName");
+                var recommendedAmount = GetString(item, "recommendedAmount");
+                var reason = GetString(item, "reason");
+
+                if (isArabic)
+                {
+                    foodName = WorkoutLocalization.TranslatePhrase(foodName);
+                    recommendedAmount = WorkoutLocalization.TranslatePhrase(recommendedAmount);
+                    reason = WorkoutLocalization.TranslatePhrase(reason);
+                }
+
+                sb.AppendLine($"{foodName} - {recommendedAmount}");
+                if (isArabic)
+                {
+                    sb.AppendLine($"الطريقة: {reason}");
+                    sb.AppendLine($"السعرات: {GetNumber(item, "calories")} سعر | بروتين: {GetNumber(item, "proteinGrams")} جم | كارب: {GetNumber(item, "carbsGrams")} جم | دهون: {GetNumber(item, "fatGrams")} جم");
+                }
+                else
+                {
+                    sb.AppendLine($"Instructions: {reason}");
+                    sb.AppendLine($"Calories: {GetNumber(item, "calories")} kcal | Protein: {GetNumber(item, "proteinGrams")}g | Carbs: {GetNumber(item, "carbsGrams")}g | Fat: {GetNumber(item, "fatGrams")}g");
+                }
             }
             sb.AppendLine("---");
         }
@@ -2342,8 +2379,8 @@ namespace ArenaInfrastructure.AI
         private static string GetLanguageInstruction(bool isArabic, string userMessage)
         {
             return isArabic
-                ? "Target language: Arabic. Use natural Arabic matching the user's tone. Do not switch to English except for unavoidable exercise or nutrition terms."
-                : "Target language: English. Use clear professional English. Do not switch to Arabic.";
+                ? "language = Arabic. Respond ONLY in Arabic. You must produce a 100% Arabic response. Do not use English words or characters unless they are universally recognized brand names."
+                : "language = English. Respond ONLY in English. You must produce a 100% English response. Do not use Arabic words or characters.";
         }
 
         private static string CombineHealthConditions(string? profileHealthConditions, string healthContext)
@@ -2368,6 +2405,122 @@ namespace ArenaInfrastructure.AI
             === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
             {healthContext}
             """;
+        }
+
+        private async Task<string> EnsureLanguageConsistencyAsync(string reply, bool isArabic)
+        {
+            if (string.IsNullOrWhiteSpace(reply))
+                return reply;
+
+            // Check if there is a mixed language issue
+            bool hasArabic = reply.Any(c => c >= 0x0600 && c <= 0x06FF);
+            // Count English letters
+            int englishLetterCount = reply.Count(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
+            
+            bool hasMixedLanguage = (isArabic && englishLetterCount > 50) || (!isArabic && hasArabic);
+
+            if (!hasMixedLanguage)
+                return reply;
+
+            _logger.LogInformation("Mixed language detected. Enforcing strict language consistency...");
+
+            var prompt = $$"""
+You are a language synchronization layer for an AI fitness system.
+The target language is: {{(isArabic ? "Arabic (100% Arabic, no English except universally recognized brand names like Gym, barbell, dumbbells)" : "English (100% English, zero Arabic)")}}.
+
+The following text contains mixed languages. You must translate any text in the wrong language and output the entire text fully and natively in the target language. Preserve the original emojis, structure, and formatting.
+
+Mixed Text:
+{{reply}}
+
+Output the localized version ONLY. No explanations, no markdown blocks.
+""";
+
+            try
+            {
+                var cleanReply = await _gemini.GetCompletionAsync(prompt, new List<ChatMessageDto>(), reply);
+                if (!string.IsNullOrWhiteSpace(cleanReply))
+                {
+                    return cleanReply.Trim();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clean mixed language reply. Returning original.");
+            }
+            return reply;
+        }
+
+        private async Task<string> GenerateUnifiedHealthProfileResponseAsync(
+            ArenaDomain.Entities.MemberProfile profile,
+            bool isArabic)
+        {
+            var currentProfile = new HealthProfileDto();
+            if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+            {
+                try
+                {
+                    currentProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
+                }
+                catch { }
+            }
+
+            // Sync from legacy fields to be completely safe
+            var injuries = string.IsNullOrWhiteSpace(profile.Injuries)
+                ? new List<string>()
+                : profile.Injuries.Split(new[] { ',', ';', '.' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+            var conditions = string.IsNullOrWhiteSpace(profile.HealthConditions)
+                ? new List<string>()
+                : profile.HealthConditions.Split(new[] { ',', ';', '.' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+            var restrictions = string.IsNullOrWhiteSpace(profile.DietaryRestrictions)
+                ? new List<string>()
+                : profile.DietaryRestrictions.Split(new[] { ',', ';', '.' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+
+            currentProfile.Injuries = currentProfile.Injuries.Concat(injuries).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            currentProfile.Conditions = currentProfile.Conditions.Concat(conditions).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            currentProfile.Restrictions = currentProfile.Restrictions.Concat(restrictions).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("=== MEMBER HEALTH PROFILE ===");
+            sb.AppendLine($"- Injuries/Limitations: {(currentProfile.Injuries.Any() ? string.Join(", ", currentProfile.Injuries) : "None")}");
+            sb.AppendLine($"- Diseases/Conditions: {(currentProfile.Conditions.Any() ? string.Join(", ", currentProfile.Conditions) : "None")}");
+            sb.AppendLine($"- Allergies: {(currentProfile.Allergies.Any() ? string.Join(", ", currentProfile.Allergies) : "None")}");
+            sb.AppendLine($"- Dietary Restrictions: {(currentProfile.Restrictions.Any() ? string.Join(", ", currentProfile.Restrictions) : "None")}");
+            sb.AppendLine($"- Medications: {(currentProfile.Medications.Any() ? string.Join(", ", currentProfile.Medications) : "None")}");
+
+            var prompt = $"""
+You are a professional clinical fitness assistant.
+Generate a structured, detailed health report in English for the member based on their profile.
+Include:
+- Stored conditions/injuries/allergies
+- A brief medical/fitness explanation for each condition
+- Safety recommendations and physical limitations for workouts and nutrition
+
+Member Health Profile:
+{sb}
+
+Be clear, supportive, and professional.
+""";
+
+            var englishReport = await _gemini.GetCompletionAsync(prompt, new List<ChatMessageDto>(), "Generate Report");
+
+            if (isArabic)
+            {
+                var translationPrompt = $"""
+You are a professional medical translator for a fitness app.
+Translate the following detailed health report into natural, friendly, and motivating Arabic.
+Keep the exact same layout, sections, safety warnings, and information. Translate medical conditions accurately (e.g. Anterior Cruciate Ligament (ACL) Injury -> إصابة الرباط الصليبي الأمامي, Lactose Intolerance -> عدم تحمل اللاكتوز).
+
+Report to translate:
+{englishReport}
+
+Output the Arabic translation ONLY. No extra explanation text.
+""";
+                var arabicReport = await _gemini.GetCompletionAsync(translationPrompt, new List<ChatMessageDto>(), "Translate Report");
+                return arabicReport.Trim();
+            }
+
+            return englishReport.Trim();
         }
 
         // ✅ Get all conversations for member

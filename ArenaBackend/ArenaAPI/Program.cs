@@ -232,13 +232,12 @@ namespace ArenaAPI
                     service => service.ProcessNoShowPenaltiesAsync(CancellationToken.None),
                     Cron.Minutely());
 
-                // ── Init pgvector schema on Neon (idempotent) ────────────
-                // Creates the MemberHealthVectors table + HNSW index if they don't exist.
-                var vectorStore = scope.ServiceProvider.GetService<NeonVectorStore>();
-                if (vectorStore != null)
+                // ── Init RAG schema in SQL Server (idempotent) ────────────
+                var healthRAG = scope.ServiceProvider.GetService<IMemberHealthRAGService>();
+                if (healthRAG != null)
                 {
-                    try { await vectorStore.EnsureSchemaAsync(); }
-                    catch (Exception ex) { Console.WriteLine($"[VectorStore] Schema init failed: {ex.Message}"); }
+                    try { await healthRAG.EnsureSchemaAsync(); }
+                    catch (Exception ex) { Console.WriteLine($"[HealthRAG] SQL Server schema init failed: {ex.Message}"); }
                 }
             }
 
