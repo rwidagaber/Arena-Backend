@@ -73,11 +73,16 @@ namespace ArenaApplication.Services
                 .Select(a => a.CheckInTime!.Value)
                 .ToListAsync();
 
-            var localCheckInHours = checkInsUtc
+            var localCheckIns = checkInsUtc
                 .Select(t => DateTime.SpecifyKind(t, DateTimeKind.Utc) + _localOffset)
                 .Where(t => ToWorkingDay(t.DayOfWeek) == workingDay)
-                .Select(t => t.Hour)
                 .ToList();
+
+            // How many distinct past dates of this weekday we actually observed. Used to turn a
+            // raw all-time check-in count into a typical single-day figure so it lines up with
+            // the target date's booking count instead of dwarfing it. Never divide by zero.
+            var weeksObserved = Math.Max(1, localCheckIns.Select(t => t.Date).Distinct().Count());
+            var localCheckInHours = localCheckIns.Select(t => t.Hour).ToList();
 
             // Only confirmed bookings on the target date consume capacity (cancelled,
             // pending, expired, etc. are not counted toward crowd/traffic).
@@ -103,7 +108,9 @@ namespace ArenaApplication.Services
             {
                 // Hours past midnight wrap back into 0-23 for crowd matching and display.
                 var slotHour = hour % 24;
-                var checkInCount = localCheckInHours.Count(h => h == slotHour);
+                // Typical check-ins for this hour on this weekday (historical average, rounded)
+                // so it sits on the same scale as a single target-day's bookings.
+                var checkInCount = (int)Math.Round((double)localCheckInHours.Count(h => h == slotHour) / weeksObserved);
                 var bookingCount = bookingHours.Count(s => s.Hours == slotHour);
                 dto.Slots.Add(new OccupancySlotDto
                 {
@@ -116,10 +123,10 @@ namespace ArenaApplication.Services
                 });
             }
 
-            var max = dto.Slots.Count > 0 ? dto.Slots.Max(s => s.Total) : 0;
             foreach (var slot in dto.Slots)
-                // Over-capacity spots are always High (red); otherwise rank relative to the busiest hour.
-                slot.Level = slot.OverCapacity ? "High" : ComputeLevel(slot.Total, max);
+                // Over-capacity spots are always High (red); otherwise grade against slot capacity
+                // in absolute terms, so a quiet day never paints its busiest-but-empty hour red.
+                slot.Level = slot.OverCapacity ? "High" : ComputeLevel(slot.Total);
 
             return Result<DayOccupancyDto>.Success(dto);
         }
@@ -218,10 +225,13 @@ namespace ArenaApplication.Services
             return $"{h} {period}";
         }
 
-        private static string ComputeLevel(int total, int max)
+        // Absolute crowd level for one hour, measured against slot capacity (SlotCapacity = full).
+        // Low: up to ~1/3 full, Medium: up to ~2/3 full, High: busier than that. This replaces the
+        // old relative-to-peak scaling, which mislabeled the busiest hour of a quiet day as packed.
+        private static string ComputeLevel(int total)
         {
-            if (max <= 0 || total == 0) return "Low";
-            var ratio = (double)total / max;
+            if (total <= 0) return "Low";
+            var ratio = (double)total / SlotCapacity;
             if (ratio <= 0.34) return "Low";
             if (ratio <= 0.67) return "Medium";
             return "High";
