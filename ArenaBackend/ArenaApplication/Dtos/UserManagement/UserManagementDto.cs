@@ -20,5 +20,7 @@ namespace ArenaApplication.Dtos.UserManagement
         /// Subscription status: Active, Expired, or null if no subscription
         /// </summary>
         public SubscriptionStatus? SubscriptionStatus { get; set; } = null;
+        public bool IsManualActive { get; set; }
+        public bool IsManualExpiredOrCancelled { get; set; }
     }
 }

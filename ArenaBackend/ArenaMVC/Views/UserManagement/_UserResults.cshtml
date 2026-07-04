@@ -46,34 +46,57 @@
                                     <span class="user-badge badge-crimson">@Localizer["Inactive"]</span>
                                 }
                             </td>
-                            <td data-label="@Localizer["Member"]" class="user-member-cell">
-                                @if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ActiveMembership)
-                                {
-                                    <span class="user-badge badge-blue">@Localizer["ActiveMembership"]</span>
-                                }
-                                else if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ExpiredMembership)
-                                {
-                                    <span class="user-badge badge-amber-warm">@Localizer["ExpiredMembership"]</span>
-                                }
-                                else
-                                {
-                                    <span class="user-badge badge-gray">@Localizer["User"]</span>
-                                }
-                            </td>
-                            <td data-label="@Localizer["SubscriptionStatus"]" class="user-subscription-cell">
-                                @if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Active)
-                                {
-                                    <span class="user-badge badge-emerald">@Localizer["Active"]</span>
-                                }
-                                else if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
-                                {
-                                    <span class="user-badge badge-orange">@Localizer["Expired"]</span>
-                                }
-                                else
-                                {
-                                    <span class="user-badge badge-gray">@Localizer["NoSubscription"]</span>
-                                }
-                            </td>
+                             <td data-label="@Localizer["Member"]" class="user-member-cell">
+                                 @if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ActiveMembership)
+                                 {
+                                     <span class="user-badge badge-blue">@Localizer["ActiveMembership"]</span>
+                                 }
+                                 else if (user.IsMember == ArenaDomain.Enums.MembershipStatus.ExpiredMembership)
+                                 {
+                                     @if (user.IsManualExpiredOrCancelled)
+                                     {
+                                         <span class="user-badge badge-amber-warm">@Localizer["ExpiredManual"]</span>
+                                     }
+                                     else
+                                     {
+                                         <span class="user-badge badge-amber-warm">@Localizer["ExpiredMembership"]</span>
+                                     }
+                                 }
+                                 else
+                                 {
+                                     <span class="user-badge badge-gray">@Localizer["User"]</span>
+                                 }
+                             </td>
+                             <td data-label="@Localizer["SubscriptionStatus"]" class="user-subscription-cell">
+                                  @if (user.IsManualActive)
+                                  {
+                                      <span class="user-badge badge-emerald">@Localizer["ManualActive"]</span>
+                                  }
+                                  else if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Active)
+                                  {
+                                      <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                                  }
+                                  else if (user.IsManualExpiredOrCancelled && user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Cancelled)
+                                  {
+                                      <span class="user-badge badge-crimson">@Localizer["CancelledManual"]</span>
+                                  }
+                                  else if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Cancelled)
+                                  {
+                                      <span class="user-badge badge-crimson">@Localizer["Cancelled"]</span>
+                                  }
+                                  else if (user.IsManualExpiredOrCancelled && user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
+                                  {
+                                      <span class="user-badge badge-orange">@Localizer["ExpiredManual"]</span>
+                                  }
+                                  else if (user.SubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
+                                  {
+                                      <span class="user-badge badge-orange">@Localizer["Expired"]</span>
+                                  }
+                                  else
+                                  {
+                                      <span class="user-badge badge-gray">@Localizer["NoSubscription"]</span>
+                                  }
+                              </td>
                             <td data-label="@Localizer["Actions"]" class="user-actions-cell">
                                 <div class="d-flex justify-content-center gap-2 align-items-center actions-cell">
                                     <a href="@Url.Action("Details", "UserManagement", new { id = user.Id })" class="action-icon-btn btn-action-view" data-tooltip="@Localizer["ViewDetails"]">

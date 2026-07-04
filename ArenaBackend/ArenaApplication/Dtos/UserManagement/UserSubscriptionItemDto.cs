@@ -11,5 +11,6 @@ namespace ArenaApplication.Dtos.UserManagement
         public int RemainingSessions { get; set; }
         public int DurationDays { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsManualActive { get; set; }
     }
 }

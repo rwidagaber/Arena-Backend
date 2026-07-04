@@ -46,5 +46,8 @@ namespace ArenaMVC.Models
         /// All subscriptions for the user, ordered by CreatedAt DESC
         /// </summary>
         public List<SubscriptionItemViewModel> SubscriptionHistory { get; set; } = new();
+
+        public bool IsManualActive { get; set; }
+        public bool IsManualExpiredOrCancelled { get; set; }
     }
 }
