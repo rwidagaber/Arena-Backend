@@ -8,8 +8,21 @@
 
 <div class="subscription-admin-container">
 	<div class="subscription-admin-header">
+
+		<div class="row mb-4 align-items-center">
+			<div class="col-md-6">
 		<h1><i data-lucide="clipboard-list" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["SubscriptionPlans"]</h1>
-		<p>@Localizer["SubscriptionPlans"]</p>
+			</div>
+			<div class="col-md-6 text-end d-flex flex-wrap gap-2 justify-content-md-end justify-content-start mt-3 mt-md-0">
+				<button type="button" id="btnManageDiscount" class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1">
+					<i data-lucide="percent" style="width: 18px; height: 18px;"></i> <span id="btnManageDiscountText">@Localizer["ManageDiscount"]</span>
+				</button>
+				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary d-inline-flex align-items-center gap-1">
+					<i data-lucide="plus" style="width: 18px; height: 18px;"></i> @Localizer["CreateNewPlan"]
+				</a>
+			</div>
+		</div>
+				<p style=" margin-bottom: 0;">@Localizer["AvailablePlans"]</p>
 	</div>
 
 	<div class="container-fluid mt-4">
@@ -27,50 +40,69 @@
 			</div>
 		}
 
-		<div class="row mb-4">
-			<div class="col-md-8">
-				<h2 style="color: var(--yellow); margin-bottom: 1.5rem;">@Localizer["AvailablePlans"]</h2>
-			</div>
-			<div class="col-md-4 text-end">
-				<a href="@Url.Action("Create", "SubscriptionPlans")" class="btn btn-subscription-primary d-inline-flex align-items-center gap-1">
-					<i data-lucide="plus" style="width: 18px; height: 18px;"></i> @Localizer["CreateNewPlan"]
-				</a>
-			</div>
-		</div>
-
 		@if (Model != null && Model.Any())
 		{
-			<div class="row">
+			<div class="row" id="plansContainer">
 				@foreach (var plan in Model)
 				{
 					<div class="col-lg-6 col-md-12 mb-4">
-						<div class="subscription-card">
+						<div class="subscription-card @(plan.HasDiscount ? "has-discount" : "")" data-plan-id="@plan.Id">
+							@if (plan.HasDiscount)
+							{
+								<div class="discount-ribbon">@Localizer["Sale"]</div>
+							}
+
 							<div class="subscription-card-header">
-								<h3 class="subscription-card-title">@plan.Name</h3>
-								@if (plan.IsActive)
-								{
-									<span class="subscription-badge d-inline-flex align-items-center gap-1">
-										<i data-lucide="check" style="width: 14px; height: 14px;"></i> @Localizer["Active"]
-									</span>
-								}
-								else
-								{
-									<span class="subscription-badge featured d-inline-flex align-items-center gap-1">
-										<i data-lucide="star" style="width: 14px; height: 14px;"></i> @Localizer["Inactive"]
-									</span>
-								}
+								<div class="d-flex align-items-center gap-2">
+									<!-- Selection Checkbox overlay -->
+									<div class="plan-select-wrapper">
+										<input type="checkbox" class="discount-checkbox-input" value="@plan.Id" />
+									</div>
+									<h3 class="subscription-card-title" style="margin-bottom: 0;">@plan.Name</h3>
+								</div>
+								<div>
+									@if (plan.IsActive)
+									{
+										<span class="subscription-badge d-inline-flex align-items-center gap-1">
+											<i data-lucide="check" style="width: 14px; height: 14px;"></i> @Localizer["Active"]
+										</span>
+									}
+									else
+									{
+										<span class="subscription-badge featured d-inline-flex align-items-center gap-1">
+											<i data-lucide="star" style="width: 14px; height: 14px;"></i> @Localizer["Inactive"]
+										</span>
+									}
+								</div>
 							</div>
 
 							<p style="color: var(--autonomous); margin-bottom: 1rem; line-height: 1.6;">
 								@plan.Description
 							</p>
 
-										@* @CultureHelper.FormatCurrency(plan.Price) *@
 							<div class="subscription-details">
 								<div class="subscription-detail-item">
 									<div class="subscription-detail-label">@Localizer["Price"]</div>
 									<div class="subscription-detail-value">
-										@plan.Price @Localizer["Currency"]
+										@if (plan.HasDiscount)
+										{
+											<span style="text-decoration: line-through; color: var(--autonomous); font-size: 0.9rem; margin-inline-end: 8px;">@plan.Price @Localizer["Currency"]</span>
+											<span style="color: #f59e0b;">@plan.DiscountedPrice.ToString("F2") @Localizer["Currency"]</span>
+											<div>
+												<span class="discount-percentage-badge">@(plan.DiscountPercentage?.ToString("0"))% @Localizer["Off"]</span>
+											</div>
+											@if (plan.DiscountEndDate.HasValue)
+											{
+												<div class="discount-expiry">
+													<i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+													<span>@Localizer["DiscountEnds"]: @plan.DiscountEndDate.Value.ToString("yyyy-MM-dd")</span>
+												</div>
+											}
+										}
+										else
+										{
+											<span>@plan.Price @Localizer["Currency"]</span>
+										}
 									</div>
 								</div>
 								<div class="subscription-detail-item">
@@ -124,8 +156,266 @@
 	</div>
 </div>
 
+<!-- Bulk Actions Floating Toolbar -->
+<div class="discount-toolbar" id="discountToolbar">
+	<div class="discount-toolbar-content">
+		<div class="discount-selected-count">
+			<span id="selectedCount">0</span> @Localizer["Selected"]
+		</div>
+		<div class="discount-toolbar-actions">
+			<button type="button" id="btnToggleSelectAll" class="btn btn-subscription-secondary btn-sm">@Localizer["SelectAll"]</button>
+			<button type="button" id="btnApplyDiscountBulk" class="btn btn-subscription-primary btn-sm" data-bs-toggle="modal" data-bs-target="#discountModal" disabled>
+				<i data-lucide="percent" style="width: 14px; height: 14px;"></i> @Localizer["ApplyDiscount"]
+			</button>
+			<button type="button" id="btnRemoveDiscountBulk" class="btn btn-subscription-danger btn-sm" disabled>
+				<i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> @Localizer["RemoveDiscount"]
+			</button>
+			<button type="button" id="btnCancelDiscountToolbar" class="btn btn-subscription-secondary btn-sm">
+				<i data-lucide="x" style="width: 14px; height: 14px;"></i> @Localizer["Cancel"]
+			</button>
+		</div>
+	</div>
+</div>
+
+<!-- Apply Discount Modal -->
+<div class="modal fade discount-modal" id="discountModal" tabindex="-1" aria-labelledby="discountModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content" style="background-color: var(--card-bg); border: 1px solid var(--border-color); color: var(--whiteout);">
+			<div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+				<h5 class="modal-title" id="discountModalLabel" style="color: var(--yellow); font-weight: 700;">
+					<i data-lucide="percent" style="width: 20px; height: 20px; vertical-align: middle; margin-inline-end: 6px;"></i>
+					@Localizer["ApplyDiscount"]
+				</h5>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<p class="text-muted" style="font-size: 0.9rem;">@Localizer["EnterDiscountDetails"]</p>
+				<div class="subscription-form-group">
+					<label for="modalDiscountPercentage" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["DiscountPercentage"] (1-99)% *</label>
+					<input type="number" id="modalDiscountPercentage" class="form-control" min="1" max="99" placeholder="e.g. 15" required style="background-color: var(--input-bg); color: var(--whiteout); border: 1px solid var(--border-color);" />
+					<div class="text-danger mt-1" id="modalPercentageError" style="display:none; font-size: 0.85rem;">@Localizer["InvalidDiscountPercentage"]</div>
+				</div>
+				<div class="subscription-form-group mt-3">
+					<label for="modalDiscountEndDate" style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["DiscountEndDate"] (@Localizer["Optional"])</label>
+					<input type="date" id="modalDiscountEndDate" class="form-control" style="background-color: var(--input-bg); color: var(--whiteout); border: 1px solid var(--border-color);" />
+				</div>
+			</div>
+			<div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+				<button type="button" class="btn btn-subscription-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+				<button type="button" id="btnSubmitDiscount" class="btn btn-subscription-primary">@Localizer["ApplyDiscount"]</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Remove Discount Confirmation Modal -->
+<div class="modal fade modal-dark" id="confirmDeleteDiscountModal" tabindex="-1" aria-labelledby="confirmDeleteDiscountModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content" style="background-color: var(--card-bg); border: 1px solid var(--border-color); color: var(--whiteout);">
+			<div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+				<h5 class="modal-title d-inline-flex align-items-center gap-2" id="confirmDeleteDiscountModalLabel" style="color: #ef4444; font-weight: 700;">
+					<i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: #ef4444;"></i>
+					@Localizer["ConfirmDeletion"]
+				</h5>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				@Localizer["AreYouSureDeleteDiscount"]
+			</div>
+			<div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+				<button type="button" class="btn btn-subscription-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+				<button type="button" id="btnConfirmRemoveDiscount" class="btn btn-subscription-danger" style="height: 38px;">@Localizer["Confirm"]</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Forms for Submission -->
+<form id="applyDiscountForm" method="post" action="@Url.Action("ApplyDiscount", "SubscriptionPlans")" style="display:none;">
+	<div id="applyDiscountInputs"></div>
+	<input type="hidden" name="discountPercentage" id="applyDiscountPercentage" />
+	<input type="hidden" name="endDate" id="applyDiscountEndDate" />
+</form>
+
+<form id="removeDiscountForm" method="post" action="@Url.Action("RemoveDiscount", "SubscriptionPlans")" style="display:none;">
+	<div id="removeDiscountInputs"></div>
+</form>
+
 @section Scripts {
 	<script>
-		// Add any future JavaScript logic here
+		document.addEventListener('DOMContentLoaded', function () {
+			const btnManageDiscount = document.getElementById('btnManageDiscount');
+			const btnManageDiscountText = document.getElementById('btnManageDiscountText');
+			const plansContainer = document.getElementById('plansContainer');
+			const discountToolbar = document.getElementById('discountToolbar');
+			const selectedCount = document.getElementById('selectedCount');
+			const btnToggleSelectAll = document.getElementById('btnToggleSelectAll');
+			const btnApplyDiscountBulk = document.getElementById('btnApplyDiscountBulk');
+			const btnRemoveDiscountBulk = document.getElementById('btnRemoveDiscountBulk');
+			const btnCancelDiscountToolbar = document.getElementById('btnCancelDiscountToolbar');
+
+			const modalDiscountPercentage = document.getElementById('modalDiscountPercentage');
+			const modalDiscountEndDate = document.getElementById('modalDiscountEndDate');
+			const modalPercentageError = document.getElementById('modalPercentageError');
+			const btnSubmitDiscount = document.getElementById('btnSubmitDiscount');
+
+			const confirmDeleteDiscountModalEl = document.getElementById('confirmDeleteDiscountModal');
+			const confirmDeleteDiscountModal = new bootstrap.Modal(confirmDeleteDiscountModalEl);
+			const btnConfirmRemoveDiscount = document.getElementById('btnConfirmRemoveDiscount');
+
+			const applyDiscountForm = document.getElementById('applyDiscountForm');
+			const applyDiscountInputs = document.getElementById('applyDiscountInputs');
+			const applyDiscountPercentage = document.getElementById('applyDiscountPercentage');
+			const applyDiscountEndDate = document.getElementById('applyDiscountEndDate');
+
+			const removeDiscountForm = document.getElementById('removeDiscountForm');
+			const removeDiscountInputs = document.getElementById('removeDiscountInputs');
+
+			let isSelectionMode = false;
+
+			// Toggle Selection Mode
+			btnManageDiscount.addEventListener('click', function () {
+				isSelectionMode = !isSelectionMode;
+				if (isSelectionMode) {
+					plansContainer.classList.add('selection-mode-active');
+					discountToolbar.classList.add('show');
+					btnManageDiscountText.textContent = "@Localizer["Cancel"]";
+					btnManageDiscount.classList.remove('btn-subscription-secondary');
+					btnManageDiscount.classList.add('btn-subscription-danger');
+				} else {
+					exitSelectionMode();
+				}
+			});
+
+			btnCancelDiscountToolbar.addEventListener('click', exitSelectionMode);
+
+			function exitSelectionMode() {
+				isSelectionMode = false;
+				plansContainer.classList.remove('selection-mode-active');
+				discountToolbar.classList.remove('show');
+				btnManageDiscountText.textContent = "@Localizer["ManageDiscount"]";
+				btnManageDiscount.classList.remove('btn-subscription-danger');
+				btnManageDiscount.classList.add('btn-subscription-secondary');
+
+				// Reset checkboxes and card styling
+				document.querySelectorAll('.discount-checkbox-input').forEach(cb => {
+					cb.checked = false;
+				});
+				document.querySelectorAll('.subscription-card').forEach(card => {
+					card.classList.remove('card-selected');
+				});
+				updateSelectedCount();
+			}
+
+			// Handle Card Clicks
+			document.querySelectorAll('.subscription-card').forEach(card => {
+				card.addEventListener('click', function (e) {
+					if (!isSelectionMode) return;
+
+					// If click was on edit/delete actions, don't trigger selection
+					if (e.target.closest('.subscription-actions')) return;
+
+					const checkbox = card.querySelector('.discount-checkbox-input');
+					// Toggle if the click wasn't directly on the checkbox (to avoid double toggle)
+					if (e.target !== checkbox) {
+						checkbox.checked = !checkbox.checked;
+					}
+
+					if (checkbox.checked) {
+						card.classList.add('card-selected');
+					} else {
+						card.classList.remove('card-selected');
+					}
+
+					updateSelectedCount();
+				});
+			});
+
+			// Update Toolbar state
+			function updateSelectedCount() {
+				const checkedBoxes = document.querySelectorAll('.discount-checkbox-input:checked');
+				selectedCount.textContent = checkedBoxes.length;
+
+				if (checkedBoxes.length > 0) {
+					btnApplyDiscountBulk.removeAttribute('disabled');
+					btnRemoveDiscountBulk.removeAttribute('disabled');
+				} else {
+					btnApplyDiscountBulk.setAttribute('disabled', 'true');
+					btnRemoveDiscountBulk.setAttribute('disabled', 'true');
+				}
+
+				const allCheckboxes = document.querySelectorAll('.discount-checkbox-input');
+				if (checkedBoxes.length === allCheckboxes.length && allCheckboxes.length > 0) {
+					btnToggleSelectAll.textContent = "@Localizer["DeselectAll"]";
+				} else {
+					btnToggleSelectAll.textContent = "@Localizer["SelectAll"]";
+				}
+			}
+
+			// Toggle Select All
+			btnToggleSelectAll.addEventListener('click', function () {
+				const allCheckboxes = document.querySelectorAll('.discount-checkbox-input');
+				const checkedBoxes = document.querySelectorAll('.discount-checkbox-input:checked');
+				const shouldSelectAll = checkedBoxes.length < allCheckboxes.length;
+
+				allCheckboxes.forEach(cb => {
+					cb.checked = shouldSelectAll;
+					const card = cb.closest('.subscription-card');
+					if (shouldSelectAll) {
+						card.classList.add('card-selected');
+					} else {
+						card.classList.remove('card-selected');
+					}
+				});
+
+				updateSelectedCount();
+			});
+
+			// Apply Discount Submission
+			btnSubmitDiscount.addEventListener('click', function () {
+				const percentage = parseInt(modalDiscountPercentage.value);
+				if (isNaN(percentage) || percentage < 1 || percentage > 99) {
+					modalPercentageError.style.display = 'block';
+					return;
+				}
+				modalPercentageError.style.display = 'none';
+
+				// Fill form
+				applyDiscountPercentage.value = percentage;
+				applyDiscountEndDate.value = modalDiscountEndDate.value;
+
+				applyDiscountInputs.innerHTML = '';
+				const checkedBoxes = document.querySelectorAll('.discount-checkbox-input:checked');
+				checkedBoxes.forEach(cb => {
+					const input = document.createElement('input');
+					input.type = 'hidden';
+					input.name = 'planIds';
+					input.value = cb.value;
+					applyDiscountInputs.appendChild(input);
+				});
+
+				applyDiscountForm.submit();
+			});
+
+			// Remove Discount Modal Submission
+			btnRemoveDiscountBulk.addEventListener('click', function () {
+				confirmDeleteDiscountModal.show();
+			});
+
+			btnConfirmRemoveDiscount.addEventListener('click', function () {
+				confirmDeleteDiscountModal.hide();
+				removeDiscountInputs.innerHTML = '';
+				const checkedBoxes = document.querySelectorAll('.discount-checkbox-input:checked');
+				checkedBoxes.forEach(cb => {
+					const input = document.createElement('input');
+					input.type = 'hidden';
+					input.name = 'planIds';
+					input.value = cb.value;
+					removeDiscountInputs.appendChild(input);
+				});
+
+				removeDiscountForm.submit();
+			});
+		});
 	</script>
 }

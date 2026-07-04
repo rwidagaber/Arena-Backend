@@ -36,6 +36,13 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
                .IsRequired()
                .HasDefaultValue(false);
 
+        builder.Property(s => s.DiscountPercentage)
+               .IsRequired(false)
+               .HasColumnType("decimal(5,2)");
+
+        builder.Property(s => s.DiscountEndDate)
+               .IsRequired(false);
+
         // SubscriptionPlan → UserSubscriptions (many)
         builder.HasMany(s => s.UserSubscriptions)
                .WithOne(us => us.Plan)

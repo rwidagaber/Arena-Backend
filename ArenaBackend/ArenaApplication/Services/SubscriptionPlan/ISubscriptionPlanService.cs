@@ -9,5 +9,7 @@ namespace ArenaApplication.Services.SubscriptionPlan
         Task<SubscriptionPlanDto> CreateAsync(CreateSubscriptionPlanDto createDto, CancellationToken cancellationToken = default);
         Task<SubscriptionPlanDto> UpdateAsync(Guid id, UpdateSubscriptionPlanDto updateDto, CancellationToken cancellationToken = default);
         Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task ApplyDiscountAsync(List<Guid> planIds, decimal discountPercentage, DateTime? endDate, CancellationToken cancellationToken = default);
+        Task RemoveDiscountAsync(List<Guid> planIds, CancellationToken cancellationToken = default);
     }
 }
