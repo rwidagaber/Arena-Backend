@@ -36,5 +36,24 @@ namespace ArenaApplication.Dtos.UserManagement
 
         // Subscription History
         public List<UserSubscriptionItemDto> SubscriptionHistory { get; set; } = new();
+
+        // Manual subscription management properties
+        public bool HasActiveSubscription { get; set; }
+        public Guid? CurrentSubscriptionId { get; set; }
+        public string? CurrentPlanNameEn { get; set; }
+        public string? CurrentPlanNameAr { get; set; }
+        public bool IsManualActive { get; set; }
+        public bool IsManualExpiredOrCancelled { get; set; }
+        public List<SubscriptionPlanSelectionDto> AvailablePlans { get; set; } = new();
+    }
+
+    public class SubscriptionPlanSelectionDto
+    {
+        public Guid Id { get; set; }
+        public string NameEn { get; set; } = string.Empty;
+        public string NameAr { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int DurationMonths { get; set; }
+        public bool HasAI { get; set; }
     }
 }

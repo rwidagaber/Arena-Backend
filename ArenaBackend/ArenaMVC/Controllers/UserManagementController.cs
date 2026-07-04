@@ -58,7 +58,9 @@ namespace ArenaMVC.Controllers
                     RegisterDate = u.RegisterDate,
                     IsActive = u.IsActive,
                     IsMember = u.IsMember,
-                    SubscriptionStatus = u.SubscriptionStatus
+                    SubscriptionStatus = u.SubscriptionStatus,
+                    IsManualActive = u.IsManualActive,
+                    IsManualExpiredOrCancelled = u.IsManualExpiredOrCancelled
                 }).ToList();
 
                 var viewModel = new UserListPagedViewModel
@@ -114,7 +116,9 @@ namespace ArenaMVC.Controllers
                     RegisterDate = u.RegisterDate,
                     IsActive = u.IsActive,
                     IsMember = u.IsMember,
-                    SubscriptionStatus = u.SubscriptionStatus
+                    SubscriptionStatus = u.SubscriptionStatus,
+                    IsManualActive = u.IsManualActive,
+                    IsManualExpiredOrCancelled = u.IsManualExpiredOrCancelled
                 }).ToList();
 
                 var viewModel = new UserListPagedViewModel
@@ -179,7 +183,9 @@ namespace ArenaMVC.Controllers
                     // Subscription History (Section 3)
                     SubscriptionHistory = user.SubscriptionHistory
                         .Select(s => MapSubscriptionItem(s))
-                        .ToList()
+                        .ToList(),
+                    IsManualActive = user.IsManualActive,
+                    IsManualExpiredOrCancelled = user.IsManualExpiredOrCancelled
                 };
 
                 return View(viewModel);
@@ -210,7 +216,24 @@ namespace ArenaMVC.Controllers
                     Id = user.Id,
                     FullName = user.FullName,
                     Email = user.Email,
-                    IsActive = user.IsActive
+                    IsActive = user.IsActive,
+
+                    HasActiveSubscription = user.HasActiveSubscription,
+                    CurrentSubscriptionId = user.CurrentSubscriptionId,
+                    CurrentPlanName = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName.StartsWith("ar", StringComparison.OrdinalIgnoreCase) 
+                        ? user.CurrentPlanNameAr 
+                        : user.CurrentPlanNameEn,
+                    CurrentSubscriptionStatus = user.CurrentSubscriptionStatus?.ToString(),
+                    IsManualActive = user.IsManualActive,
+                    AvailablePlans = user.AvailablePlans.Select(p => new SubscriptionPlanSelectionViewModel
+                    {
+                        Id = p.Id,
+                        NameEn = p.NameEn,
+                        NameAr = p.NameAr,
+                        Price = p.Price,
+                        DurationMonths = p.DurationMonths,
+                        HasAI = p.HasAI
+                    }).ToList()
                 };
 
                 return View(viewModel);
@@ -235,10 +258,56 @@ namespace ArenaMVC.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                var result = await _userService.UpdateUserStatus(id, model.IsActive);
-                if (!result.IsSuccess)
+                var adminName = User.Identity?.Name ?? "Admin";
+
+                if (model.SubmitAction == "addSubscription")
                 {
-                    TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredSavingUserStatus"].Value;
+                    if (!model.SelectedPlanId.HasValue || model.SelectedPlanId.Value == Guid.Empty)
+                    {
+                        TempData["Error"] = _localizer["PleaseSelectPlan"].Value;
+                        await PopulateSubscriptionData(id, model);
+                        return View(model);
+                    }
+
+                    var result = await _userService.AddManualSubscription(id, model.SelectedPlanId.Value, adminName);
+                    if (!result.IsSuccess)
+                    {
+                        TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredProcessingSubscription"].Value;
+                        await PopulateSubscriptionData(id, model);
+                        return View(model);
+                    }
+
+                    TempData["Success"] = _localizer["SubscriptionAddedSuccessfully"].Value;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (model.SubmitAction == "cancelSubscription")
+                {
+                    if (!model.CurrentSubscriptionId.HasValue || model.CurrentSubscriptionId.Value == Guid.Empty)
+                    {
+                        TempData["Error"] = _localizer["NoActiveSubscriptionToCancel"].Value;
+                        await PopulateSubscriptionData(id, model);
+                        return View(model);
+                    }
+
+                    var result = await _userService.CancelActiveSubscription(id, model.CurrentSubscriptionId.Value, adminName);
+                    if (!result.IsSuccess)
+                    {
+                        TempData["Error"] = result.Errors != null ? string.Join(", ", result.Errors) : _localizer["AnErrorOccurredCancellingSubscription"].Value;
+                        await PopulateSubscriptionData(id, model);
+                        return View(model);
+                    }
+
+                    TempData["Success"] = _localizer["SubscriptionCancelledSuccessfully"].Value;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Default action: Update account status
+                var statusResult = await _userService.UpdateUserStatus(id, model.IsActive);
+                if (!statusResult.IsSuccess)
+                {
+                    TempData["Error"] = statusResult.Errors != null ? string.Join(", ", statusResult.Errors) : _localizer["AnErrorOccurredSavingUserStatus"].Value;
+                    await PopulateSubscriptionData(id, model);
                     return View(model);
                 }
 
@@ -248,7 +317,35 @@ namespace ArenaMVC.Controllers
             catch (Exception)
             {
                 TempData["Error"] = _localizer["AnErrorOccurredSavingUserStatus"].Value;
+                await PopulateSubscriptionData(id, model);
                 return View(model);
+            }
+        }
+
+        private async Task PopulateSubscriptionData(Guid id, ManageUserViewModel model)
+        {
+            var result = await _userService.GetUserForManage(id);
+            if (result.IsSuccess)
+            {
+                var user = result.Value;
+                model.FullName = user.FullName;
+                model.Email = user.Email;
+                model.HasActiveSubscription = user.HasActiveSubscription;
+                model.CurrentSubscriptionId = user.CurrentSubscriptionId;
+                model.CurrentPlanName = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName.StartsWith("ar", StringComparison.OrdinalIgnoreCase) 
+                    ? user.CurrentPlanNameAr 
+                    : user.CurrentPlanNameEn;
+                model.CurrentSubscriptionStatus = user.CurrentSubscriptionStatus?.ToString();
+                model.IsManualActive = user.IsManualActive;
+                model.AvailablePlans = user.AvailablePlans.Select(p => new SubscriptionPlanSelectionViewModel
+                {
+                    Id = p.Id,
+                    NameEn = p.NameEn,
+                    NameAr = p.NameAr,
+                    Price = p.Price,
+                    DurationMonths = p.DurationMonths,
+                    HasAI = p.HasAI
+                }).ToList();
             }
         }
 
@@ -286,7 +383,8 @@ namespace ArenaMVC.Controllers
                 EndDate = dto.EndDate,
                 RemainingSessions = dto.RemainingSessions,
                 DurationDays = dto.DurationDays,
-                CreatedAt = dto.CreatedAt
+                CreatedAt = dto.CreatedAt,
+                IsManualActive = dto.IsManualActive
             };
         }
     }

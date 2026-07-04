@@ -14,6 +14,8 @@ namespace ArenaApplication.IServices
         Task<Result<UserManagementDetailsDto>> GetUserDetails(Guid id);
         Task<Result<UserManagementDetailsDto>> GetUserForManage(Guid id);
         Task<Result<bool>> UpdateUserStatus(Guid id, bool isActive);
+        Task<Result<bool>> AddManualSubscription(Guid userId, Guid planId, string adminName);
+        Task<Result<bool>> CancelActiveSubscription(Guid userId, Guid subscriptionId, string adminName);
         Task<Result<bool>> SoftDeleteUser(Guid id);
     }
 }

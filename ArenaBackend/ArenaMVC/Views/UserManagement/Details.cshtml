@@ -83,7 +83,14 @@
                         }
                         else if (Model.MembershipStatus == ArenaDomain.Enums.MembershipStatus.ExpiredMembership)
                         {
-                            <span class="user-badge badge-amber-warm">@Localizer["ExpiredMembership"]</span>
+                            @if (Model.IsManualExpiredOrCancelled)
+                            {
+                                <span class="user-badge badge-amber-warm">@Localizer["ExpiredManual"]</span>
+                            }
+                            else
+                            {
+                                <span class="user-badge badge-amber-warm">@Localizer["ExpiredMembership"]</span>
+                            }
                         }
                         else
                         {
@@ -102,13 +109,25 @@
                 <div class="user-detail-row">
                     <span class="user-detail-label">@Localizer["CurrentSubscriptionStatus"]</span>
                     <span class="user-detail-value">
-                        @if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Active)
+                        @if (Model.IsManualActive)
+                        {
+                            <span class="user-badge badge-emerald">@Localizer["ManualActive"]</span>
+                        }
+                        else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Active)
                         {
                             <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                        }
+                        else if (Model.IsManualExpiredOrCancelled && Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
+                        {
+                            <span class="user-badge badge-amber-warm">@Localizer["ExpiredManual"]</span>
                         }
                         else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Expired)
                         {
                             <span class="user-badge badge-amber-warm">@Localizer["Expired"]</span>
+                        }
+                        else if (Model.IsManualExpiredOrCancelled && Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Cancelled)
+                        {
+                            <span class="user-badge badge-crimson">@Localizer["CancelledManual"]</span>
                         }
                         else if (Model.CurrentSubscriptionStatus == ArenaDomain.Enums.SubscriptionStatus.Cancelled)
                         {
@@ -147,7 +166,14 @@
                     <div class="user-detail-row">
                         <span class="user-detail-label">@Localizer["SubscriptionStatus"]</span>
                         <span class="user-detail-value">
-                            <span class="user-badge badge-emerald">@Model.CurrentSubscription.Status</span>
+                            @if (Model.CurrentSubscription.IsManualActive)
+                            {
+                                <span class="user-badge badge-emerald">@Localizer["ManualActive"]</span>
+                            }
+                            else
+                            {
+                                <span class="user-badge badge-emerald">@Model.CurrentSubscription.Status</span>
+                            }
                         </span>
                     </div>
                     <div class="user-detail-row">
@@ -201,18 +227,30 @@
                                     <td data-label="@Localizer["StartDate"]" class="history-start-cell">@sub.StartDate.ToString("yyyy-MM-dd")</td>
                                     <td data-label="@Localizer["EndDate"]" class="history-end-cell">@sub.EndDate.ToString("yyyy-MM-dd")</td>
                                     <td data-label="@Localizer["Status"]" class="history-status-cell">
-                                        @if (sub.Status == "Active")
-                                        {
-                                            <span class="user-badge badge-emerald">@Localizer["Active"]</span>
-                                        }
-                                        else if (sub.Status == "Expired")
-                                        {
-                                            <span class="user-badge badge-amber-warm">@Localizer["Expired"]</span>
-                                        }
-                                        else if (sub.Status == "Cancelled")
-                                        {
-                                            <span class="user-badge badge-crimson">@Localizer["Cancelled"]</span>
-                                        }
+                                         @if (sub.IsManualActive && sub.Status == "Active")
+                                         {
+                                             <span class="user-badge badge-emerald">@Localizer["ManualActive"]</span>
+                                         }
+                                         else if (sub.Status == "Active")
+                                         {
+                                             <span class="user-badge badge-emerald">@Localizer["Active"]</span>
+                                         }
+                                         else if (sub.IsManualActive && sub.Status == "Expired")
+                                         {
+                                             <span class="user-badge badge-amber-warm">@Localizer["ExpiredManual"]</span>
+                                         }
+                                         else if (sub.Status == "Expired")
+                                         {
+                                             <span class="user-badge badge-amber-warm">@Localizer["Expired"]</span>
+                                         }
+                                         else if (sub.IsManualActive && sub.Status == "Cancelled")
+                                         {
+                                             <span class="user-badge badge-crimson">@Localizer["CancelledManual"]</span>
+                                         }
+                                         else if (sub.Status == "Cancelled")
+                                         {
+                                             <span class="user-badge badge-crimson">@Localizer["Cancelled"]</span>
+                                         }
                                         else if (sub.Status == "Pending")
                                         {
                                             <span class="user-badge badge-amber">@Localizer["Pending"]</span>
