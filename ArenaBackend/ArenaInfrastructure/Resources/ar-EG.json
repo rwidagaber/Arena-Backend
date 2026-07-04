@@ -529,5 +529,7 @@
   "SubscriptionCancellation": "إلغاء الاشتراك",
   "KeepSubscription": "الاحتفاظ بالاشتراك",
   "ExpiredManual": "منتهي يدوياً",
-  "CancelledManual": "ملغى يدوياً"
+  "CancelledManual": "ملغى يدوياً",
+  "Newest": "الأحدث أولاً",
+  "Oldest": "الأقدم أولاً"
 }

@@ -417,7 +417,6 @@
   "Category": "Category",
   "MaxActivePlansReached": "You cannot have more than 2 active subscription plans at the same time. Please wait for an existing plan to expire before subscribing to a new one.",
   "AIFeatureRequiresAIPlan": "AI features are only available with an AI-enabled subscription plan. Please upgrade your plan to access this feature.",
-
   "EquipmentCreatedSuccessfully": "Equipment created successfully!",
   "EquipmentUpdatedSuccessfully": "Equipment updated successfully!",
   "EquipmentDeletedSuccessfully": "Equipment deleted successfully!",
@@ -531,5 +530,7 @@
   "SubscriptionCancellation": "Subscription Cancellation",
   "KeepSubscription": "Keep Subscription",
   "ExpiredManual": "Expired (Manual)",
-  "CancelledManual": "Cancelled (Manual)"
+  "CancelledManual": "Cancelled (Manual)",
+  "Newest": "Newest First",
+  "Oldest": "Oldest First"
 }

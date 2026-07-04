@@ -10,7 +10,7 @@ namespace ArenaApplication.IServices
 {
     public interface IUserManagementService
     {
-        Task<Result<PagedResult<UserManagementDto>>> GetUsers(string? search, bool? isActive, MembershipStatus? membershipStatus, string? subscriptionStatus, int page, int pageSize);
+        Task<Result<PagedResult<UserManagementDto>>> GetUsers(string? search, bool? isActive, MembershipStatus? membershipStatus, string? subscriptionStatus, int page, int pageSize, string? sortBy = "RegisterDate", bool isAscending = false);
         Task<Result<UserManagementDetailsDto>> GetUserDetails(Guid id);
         Task<Result<UserManagementDetailsDto>> GetUserForManage(Guid id);
         Task<Result<bool>> UpdateUserStatus(Guid id, bool isActive);

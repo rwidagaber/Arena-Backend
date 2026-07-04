@@ -36,9 +36,10 @@
             <form id="userFiltersForm" method="get" class="row g-3 align-items-end">
                 <input type="hidden" name="page" value="1" />
                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                <input type="hidden" name="isAscending" id="isAscendingInput" value="@Model.IsAscending.ToString().ToLower()" />
                 
                 <!-- Search Input -->
-                <div class="col-12 col-lg-6">
+                <div class="col-12 col-lg-5">
                     <label class="form-label" for="searchInput">@Localizer["Search"]</label>
                     <div class="search-input-wrapper" id="searchWrapper" style="position: relative;">
                         <span style="position: absolute; inset-inline-start: 16px; top: 50%; transform: translateY(-50%); color: var(--autonomous); display: flex; align-items: center; z-index: 10; pointer-events: none;">
@@ -58,7 +59,7 @@
                 </div>
 
                 <!-- Account Status Dropdown -->
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="col-12 col-sm-6 col-md-4 col-lg-2.5">
                     <label class="form-label" for="accountStatusSelect">@Localizer["AccountStatus"]</label>
                     <select class="form-select filter-select" id="accountStatusSelect" name="isActive">
                         <option value="" selected="@(Model.IsActive is null ? "selected" : null)">@Localizer["All"]</option>
@@ -67,19 +68,8 @@
                     </select>
                 </div>
 
-                <!-- Member Type Dropdown -->
-                @* <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <label class="form-label" for="memberStatusSelect">@Localizer["Member"]</label>
-                    <select class="form-select filter-select" id="memberStatusSelect" name="membershipStatus">
-                        <option value="" selected="@(Model.MembershipStatusFilter is null ? "selected" : null)">@Localizer["All"]</option>
-                        <option value="User" selected="@(Model.MembershipStatusFilter == ArenaDomain.Enums.MembershipStatus.User ? "selected" : null)">@Localizer["User"]</option>
-                        <option value="ActiveMembership" selected="@(Model.MembershipStatusFilter == ArenaDomain.Enums.MembershipStatus.ActiveMembership ? "selected" : null)">@Localizer["ActiveMembership"]</option>
-                        <option value="ExpiredMembership" selected="@(Model.MembershipStatusFilter == ArenaDomain.Enums.MembershipStatus.ExpiredMembership ? "selected" : null)">@Localizer["ExpiredMembership"]</option>
-                    </select>
-                </div> *@
-
                 <!-- Subscription Status Dropdown -->
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="col-12 col-sm-6 col-md-4 col-lg-2.5">
                     <label class="form-label" for="subscriptionStatusSelect">@Localizer["SubscriptionStatus"]</label>
                     <select class="form-select filter-select" id="subscriptionStatusSelect" name="subscriptionStatus">
                         <option value="" selected="@(string.IsNullOrEmpty(Model.SubscriptionStatusFilter) ? "selected" : null)">@Localizer["All"]</option>
@@ -87,6 +77,23 @@
                         <option value="Active" selected="@(Model.SubscriptionStatusFilter == "Active" ? "selected" : null)">@Localizer["Active"]</option>
                         <option value="Expired" selected="@(Model.SubscriptionStatusFilter == "Expired" ? "selected" : null)">@Localizer["Expired"]</option>
                     </select>
+                </div>
+
+                <!-- Sort Toggle Button -->
+                <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+                    <label class="form-label d-none d-sm-block">&nbsp;</label>
+                    <button type="button" id="sortDirectionBtn" class="btn btn-subscription-secondary w-100 d-inline-flex align-items-center justify-content-center gap-2" style="height: 46px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--body-bg); color: var(--text-color); transition: all 0.2s;">
+                        @if (Model.IsAscending)
+                        {
+                            <i data-lucide="arrow-up-narrow-wide" style="width: 16px; height: 16px; color: var(--yellow);"></i>
+                            <span>@Localizer["Oldest"]</span>
+                        }
+                        else
+                        {
+                            <i data-lucide="arrow-down-narrow-wide" style="width: 16px; height: 16px; color: var(--yellow);"></i>
+                            <span>@Localizer["Newest"]</span>
+                        }
+                    </button>
                 </div>
             </form>
         </div>
@@ -171,6 +178,7 @@
                 var isActiveVal = document.getElementById('accountStatusSelect')?.value || '';
                 var membershipStatusVal = document.getElementById('memberStatusSelect')?.value || '';
                 var subscriptionStatusVal = document.getElementById('subscriptionStatusSelect')?.value || '';
+                var isAscendingVal = document.getElementById('isAscendingInput')?.value || 'false';
 
                 // Build query string
                 var params = new URLSearchParams({ 
@@ -178,6 +186,7 @@
                     isActive: isActiveVal,
                     membershipStatus: membershipStatusVal,
                     subscriptionStatus: subscriptionStatusVal,
+                    isAscending: isAscendingVal,
                     page: page, 
                     pageSize: pageSize 
                 });
@@ -215,6 +224,7 @@
                 var isActiveVal = document.getElementById('accountStatusSelect')?.value || '';
                 var membershipStatusVal = document.getElementById('memberStatusSelect')?.value || '';
                 var subscriptionStatusVal = document.getElementById('subscriptionStatusSelect')?.value || '';
+                var isAscendingVal = document.getElementById('isAscendingInput')?.value || 'false';
 
                 currentSearch = searchVal;
 
@@ -224,6 +234,7 @@
                 if (isActiveVal) stateParams.set('isActive', isActiveVal);
                 if (membershipStatusVal) stateParams.set('membershipStatus', membershipStatusVal);
                 if (subscriptionStatusVal) stateParams.set('subscriptionStatus', subscriptionStatusVal);
+                if (isAscendingVal === 'true') stateParams.set('isAscending', 'true');
                 stateParams.set('page', page.toString());
 
                 history.replaceState(null, '', window.location.pathname + '?' + stateParams.toString());
@@ -296,6 +307,32 @@
                         });
                     }
                 });
+
+                // Bind sorting toggle button
+                var sortBtn = document.getElementById('sortDirectionBtn');
+                var isAscInput = document.getElementById('isAscendingInput');
+                if (sortBtn && isAscInput) {
+                    sortBtn.addEventListener('click', function () {
+                        var currentVal = isAscInput.value === 'true';
+                        var newVal = !currentVal;
+                        isAscInput.value = newVal.toString();
+                        
+                        // Dynamically update button icon & text
+                        if (newVal) {
+                            sortBtn.innerHTML = `
+                                <i data-lucide="arrow-up-narrow-wide" style="width: 16px; height: 16px; color: var(--yellow);"></i>
+                                <span>@Localizer["Oldest"]</span>
+                            `;
+                        } else {
+                            sortBtn.innerHTML = `
+                                <i data-lucide="arrow-down-narrow-wide" style="width: 16px; height: 16px; color: var(--yellow);"></i>
+                                <span>@Localizer["Newest"]</span>
+                            `;
+                        }
+                        reinitLucide();
+                        updateUrlAndFetch(1);
+                    });
+                }
             }
 
             /* ── bootstrap ──────────────────────────────────────────────── */
