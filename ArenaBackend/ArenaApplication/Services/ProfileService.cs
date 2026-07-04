@@ -36,7 +36,7 @@ namespace ArenaApplication.Services
                 return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .Where(s => s.Status == SubscriptionStatus.Active)
+                .Where(s => s.Status != SubscriptionStatus.Cancelled && s.Status != SubscriptionStatus.Expired)
                 .OrderByDescending(s => s.Plan?.HasAI == true)
                 .FirstOrDefault();
 
@@ -88,7 +88,7 @@ namespace ArenaApplication.Services
                 return Result<GetProfileDto>.Failure(_localizer["UserNotFound"]);
 
             var activeSubscription = user.MemberProfile?.Subscriptions
-                .Where(s => s.Status == SubscriptionStatus.Active)
+                .Where(s => s.Status != SubscriptionStatus.Cancelled && s.Status != SubscriptionStatus.Expired)
                 .OrderByDescending(s => s.Plan?.HasAI == true)
                 .FirstOrDefault();
 
