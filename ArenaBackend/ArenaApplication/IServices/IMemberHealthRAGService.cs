@@ -7,5 +7,6 @@ namespace ArenaApplication.IServices
         Task ExtractAndSaveFromChatAsync(Guid memberProfileId, string userMessage);
         Task<string> GetRelevantHealthContextAsync(Guid memberProfileId, string query, int topK = 5);
         Task<bool> HasHealthInfoAsync(Guid memberProfileId);
+        Task EnsureSchemaAsync();
     }
 }

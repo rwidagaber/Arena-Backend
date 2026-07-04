@@ -4,7 +4,7 @@ The user may write in English OR Arabic OR both mixed.
 Analyze the user message carefully based on MEANING not exact words.
 Return ONLY this JSON, no extra text, no markdown:
 {
-  "intent": "GENERATE_WORKOUT_PLAN" | "GENERATE_NUTRITION_PLAN" | "MODIFY_WORKOUT_PLAN" | "MODIFY_NUTRITION_PLAN" | "ASK_ABOUT_INJURY_COMPATIBILITY" | "ASK_ABOUT_EXERCISE" | "ASK_ABOUT_NUTRITION" | "REQUEST_ALTERNATIVE_EXERCISE" | "REQUEST_MEAL_SUGGESTION" | "REQUEST_FOOD_ANALYSIS" | "BOOK_SESSION" | "ASK_BOOKING_DETAILS" | "GENERAL_FITNESS_QUESTION" | "GREETING" | "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat" | "GET_NUTRITION_TARGETS" | "GET_WORKOUT_TODAY" | "GET_WORKOUT_DAY" | "GET_WORKOUT_DURATION" | "GET_WORKOUT_GOAL" | "GET_WORKOUT_SUMMARY" | "GET_WORKOUT_EXERCISES" | "GET_WORKOUT_SCHEDULE" | "GET_USER_INJURIES" | "GET_ACTIVE_PLAN",
+  "intent": "GENERATE_WORKOUT_PLAN" | "GENERATE_NUTRITION_PLAN" | "MODIFY_WORKOUT_PLAN" | "MODIFY_NUTRITION_PLAN" | "ASK_ABOUT_INJURY_COMPATIBILITY" | "ASK_ABOUT_EXERCISE" | "ASK_ABOUT_NUTRITION" | "REQUEST_ALTERNATIVE_EXERCISE" | "REQUEST_MEAL_SUGGESTION" | "REQUEST_FOOD_ANALYSIS" | "BOOK_SESSION" | "ASK_BOOKING_DETAILS" | "GENERAL_FITNESS_QUESTION" | "GREETING" | "workout" | "nutrition" | "food_analysis" | "booking" | "attendance" | "chat" | "GET_NUTRITION_TARGETS" | "GET_WORKOUT_TODAY" | "GET_WORKOUT_DAY" | "GET_WORKOUT_DURATION" | "GET_WORKOUT_GOAL" | "GET_WORKOUT_SUMMARY" | "GET_WORKOUT_EXERCISES" | "GET_WORKOUT_SCHEDULE" | "RETRIEVE_HEALTH_INFORMATION" | "GET_ACTIVE_PLAN",
   "action": "create" | "cancel" | "reschedule" | null,
   "date": "YYYY-MM-DD or null",
   "time": "HH:mm or null",
@@ -100,7 +100,7 @@ Intent rules:
                          → "What is my workout schedule?", "How many workout days do I have?"
                          → Arabic/Egyptian: "جدول تمريني ايه؟", "بتمرن كام يوم في الاسبوع؟"
 
-- "GET_USER_INJURIES" → user asks if you know or remember their injuries, medical conditions, health status, or physical limitations.
+- "RETRIEVE_HEALTH_INFORMATION" → user asks if you know or remember their injuries, medical conditions, health status, or physical limitations.
                      → "Do you know my injuries?", "What injuries do I have?", "What medical conditions do I have?"
                      → Arabic/Egyptian: "انت تعرف اصابتي؟", "فاكر اصابتي؟", "عندي اي اصابات؟", "تعرف انا مصاب في ايه؟", "ايه الاصابات المسجلة عندي؟", "ايه الامراض اللي عندي؟", "تعرف حالتي الصحية؟", "فاكر انا عندي ايه؟", "عارف عندي اي اصابات؟"
                      → NEVER generate a workout or nutrition plan for this.
@@ -225,23 +225,23 @@ Examples:
 "How long is my workout plan?" => {"intent":"GET_WORKOUT_DURATION"}
 "How long is my plan?" => {"intent":"GET_WORKOUT_DURATION"}
 
-"Do you know my injuries?" => {"intent":"GET_USER_INJURIES"}
-"What injuries do I have?" => {"intent":"GET_USER_INJURIES"}
-"Show my injuries." => {"intent":"GET_USER_INJURIES"}
-"What medical conditions do I have?" => {"intent":"GET_USER_INJURIES"}
-"ما هي إصاباتي؟" => {"intent":"GET_USER_INJURIES"}
-"ما هي الأمراض المسجلة لدي؟" => {"intent":"GET_USER_INJURIES"}
-"هل تعرف إصاباتي؟" => {"intent":"GET_USER_INJURIES"}
-"هل تعرف حالتي الصحية؟" => {"intent":"GET_USER_INJURIES"}
-"اعرض إصاباتي." => {"intent":"GET_USER_INJURIES"}
-"انت تعرف اصابتي؟" => {"intent":"GET_USER_INJURIES"}
-"تعرف عندي ايه؟" => {"intent":"GET_USER_INJURIES"}
-"فاكر اصابتي؟" => {"intent":"GET_USER_INJURIES"}
-"ايه الاصابات اللي عندي؟" => {"intent":"GET_USER_INJURIES"}
-"انا عندي اي اصابات؟" => {"intent":"GET_USER_INJURIES"}
-"تعرف الامراض بتاعتي؟" => {"intent":"GET_USER_INJURIES"}
-"عندي اي مشاكل صحية؟" => {"intent":"GET_USER_INJURIES"}
-"فاكر انا قولتلك ايه عن اصابتي؟" => {"intent":"GET_USER_INJURIES"}
+"Do you know my injuries?" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"What injuries do I have?" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"Show my injuries." => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"What medical conditions do I have?" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"ما هي إصاباتي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"ما هي الأمراض المسجلة لدي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"هل تعرف إصاباتي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"هل تعرف حالتي الصحية؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"اعرض إصاباتي." => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"انت تعرف اصابتي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"تعرف عندي ايه؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"فاكر اصابتي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"ايه الاصابات اللي عندي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"انا عندي اي اصابات؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"تعرف الامراض بتاعتي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"عندي اي مشاكل صحية؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
+"فاكر انا قولتلك ايه عن اصابتي؟" => {"intent":"RETRIEVE_HEALTH_INFORMATION"}
 
 "الكالوريز بتاعتي كام؟" => {"intent":"GET_NUTRITION_TARGETS"}
 "البروتين بتاعي كام؟" => {"intent":"GET_NUTRITION_TARGETS"}

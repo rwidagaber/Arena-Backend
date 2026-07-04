@@ -219,6 +219,7 @@ namespace ArenaInfrastructure.AI
 
             NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
             ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
+            LocalizeWorkoutPlan(planData, WorkoutLocalization.IsArabic(userMessage), effectiveGoal);
 
             var activeWorkoutPlans = await _context.WorkoutPlans
                 .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
@@ -416,6 +417,12 @@ namespace ArenaInfrastructure.AI
             === USER REQUEST ===
             The user wants to modify their workout plan with the following request:
             "{userMessage}"
+
+            === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+            {healthContext}
+
+            === STRICT MEDICAL GUIDELINES ===
+            {await _healthIntelligence.RetrieveMedicalGuidelinesAsync(healthProfile)}
             
             === INSTRUCTIONS ===
             1. Apply the user's modification request to the plan.
@@ -466,6 +473,7 @@ namespace ArenaInfrastructure.AI
 
             NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
             ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
+            LocalizeWorkoutPlan(planData, WorkoutLocalization.IsArabic(userMessage), effectiveGoal);
 
             var activeWorkoutPlans = await _context.WorkoutPlans
                 .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
@@ -593,7 +601,7 @@ namespace ArenaInfrastructure.AI
             string effectiveGoal)
         {
             if (string.IsNullOrWhiteSpace(planData.Name))
-                planData.Name = $"{memberName} Workout Plan";
+                planData.Name = WorkoutLocalization.GetLocalizedPlanName(effectiveGoal, WorkoutLocalization.IsArabic(userMessage));
 
             if (planData.DurationWeeks <= 0)
                 planData.DurationWeeks = 4;
@@ -601,7 +609,16 @@ namespace ArenaInfrastructure.AI
             planData.Days ??= [];
             var avoidKneeStress = ContainsAny(profile.Injuries, "knee", "ركبة")
                 || ContainsAny(userMessage, "knee", "ركبة")
-                || ContainsAny(healthContext, "knee", "ركبة");
+                || ContainsAny(healthContext, "knee", "ركبة")
+                || ContainsAny(healthContext, "acl", "meniscus");
+
+            var avoidShoulderStress = ContainsAny(profile.Injuries, "shoulder", "rotator", "arm", "كتف", "ذراع")
+                || ContainsAny(userMessage, "shoulder", "rotator", "arm", "كتف", "ذراع")
+                || ContainsAny(healthContext, "shoulder", "rotator", "arm", "كتف", "ذراع");
+
+            var avoidBackStress = ContainsAny(profile.Injuries, "back", "spine", "lumber", "ظهر")
+                || ContainsAny(userMessage, "back", "spine", "lumber", "ظهر")
+                || ContainsAny(healthContext, "back", "spine", "lumber", "ظهر");
 
             foreach (var day in planData.Days)
             {
@@ -626,6 +643,12 @@ namespace ArenaInfrastructure.AI
 
                     if (avoidKneeStress && IsKneeStressExercise(exercise.Name))
                         ReplaceWithKneeFriendlyExercise(exercise);
+
+                    if (avoidShoulderStress && IsShoulderStressExercise(exercise.Name))
+                        ReplaceWithShoulderFriendlyExercise(exercise);
+
+                    if (avoidBackStress && IsBackStressExercise(exercise.Name))
+                        ReplaceWithBackFriendlyExercise(exercise);
                 }
             }
         }
@@ -758,7 +781,7 @@ namespace ArenaInfrastructure.AI
 
             return new WorkoutPlanAIResponse
             {
-                Name = $"{memberName} {goal} Personalized Workout Plan",
+                Name = WorkoutLocalization.GetLocalizedPlanName(effectiveGoal, WorkoutLocalization.IsArabic(userMessage)),
                 DurationWeeks = defaults.DurationWeeks,
                 Days = days
             };
@@ -824,7 +847,6 @@ namespace ArenaInfrastructure.AI
 
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
-
         private static bool IsKneeStressExercise(string? exerciseName) =>
             ContainsAny(
                 exerciseName,
@@ -837,6 +859,28 @@ namespace ArenaInfrastructure.AI
                 "step-up",
                 "step up");
 
+        private static bool IsShoulderStressExercise(string? name) =>
+            ContainsAny(name, "shoulder press", "overhead press", "military press", "overhead", "ضغط كتف");
+
+        private static void ReplaceWithShoulderFriendlyExercise(WorkoutExerciseAIResponse ex)
+        {
+            ex.Name = "Cable Face Pull";
+            ex.MuscleGroup = "Shoulders";
+            ex.Sets = ex.Sets <= 0 ? 3 : ex.Sets;
+            ex.Reps = ex.Reps <= 0 ? 15 : ex.Reps;
+        }
+
+        private static bool IsBackStressExercise(string? name) =>
+            ContainsAny(name, "deadlift", "barbell squat", "heavy row", "t-bar row", "dead lift", "رفعة مميتة");
+
+        private static void ReplaceWithBackFriendlyExercise(WorkoutExerciseAIResponse ex)
+        {
+            ex.Name = "Hyperextension";
+            ex.MuscleGroup = "Lower Back";
+            ex.Sets = ex.Sets <= 0 ? 3 : ex.Sets;
+            ex.Reps = ex.Reps <= 0 ? 12 : ex.Reps;
+        }
+
         private static void ReplaceWithKneeFriendlyExercise(WorkoutExerciseAIResponse exercise)
         {
             exercise.Name = exercise.MuscleGroup.Contains("leg", StringComparison.OrdinalIgnoreCase)
@@ -846,6 +890,26 @@ namespace ArenaInfrastructure.AI
             exercise.Sets = exercise.Sets <= 0 ? 3 : exercise.Sets;
             exercise.Reps = exercise.Reps <= 0 ? 12 : exercise.Reps;
             exercise.MuscleGroup = exercise.Name == "Seated Leg Curl" ? "Hamstrings" : "Glutes";
+        }
+
+        private static void LocalizeWorkoutPlan(WorkoutPlanAIResponse planData, bool isArabic, string effectiveGoal)
+        {
+            planData.Name = WorkoutLocalization.GetLocalizedPlanName(effectiveGoal, isArabic);
+
+            if (isArabic)
+            {
+                foreach (var day in planData.Days ?? [])
+                {
+                    day.DayName = WorkoutLocalization.TranslateDay(day.DayName);
+                    foreach (var ex in day.Exercises ?? [])
+                    {
+                        var englishName = ex.Name;
+                        ex.Name = WorkoutLocalization.TranslateExercise(englishName);
+                        ex.NameAr = ex.Name;
+                        ex.MuscleGroupAr = ex.MuscleGroup;
+                    }
+                }
+            }
         }
     }
 }

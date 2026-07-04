@@ -160,7 +160,8 @@ namespace ArenaInfrastructure.AI
                 planData = CreateFallbackPlanData(profile, effectiveGoal);
             }
 
-            NormalizeNutritionPlan(planData);
+            ApplyLocalNutritionReplacements(planData, healthContext);
+            LocalizePlanData(planData, WorkoutLocalization.IsArabic(userMessage));
 
             var activeNutritionPlans = await _context.NutritionPlans
                 .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
@@ -272,13 +273,15 @@ namespace ArenaInfrastructure.AI
             };
 
             var currentPlanJson = JsonSerializer.Serialize(currentPlanData, new JsonSerializerOptions { WriteIndented = true });
-
             HealthProfileDto healthProfile = new HealthProfileDto();
             if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
             {
                 healthProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new HealthProfileDto();
             }
 
+            var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, userMessage);
+            var medicalGuidelines = await _healthIntelligence.RetrieveMedicalGuidelinesAsync(healthProfile);
+ 
             var prompt = $"""
             You are a certified nutritionist and dietitian.
             
@@ -288,6 +291,12 @@ namespace ArenaInfrastructure.AI
             === USER REQUEST ===
             The user wants to modify their nutrition plan with the following request:
             "{userMessage}"
+
+            === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
+            {healthContext}
+
+            === STRICT MEDICAL GUIDELINES ===
+            {medicalGuidelines}
             
             === INSTRUCTIONS ===
             1. Apply the user's modification request to the plan.
@@ -339,6 +348,8 @@ namespace ArenaInfrastructure.AI
             }
 
             NormalizeNutritionPlan(planData);
+            ApplyLocalNutritionReplacements(planData, healthContext);
+            LocalizePlanData(planData, WorkoutLocalization.IsArabic(userMessage));
 
             var activeNutritionPlans = await _context.NutritionPlans
                 .Where(existingPlan => existingPlan.MemberProfileId == profile.Id
@@ -609,6 +620,69 @@ namespace ArenaInfrastructure.AI
             === MEMBER'S KNOWN HEALTH HISTORY (CRITICAL - MUST RESPECT) ===
             {healthContext}
             """;
+        }
+
+        private static void ApplyLocalNutritionReplacements(NutritionPlanAIResponse plan, string healthContext)
+        {
+            if (plan?.Meals == null) return;
+
+            bool hasPeanuts = WorkoutLocalization.ContainsAny(healthContext, "peanut", "فول سوداني");
+            bool hasLactose = WorkoutLocalization.ContainsAny(healthContext, "lactose", "dairy", "milk", "cheese", "yogurt", "حليب", "جبن", "لبن");
+
+            foreach (var meal in plan.Meals)
+            {
+                if (hasPeanuts)
+                {
+                    meal.Name = ReplacePeanuts(meal.Name);
+                    meal.Ingredients = ReplacePeanuts(meal.Ingredients);
+                }
+                if (hasLactose)
+                {
+                    meal.Name = ReplaceDairy(meal.Name);
+                    meal.Ingredients = ReplaceDairy(meal.Ingredients);
+                }
+            }
+        }
+
+        private static string ReplacePeanuts(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text
+                .Replace("peanut butter", "almond butter", StringComparison.OrdinalIgnoreCase)
+                .Replace("peanut", "almond", StringComparison.OrdinalIgnoreCase)
+                .Replace("peanuts", "almonds", StringComparison.OrdinalIgnoreCase)
+                .Replace("زبدة الفول السوداني", "زبدة اللوز", StringComparison.OrdinalIgnoreCase)
+                .Replace("فول سوداني", "لوز", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ReplaceDairy(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text
+                .Replace("greek yogurt", "lactose-free yogurt", StringComparison.OrdinalIgnoreCase)
+                .Replace("yogurt", "lactose-free yogurt", StringComparison.OrdinalIgnoreCase)
+                .Replace("milk", "almond milk", StringComparison.OrdinalIgnoreCase)
+                .Replace("cheese", "tofu", StringComparison.OrdinalIgnoreCase)
+                .Replace("cottage cheese", "tofu", StringComparison.OrdinalIgnoreCase)
+                .Replace("زبادي يوناني", "زبادي خالي من اللاكتوز", StringComparison.OrdinalIgnoreCase)
+                .Replace("زبادي", "زبادي خالي من اللاكتوز", StringComparison.OrdinalIgnoreCase)
+                .Replace("حليب", "حليب اللوز", StringComparison.OrdinalIgnoreCase)
+                .Replace("لبن", "حليب اللوز", StringComparison.OrdinalIgnoreCase)
+                .Replace("جبن قريش", "توفو", StringComparison.OrdinalIgnoreCase)
+                .Replace("جبن", "توفو", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void LocalizePlanData(NutritionPlanAIResponse planData, bool isArabic)
+        {
+            if (isArabic && planData.Meals != null)
+            {
+                foreach (var meal in planData.Meals)
+                {
+                    meal.MealType = WorkoutLocalization.TranslateMealType(meal.MealType);
+                    meal.Name = WorkoutLocalization.TranslatePhrase(meal.Name);
+                    meal.Ingredients = WorkoutLocalization.TranslatePhrase(meal.Ingredients);
+                }
+            }
         }
     }
 }

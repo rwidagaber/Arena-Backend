@@ -7,4 +7,5 @@
   <Project Path="ArenaDomain/ArenaDomain.csproj" />
   <Project Path="ArenaInfrastructure/ArenaInfrastructure.csproj" />
   <Project Path="ArenaMVC/ArenaMVC.csproj" />
+  <Project Path="ArenaTests/ArenaTests.csproj" />
 </Solution>

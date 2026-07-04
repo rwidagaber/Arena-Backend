@@ -125,6 +125,23 @@ namespace ArenaInfrastructure.AI
             await cmd.ExecuteNonQueryAsync();
         }
 
+        public async Task SoftDeleteByKeywordAsync(Guid memberProfileId, string category, string keyword)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = """
+                UPDATE "MemberHealthVectors"
+                SET "IsActive" = false
+                WHERE "MemberProfileId" = $1 
+                  AND "Category" = $2 
+                  AND LOWER("Content") LIKE $3
+                """;
+            cmd.Parameters.AddWithValue(memberProfileId);
+            cmd.Parameters.AddWithValue(category);
+            cmd.Parameters.AddWithValue($"%{keyword.ToLowerInvariant()}%");
+            await cmd.ExecuteNonQueryAsync();
+        }
+
         // ── Read / Search ─────────────────────────────────────────────────────────
 
         /// <summary>

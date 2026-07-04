@@ -32,7 +32,7 @@ namespace ArenaInfrastructure.Data
 
         // ── Health ────────────────────────────────────────────────────────────────
         public DbSet<ProgressLog> ProgressLogs { get; set; }
-        //public DbSet<MemberHealthVector> MemberHealthVectors { get; set; }
+        public DbSet<MemberHealthVector> MemberHealthVectors { get; set; }
 
         // ── Notifications ─────────────────────────────────────────────────────────
         public DbSet<Notification> Notifications { get; set; }
