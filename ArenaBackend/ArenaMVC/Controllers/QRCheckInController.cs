@@ -38,18 +38,31 @@ public class QRCheckInController : Controller
     [HttpGet]
     public async Task<IActionResult> History()
     {
+        // High Performance: Use Select projection to fetch only scalar columns needed by the view.
+        // Bypasses loading massive entities (Booking, User, MemberProfile) and avoids EF tracking.
         var attendances = await _context.Attendances
-            .Include(a => a.MemberProfile)
-                .ThenInclude(m => m.User)
-            .Include(a => a.Booking)
+            .AsNoTracking()
             .OrderByDescending(a => a.CheckInTime)
             .Take(100)
+            .Select(a => new AttendanceHistoryViewModel
+            {
+                BookingId = a.BookingId,
+                MemberName = ((a.MemberProfile.User.FirstName ?? "") + " " + (a.MemberProfile.User.LastName ?? "")).Trim(),
+                BookingDate = a.Booking.BookingDate,
+                StartTime = a.Booking.StartTime,
+                EndTime = a.Booking.EndTime,
+                CheckInTime = a.CheckInTime,
+                ScannedById = a.ScannedById
+            })
             .ToListAsync();
 
         var adminIds = attendances.Where(a => a.ScannedById.HasValue).Select(a => a.ScannedById!.Value).Distinct().ToList();
+        
         var adminMap = await _context.Users
+            .AsNoTracking()
             .Where(u => adminIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim());
+            .Select(u => new { u.Id, Name = (u.FirstName + " " + u.LastName).Trim() })
+            .ToDictionaryAsync(u => u.Id, u => u.Name);
 
         ViewBag.AdminMap = adminMap;
 
@@ -108,5 +121,17 @@ public class QRCheckInController : Controller
     public class ScanRequest
     {
         public string Code { get; set; } = string.Empty;
+    }
+
+    // Lightweight DTO to transfer only data needed for rendering checkin list
+    public class AttendanceHistoryViewModel
+    {
+        public Guid BookingId { get; set; }
+        public string MemberName { get; set; } = string.Empty;
+        public DateTime BookingDate { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
+        public DateTime? CheckInTime { get; set; }
+        public Guid? ScannedById { get; set; }
     }
 }
