@@ -73,15 +73,16 @@ namespace ArenaTests
             // 1. Intent Detection Prompt
             if (prompt.Contains("intent detection") || prompt.Contains("intent"))
             {
-                if (userMessage.Contains("diabetes") || userMessage.Contains("السكر"))
+                var lowerUser = (userMessage ?? "").ToLowerInvariant();
+                if (lowerUser.Contains("diabetes") || userMessage.Contains("السكر"))
                 {
-                    if (userMessage.Contains("recovered") || userMessage.Contains("خفيت"))
+                    if (lowerUser.Contains("recovered") || userMessage.Contains("خفيت"))
                     {
                         return Task.FromResult("{\"intent\": \"chat\"}");
                     }
                     return Task.FromResult("{\"intent\": \"chat\", \"healthConditions\": \"Diabetes\"}");
                 }
-                if (userMessage.Contains("tell me my") || userMessage.Contains("الأمراض") || userMessage.Contains("الامراض") || userMessage.Contains("الإصابات") || userMessage.Contains("الاصابات"))
+                if (lowerUser.Contains("tell me my") || userMessage.Contains("الأمراض") || userMessage.Contains("الامراض") || userMessage.Contains("الإصابات") || userMessage.Contains("الاصابات"))
                 {
                     return Task.FromResult("{\"intent\": \"RETRIEVE_HEALTH_INFORMATION\"}");
                 }
@@ -105,6 +106,10 @@ namespace ArenaTests
             // 3. Health Intelligence Profile Extraction (structured JSON)
             if (prompt.Contains("medical extraction system"))
             {
+                if (userMessage.Contains("recovered") || userMessage.Contains("خفيت"))
+                {
+                    return Task.FromResult("{\"conditions\": [], \"allergies\": [], \"injuries\": [], \"restrictions\": [], \"medications\": []}");
+                }
                 if (userMessage.Contains("diabetes") || userMessage.Contains("السكر"))
                 {
                     return Task.FromResult("{\"conditions\": [\"Diabetes\"], \"allergies\": [], \"injuries\": [], \"restrictions\": [], \"medications\": []}");
@@ -112,16 +117,97 @@ namespace ArenaTests
                 return Task.FromResult("{\"conditions\": [], \"allergies\": [], \"injuries\": [], \"restrictions\": [], \"medications\": []}");
             }
 
-            // 4. Generate Health Report
-            if (prompt.Contains("clinical fitness assistant"))
+            // 4. Workout Plan Prompt (Must be checked BEFORE Translate/Clinical to avoid collisions)
+            if (prompt.Contains("personal trainer") && prompt.Contains("durationweeks"))
             {
-                return Task.FromResult("Member has Diabetes. Monitor blood sugar.");
+                return Task.FromResult(@"{
+  ""name"": ""Weight Loss Plan"",
+  ""nameAr"": ""خطة خسارة الوزن"",
+  ""durationWeeks"": 4,
+  ""weeklyFrequency"": 3,
+  ""estimatedCaloriesBurnPerSession"": 400,
+  ""days"": [
+    {
+      ""dayName"": ""Monday"",
+      ""dayNameAr"": ""الاثنين"",
+      ""focus"": ""Upper Body"",
+      ""warmup"": ""5 min light cardio"",
+      ""exercises"": [
+        {
+          ""name"": ""Dumbbell Bench Press"",
+          ""nameAr"": ""ضغط صدر بالدامبل"",
+          ""description"": ""A compound upper-body exercise that primarily develops the chest while also engaging the shoulders and triceps."",
+          ""descriptionAr"": ""تمرين مركب للجزء العلوي من الجسم يطور الصدر بشكل أساسي مع إشراك الكتفين والترايسبس."",
+          ""sets"": 4,
+          ""reps"": 10,
+          ""restSeconds"": 90,
+          ""muscleGroup"": ""Chest"",
+          ""muscleGroupAr"": ""الصدر"",
+          ""equipment"": ""Dumbbells, Flat Bench"",
+          ""equipmentAr"": ""دامبل، بنش مستو"",
+          ""primaryMuscles"": [""Pectoralis Major"", ""Anterior Deltoids"", ""Triceps""],
+          ""secondaryMuscles"": [""Triceps"", ""Shoulders""],
+          ""instructions"": [""1. Lie flat on the bench."", ""2. Hold the dumbbells above your chest."", ""3. Lower them slowly until your elbows reach approximately 90 degrees."", ""4. Press the dumbbells upward until your arms are fully extended."", ""5. Repeat with controlled movement.""],
+          ""commonMistakes"": [""Bouncing the weights."", ""Locking the elbows aggressively."", ""Arching the lower back excessively.""],
+          ""safetyTips"": [""Keep your feet firmly on the floor."", ""Maintain a neutral wrist position."", ""Avoid lifting weights beyond your control.""],
+          ""breathing"": ""Inhale while lowering the dumbbells. Exhale while pressing upward."",
+          ""difficulty"": ""Beginner"",
+          ""category"": ""Strength"",
+          ""videoUrl"": ""https://www.youtube.com/watch?v=vm1G1kK34c0""
+        }
+      ],
+      ""cooldown"": ""5 min stretching""
+    }
+  ]
+}");
             }
 
             // 5. Translate Report
-            if (prompt.Contains("medical translator"))
+            if (prompt.Contains("medical translator") || (prompt.Contains("translate") && prompt.Contains("detailed health report")))
             {
-                return Task.FromResult("العضو يعاني من مرض السكري. يرجى مراقبة مستوى السكر.");
+                if (prompt.Contains("diabetes"))
+                {
+                    return Task.FromResult("العضو يعاني من مرض السكري. يرجى مراقبة مستوى السكر.");
+                }
+                return Task.FromResult("لا يوجد لدى العضو أي أمراض معروفة.");
+            }
+
+            // 6. Generate Health Report
+            if (prompt.Contains("clinical fitness assistant") || prompt.Contains("clinical") || prompt.Contains("health report"))
+            {
+                if (prompt.Contains("diabetes"))
+                {
+                    return Task.FromResult("Member has Diabetes. Monitor blood sugar.");
+                }
+                return Task.FromResult("Member has no known health conditions.");
+            }
+
+            // 7. Chat System Prompt
+            if (prompt.Contains("arena ai") || prompt.Contains("gym trainer"))
+            {
+                if (prompt.Contains("health conditions: diabetes"))
+                {
+                    return Task.FromResult("Based on your profile, you have Diabetes (السكري).");
+                }
+                return Task.FromResult("You have no known health conditions.");
+            }
+
+            // 8. Language Synchronization Prompt
+            if (prompt.Contains("language synchronization layer") || prompt.Contains("synchronization"))
+            {
+                if (prompt.Contains("diabetes"))
+                {
+                    if (prompt.Contains("english"))
+                    {
+                        return Task.FromResult("Based on your profile, you have Diabetes.");
+                    }
+                    return Task.FromResult("بناءً على ملفك الشخصي، فإنك تعاني من السكري.");
+                }
+                if (prompt.Contains("english"))
+                {
+                    return Task.FromResult("You have no known health conditions.");
+                }
+                return Task.FromResult("لا يوجد لديك أي أمراض معروفة.");
             }
 
             return Task.FromResult("Mock Gemini response");
@@ -190,6 +276,7 @@ namespace ArenaTests
             var bookingRepo = new GenericRepository<Booking, Guid>(_context);
             var ragService = new SimpleRAGService(_context);
             var healthRAG = new MemberHealthRAGService(embeddingMock, geminiMock, _context);
+            var attendanceMock = new MockAttendanceSuggestionService();
             var healthIntelligence = new HealthIntelligenceService(geminiMock);
 
             _chatService = new ChatService(
@@ -203,6 +290,7 @@ namespace ArenaTests
                 NullLogger<ChatService>.Instance,
                 environmentMock,
                 healthRAG,
+                attendanceMock,
                 healthIntelligence
             );
         }

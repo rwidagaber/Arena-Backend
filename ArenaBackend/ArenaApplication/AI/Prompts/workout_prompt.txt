@@ -44,15 +44,41 @@ If member has knee injury — STRICTLY AVOID:
 - Running / Jumping
 Replace with: Seated Leg Curl, Hip Thrust, Upper body focus
 
+=== TARGET MUSCLE SPECIALIZATION ===
+If the requested goal is a target muscle group (e.g., Chest Hypertrophy, Leg Hypertrophy, Back Strength, Shoulder Hypertrophy, Arm Hypertrophy, Glutes Hypertrophy, Core Strength):
+1. Prioritize and focus on that specific muscle group in the workout (e.g., higher volume, more exercises, or placing them early in the sessions).
+2. You MUST still maintain a balanced training program for the rest of the body. Do NOT train only one muscle. Include exercises for other major muscle groups to preserve overall body balance and safety.
+
 === USER REQUEST ===
 {userMessage}
 
 Return ONLY valid JSON, no markdown:
-IMPORTANT: You MUST use the exact English property names (keys) shown in the JSON structure below. Never translate the JSON keys to Arabic or any other language. You may translate the values (like dayName, focus, name, formTip) to the language of the user's message.
+IMPORTANT: You MUST use the exact English property names (keys) shown in the JSON structure below. Never translate the JSON keys to Arabic or any other language. Always generate both English and Arabic versions of all descriptive fields so they can be bilingually localized.
 Numeric fields must be JSON numbers only. Do not use strings, ranges, units, or words for numeric fields.
 For timed exercises, put the minute count as the numeric "reps" value and explain timing in "formTip".
 Required numeric fields:
 - durationWeeks, weeklyFrequency, estimatedCaloriesBurnPerSession, sets, reps, restSeconds
+
+For every exercise, you MUST generate comprehensive and detailed educational metadata in both English and Arabic:
+- description: A comprehensive explanation in English including: what this exercise is, why it is useful, beginner tips, and when to avoid it (if user has injuries).
+- descriptionAr: The Arabic translation of the comprehensive description.
+- instructions: An array of step-by-step instructions in English (incorporating proper starting position, movement execution, and tempo recommendations).
+- instructionsAr: An array of step-by-step instructions in Arabic.
+- breathing: Recommended breathing technique in English.
+- breathingAr: Recommended breathing technique in Arabic.
+- commonMistakes: An array of common mistakes to avoid in English.
+- commonMistakesAr: An array of common mistakes to avoid in Arabic.
+- safetyTips: An array of safety tips in English.
+- safetyTipsAr: An array of safety tips in Arabic.
+- primaryMuscles: Targeted primary muscles in English.
+- primaryMusclesAr: Targeted primary muscles in Arabic.
+- secondaryMuscles: Targeted secondary muscles in English.
+- secondaryMusclesAr: Targeted secondary muscles in Arabic.
+- difficulty: Difficulty level in English (Beginner, Intermediate, or Advanced).
+- difficultyAr: Difficulty level in Arabic (مبتدئ, متوسط, متقدم).
+- category: Category in English.
+- categoryAr: Category in Arabic.
+- videoUrl: A high-quality instructional YouTube video URL demonstrating the correct technique from official fitness channels like Jeff Nippard, ATHLEAN-X, Jeremy Ethier, Renaissance Periodization, Squat University, or similar reputable sources. Must be a valid, stable YouTube link.
 
 {
   "name": "...",
@@ -70,15 +96,32 @@ Required numeric fields:
         {
           "name": "...",
           "nameAr": "...",
+          "description": "...",
           "descriptionAr": "...",
           "sets": 4,
           "reps": 10,
           "restSeconds": 90,
           "muscleGroup": "...",
           "muscleGroupAr": "...",
+          "equipment": "...",
           "equipmentAr": "...",
-          "formTip": "...",
-          "modification": "..."
+          "primaryMuscles": ["..."],
+          "primaryMusclesAr": ["..."],
+          "secondaryMuscles": ["..."],
+          "secondaryMusclesAr": ["..."],
+          "instructions": ["..."],
+          "instructionsAr": ["..."],
+          "commonMistakes": ["..."],
+          "commonMistakesAr": ["..."],
+          "safetyTips": ["..."],
+          "safetyTipsAr": ["..."],
+          "breathing": "...",
+          "breathingAr": "...",
+          "difficulty": "...",
+          "difficultyAr": "...",
+          "category": "...",
+          "categoryAr": "...",
+          "videoUrl": "https://..."
         }
       ],
       "cooldown": "5 min stretching"
