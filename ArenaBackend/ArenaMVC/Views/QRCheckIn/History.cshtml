@@ -1,16 +1,17 @@
-@model IEnumerable<ArenaDomain.Entities.Bookings.Attendance>
+@model IEnumerable<ArenaMVC.Controllers.QRCheckInController.AttendanceHistoryViewModel>
 @{
     ViewData["Title"] = @Localizer["ScanningHistory"];
     var adminMap = ViewBag.AdminMap as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
 }
 
 @functions {
-    public string GetInitials(string firstName, string lastName)
+    public string GetInitials(string fullName)
     {
-        string initials = "";
-        if (!string.IsNullOrEmpty(firstName)) initials += firstName[0];
-        if (!string.IsNullOrEmpty(lastName)) initials += lastName[0];
-        return string.IsNullOrEmpty(initials) ? "U" : initials.ToUpper();
+        if (string.IsNullOrEmpty(fullName)) return "U";
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length > 1)
+            return (parts[0][0].ToString() + parts[parts.Length - 1][0].ToString()).ToUpper();
+        return parts[0][0].ToString().ToUpper();
     }
 
     public string GetAvatarClass(string name)
@@ -112,11 +113,9 @@
                         }
                         @foreach (var item in Model)
                         {
-                            var fName = item.MemberProfile?.User?.FirstName ?? "";
-                            var lName = item.MemberProfile?.User?.LastName ?? "";
-                            var fullName = $"{fName} {lName}".Trim();
+                            var fullName = item.MemberName;
                             var avatarClass = GetAvatarClass(fullName);
-                            var initials = GetInitials(fName, lName);
+                            var initials = GetInitials(fullName);
                             
                             var scannedByName = item.ScannedById.HasValue && adminMap.ContainsKey(item.ScannedById.Value)
                                 ? adminMap[item.ScannedById.Value]
@@ -136,10 +135,10 @@
                                 </td>
                                 <td data-label="@Localizer["SessionDate"]">
                                     <div class="session-cell">
-                                        <span class="session-date">@item.Booking?.BookingDate.ToString("yyyy-MM-dd")</span>
+                                        <span class="session-date">@item.BookingDate.ToString("yyyy-MM-dd")</span>
                                         <span class="session-time">
                                             <i data-lucide="calendar" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px"></i>
-                                            @(item.Booking?.StartTime.ToString(@"hh\:mm") ?? "—") - @(item.Booking?.EndTime?.ToString(@"hh\:mm") ?? "—")
+                                            @(item.StartTime.ToString(@"hh\:mm")) - @(item.EndTime?.ToString(@"hh\:mm") ?? "—")
                                         </span>
                                     </div>
                                 </td>
