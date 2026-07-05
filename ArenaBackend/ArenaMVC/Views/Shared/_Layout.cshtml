@@ -81,6 +81,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @(currentController == "QRCheckIn" ? "active" : "")" asp-area="" asp-controller="QRCheckIn" asp-action="Index">
+                        <i data-lucide="scan-line" class="nav-icon"></i>
+                        <span>@Localizer["QRCheckIn"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @(currentController == "Equipments" ? "active" : "")" asp-area="" asp-controller="Equipments" asp-action="Index">
                         <i data-lucide="dumbbell" class="nav-icon"></i>
                         <span>@Localizer["Equipments"]</span>
