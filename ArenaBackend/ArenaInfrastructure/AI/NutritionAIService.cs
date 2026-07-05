@@ -63,7 +63,19 @@ namespace ArenaInfrastructure.AI
             if (profile == null)
                 throw new Exception($"MemberProfile not found for Id: {memberProfileId}");
 
-            var effectiveGoal = DetectGoalOverride(userMessage) ?? profile.Goal ?? "General Fitness";
+            var effectiveGoal = DetermineGoal(userMessage, profile.Goal);
+            if (string.IsNullOrEmpty(effectiveGoal))
+            {
+                throw new GoalRequiredException("GOAL_REQUIRED");
+            }
+
+            var goalFromMessage = ExtractGoalFromMessage(userMessage);
+            if (goalFromMessage != null && !string.Equals(profile.Goal, goalFromMessage, StringComparison.OrdinalIgnoreCase))
+            {
+                profile.Goal = goalFromMessage;
+                _context.MemberProfiles.Update(profile);
+            }
+
             var goalAwareUserMessage = BuildGoalAwareUserMessage(userMessage, effectiveGoal);
             var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, goalAwareUserMessage);
             var recentProgress = await _context.ProgressLogs
@@ -592,18 +604,126 @@ namespace ArenaInfrastructure.AI
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static string? DetectGoalOverride(string? userMessage)
+        private static string? DetermineGoal(string? userMessage, string? dbGoal)
         {
-            if (ContainsAny(userMessage, "gain weight", "weight gain", "increase weight", "bulk", "bulking", "gain muscle", "muscle gain", "build muscle", "اكسب وزن", "ازيد وزن", "اضخم", "عضلات"))
-                return "Weight Gain / Muscle Gain";
+            var extracted = ExtractGoalFromMessage(userMessage);
+            if (extracted != null)
+                return extracted;
 
-            if (ContainsAny(userMessage, "lose weight", "weight loss", "loss weight", "fat loss", "cut", "cutting", "اخس", "انحف", "تنشيف", "نزل وزن"))
-                return "Weight Loss";
-
-            if (ContainsAny(userMessage, "endurance", "fitness", "fit", "لياقة"))
-                return "General Fitness";
+            if (!string.IsNullOrWhiteSpace(dbGoal))
+            {
+                var normalized = NormalizeGoalName(dbGoal);
+                if (normalized != null)
+                    return normalized;
+            }
 
             return null;
+        }
+
+        private static string? ExtractGoalFromMessage(string? userMessage)
+        {
+            if (string.IsNullOrWhiteSpace(userMessage)) return null;
+
+            if (ContainsAny(userMessage, 
+                "lose weight", "weight loss", "loss weight", "burn fat", "fat burn", "get lean", "lean out", "cutting", "cut",
+                "أخس", "اخس", "أنزل وزن", "انزل وزن", "أحرق دهون", "احرق دهون", "أتخلص من الكرش", "اتخلص من الكرش", "تنشيف", "نحافة", "انحف", "أنحف"))
+            {
+                return "Weight Loss";
+            }
+
+            if (ContainsAny(userMessage, 
+                "gain weight", "weight gain", "increase weight", "bulk", "bulking", "gain muscle", "muscle gain", "build muscle",
+                "أتخن", "اتخن", "أزيد وزن", "ازيد وزن", "أبني عضلات", "ابني عضلات", "أضخم", "اضخم", "أزود كتلة عضلية", "ازود كتلة عضلية", "تضخيم"))
+            {
+                return "Muscle Gain";
+            }
+
+            if (ContainsAny(userMessage, "stronger chest", "bigger chest", "build chest", "develop chest", "أقوي صدري", "اقوي صدري", "أكبر صدري", "اكبر صدري", "تضخيم الصدر", "تمرين صدر"))
+            {
+                return "Chest Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "stronger legs", "bigger legs", "build legs", "leg strength", "leg hypertrophy", "أقوي رجلي", "اقوي رجلي", "أكبر رجلي", "اكبر رجلي", "تضخيم الرجل"))
+            {
+                return "Leg Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "stronger back", "bigger back", "build back", "back strength", "back hypertrophy", "أقوي ضهري", "اقوي ضهري", "أكبر ضهري", "اكبر ضهري", "تضخيم الظهر"))
+            {
+                return "Back Strength";
+            }
+
+            if (ContainsAny(userMessage, "stronger shoulders", "bigger shoulders", "build shoulders", "shoulder strength", "shoulder hypertrophy", "أقوي كتفي", "اقوي كتفي", "أكبر كتفي", "اكبر كتفي", "تضخيم الكتف"))
+            {
+                return "Shoulder Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "stronger arms", "bigger arms", "build arms", "arm strength", "arm hypertrophy", "أقوي دراعاتي", "اقوي دراعاتي", "أكبر دراعاتي", "اكبر دراعاتي", "أكبر دراع", "اكبر دراع", "تضخيم الذراع"))
+            {
+                return "Arm Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "glutes", "bigger glutes", "glute training", "أكبر مؤخرة", "اكبر مؤخرة", "تضخيم المؤخرة", "الأرداف"))
+            {
+                return "Glutes Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "core", "abs", "six pack", "أقوي بطني", "اقوي بطني", "عضلات بطن"))
+            {
+                return "Core Strength";
+            }
+
+            if (ContainsAny(userMessage, "improve my fitness", "improve fitness", "general fitness", "fitness level", "أقوي اللياقة", "اقوي اللياقة", "تحسين اللياقة", "لياقة"))
+            {
+                return "General Fitness";
+            }
+
+            if (ContainsAny(userMessage, "increase strength", "improve strength", "get stronger", "my strength", "أزود قوتي", "ازود قوتي", "زيادة القوة", "قوة"))
+            {
+                return "Strength";
+            }
+
+            return null;
+        }
+
+        private static string? NormalizeGoalName(string dbGoal)
+        {
+            if (string.IsNullOrWhiteSpace(dbGoal)) return null;
+
+            if (ContainsAny(dbGoal, "loss", "lose", "cut", "تخسيس", "خسارة", "تنشيف"))
+                return "Weight Loss";
+
+            if (ContainsAny(dbGoal, "gain", "bulk", "تضخيم", "بناء"))
+                return "Muscle Gain";
+
+            if (ContainsAny(dbGoal, "chest"))
+                return "Chest Hypertrophy";
+
+            if (ContainsAny(dbGoal, "leg"))
+                return "Leg Hypertrophy";
+
+            if (ContainsAny(dbGoal, "back"))
+                return "Back Strength";
+
+            if (ContainsAny(dbGoal, "shoulder"))
+                return "Shoulder Hypertrophy";
+
+            if (ContainsAny(dbGoal, "arm"))
+                return "Arm Hypertrophy";
+
+            if (ContainsAny(dbGoal, "glute"))
+                return "Glutes Hypertrophy";
+
+            if (ContainsAny(dbGoal, "core", "abs"))
+                return "Core Strength";
+
+            if (ContainsAny(dbGoal, "endurance", "fitness", "fit", "لياقة"))
+                return "General Fitness";
+
+            if (ContainsAny(dbGoal, "strength", "قوة"))
+                return "Strength";
+
+            return dbGoal;
         }
 
         private static string BuildGoalAwareUserMessage(string userMessage, string effectiveGoal) =>

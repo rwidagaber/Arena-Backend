@@ -23,6 +23,23 @@ namespace ArenaDomain.Entities.Workout
 
         public string? ImageUrl { get; set; }
 
+        public string? PrimaryMuscles { get; set; }
+        public string? PrimaryMusclesAr { get; set; }
+        public string? SecondaryMuscles { get; set; }
+        public string? SecondaryMusclesAr { get; set; }
+        public string? Instructions { get; set; }
+        public string? InstructionsAr { get; set; }
+        public string? CommonMistakes { get; set; }
+        public string? CommonMistakesAr { get; set; }
+        public string? SafetyTips { get; set; }
+        public string? SafetyTipsAr { get; set; }
+        public string? Breathing { get; set; }
+        public string? BreathingAr { get; set; }
+        public string? Difficulty { get; set; }
+        public string? DifficultyAr { get; set; }
+        public string? Category { get; set; }
+        public string? CategoryAr { get; set; }
+
         // Navigation
         public Guid MemberProfileId { get; set; }
         public virtual MemberProfile MemberProfile { get; set; } = null!;

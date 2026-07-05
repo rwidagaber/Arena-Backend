@@ -45,8 +45,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
                      .HasMaxLength(500);
 
               builder.Property(p => p.GatewayResponse)
-                     .IsRequired(false)
-                     .HasColumnType("nvarchar(max)");
+                     .IsRequired(false);
 
               // ApplicationUser → Payments (many)
               builder.HasOne(p => p.User)
