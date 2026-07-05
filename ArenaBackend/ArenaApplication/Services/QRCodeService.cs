@@ -1,4 +1,4 @@
-﻿using ArenaApplication.Dtos.AttendanceDtos;
+using ArenaApplication.Dtos.AttendanceDtos;
 using ArenaApplication.Dtos.QrCodeDtos;
 using ArenaApplication.IServices;
 using ArenaApplication.Services;
@@ -6,6 +6,7 @@ using ArenaDomain.Entities.Bookings;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Enums;
 using ArenaDomain.Interfaces;
+using ArenaInfrastructure.Repositories;
 using ArenaDomain.Shared;
 using Microsoft.Extensions.Localization;
 using System;
@@ -21,6 +22,7 @@ namespace ArenaInfrastructure.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
         private readonly INotificationService _notificationService;
+        private readonly IMemberProfileRepository _memberProfileRepo;
 
         public QRCodeService(
             IGenericRepository<QRCode, Guid> qrRepo,
@@ -29,7 +31,8 @@ namespace ArenaInfrastructure.Services
             IGenericRepository<UserSubscription, Guid> subscriptionRepo,
             IUnitOfWork unitOfWork,
             IStringLocalizer<ArenaLocalization> localizer,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IMemberProfileRepository memberProfileRepo)
         {
             _qrRepo = qrRepo;
             _bookingRepo = bookingRepo;
@@ -38,6 +41,7 @@ namespace ArenaInfrastructure.Services
             _unitOfWork = unitOfWork;
             _localizer = localizer;
             _notificationService = notificationService;
+            _memberProfileRepo = memberProfileRepo;
         }
 
         public async Task<QrDto> GenerateAsync(Guid bookingId)
@@ -195,11 +199,21 @@ namespace ArenaInfrastructure.Services
                 await _notificationService.NotifySubscriptionExpiredAsync(
                     booking.MemberProfileId);
 
+            // 9. Load member profile for result details
+            var memberProfile = await _memberProfileRepo.GetByIdAsync(booking.MemberProfileId);
+            var memberName = memberProfile?.User != null
+                ? $"{memberProfile.User.FirstName} {memberProfile.User.LastName}".Trim()
+                : null;
+
             return new QrScanResultDto
             {
                 Message = _localizer["QRScannedSuccess"],
                 BookingId = qr.BookingId,
-                MemberProfileId = booking.MemberProfileId
+                MemberProfileId = booking.MemberProfileId,
+                MemberName = memberName,
+                SessionDate = booking.BookingDate,
+                StartTime = booking.StartTime,
+                EndTime = booking.EndTime
             };
         }
     }
