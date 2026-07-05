@@ -7,11 +7,21 @@
 
 <div class="qr-checkin-page">
     <div class="qr-page-header">
-        <div class="qr-header-icon">
-            <i data-lucide="scan-line"></i>
+        <div class="header-left">
+            <div class="qr-header-icon">
+                <i data-lucide="scan-line"></i>
+            </div>
+            <div>
+                <h1>@Localizer["QRCheckIn"]</h1>
+                <p class="qr-subtitle">@Localizer["ScanMemberQR"]</p>
+            </div>
         </div>
-        <h1>@Localizer["QRCheckIn"]</h1>
-        <p class="qr-subtitle">@Localizer["ScanMemberQR"]</p>
+        <div class="header-right">
+            <a asp-action="History" class="btn-goto-history">
+                <i data-lucide="history" style="width:18px;height:18px"></i>
+                <span>@Localizer["ScanningHistory"]</span>
+            </a>
+        </div>
     </div>
 
     <div class="qr-scanner-container">

@@ -81,9 +81,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "QRCheckIn" ? "active" : "")" asp-area="" asp-controller="QRCheckIn" asp-action="Index">
+                    <a class="nav-link @(currentController == "QRCheckIn" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="QRCheckIn" asp-action="Index">
                         <i data-lucide="scan-line" class="nav-icon"></i>
                         <span>@Localizer["QRCheckIn"]</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "QRCheckIn" && currentAction == "History" ? "active" : "")" asp-area="" asp-controller="QRCheckIn" asp-action="History">
+                        <i data-lucide="history" class="nav-icon"></i>
+                        <span>@Localizer["ScanningHistory"]</span>
                     </a>
                 </li>
                 <li class="nav-item">

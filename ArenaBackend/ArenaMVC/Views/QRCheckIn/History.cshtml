@@ -1,0 +1,182 @@
+@model IEnumerable<ArenaDomain.Entities.Bookings.Attendance>
+@{
+    ViewData["Title"] = @Localizer["ScanningHistory"];
+    var adminMap = ViewBag.AdminMap as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
+}
+
+@functions {
+    public string GetInitials(string firstName, string lastName)
+    {
+        string initials = "";
+        if (!string.IsNullOrEmpty(firstName)) initials += firstName[0];
+        if (!string.IsNullOrEmpty(lastName)) initials += lastName[0];
+        return string.IsNullOrEmpty(initials) ? "U" : initials.ToUpper();
+    }
+
+    public string GetAvatarClass(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "avatar-blue";
+        char firstChar = char.ToUpper(name[0]);
+        if (firstChar >= 'A' && firstChar <= 'F') return "avatar-blue";
+        if (firstChar >= 'G' && firstChar <= 'L') return "avatar-teal";
+        if (firstChar >= 'M' && firstChar <= 'R') return "avatar-purple";
+        return "avatar-orange";
+    }
+}
+
+<link rel="stylesheet" href="~/css/qrcheckin-admin.css" asp-append-version="true" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<div class="qr-history-page">
+    <!-- Header Section -->
+    <div class="history-page-header">
+        <div class="header-left">
+            <div class="history-header-icon">
+                <i data-lucide="history"></i>
+            </div>
+            <div>
+                <h1>@Localizer["ScanningHistory"]</h1>
+                <p class="history-subtitle">@Localizer["RecentCheckInsDescription"]</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <a asp-action="Index" class="btn-goto-scanner">
+                <i data-lucide="scan-line"></i>
+                <span>@Localizer["QRCheckIn"]</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Dashboard row -->
+    <div class="history-stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-scans">
+                <i data-lucide="scan"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">@Localizer["TotalScans"]</span>
+                <span class="stat-value">@Model.Count()</span>
+            </div>
+            <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-today">
+                <i data-lucide="calendar-check"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">@Localizer["TodayScans"]</span>
+                <span class="stat-value">@Model.Count(a => a.CheckInTime?.Date == DateTime.Today)</span>
+            </div>
+            <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-status">
+                <span class="pulse-beacon"></span>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">@Localizer["SystemStatus"]</span>
+                <span class="stat-value text-success">@Localizer["Online"]</span>
+            </div>
+            <div class="stat-glow"></div>
+        </div>
+    </div>
+
+    <!-- Main List Card -->
+    <div class="history-table-card">
+        @if (!Model.Any())
+        {
+            <div class="empty-history-state">
+                <div class="empty-icon-glow">
+                    <i data-lucide="inbox"></i>
+                </div>
+                <h3>@Localizer["NoHistoryScans"]</h3>
+                <p>@Localizer["ScansShowUpHere"]</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive-wrapper">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["MemberName"]</th>
+                            <th>@Localizer["SessionDate"]</th>
+                            <th>@Localizer["CheckInTime"]</th>
+                            <th>@Localizer["ScannedBy"]</th>
+                            <th>@Localizer["Status"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int index = 1;
+                        }
+                        @foreach (var item in Model)
+                        {
+                            var fName = item.MemberProfile?.User?.FirstName ?? "";
+                            var lName = item.MemberProfile?.User?.LastName ?? "";
+                            var fullName = $"{fName} {lName}".Trim();
+                            var avatarClass = GetAvatarClass(fullName);
+                            var initials = GetInitials(fName, lName);
+                            
+                            var scannedByName = item.ScannedById.HasValue && adminMap.ContainsKey(item.ScannedById.Value)
+                                ? adminMap[item.ScannedById.Value]
+                                : "System / Auto";
+                            
+                            <tr style="--row-index: @index;">
+                                <td data-label="@Localizer["MemberName"]">
+                                    <div class="member-cell">
+                                        <div class="member-initial-avatar @avatarClass">
+                                            <span>@initials</span>
+                                        </div>
+                                        <div>
+                                            <span class="member-name">@(string.IsNullOrEmpty(fullName) ? "Unknown Member" : fullName)</span>
+                                            <span class="member-booking-id">@item.BookingId.ToString().Substring(0, 8)...</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="@Localizer["SessionDate"]">
+                                    <div class="session-cell">
+                                        <span class="session-date">@item.Booking?.BookingDate.ToString("yyyy-MM-dd")</span>
+                                        <span class="session-time">
+                                            <i data-lucide="calendar" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px"></i>
+                                            @(item.Booking?.StartTime.ToString(@"hh\:mm") ?? "—") - @(item.Booking?.EndTime?.ToString(@"hh\:mm") ?? "—")
+                                        </span>
+                                    </div>
+                                </td>
+                                <td data-label="@Localizer["CheckInTime"]">
+                                    <span class="checkin-time-badge">
+                                        <i data-lucide="clock" style="width:12px;height:12px"></i>
+                                        @item.CheckInTime?.ToString("yyyy-MM-dd HH:mm")
+                                    </span>
+                                </td>
+                                <td data-label="@Localizer["ScannedBy"]">
+                                    <span class="scanned-by-badge">
+                                        <i data-lucide="shield-check" style="width:12px;height:12px"></i>
+                                        @scannedByName
+                                    </span>
+                                </td>
+                                <td data-label="@Localizer["Status"]">
+                                    <span class="status-badge success">
+                                        <span class="status-dot"></span>
+                                        @Localizer["CheckInSuccess"]
+                                    </span>
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+}

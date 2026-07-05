@@ -1,6 +1,8 @@
 using ArenaApplication.IServices;
+using ArenaInfrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ArenaMVC.Controllers;
@@ -11,15 +13,18 @@ public class QRCheckInController : Controller
     private readonly IQRCodeService _qrService;
     private readonly IAnalyticsCacheVersionService _analyticsCacheVersionService;
     private readonly ILogger<QRCheckInController> _logger;
+    private readonly AppDbContext _context;
 
     public QRCheckInController(
         IQRCodeService qrService,
         IAnalyticsCacheVersionService analyticsCacheVersionService,
-        ILogger<QRCheckInController> logger)
+        ILogger<QRCheckInController> logger,
+        AppDbContext context)
     {
         _qrService = qrService;
         _analyticsCacheVersionService = analyticsCacheVersionService;
         _logger = logger;
+        _context = context;
     }
 
     // GET: /QRCheckIn
@@ -27,6 +32,28 @@ public class QRCheckInController : Controller
     public IActionResult Index()
     {
         return View();
+    }
+
+    // GET: /QRCheckIn/History
+    [HttpGet]
+    public async Task<IActionResult> History()
+    {
+        var attendances = await _context.Attendances
+            .Include(a => a.MemberProfile)
+                .ThenInclude(m => m.User)
+            .Include(a => a.Booking)
+            .OrderByDescending(a => a.CheckInTime)
+            .Take(100)
+            .ToListAsync();
+
+        var adminIds = attendances.Where(a => a.ScannedById.HasValue).Select(a => a.ScannedById!.Value).Distinct().ToList();
+        var adminMap = await _context.Users
+            .Where(u => adminIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim());
+
+        ViewBag.AdminMap = adminMap;
+
+        return View(attendances);
     }
 
     // POST: /QRCheckIn/Scan  (AJAX — returns JSON)
