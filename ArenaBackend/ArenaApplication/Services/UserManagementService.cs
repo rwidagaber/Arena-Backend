@@ -116,6 +116,19 @@ namespace ArenaApplication.Services
                     {
                         query = query.Where(u => u.MemberProfile != null && u.MemberProfile.Subscriptions.Any() && !u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active));
                     }
+                    else if (subscriptionStatus.Equals("ExpiringSoon", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var now = DateTime.UtcNow;
+                        var sevenDaysFromNow = now.AddDays(7);
+                        query = query.Where(u => u.MemberProfile != null &&
+                                                 u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted) &&
+                                                 u.MemberProfile.Subscriptions
+                                                    .Where(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted)
+                                                    .Max(s => (DateTime?)s.EndDate) > now &&
+                                                 u.MemberProfile.Subscriptions
+                                                    .Where(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted)
+                                                    .Max(s => (DateTime?)s.EndDate) <= sevenDaysFromNow);
+                    }
                 }
 
                 if (isAscending)

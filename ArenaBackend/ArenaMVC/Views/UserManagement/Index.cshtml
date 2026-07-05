@@ -75,6 +75,7 @@
                         <option value="" selected="@(string.IsNullOrEmpty(Model.SubscriptionStatusFilter) ? "selected" : null)">@Localizer["All"]</option>
                         <option value="NoSubscription" selected="@(Model.SubscriptionStatusFilter == "NoSubscription" ? "selected" : null)">@Localizer["NoSubscription"]</option>
                         <option value="Active" selected="@(Model.SubscriptionStatusFilter == "Active" ? "selected" : null)">@Localizer["Active"]</option>
+                        <option value="ExpiringSoon" selected="@(Model.SubscriptionStatusFilter == "ExpiringSoon" ? "selected" : null)">@Localizer["ExpiringSoon"]</option>
                         <option value="Expired" selected="@(Model.SubscriptionStatusFilter == "Expired" ? "selected" : null)">@Localizer["Expired"]</option>
                     </select>
                 </div>

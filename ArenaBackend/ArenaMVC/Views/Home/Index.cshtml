@@ -441,7 +441,7 @@
     </div>
 
     <!-- Expiring Subscriptions -->
-    <div class="metric-card">
+    <a href="@Url.Action("Index", "UserManagement", new { subscriptionStatus = "ExpiringSoon" })" class="metric-card" style="text-decoration: none;">
         <div class="metric-icon"><i data-lucide="clock"></i></div>
         <div class="metric-info">
             <span class="metric-label">@Localizer["ExpiringSoon"]</span>
@@ -450,7 +450,7 @@
                 @(Model.ExpiringSubscriptions > 0 ? "⚠" : "✓") @Localizer["Within7Days"]
             </span>
         </div>
-    </div>
+    </a>
 
     <!-- Today's Attendance -->
     <div class="metric-card">
