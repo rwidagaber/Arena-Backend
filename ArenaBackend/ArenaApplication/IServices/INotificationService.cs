@@ -38,6 +38,7 @@ namespace ArenaApplication.IServices
         // ── Bookings & Attendance ─────────────────────────────────────────────
         Task NotifyBookingConfirmedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default);
         Task NotifyBookingCancelledAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default);
+        Task NotifyBookingCancelledGymHoursChangedAsync(Guid memberProfileId, DateTime bookingDate, TimeSpan startTime, CancellationToken cancellationToken = default);
         Task NotifyBookingRescheduledAsync(Guid memberProfileId, DateTime newBookingDate, CancellationToken cancellationToken = default);
 
         Task NotifyQrCodeGeneratedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default);

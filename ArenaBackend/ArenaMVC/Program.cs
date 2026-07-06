@@ -50,6 +50,11 @@ builder
     });
 
 builder.Services.ConfigureDbContext(builder.Configuration);
+
+// Register EmailSettings configuration section for DI options pattern
+builder.Services.Configure<ArenaApi.Configurations.EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
 // register Mapster IMapper and config
 builder.Services.AddMapsterConfiguration();
 builder.Services.AddApplicationServices();

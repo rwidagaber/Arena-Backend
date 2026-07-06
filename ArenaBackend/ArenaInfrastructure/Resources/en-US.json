@@ -556,5 +556,7 @@
   "TodayScans": "Today's Scans",
   "SystemStatus": "System Status",
   "Online": "Online",
-  "ScansShowUpHere": "Recorded scans will show up here."
+  "ScansShowUpHere": "Recorded scans will show up here.",
+  "NotificationBookingCancelledGymHoursChangedTitle": "Gym Hours Updated",
+  "NotificationBookingCancelledGymHoursChangedMessage": "Your booking on {0} at {1} has been cancelled because the gym hours were updated."
 }

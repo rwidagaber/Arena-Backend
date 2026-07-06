@@ -555,5 +555,7 @@
   "TodayScans": "عمليات المسح اليوم",
   "SystemStatus": "حالة النظام",
   "Online": "نشط / متصل",
-  "ScansShowUpHere": "ستظهر عمليات المسح المسجلة هنا."
+  "ScansShowUpHere": "ستظهر عمليات المسح المسجلة هنا.",
+  "NotificationBookingCancelledGymHoursChangedTitle": "تعديل مواعيد العمل",
+  "NotificationBookingCancelledGymHoursChangedMessage": "تم إلغاء حجزك بتاريخ {0} الساعة {1} بسبب تعديل مواعيد عمل صالة الألعاب الرياضية."
 }
