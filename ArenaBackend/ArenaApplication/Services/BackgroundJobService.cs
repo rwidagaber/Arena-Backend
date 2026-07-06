@@ -96,6 +96,14 @@ namespace ArenaApplication.Services
             return Task.CompletedTask;
         }
 
+        public Task EnqueueGymHoursChangedCancellationAsync(Guid memberId, DateTime bookingDate, TimeSpan startTime)
+        {
+            var fullDateTime = DateTime.SpecifyKind(bookingDate.Date.Add(startTime), DateTimeKind.Utc);
+            _jobClient.Enqueue<INotificationService>(s =>
+                s.NotifyBookingCancelledGymHoursChangedAsync(memberId, fullDateTime, startTime, CancellationToken.None));
+            return Task.CompletedTask;
+        }
+
         public Task EnqueueBookingRescheduledAsync(Guid memberId, DateTime newBookingDate, TimeSpan startTime)
         {
             var fullDateTime = DateTime.SpecifyKind(newBookingDate.Date.Add(startTime), DateTimeKind.Utc);

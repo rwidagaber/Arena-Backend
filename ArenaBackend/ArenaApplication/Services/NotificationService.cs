@@ -285,6 +285,58 @@ namespace ArenaApplication.Services
                 NotificationType.Warning,
                 cancellationToken);
 
+        public async Task NotifyBookingCancelledGymHoursChangedAsync(
+            Guid memberProfileId,
+            DateTime bookingDate,
+            TimeSpan startTime,
+            CancellationToken cancellationToken = default)
+        {
+            var profile = await _memberProfileRepository.GetByIdAsync(memberProfileId, cancellationToken);
+            
+            var title = _localizer["NotificationBookingCancelledGymHoursChangedTitle"];
+            var message = string.Format(
+                _localizer["NotificationBookingCancelledGymHoursChangedMessage"],
+                bookingDate.ToString("yyyy-MM-dd"),
+                startTime.ToString(@"hh\:mm"));
+
+            var entity = new Notification
+            {
+                Id = Guid.NewGuid(),
+                MemberProfileId = memberProfileId,
+                Title = title,
+                Message = message,
+                Type = NotificationType.Warning,
+                IsRead = false
+            };
+
+            await _repository.AddAsync(entity, cancellationToken);
+
+            if (profile != null)
+            {
+                await _notificationHub.SendToUserAsync(
+                    profile.UserId,
+                    entity.Adapt<NotificationDto>(),
+                    cancellationToken);
+
+                await _pushNotificationService.SendAsync(profile.UserId, title, message);
+
+                Console.WriteLine($"[NotificationService] NotifyBookingCancelledGymHoursChangedAsync - MemberProfileId: {memberProfileId}, Found: True, User Found: {profile.User != null}, Email: {profile.User?.Email}");
+                if (profile.User != null)
+                {
+                    await _emailService.SendGymHoursChangedCancellationEmailAsync(
+                        profile.User.Email!,
+                        profile.User.FirstName,
+                        bookingDate,
+                        startTime,
+                        cancellationToken);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[NotificationService] NotifyBookingCancelledGymHoursChangedAsync - MemberProfileId: {memberProfileId}, Found: False");
+            }
+        }
+
         public Task NotifyBookingRescheduledAsync(Guid memberProfileId, DateTime newBookingDate, CancellationToken cancellationToken = default) =>
             CreateAsync(
                 memberProfileId,
