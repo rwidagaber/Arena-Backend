@@ -12,18 +12,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using ArenaDomain.Entities.Subscription;
+using ArenaDomain.Entities.Payments;
+using ArenaDomain.Entities;
+
 namespace ArenaApplication.Services
 {
     public class UserManagementService : IUserManagementService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> _planRepository;
+        private readonly IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> _subscriptionRepository;
+        private readonly IGenericRepository<MemberProfile, Guid> _memberProfileRepository;
+        private readonly IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> _paymentRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IStringLocalizer<ArenaLocalization> _localizer;
 
         public UserManagementService(
             IUserRepository userRepository,
+            IGenericRepository<ArenaDomain.Entities.Subscription.SubscriptionPlan, Guid> planRepository,
+            IGenericRepository<ArenaDomain.Entities.Subscription.UserSubscription, Guid> subscriptionRepository,
+            IGenericRepository<MemberProfile, Guid> memberProfileRepository,
+            IGenericRepository<ArenaDomain.Entities.Payments.Payment, Guid> paymentRepository,
+            IUnitOfWork unitOfWork,
             IStringLocalizer<ArenaLocalization> localizer)
         {
             _userRepository = userRepository;
+            _planRepository = planRepository;
+            _subscriptionRepository = subscriptionRepository;
+            _memberProfileRepository = memberProfileRepository;
+            _paymentRepository = paymentRepository;
+            _unitOfWork = unitOfWork;
             _localizer = localizer;
         }
 
@@ -33,7 +52,9 @@ namespace ArenaApplication.Services
             MembershipStatus? membershipStatus, 
             string? subscriptionStatus, 
             int page, 
-            int pageSize)
+            int pageSize,
+            string? sortBy = "RegisterDate",
+            bool isAscending = false)
         {
             try
             {
@@ -43,6 +64,7 @@ namespace ArenaApplication.Services
                 var query = _userRepository.GetAll()
                     .Include(u => u.MemberProfile)
                         .ThenInclude(mp => mp.Subscriptions)
+                            .ThenInclude(s => s.Payments)
                     .AsNoTracking();
 
                 // Exclude soft-deleted users
@@ -94,6 +116,28 @@ namespace ArenaApplication.Services
                     {
                         query = query.Where(u => u.MemberProfile != null && u.MemberProfile.Subscriptions.Any() && !u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active));
                     }
+                    else if (subscriptionStatus.Equals("ExpiringSoon", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var now = DateTime.UtcNow;
+                        var sevenDaysFromNow = now.AddDays(7);
+                        query = query.Where(u => u.MemberProfile != null &&
+                                                 u.MemberProfile.Subscriptions.Any(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted) &&
+                                                 u.MemberProfile.Subscriptions
+                                                    .Where(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted)
+                                                    .Max(s => (DateTime?)s.EndDate) > now &&
+                                                 u.MemberProfile.Subscriptions
+                                                    .Where(s => s.Status == SubscriptionStatus.Active && !s.IsDeleted)
+                                                    .Max(s => (DateTime?)s.EndDate) <= sevenDaysFromNow);
+                    }
+                }
+
+                if (isAscending)
+                {
+                    query = query.OrderBy(u => u.CreatedAt);
+                }
+                else
+                {
+                    query = query.OrderByDescending(u => u.CreatedAt);
                 }
 
                 int totalCount = await query.CountAsync();
@@ -107,6 +151,11 @@ namespace ArenaApplication.Services
                 {
                     // Get subscriptions from MemberProfile if it exists
                     var subscriptions = u.MemberProfile?.Subscriptions ?? new List<ArenaDomain.Entities.Subscription.UserSubscription>();
+                    var activeSubscription = subscriptions.FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                    var isManualActive = activeSubscription != null && activeSubscription.Payments.Any(p => p.TransactionId != null && p.TransactionId.StartsWith("ManualActive"));
+                    
+                    var latestSub = subscriptions.OrderByDescending(s => s.CreatedAt).FirstOrDefault();
+                    var isManualExpiredOrCancelled = latestSub != null && latestSub.Payments.Any(p => p.TransactionId != null && p.TransactionId.StartsWith("ManualActive"));
 
                     return new UserManagementDto
                     {
@@ -114,11 +163,13 @@ namespace ArenaApplication.Services
                         FullName = $"{u.FirstName} {u.LastName}".Trim(),
                         Email = u.Email ?? string.Empty,
                         PhoneNumber = u.PhoneNumber ?? string.Empty,
-                        RegisterDate = u.MemberProfile?.CreatedAt,
+                        RegisterDate = u.CreatedAt,
                         IsActive = u.IsActive,
                         // Membership is now determined by subscriptions, not MemberProfile existence
                         IsMember = DetermineMembershipStatus(subscriptions),
-                        SubscriptionStatus = DetermineSubscriptionStatus(subscriptions)
+                        SubscriptionStatus = DetermineSubscriptionStatus(subscriptions),
+                        IsManualActive = isManualActive,
+                        IsManualExpiredOrCancelled = isManualExpiredOrCancelled
                     };
                 }).ToList();
 
@@ -171,7 +222,7 @@ namespace ArenaApplication.Services
                     IsActive = user.IsActive,
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
-                    RegisterDate = memberProfile?.CreatedAt,
+                    RegisterDate = user.CreatedAt,
 
                     // Membership Info (based on subscriptions)
                     MembershipStatus = membershipStatus,
@@ -187,7 +238,11 @@ namespace ArenaApplication.Services
                     SubscriptionHistory = subscriptions
                         .OrderByDescending(s => s.CreatedAt)
                         .Select(s => MapSubscriptionItem(s))
-                        .ToList()
+                        .ToList(),
+
+                    IsManualActive = activeSubscription != null && activeSubscription.Payments.Any(p => p.TransactionId != null && p.TransactionId.StartsWith("ManualActive")),
+                    IsManualExpiredOrCancelled = subscriptions.OrderByDescending(s => s.CreatedAt).FirstOrDefault() != null &&
+                                                 subscriptions.OrderByDescending(s => s.CreatedAt).FirstOrDefault()!.Payments.Any(p => p.TransactionId != null && p.TransactionId.StartsWith("ManualActive"))
                 };
 
                 return Result<UserManagementDetailsDto>.Success(dto);
@@ -209,12 +264,33 @@ namespace ArenaApplication.Services
                     return Result<UserManagementDetailsDto>.Failure(_localizer["UserNotFound"]);
                 }
 
+                var subscriptions = user.MemberProfile?.Subscriptions?.ToList() ?? new List<ArenaDomain.Entities.Subscription.UserSubscription>();
+                var activeSubscription = subscriptions.FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+                var isManualActive = activeSubscription != null && activeSubscription.Payments.Any(p => p.TransactionId != null && p.TransactionId.StartsWith("ManualActive"));
+
+                var plans = await _planRepository.FindAsync(p => p.IsActive);
+
                 var dto = new UserManagementDetailsDto
                 {
                     Id = user.Id,
                     FullName = $"{user.FirstName} {user.LastName}".Trim(),
                     Email = user.Email ?? string.Empty,
-                    IsActive = user.IsActive
+                    IsActive = user.IsActive,
+
+                    HasActiveSubscription = activeSubscription != null,
+                    CurrentSubscriptionId = activeSubscription?.Id,
+                    CurrentPlanNameEn = activeSubscription?.Plan?.NameEn,
+                    CurrentPlanNameAr = activeSubscription?.Plan?.NameAr,
+                    IsManualActive = isManualActive,
+                    AvailablePlans = plans.Select(p => new SubscriptionPlanSelectionDto
+                    {
+                        Id = p.Id,
+                        NameEn = p.NameEn,
+                        NameAr = p.NameAr,
+                        Price = p.Price,
+                        DurationMonths = p.DurationMonths,
+                        HasAI = p.HasAI
+                    }).ToList()
                 };
 
                 return Result<UserManagementDetailsDto>.Success(dto);
@@ -300,10 +376,12 @@ namespace ArenaApplication.Services
             if (subscriptions == null || !subscriptions.Any())
                 return null;
 
-            if (subscriptions.Any(s => s.Status == SubscriptionStatus.Active))
+            var active = subscriptions.FirstOrDefault(s => s.Status == SubscriptionStatus.Active);
+            if (active != null)
                 return SubscriptionStatus.Active;
 
-            return SubscriptionStatus.Expired;
+            var latest = subscriptions.OrderByDescending(s => s.CreatedAt).FirstOrDefault();
+            return latest?.Status;
         }
 
         private static UserSubscriptionItemDto MapSubscriptionItem(ArenaDomain.Entities.Subscription.UserSubscription subscription)
@@ -316,8 +394,134 @@ namespace ArenaApplication.Services
                 EndDate = subscription.EndDate,
                 RemainingSessions = subscription.RemainingSessions,
                 DurationDays = (subscription.EndDate - subscription.StartDate).Days,
-                CreatedAt = subscription.CreatedAt
+                CreatedAt = subscription.CreatedAt,
+                IsManualActive = subscription.Payments.Any(p => p.TransactionId != null && p.TransactionId.StartsWith("ManualActive"))
             };
+        }
+
+        public async Task<Result<bool>> AddManualSubscription(Guid userId, Guid planId, string adminName)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null || user.IsDeleted)
+                {
+                    return Result<bool>.Failure(_localizer["UserNotFound"]);
+                }
+
+                var plan = await _planRepository.GetByIdAsync(planId);
+                if (plan == null || !plan.IsActive)
+                {
+                    return Result<bool>.Failure(_localizer["PlanNotFoundOrInactive"]);
+                }
+
+                // If user has an active subscription, we cannot add a new one manually
+                var subscriptions = user.MemberProfile?.Subscriptions ?? new List<ArenaDomain.Entities.Subscription.UserSubscription>();
+                if (subscriptions.Any(s => s.Status == SubscriptionStatus.Active))
+                {
+                    return Result<bool>.Failure(_localizer["UserHasActiveSubscription"]);
+                }
+
+                // Activate the user's account status when a subscription is manually added
+                user.IsActive = true;
+
+                // If user doesn't have a member profile, create one
+                var memberProfile = user.MemberProfile;
+                if (memberProfile == null)
+                {
+                    memberProfile = new MemberProfile
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        DateOfBirth = DateTime.UtcNow.AddYears(-20), // Default date of birth
+                        Gender = Gender.Male, // Default gender
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = adminName
+                    };
+                    await _memberProfileRepository.AddAsync(memberProfile);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+
+                // Create manual active subscription
+                var newSub = new ArenaDomain.Entities.Subscription.UserSubscription
+                {
+                    Id = Guid.NewGuid(),
+                    MemberProfileId = memberProfile.Id,
+                    PlanId = plan.Id,
+                    StartDate = DateTime.UtcNow,
+                    EndDate = DateTime.UtcNow.AddMonths(plan.DurationMonths),
+                    Status = SubscriptionStatus.Active,
+                    RemainingSessions = plan.SessionLimit ?? 0,
+                    ReminderSent = false,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = adminName
+                };
+
+                await _subscriptionRepository.AddAsync(newSub);
+
+                // Create associated cash payment record with transaction id "ManualActive"
+                var payment = new ArenaDomain.Entities.Payments.Payment
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    UserSubscriptionId = newSub.Id,
+                    Amount = plan.Price,
+                    Currency = "EGP",
+                    PaymentMethod = PaymentMethod.Cash,
+                    TransactionId = $"ManualActive-{newSub.Id}",
+                    Status = PaymentStatus.Paid,
+                    PaymentDate = DateTime.UtcNow,
+                    GatewayResponse = "Manual Activation by Admin",
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = adminName
+                };
+
+                await _paymentRepository.AddAsync(payment);
+
+                await _unitOfWork.SaveChangesAsync();
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(ex.Message);
+            }
+        }
+
+        public async Task<Result<bool>> CancelActiveSubscription(Guid userId, Guid subscriptionId, string adminName)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null || user.IsDeleted)
+                {
+                    return Result<bool>.Failure(_localizer["UserNotFound"]);
+                }
+
+                var subscription = await _subscriptionRepository.GetByIdAsync(subscriptionId);
+                if (subscription == null || subscription.IsDeleted)
+                {
+                    return Result<bool>.Failure(_localizer["SubscriptionNotFound"]);
+                }
+
+                if (subscription.Status != SubscriptionStatus.Active)
+                {
+                    return Result<bool>.Failure(_localizer["SubscriptionNotActive"]);
+                }
+
+                subscription.Status = SubscriptionStatus.Cancelled;
+                subscription.EndDate = DateTime.UtcNow;
+                subscription.UpdatedAt = DateTime.UtcNow;
+                subscription.UpdatedBy = adminName;
+
+                await _subscriptionRepository.UpdateAsync(subscription);
+                await _unitOfWork.SaveChangesAsync();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(ex.Message);
+            }
         }
     }
 }

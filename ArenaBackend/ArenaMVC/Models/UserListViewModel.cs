@@ -22,5 +22,7 @@ namespace ArenaMVC.Models
         /// Views will localize the display
         /// </summary>
         public SubscriptionStatus? SubscriptionStatus { get; set; } = null;
+        public bool IsManualActive { get; set; }
+        public bool IsManualExpiredOrCancelled { get; set; }
     }
 }

@@ -549,4 +549,234 @@ html[dir="rtl"] .usub-arrow-next {
     display: inline-block;
     transform: scaleX(-1);
 }
+
+/* --- Discount Features Styling --- */
+
+/* Ribbon badge for discounted plans */
+.subscription-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.subscription-card.has-discount {
+    border-color: #f59e0b; /* Amber */
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);
+}
+
+.subscription-card.has-discount:hover {
+    border-color: #f59e0b;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+}
+
+html[data-theme="light"] .subscription-card.has-discount {
+    border-color: #d97706; /* Darker amber in light theme */
+    box-shadow: 0 4px 20px rgba(217, 119, 6, 0.12);
+}
+
+.discount-ribbon {
+    position: absolute;
+    top: 18px;
+    right: -32px;
+    transform: rotate(45deg);
+    background-color: #f59e0b;
+    color: #000;
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 0.25rem 2.5rem;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+html[dir="rtl"] .discount-ribbon {
+    right: auto;
+    left: -32px;
+    transform: rotate(-45deg);
+}
+
+html[data-theme="light"] .discount-ribbon {
+    background-color: #d97706;
+    color: #fff;
+}
+
+/* Pricing updates */
+.discount-percentage-badge {
+    display: inline-block;
+    background-color: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.4rem;
+}
+
+html[data-theme="light"] .discount-percentage-badge {
+    background-color: rgba(217, 119, 6, 0.1);
+    border-color: rgba(217, 119, 6, 0.3);
+    color: #b45309;
+}
+
+.discount-expiry {
+    font-size: 0.8rem;
+    color: rgba(245, 158, 11, 0.8);
+    margin-top: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+html[data-theme="light"] .discount-expiry {
+    color: #b45309;
+}
+
+/* Selection / Checklist Mode styling */
+.plan-select-wrapper {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.selection-mode-active .plan-select-wrapper {
+    display: inline-flex;
+}
+
+.selection-mode-active .subscription-card {
+    cursor: pointer;
+    border-color: var(--border-color);
+}
+
+.selection-mode-active .subscription-card:hover {
+    border-color: var(--yellow);
+    transform: translateY(-2px);
+}
+
+.subscription-card.card-selected {
+    border-color: var(--yellow) !important;
+    background-color: rgba(213, 235, 69, 0.05) !important;
+}
+
+html[data-theme="light"] .subscription-card.card-selected {
+    background-color: rgba(198, 239, 46, 0.05) !important;
+}
+
+/* Custom checkbox styled premium */
+.discount-checkbox-input {
+    width: 22px;
+    height: 22px;
+    background-color: var(--input-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.discount-checkbox-input:checked {
+    background-color: var(--yellow);
+    border-color: var(--yellow);
+}
+
+.discount-checkbox-input:checked::after {
+    content: "";
+    width: 6px;
+    height: 11px;
+    border: solid #000;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+}
+
+/* Floating Toolbar at the bottom */
+.discount-toolbar {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: rgba(30, 30, 36, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    padding: 0.75rem 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    width: 90%;
+    max-width: 650px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    opacity: 0;
+}
+
+.discount-toolbar.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+html[data-theme="light"] .discount-toolbar {
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.discount-toolbar-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.discount-selected-count {
+    color: var(--whiteout);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.discount-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-subscription-primary.btn-sm,
+.btn-subscription-secondary.btn-sm,
+.btn-subscription-danger.btn-sm {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 30px;
+}
+
+/* Modal styling refinement */
+.discount-modal .modal-content {
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+}
+
+/* Responsive adjustment for toolbar */
+@media (max-width: 576px) {
+    .discount-toolbar {
+        bottom: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 20px;
+    }
+
+    .discount-toolbar-content {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+
+    .discount-toolbar-actions {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
 

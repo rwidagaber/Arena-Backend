@@ -34,12 +34,31 @@ namespace ArenaInfrastructure.AI
     {
         public string Name { get; set; } = string.Empty;
         public string? NameAr { get; set; }
+        public string? Description { get; set; }
         public string? DescriptionAr { get; set; }
         public int Sets { get; set; }
         public int Reps { get; set; }
         public string MuscleGroup { get; set; } = string.Empty;
         public string? MuscleGroupAr { get; set; }
+        public string? Equipment { get; set; }
         public string? EquipmentAr { get; set; }
+        public List<string>? PrimaryMuscles { get; set; }
+        public List<string>? PrimaryMusclesAr { get; set; }
+        public List<string>? SecondaryMuscles { get; set; }
+        public List<string>? SecondaryMusclesAr { get; set; }
+        public List<string>? Instructions { get; set; }
+        public List<string>? InstructionsAr { get; set; }
+        public List<string>? CommonMistakes { get; set; }
+        public List<string>? CommonMistakesAr { get; set; }
+        public List<string>? SafetyTips { get; set; }
+        public List<string>? SafetyTipsAr { get; set; }
+        public string? Breathing { get; set; }
+        public string? BreathingAr { get; set; }
+        public string? Difficulty { get; set; }
+        public string? DifficultyAr { get; set; }
+        public string? Category { get; set; }
+        public string? CategoryAr { get; set; }
+        public string? VideoUrl { get; set; }
     }
 
     public class WorkoutAIService : IWorkoutAIService
@@ -87,12 +106,16 @@ namespace ArenaInfrastructure.AI
             Console.WriteLine($"Experience: {profile.FitnessExperience}");
             Console.WriteLine($"===============");
 
-            var effectiveGoal = DetectGoalOverride(userMessage) ?? profile.Goal ?? "General Fitness";
-
-            var goalOverride = DetectGoalOverride(userMessage);
-            if (goalOverride != null && !string.Equals(profile.Goal, goalOverride, StringComparison.OrdinalIgnoreCase))
+            var effectiveGoal = DetermineGoal(userMessage, profile.Goal);
+            if (string.IsNullOrEmpty(effectiveGoal))
             {
-                profile.Goal = goalOverride;
+                throw new GoalRequiredException("GOAL_REQUIRED");
+            }
+
+            var goalFromMessage = ExtractGoalFromMessage(userMessage);
+            if (goalFromMessage != null && !string.Equals(profile.Goal, goalFromMessage, StringComparison.OrdinalIgnoreCase))
+            {
+                profile.Goal = goalFromMessage;
                 _context.MemberProfiles.Update(profile);
             }
 
@@ -219,6 +242,7 @@ namespace ArenaInfrastructure.AI
 
             NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
             ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
+            await ResolveDuplicateExercisesAsync(planData, validCatalogItems);
             LocalizeWorkoutPlan(planData, WorkoutLocalization.IsArabic(userMessage), effectiveGoal);
 
             var activeWorkoutPlans = await _context.WorkoutPlans
@@ -276,14 +300,16 @@ namespace ArenaInfrastructure.AI
                             NameAr = ex.NameAr,
                             MuscleGroup = ex.MuscleGroup,
                             MuscleGroupAr = ex.MuscleGroupAr,
-                            Description = ex.Name,
+                            Description = !string.IsNullOrEmpty(ex.Description) ? ex.Description : ex.Name,
                             DescriptionAr = ex.DescriptionAr,
-                            Equipment = "None",
+                            Equipment = !string.IsNullOrEmpty(ex.Equipment) ? ex.Equipment : "None",
                             EquipmentAr = ex.EquipmentAr,
                             MemberProfileId = profile.Id
                         };
                         _context.Exercises.Add(existingExercise);
                     }
+
+                    PopulateExerciseMetadata(existingExercise, ex);
 
                     _context.WorkoutExercises.Add(new WorkoutExercise
                     {
@@ -300,19 +326,7 @@ namespace ArenaInfrastructure.AI
                         ExerciseId = existingExercise.Id,
                         Sets = ex.Sets,
                         Reps = ex.Reps,
-                        Exercise = new ExerciseDto
-                        {
-                            Id = existingExercise.Id,
-                            Name = existingExercise.Name,
-                            NameAr = existingExercise.NameAr,
-                            Description = existingExercise.Description,
-                            DescriptionAr = existingExercise.DescriptionAr,
-                            MuscleGroup = existingExercise.MuscleGroup,
-                            MuscleGroupAr = existingExercise.MuscleGroupAr,
-                            Equipment = existingExercise.Equipment,
-                            EquipmentAr = existingExercise.EquipmentAr,
-                            MemberProfileId = existingExercise.MemberProfileId
-                        }
+                        Exercise = MapToExerciseDto(existingExercise)
                     });
                 }
 
@@ -383,7 +397,18 @@ namespace ArenaInfrastructure.AI
 
             var currentPlanJson = JsonSerializer.Serialize(currentPlanData, new JsonSerializerOptions { WriteIndented = true });
 
-            var effectiveGoal = profile.Goal ?? "General Fitness";
+            var effectiveGoal = DetermineGoal(userMessage, profile.Goal);
+            if (string.IsNullOrEmpty(effectiveGoal))
+            {
+                throw new GoalRequiredException("GOAL_REQUIRED");
+            }
+
+            var goalFromMessage = ExtractGoalFromMessage(userMessage);
+            if (goalFromMessage != null && !string.Equals(profile.Goal, goalFromMessage, StringComparison.OrdinalIgnoreCase))
+            {
+                profile.Goal = goalFromMessage;
+                _context.MemberProfiles.Update(profile);
+            }
             var memberName = GetMemberName(profile);
             var goalAwareUserMessage = BuildGoalAwareUserMessage(userMessage, effectiveGoal);
             var healthContext = await _healthRAG.GetRelevantHealthContextAsync(profile.Id, goalAwareUserMessage);
@@ -473,6 +498,7 @@ namespace ArenaInfrastructure.AI
 
             NormalizeWorkoutPlan(planData, profile, memberName, goalAwareUserMessage, healthContext, effectiveGoal);
             ApplyEquipmentSubstitution(planData, catalogItems, validCatalogItems);
+            await ResolveDuplicateExercisesAsync(planData, validCatalogItems);
             LocalizeWorkoutPlan(planData, WorkoutLocalization.IsArabic(userMessage), effectiveGoal);
 
             var activeWorkoutPlans = await _context.WorkoutPlans
@@ -524,13 +550,19 @@ namespace ArenaInfrastructure.AI
                         {
                             Id = Guid.NewGuid(),
                             Name = ex.Name,
+                            NameAr = ex.NameAr,
                             MuscleGroup = ex.MuscleGroup,
-                            Description = ex.Name,
-                            Equipment = "None",
+                            MuscleGroupAr = ex.MuscleGroupAr,
+                            Description = !string.IsNullOrEmpty(ex.Description) ? ex.Description : ex.Name,
+                            DescriptionAr = ex.DescriptionAr,
+                            Equipment = !string.IsNullOrEmpty(ex.Equipment) ? ex.Equipment : "None",
+                            EquipmentAr = ex.EquipmentAr,
                             MemberProfileId = profile.Id
                         };
                         _context.Exercises.Add(existingExercise);
                     }
+
+                    PopulateExerciseMetadata(existingExercise, ex);
 
                     _context.WorkoutExercises.Add(new WorkoutExercise
                     {
@@ -545,7 +577,9 @@ namespace ArenaInfrastructure.AI
                     {
                         Name = ex.Name,
                         Sets = ex.Sets,
-                        Reps = ex.Reps
+                        Reps = ex.Reps,
+                        ExerciseId = existingExercise.Id,
+                        Exercise = MapToExerciseDto(existingExercise)
                     });
                 }
 
@@ -690,6 +724,128 @@ namespace ArenaInfrastructure.AI
             }
         }
 
+        private async Task ResolveDuplicateExercisesAsync(WorkoutPlanAIResponse planData, List<ExerciseCatalogItem> validCatalog)
+        {
+            if (planData.Days == null) return;
+
+            foreach (var day in planData.Days)
+            {
+                if (day.Exercises == null) continue;
+
+                var seenExerciseNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var ex in day.Exercises)
+                {
+                    if (string.IsNullOrWhiteSpace(ex.Name)) continue;
+
+                    if (seenExerciseNames.Contains(ex.Name))
+                    {
+                        // Duplicate detected! Try to find a replacement targeting the same muscle group
+                        var targetMuscleGroup = ex.MuscleGroup;
+                        if (string.IsNullOrEmpty(targetMuscleGroup))
+                        {
+                            var matched = validCatalog.FirstOrDefault(c => c.Name.Equals(ex.Name, StringComparison.OrdinalIgnoreCase));
+                            if (matched != null) targetMuscleGroup = matched.MuscleGroup;
+                        }
+                        if (string.IsNullOrEmpty(targetMuscleGroup)) targetMuscleGroup = "General";
+
+                        // Find candidates from validCatalog that target the same muscle group and are NOT in the seen list
+                        var replacementItem = validCatalog
+                            .FirstOrDefault(c => c.MuscleGroup.Equals(targetMuscleGroup, StringComparison.OrdinalIgnoreCase)
+                                && !seenExerciseNames.Contains(c.Name));
+
+                        if (replacementItem == null)
+                        {
+                            // Try to find ANY exercise in the catalog that is not yet used on this day
+                            replacementItem = validCatalog
+                                .FirstOrDefault(c => !seenExerciseNames.Contains(c.Name));
+                        }
+
+                        if (replacementItem != null)
+                        {
+                            var replacementName = replacementItem.Name;
+
+                            // Look for an existing template in the database to get high-quality instructions/tips
+                            var template = await _context.Exercises
+                                .FirstOrDefaultAsync(e => e.Name == replacementName && e.Instructions != null);
+
+                            ex.Name = replacementItem.Name;
+                            ex.NameAr = replacementItem.NameAr;
+                            ex.MuscleGroup = replacementItem.MuscleGroup;
+                            ex.MuscleGroupAr = replacementItem.MuscleGroupAr;
+
+                            if (template != null)
+                            {
+                                ex.Description = template.Description;
+                                ex.DescriptionAr = template.DescriptionAr;
+                                ex.Instructions = SafeDeserializeList(template.Instructions);
+                                ex.InstructionsAr = SafeDeserializeList(template.InstructionsAr);
+                                ex.CommonMistakes = SafeDeserializeList(template.CommonMistakes);
+                                ex.CommonMistakesAr = SafeDeserializeList(template.CommonMistakesAr);
+                                ex.SafetyTips = SafeDeserializeList(template.SafetyTips);
+                                ex.SafetyTipsAr = SafeDeserializeList(template.SafetyTipsAr);
+                                ex.Breathing = template.Breathing;
+                                ex.BreathingAr = template.BreathingAr;
+                                ex.Difficulty = template.Difficulty;
+                                ex.DifficultyAr = template.DifficultyAr;
+                                ex.Category = template.Category;
+                                ex.CategoryAr = template.CategoryAr;
+                                ex.VideoUrl = template.VideoUrl;
+                                ex.Equipment = template.Equipment;
+                                ex.EquipmentAr = template.EquipmentAr;
+                                ex.PrimaryMuscles = SafeDeserializeList(template.PrimaryMuscles);
+                                ex.PrimaryMusclesAr = SafeDeserializeList(template.PrimaryMusclesAr);
+                                ex.SecondaryMuscles = SafeDeserializeList(template.SecondaryMuscles);
+                                ex.SecondaryMusclesAr = SafeDeserializeList(template.SecondaryMusclesAr);
+                            }
+                            else
+                            {
+                                ex.Description = replacementItem.Description;
+                                ex.DescriptionAr = replacementItem.DescriptionAr;
+                                ex.Instructions = new List<string> { "Start in a stable position.", "Execute the exercise with control.", "Perform the reps under control and return to start position." };
+                                ex.InstructionsAr = new List<string> { "ابدأ في وضع ثابت.", "نفذ التمرين بتحكم.", "قم بأداء التكرارات بتحكم وعد إلى وضع البداية." };
+                                ex.Breathing = "Inhale during eccentric phase, exhale during concentric phase.";
+                                ex.BreathingAr = "الشهيق أثناء الحركة السلبية، والزفير أثناء الحركة الإيجابية.";
+                                ex.CommonMistakes = new List<string> { "Using momentum to lift.", "Improper body alignment." };
+                                ex.CommonMistakesAr = new List<string> { "استخدام قوة الدفع للرفع.", "محاذاة غير صحيحة للجسم." };
+                                ex.SafetyTips = new List<string> { "Keep your core engaged.", "Do not lock out your joints." };
+                                ex.SafetyTipsAr = new List<string> { "حافظ على تفعيل عضلات الجذع.", "لا تقفل مفاصلك بالكامل." };
+                                ex.Difficulty = replacementItem.DifficultyLevel;
+                                ex.DifficultyAr = replacementItem.DifficultyLevel == "Beginner" ? "مبتدئ" : replacementItem.DifficultyLevel == "Intermediate" ? "متوسط" : "متقدم";
+                                ex.Category = "Strength";
+                                ex.CategoryAr = "قوة";
+                                ex.Equipment = "Gym Equipment";
+                                ex.EquipmentAr = "معدات الصالة الرياضية";
+                                ex.PrimaryMuscles = new List<string> { replacementItem.MuscleGroup };
+                                ex.PrimaryMusclesAr = new List<string> { replacementItem.MuscleGroupAr ?? replacementItem.MuscleGroup };
+                                ex.SecondaryMuscles = new List<string>();
+                                ex.SecondaryMusclesAr = new List<string>();
+                            }
+                        }
+                    }
+
+                    seenExerciseNames.Add(ex.Name);
+                }
+            }
+        }
+
+        private static List<string>? SafeDeserializeList(string? json)
+        {
+            if (string.IsNullOrEmpty(json)) return null;
+            try
+            {
+                var trimmed = json.Trim();
+                if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+                {
+                    return JsonSerializer.Deserialize<List<string>>(json);
+                }
+                return new List<string> { json };
+            }
+            catch
+            {
+                return new List<string> { json };
+            }
+        }
+
         private static WorkoutPlanAIResponse CreateFallbackPlanData(MemberProfile profile, string userMessage, string effectiveGoal, string memberName)
         {
             var goal = effectiveGoal;
@@ -813,18 +969,126 @@ namespace ArenaInfrastructure.AI
             return (sets, reps, weeklyDays, durationWeeks);
         }
 
-        private static string? DetectGoalOverride(string? userMessage)
+        private static string? DetermineGoal(string? userMessage, string? dbGoal)
         {
-            if (ContainsAny(userMessage, "gain weight", "weight gain", "increase weight", "bulk", "bulking", "gain muscle", "muscle gain", "build muscle", "اكسب وزن", "ازيد وزن", "اضخم", "عضلات"))
-                return "Weight Gain / Muscle Gain";
+            var extracted = ExtractGoalFromMessage(userMessage);
+            if (extracted != null)
+                return extracted;
 
-            if (ContainsAny(userMessage, "lose weight", "weight loss", "loss weight", "fat loss", "cut", "cutting", "اخس", "انحف", "تنشيف", "نزل وزن"))
-                return "Weight Loss";
-
-            if (ContainsAny(userMessage, "endurance", "fitness", "fit", "لياقة"))
-                return "General Fitness";
+            if (!string.IsNullOrWhiteSpace(dbGoal))
+            {
+                var normalized = NormalizeGoalName(dbGoal);
+                if (normalized != null)
+                    return normalized;
+            }
 
             return null;
+        }
+
+        private static string? ExtractGoalFromMessage(string? userMessage)
+        {
+            if (string.IsNullOrWhiteSpace(userMessage)) return null;
+
+            if (ContainsAny(userMessage, 
+                "lose weight", "weight loss", "loss weight", "burn fat", "fat burn", "get lean", "lean out", "cutting", "cut",
+                "أخس", "اخس", "أنزل وزن", "انزل وزن", "أحرق دهون", "احرق دهون", "أتخلص من الكرش", "اتخلص من الكرش", "تنشيف", "نحافة", "انحف", "أنحف"))
+            {
+                return "Weight Loss";
+            }
+
+            if (ContainsAny(userMessage, 
+                "gain weight", "weight gain", "increase weight", "bulk", "bulking", "gain muscle", "muscle gain", "build muscle",
+                "أتخن", "اتخن", "أزيد وزن", "ازيد وزن", "أبني عضلات", "ابني عضلات", "أضخم", "اضخم", "أزود كتلة عضلية", "ازود كتلة عضلية", "تضخيم"))
+            {
+                return "Muscle Gain";
+            }
+
+            if (ContainsAny(userMessage, "stronger chest", "bigger chest", "build chest", "develop chest", "أقوي صدري", "اقوي صدري", "أكبر صدري", "اكبر صدري", "تضخيم الصدر", "تمرين صدر"))
+            {
+                return "Chest Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "stronger legs", "bigger legs", "build legs", "leg strength", "leg hypertrophy", "أقوي رجلي", "اقوي رجلي", "أكبر رجلي", "اكبر رجلي", "تضخيم الرجل"))
+            {
+                return "Leg Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "stronger back", "bigger back", "build back", "back strength", "back hypertrophy", "أقوي ضهري", "اقوي ضهري", "أكبر ضهري", "اكبر ضهري", "تضخيم الظهر"))
+            {
+                return "Back Strength";
+            }
+
+            if (ContainsAny(userMessage, "stronger shoulders", "bigger shoulders", "build shoulders", "shoulder strength", "shoulder hypertrophy", "أقوي كتفي", "اقوي كتفي", "أكبر كتفي", "اكبر كتفي", "تضخيم الكتف"))
+            {
+                return "Shoulder Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "stronger arms", "bigger arms", "build arms", "arm strength", "arm hypertrophy", "أقوي دراعاتي", "اقوي دراعاتي", "أكبر دراعاتي", "اكبر دراعاتي", "أكبر دراع", "اكبر دراع", "تضخيم الذراع"))
+            {
+                return "Arm Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "glutes", "bigger glutes", "glute training", "أكبر مؤخرة", "اكبر مؤخرة", "تضخيم المؤخرة", "الأرداف"))
+            {
+                return "Glutes Hypertrophy";
+            }
+
+            if (ContainsAny(userMessage, "core", "abs", "six pack", "أقوي بطني", "اقوي بطني", "عضلات بطن"))
+            {
+                return "Core Strength";
+            }
+
+            if (ContainsAny(userMessage, "improve my fitness", "improve fitness", "general fitness", "fitness level", "أقوي اللياقة", "اقوي اللياقة", "تحسين اللياقة", "لياقة"))
+            {
+                return "General Fitness";
+            }
+
+            if (ContainsAny(userMessage, "increase strength", "improve strength", "get stronger", "my strength", "أزود قوتي", "ازود قوتي", "زيادة القوة", "قوة"))
+            {
+                return "Strength";
+            }
+
+            return null;
+        }
+
+        private static string? NormalizeGoalName(string dbGoal)
+        {
+            if (string.IsNullOrWhiteSpace(dbGoal)) return null;
+
+            if (ContainsAny(dbGoal, "loss", "lose", "cut", "تخسيس", "خسارة", "تنشيف"))
+                return "Weight Loss";
+
+            if (ContainsAny(dbGoal, "gain", "bulk", "تضخيم", "بناء"))
+                return "Muscle Gain";
+
+            if (ContainsAny(dbGoal, "chest"))
+                return "Chest Hypertrophy";
+
+            if (ContainsAny(dbGoal, "leg"))
+                return "Leg Hypertrophy";
+
+            if (ContainsAny(dbGoal, "back"))
+                return "Back Strength";
+
+            if (ContainsAny(dbGoal, "shoulder"))
+                return "Shoulder Hypertrophy";
+
+            if (ContainsAny(dbGoal, "arm"))
+                return "Arm Hypertrophy";
+
+            if (ContainsAny(dbGoal, "glute"))
+                return "Glutes Hypertrophy";
+
+            if (ContainsAny(dbGoal, "core", "abs"))
+                return "Core Strength";
+
+            if (ContainsAny(dbGoal, "endurance", "fitness", "fit", "لياقة"))
+                return "General Fitness";
+
+            if (ContainsAny(dbGoal, "strength", "قوة"))
+                return "Strength";
+
+            return dbGoal;
         }
 
         private static string BuildGoalAwareUserMessage(string userMessage, string effectiveGoal) =>
@@ -910,6 +1174,88 @@ namespace ArenaInfrastructure.AI
                     }
                 }
             }
+        }
+
+        private static void PopulateExerciseMetadata(Exercise entity, WorkoutExerciseAIResponse response)
+        {
+            if (response.PrimaryMuscles != null && response.PrimaryMuscles.Count > 0)
+                entity.PrimaryMuscles = JsonSerializer.Serialize(response.PrimaryMuscles);
+            if (response.PrimaryMusclesAr != null && response.PrimaryMusclesAr.Count > 0)
+                entity.PrimaryMusclesAr = JsonSerializer.Serialize(response.PrimaryMusclesAr);
+            if (response.SecondaryMuscles != null && response.SecondaryMuscles.Count > 0)
+                entity.SecondaryMuscles = JsonSerializer.Serialize(response.SecondaryMuscles);
+            if (response.SecondaryMusclesAr != null && response.SecondaryMusclesAr.Count > 0)
+                entity.SecondaryMusclesAr = JsonSerializer.Serialize(response.SecondaryMusclesAr);
+            if (response.Instructions != null && response.Instructions.Count > 0)
+                entity.Instructions = JsonSerializer.Serialize(response.Instructions);
+            if (response.InstructionsAr != null && response.InstructionsAr.Count > 0)
+                entity.InstructionsAr = JsonSerializer.Serialize(response.InstructionsAr);
+            if (response.CommonMistakes != null && response.CommonMistakes.Count > 0)
+                entity.CommonMistakes = JsonSerializer.Serialize(response.CommonMistakes);
+            if (response.CommonMistakesAr != null && response.CommonMistakesAr.Count > 0)
+                entity.CommonMistakesAr = JsonSerializer.Serialize(response.CommonMistakesAr);
+            if (response.SafetyTips != null && response.SafetyTips.Count > 0)
+                entity.SafetyTips = JsonSerializer.Serialize(response.SafetyTips);
+            if (response.SafetyTipsAr != null && response.SafetyTipsAr.Count > 0)
+                entity.SafetyTipsAr = JsonSerializer.Serialize(response.SafetyTipsAr);
+
+            if (!string.IsNullOrEmpty(response.Description))
+                entity.Description = response.Description;
+            if (!string.IsNullOrEmpty(response.DescriptionAr))
+                entity.DescriptionAr = response.DescriptionAr;
+            if (!string.IsNullOrEmpty(response.Breathing))
+                entity.Breathing = response.Breathing;
+            if (!string.IsNullOrEmpty(response.BreathingAr))
+                entity.BreathingAr = response.BreathingAr;
+            if (!string.IsNullOrEmpty(response.Difficulty))
+                entity.Difficulty = response.Difficulty;
+            if (!string.IsNullOrEmpty(response.DifficultyAr))
+                entity.DifficultyAr = response.DifficultyAr;
+            if (!string.IsNullOrEmpty(response.Category))
+                entity.Category = response.Category;
+            if (!string.IsNullOrEmpty(response.CategoryAr))
+                entity.CategoryAr = response.CategoryAr;
+            if (!string.IsNullOrEmpty(response.VideoUrl))
+                entity.VideoUrl = response.VideoUrl;
+            if (!string.IsNullOrEmpty(response.Equipment))
+                entity.Equipment = response.Equipment;
+            if (!string.IsNullOrEmpty(response.EquipmentAr))
+                entity.EquipmentAr = response.EquipmentAr;
+        }
+
+        private static ExerciseDto MapToExerciseDto(Exercise entity)
+        {
+            return new ExerciseDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                NameAr = entity.NameAr,
+                Description = entity.Description,
+                DescriptionAr = entity.DescriptionAr,
+                MuscleGroup = entity.MuscleGroup,
+                MuscleGroupAr = entity.MuscleGroupAr,
+                Equipment = entity.Equipment,
+                EquipmentAr = entity.EquipmentAr,
+                VideoUrl = entity.VideoUrl,
+                ImageUrl = entity.ImageUrl,
+                PrimaryMuscles = entity.PrimaryMuscles,
+                PrimaryMusclesAr = entity.PrimaryMusclesAr,
+                SecondaryMuscles = entity.SecondaryMuscles,
+                SecondaryMusclesAr = entity.SecondaryMusclesAr,
+                Instructions = entity.Instructions,
+                InstructionsAr = entity.InstructionsAr,
+                CommonMistakes = entity.CommonMistakes,
+                CommonMistakesAr = entity.CommonMistakesAr,
+                SafetyTips = entity.SafetyTips,
+                SafetyTipsAr = entity.SafetyTipsAr,
+                Breathing = entity.Breathing,
+                BreathingAr = entity.BreathingAr,
+                Difficulty = entity.Difficulty,
+                DifficultyAr = entity.DifficultyAr,
+                Category = entity.Category,
+                CategoryAr = entity.CategoryAr,
+                MemberProfileId = entity.MemberProfileId
+            };
         }
     }
 }

@@ -1,7 +1,8 @@
 @model ArenaMVC.Models.ManageUserViewModel
+@using System.Globalization
 
 @{
-    ViewData["Title"] = Localizer["ManageUserStatus"];
+    ViewData["Title"] = Localizer["ManagePortalTitle"];
 }
 
 <link rel="stylesheet" href="~/css/subscription-admin.css" asp-append-version="true" />
@@ -10,8 +11,8 @@
 <div class="subscription-admin-container">
     <div class="subscription-admin-header d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div>
-            <h1><i data-lucide="settings" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["ManageUserStatus"]</h1>
-            <p>@Localizer["AccountStatus"]</p>
+            <h1><i data-lucide="settings" style="width: 32px; height: 32px; vertical-align: middle; margin-inline-end: 8px;"></i>@Localizer["ManagePortalTitle"]</h1>
+            <p>@Localizer["ManagePortalSubtitle"]</p>
         </div>
         <div class="booking-header-actions">
             <a class="btn btn-subscription-secondary d-inline-flex align-items-center gap-1" asp-controller="UserManagement" asp-action="Index">
@@ -23,60 +24,333 @@
     <div class="container-fluid mt-4">
         @if (TempData["Error"] != null)
         {
-            <div class="subscription-alert error">
+            <div class="subscription-alert error" style="margin-bottom: 2rem;">
                 <strong>@Localizer["Error"]</strong> @TempData["Error"]
             </div>
         }
+        @if (TempData["Success"] != null)
+        {
+            <div class="subscription-alert success" style="margin-bottom: 2rem;">
+                <strong>@Localizer["Success"]</strong> @TempData["Success"]
+            </div>
+        }
 
-        <div class="row justify-content-center" style="padding-top: 2rem; padding-bottom: 4rem;">
-            <div class="col-lg-6 col-md-8">
-                <div class="manage-user-card">
-                    <form asp-action="Manage" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="Id" />
-                        <input type="hidden" asp-for="FullName" />
-                        <input type="hidden" asp-for="Email" />
+        <div class="row justify-content-center g-4" style="padding-top: 2rem; padding-bottom: 4rem;">
+            <!-- Left Card: Account Status -->
+            <div class="col-lg-6 col-md-12">
+                <div class="manage-user-card" style="height: 100%; display: flex; flex-direction: column;">
+                    <h3 style="color: var(--yellow); font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 1.3rem; white-space: nowrap;">
+                        <i data-lucide="shield" style="width: 24px; height: 24px;"></i>
+                        @Localizer["AccountInformation"]
+                    </h3>
+                    <form asp-action="Manage" method="post" style="display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+                        <div>
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" name="SubmitAction" value="updateStatus" />
+                            <input type="hidden" asp-for="FullName" />
+                            <input type="hidden" asp-for="Email" />
 
-                        <!-- User Info -->
-                        <div class="subscription-form-group">
-                            <label style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["UserFullName"]</label>
-                            <input class="form-control" type="text" value="@Model.FullName" disabled />
-                        </div>
+                            <!-- User Profile/Member Summary -->
+                            <div class="member-profile-widget mb-4" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; transition: all 0.3s ease;">
+                                <div class="avatar-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(163, 230, 53, 0.1); border: 1px solid var(--yellow); display: flex; align-items: center; justify-content: center; color: var(--yellow); flex-shrink: 0; transition: all 0.3s ease;">
+                                    <i data-lucide="user" style="width: 24px; height: 24px;"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0; text-align: start;">
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@Model.FullName</h4>
+                                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@Model.Email</p>
+                                </div>
+                            </div>
 
-                        <div class="subscription-form-group">
-                            <label style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["UserEmail"]</label>
-                            <input class="form-control" type="text" value="@Model.Email" disabled />
-                        </div>
-
-                        <!-- Toggle Switch -->
-                        <div class="subscription-form-group">
-                            <label style="color: var(--yellow); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["AccountStatus"]</label>
-                            <div class="switch-container">
-                                <span class="switch-label-text">
-                                    Account is <span id="statusLabelText" class="slider-status-text @(Model.IsActive ? "active" : "inactive")">@(Model.IsActive ? Localizer["Active"] : Localizer["Inactive"])</span>
-                                </span>
-                                <label class="switch" for="isActiveToggle">
-                                    <input type="checkbox" asp-for="IsActive" id="isActiveToggle" />
-                                    <span class="slider"></span>
-                                </label>
+                            <!-- Toggle Switch -->
+                            <div class="subscription-form-group">
+                                <label style="color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["AccountStatus"]</label>
+                                <div class="switch-container">
+                                    <span class="switch-label-text">
+                                        Account is <span id="statusLabelText" class="slider-status-text @(Model.IsActive ? "active" : "inactive")">@(Model.IsActive ? Localizer["Active"] : Localizer["Inactive"])</span>
+                                    </span>
+                                    <label class="switch" for="isActiveToggle">
+                                        <input type="checkbox" asp-for="IsActive" id="isActiveToggle" />
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Buttons -->
-                        <div class="d-flex gap-3 mt-4">
+                        <div class="d-flex gap-3 mt-4" style="flex-shrink: 0;">
                             <button type="submit" class="btn btn-subscription-primary" style="flex: 1; padding: 0.75rem 1.5rem; font-weight: 600;">@Localizer["SaveChanges"]</button>
-                            <a asp-action="Index" class="btn btn-ghost" style="flex: 1;">@Localizer["Cancel"]</a>
+                            <a asp-action="Index" class="btn btn-ghost" style="flex: 1; display: inline-flex; align-items: center; justify-content: center;">@Localizer["Cancel"]</a>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Right Card: Manual Subscription Management -->
+            <div class="col-lg-6 col-md-12">
+                <div class="manage-user-card" style="height: 100%; display: flex; flex-direction: column;">
+                    <h3 style="color: var(--yellow); font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 1.3rem; white-space: nowrap;">
+                        <i data-lucide="award" style="width: 24px; height: 24px;"></i>
+                        @Localizer["ManualSubscriptionManagement"]
+                    </h3>
+
+                    <!-- User Profile/Member Summary -->
+                    <div class="member-profile-widget mb-4" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; transition: all 0.3s ease; flex-shrink: 0;">
+                        <div class="avatar-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(163, 230, 53, 0.1); border: 1px solid var(--yellow); display: flex; align-items: center; justify-content: center; color: var(--yellow); flex-shrink: 0; transition: all 0.3s ease;">
+                            <i data-lucide="user" style="width: 24px; height: 24px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0; text-align: start;">
+                            <h4 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@Model.FullName</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@Model.Email</p>
+                        </div>
+                    </div>
+
+                    @if (!Model.HasActiveSubscription)
+                    {
+                        <!-- State A: User has NO active subscription -->
+                        <form asp-action="Manage" method="post" style="display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+                            <div>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="Id" />
+                                <input type="hidden" name="SubmitAction" value="addSubscription" />
+                                <input type="hidden" asp-for="FullName" />
+                                <input type="hidden" asp-for="Email" />
+
+                                <div class="details-empty-state mb-4" style="background-color: var(--body-bg); border-radius: 8px; padding: 1rem; border: 1px dashed var(--border-color); text-align: center;">
+                                    <p style="margin: 0; color: var(--text-muted);">@Localizer["NoActiveSubscription"]</p>
+                                </div>
+
+                                <div class="subscription-form-group">
+                                    <label style="color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">@Localizer["SelectPlan"]</label>
+                                    <div class="custom-select-wrapper" style="position: relative; width: 100%;">
+                                        <!-- Hidden input to submit the actual value -->
+                                        <input type="hidden" name="SelectedPlanId" id="selectedPlanIdInput" required />
+                                        
+                                        <!-- Custom Trigger Button -->
+                                        <div class="custom-select-trigger" id="customPlanSelectTrigger" style="display: flex; align-items: center; justify-content: space-between; background-color: var(--body-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.25s ease; font-weight: 500;">
+                                            <span id="selectedPlanText" style="width: 100%; text-align: start; color: var(--text-muted);">@Localizer["ChoosePlanPlaceholder"]</span>
+                                            <i data-lucide="chevron-down" class="select-arrow-icon" style="width: 18px; height: 18px; transition: transform 0.25s ease; flex-shrink: 0; margin-inline-start: 8px;"></i>
+                                        </div>
+                                        
+                                        <!-- Custom Options List -->
+                                        <div class="custom-select-options" id="customPlanSelectOptions" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 100; max-height: 250px; overflow-y: auto; padding: 0.5rem; animation: slideDownFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
+                                            @foreach (var plan in Model.AvailablePlans)
+                                            {
+                                                var planName = CultureInfo.CurrentCulture.TwoLetterISOLanguageName.StartsWith("ar", StringComparison.OrdinalIgnoreCase) ? plan.NameAr : plan.NameEn;
+                                                <div class="custom-select-option" data-value="@plan.Id" style="padding: 0.75rem 1rem; border-radius: 6px; cursor: pointer; color: var(--text-color); transition: all 0.2s ease; margin-bottom: 2px;">
+                                                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; text-align: start;">
+                                                        <span style="font-weight: 600;">@planName</span>
+                                                        <span style="font-size: 0.85rem; color: var(--yellow); background: rgba(163, 230, 53, 0.08); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(163, 230, 53, 0.15); font-weight: 700; flex-shrink: 0; white-space: nowrap;">
+                                                            @plan.Price EGP / @plan.DurationMonths @Localizer["Months"]
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-subscription-primary w-100 mt-4" style="padding: 0.75rem; font-weight: 600; flex-shrink: 0;">
+                                <i data-lucide="plus-circle" style="width: 18px; height: 18px; margin-inline-end: 4px; vertical-align: middle;"></i>
+                                @Localizer["AddSubscription"]
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- State B: User HAS an active subscription -->
+                        <form asp-action="Manage" method="post" id="cancelSubscriptionForm" style="display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+                            <div>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="Id" />
+                                <input type="hidden" asp-for="CurrentSubscriptionId" />
+                                <input type="hidden" name="SubmitAction" value="cancelSubscription" />
+                                <input type="hidden" asp-for="FullName" />
+                                <input type="hidden" asp-for="Email" />
+
+                                <div class="active-subscription-details mb-4" style="background-color: var(--body-bg); border-radius: 8px; padding: 1.5rem; border: 1px solid var(--border-color);">
+                                    <div class="detail-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                                        <span class="label" style="color: var(--text-muted); font-weight: 500;">@Localizer["CurrentPlan"]:</span>
+                                        <span class="value" style="font-weight: 700; color: var(--yellow);">@Model.CurrentPlanName</span>
+                                    </div>
+                                    <div class="detail-row" style="display: flex; justify-content: space-between;">
+                                        <span class="label" style="color: var(--text-muted); font-weight: 500;">@Localizer["SubscriptionStatus"]:</span>
+                                        <span class="value">
+                                            @if (Model.IsManualActive)
+                                            {
+                                                <span class="user-badge badge-emerald" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 50px;">@Localizer["ManualActive"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="user-badge badge-emerald" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 50px;">@Localizer["Active"]</span>
+                                            }
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" id="openCancelModalBtn" class="btn btn-subscription-danger w-100 mt-4" style="background-color: #ef4444; color: white; border: none; padding: 0.75rem; font-weight: 600; border-radius: 8px; transition: all 0.2s; flex-shrink: 0;">
+                                @Localizer["CancelSubscription"]
+                            </button>
+                        </form>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Custom Modal for Subscription Cancellation -->
+<div id="cancelSubscriptionModal" class="custom-modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); transition: all 0.3s ease;">
+    <div class="custom-modal-card" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 2.5rem 2rem; width: 440px; max-width: 90%; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); position: relative; animation: modalFadeIn 0.3s ease;">
+        <button type="button" class="close-modal-x-btn" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
+        
+        <!-- Icon -->
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(163, 230, 53, 0.1); border: 2px solid var(--yellow); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; color: var(--yellow);">
+            <i data-lucide="help-circle" style="width: 34px; height: 34px;"></i>
+        </div>
+
+        <!-- Subtitle -->
+        <h5 style="font-size: 0.75rem; letter-spacing: 1px; color: var(--yellow); font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase;">
+            @Localizer["SubscriptionCancellation"]
+        </h5>
+
+        <!-- Title -->
+        <h3 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-color);">
+            @Localizer["CancelSubscription"]
+        </h3>
+
+        <!-- Description -->
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.5;">
+            @Localizer["AreYouSureCancelSubscription"]
+        </p>
+
+        <!-- Actions -->
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button type="button" id="confirmCancelBtn" class="btn btn-subscription-primary" style="background: var(--yellow); color: #000; font-weight: 700; padding: 0.85rem; border-radius: 8px; border: none; width: 100%; transition: opacity 0.2s;">
+                @Localizer["CancelSubscription"]
+            </button>
+            <button type="button" class="close-modal-btn" style="background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 0.85rem; border-radius: 8px; font-weight: 600; width: 100%; transition: background 0.2s;">
+                @Localizer["KeepSubscription"]
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Premium aesthetics updates */
+.manage-user-card {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 1px solid var(--border-color);
+}
+.manage-user-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--yellow);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15), 0 0 15px rgba(163, 230, 53, 0.1);
+}
+.btn-subscription-primary {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.btn-subscription-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(163, 230, 53, 0.35);
+}
+.btn-subscription-primary:active {
+    transform: translateY(0);
+}
+.btn-subscription-secondary {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.btn-subscription-secondary:hover {
+    transform: translateY(-2px);
+}
+.btn-subscription-danger {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.btn-subscription-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+}
+.btn-subscription-danger:active {
+    transform: translateY(0);
+}
+.btn-ghost {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: 1px solid var(--border-color);
+}
+.btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--text-color);
+}
+.member-profile-widget {
+    transition: all 0.25s ease;
+}
+.member-profile-widget:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--yellow) !important;
+}
+.member-profile-widget:hover .avatar-circle {
+    background: rgba(163, 230, 53, 0.2) !important;
+    transform: scale(1.05);
+}
+
+/* Custom Dropdown Select Styles */
+.custom-select-trigger:hover {
+    border-color: var(--yellow) !important;
+    box-shadow: 0 0 10px rgba(163, 230, 53, 0.15);
+}
+.custom-select-wrapper.open .custom-select-trigger {
+    border-color: var(--yellow) !important;
+    box-shadow: 0 0 15px rgba(163, 230, 53, 0.25);
+}
+.custom-select-wrapper.open .select-arrow-icon {
+    transform: rotate(180deg);
+}
+.custom-select-option {
+    text-align: start;
+    transition: all 0.2s ease;
+}
+.custom-select-option:hover {
+    background: rgba(163, 230, 53, 0.1) !important;
+    color: #fff !important;
+    transform: translateX(4px);
+}
+.custom-select-option.selected {
+    background: var(--yellow) !important;
+    color: #000 !important;
+}
+.custom-select-option.selected span {
+    color: #000 !important;
+}
+
+@@keyframes slideDownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+</style>
+
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Account status toggle
             const toggle = document.getElementById('isActiveToggle');
             const statusLabel = document.getElementById('statusLabelText');
             if (toggle && statusLabel) {
@@ -88,6 +362,97 @@
                         statusLabel.textContent = '@Localizer["Inactive"]';
                         statusLabel.className = 'slider-status-text inactive';
                     }
+                });
+            }
+
+            // Custom Modal Toggle Logic
+            const modal = document.getElementById('cancelSubscriptionModal');
+            const openModalBtn = document.getElementById('openCancelModalBtn');
+            const confirmBtn = document.getElementById('confirmCancelBtn');
+            const closeX = document.querySelector('.close-modal-x-btn');
+            const closeBtn = document.querySelector('.close-modal-btn');
+            const form = document.getElementById('cancelSubscriptionForm');
+
+            if (openModalBtn && modal) {
+                openModalBtn.addEventListener('click', function () {
+                    modal.style.display = 'flex';
+                });
+            }
+
+            function closeModal() {
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            }
+
+            if (closeX) closeX.addEventListener('click', closeModal);
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+            if (modal) {
+                modal.addEventListener('click', function (e) {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                });
+            }
+
+            if (confirmBtn && form) {
+                confirmBtn.addEventListener('click', function () {
+                    form.submit();
+                });
+            }
+
+            // Custom Dropdown Select Logic
+            const selectWrapper = document.querySelector('.custom-select-wrapper');
+            if (selectWrapper) {
+                const trigger = document.getElementById('customPlanSelectTrigger');
+                const optionsContainer = document.getElementById('customPlanSelectOptions');
+                const hiddenInput = document.getElementById('selectedPlanIdInput');
+                const selectedText = document.getElementById('selectedPlanText');
+                const optionItems = document.querySelectorAll('.custom-select-option');
+
+                trigger.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const isOpen = selectWrapper.classList.contains('open');
+                    if (isOpen) {
+                        selectWrapper.classList.remove('open');
+                        optionsContainer.style.display = 'none';
+                    } else {
+                        selectWrapper.classList.add('open');
+                        optionsContainer.style.display = 'block';
+                    }
+                });
+
+                optionItems.forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const val = this.getAttribute('data-value');
+                        
+                        if (val === "") {
+                            selectedText.textContent = '@Localizer["ChoosePlanPlaceholder"]';
+                            selectedText.style.color = 'var(--text-muted)';
+                        } else {
+                            // Clone the item inner HTML so we don't disrupt the DOM structure
+                            selectedText.innerHTML = this.innerHTML;
+                            selectedText.style.color = 'var(--text-color)';
+                        }
+
+                        hiddenInput.value = val;
+
+                        // Mark selected style
+                        optionItems.forEach(i => i.classList.remove('selected'));
+                        this.classList.add('selected');
+
+                        // Close dropdown
+                        selectWrapper.classList.remove('open');
+                        optionsContainer.style.display = 'none';
+                    });
+                });
+
+                // Close on click outside
+                document.addEventListener('click', function () {
+                    selectWrapper.classList.remove('open');
+                    optionsContainer.style.display = 'none';
                 });
             }
         });

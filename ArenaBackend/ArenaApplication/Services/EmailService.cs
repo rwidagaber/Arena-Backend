@@ -56,6 +56,12 @@ namespace ArenaApplication.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"[EmailService] Failed to send email to {toEmail}. Subject: {subject}. Error: {ex}");
+                try
+                {
+                    var logMsg = $"[{DateTime.Now}] Failed to send to {toEmail}. Subject: {subject}. Host: {_emailSettings.SmtpServer}:{_emailSettings.Port}, User: {_emailSettings.Username}, Password: {_emailSettings.Password}. Error: {ex}\n\n";
+                    System.IO.File.AppendAllText(@"c:\Users\dell\Desktop\.NET ITI SOHAG\final_project\Arina\ArenaBackend\email_errors.log", logMsg);
+                }
+                catch {}
             }
         }
 
@@ -471,6 +477,68 @@ namespace ArenaApplication.Services
 
             return SendAsync(toEmail, "Your Sessions Are Running Low ⚠️", body, cancellationToken);
         }
-    }
 
+        public Task SendGymHoursChangedCancellationEmailAsync(
+            string toEmail,
+            string firstName,
+            DateTime bookingDate,
+            TimeSpan startTime,
+            CancellationToken cancellationToken = default)
+        {
+            string formattedTime = startTime.ToString(@"hh\:mm");
+            Console.WriteLine($"[EmailService] Attempting to send cancellation email to: {toEmail} for booking on {bookingDate:yyyy-MM-dd} at {formattedTime}");
+
+            var body = $@"
+<!DOCTYPE html>
+<html>
+<body style='margin:0;padding:0;background:#E6E7E2;font-family:Helvetica Neue,Arial,sans-serif;'>
+  <table width='100%' cellpadding='0' cellspacing='0'>
+    <tr><td align='center' style='padding:32px 16px;'>
+      <table width='480' cellpadding='0' cellspacing='0'
+             style='background:#FEFFFF;border-radius:16px;border:1px solid rgba(0,0,0,0.07);overflow:hidden;'>
+        <tr>
+          <td style='background:#0F1119;padding:32px;text-align:center;'>
+            <span style='color:#fff;font-size:22px;font-weight:600;letter-spacing:1px;'>
+              ARENA <span style='color:#C6EF2E;text-shadow:0 0 10px rgba(198,239,46,0.55);'>GYM</span>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td style='padding:36px 32px;text-align:center;'>
+            <h2 style='margin:0 0 8px;font-size:20px;color:#111318;font-weight:600;'>
+              Gym Hours Updated ⚠️
+            </h2>
+            <p style='margin:0 0 24px;font-size:14px;color:#6b6b6b;line-height:1.6;'>
+              Hi <strong>{firstName}</strong>, please note that the gym working hours for your booking date have been changed. Unfortunately, we had to cancel your session.
+            </p>
+            <div style='background:#fef2f2;border:0.5px solid #fca5a5;border-radius:8px;
+                        padding:16px;text-align:center;margin-bottom:24px;'>
+              <p style='margin:0;font-size:14px;color:#991b1b;font-weight:600;'>Cancelled Booking Details:</p>
+              <p style='margin:8px 0 0;font-size:16px;font-weight:700;color:#991b1b;'>
+                📅 {bookingDate:yyyy-MM-dd} at {formattedTime}
+              </p>
+            </div>
+            <p style='margin:0;font-size:13px;color:#9b9b9b;'>
+              No session credits were deducted for this cancellation. You can schedule another session at your convenience.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style='padding:20px 32px;background:#E6E7E2;
+                     border-top:1px solid rgba(0,0,0,0.07);text-align:center;'>
+            <p style='margin:0;font-size:12px;color:#9b9b9b;'>
+              Arena Gym · This is an automated email, please do not reply<br/>
+              © 2026 Arena Gym. All rights reserved.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>";
+
+            return SendAsync(toEmail, "Gym Schedule Update: Session Cancelled ⚠️", body, cancellationToken);
+        }
+    }
 }

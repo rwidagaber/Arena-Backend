@@ -28,6 +28,9 @@ namespace ArenaInfrastructure.Repositories
                 .Include(u => u.MemberProfile)
                     .ThenInclude(mp => mp.Subscriptions)
                         .ThenInclude(s => s.Plan)
+                .Include(u => u.MemberProfile)
+                    .ThenInclude(mp => mp.Subscriptions)
+                        .ThenInclude(s => s.Payments)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 

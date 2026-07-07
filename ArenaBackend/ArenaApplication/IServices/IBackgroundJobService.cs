@@ -21,6 +21,7 @@ namespace ArenaApplication.IServices
         // =========================
         Task ScheduleBookingReminderAsync(Guid memberId, DateTime bookingDate, TimeSpan startTime);
         Task EnqueueBookingCancellationAsync(Guid memberId, DateTime bookingDate,TimeSpan startTime);
+        Task EnqueueGymHoursChangedCancellationAsync(Guid memberId, DateTime bookingDate, TimeSpan startTime);
         Task EnqueueBookingConfirmationAsync(Guid memberId, DateTime bookingDate, TimeSpan startTime);
         Task EnqueueBookingRescheduledAsync(Guid memberId, DateTime newBookingDate, TimeSpan startTime);
 

@@ -1,4 +1,4 @@
-﻿using ArenaDomain.Entities;
+using ArenaDomain.Entities;
 using ArenaDomain.Entities.User;
 using ArenaInfrastructure.Data;
 using ArenaInfrastructure.Repositories;
@@ -18,9 +18,16 @@ namespace ArenaInfrastructure.Repositories
 
         public async Task<MemberProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _context.MemberProfiles
+            var profile = await _context.MemberProfiles
                 .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (profile != null && profile.User == null)
+            {
+                await _context.Entry(profile).Reference(x => x.User).LoadAsync(cancellationToken);
+            }
+
+            return profile;
         }
 
         public async Task UpdateAsync(MemberProfile memberProfile)

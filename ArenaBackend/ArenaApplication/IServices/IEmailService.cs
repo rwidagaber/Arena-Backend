@@ -1,4 +1,4 @@
-﻿namespace ArenaApplication.IServices
+namespace ArenaApplication.IServices
 {
     public interface IEmailService
     {
@@ -14,5 +14,6 @@
         // ── Bookings ──────────────────────────────────────────────────────────
         Task SendSessionReminderAsync(string toEmail, string firstName, DateTime bookingDate, CancellationToken cancellationToken = default);
         Task SendSessionsExpiringSoonAsync(string toEmail, string firstName, int remainingSessions, CancellationToken cancellationToken = default);
+        Task SendGymHoursChangedCancellationEmailAsync(string toEmail, string firstName, DateTime bookingDate, TimeSpan startTime, CancellationToken cancellationToken = default);
     }
 }

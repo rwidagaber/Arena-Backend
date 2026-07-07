@@ -1,0 +1,365 @@
+@{
+    ViewData["Title"] = @Localizer["QRCheckIn"];
+}
+
+<link rel="stylesheet" href="~/css/qrcheckin-admin.css" asp-append-version="true" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<div class="qr-checkin-page">
+    <div class="qr-page-header">
+        <div class="header-left">
+            <div class="qr-header-icon">
+                <i data-lucide="scan-line"></i>
+            </div>
+            <div>
+                <h1>@Localizer["QRCheckIn"]</h1>
+                <p class="qr-subtitle">@Localizer["ScanMemberQR"]</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <a asp-action="History" class="btn-goto-history">
+                <i data-lucide="history" style="width:18px;height:18px"></i>
+                <span>@Localizer["ScanningHistory"]</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="qr-scanner-container">
+        <!-- Scanner Section -->
+        <div class="qr-scanner-card" id="scannerCard">
+            <div class="scanner-header">
+                <div class="scanner-badge">
+                    <span class="pulse-dot"></span>
+                    <i data-lucide="camera" style="width:14px;height:14px"></i>
+                    <span>@Localizer["CameraScanner"]</span>
+                </div>
+            </div>
+
+            <!-- Camera Preview with Guides -->
+            <div class="camera-wrapper" id="cameraWrapper" style="display:none;">
+                <div class="scanner-laser-line"></div>
+                <div class="scanner-corner corner-tl"></div>
+                <div class="scanner-corner corner-tr"></div>
+                <div class="scanner-corner corner-bl"></div>
+                <div class="scanner-corner corner-br"></div>
+                <div class="scanner-vignette"></div>
+                <div id="qrReader" class="qr-reader"></div>
+            </div>
+
+            <!-- Start / Stop Buttons -->
+            <div class="scanner-actions">
+                <button type="button" class="btn-scan-start" id="btnStartScan" onclick="startScanner()">
+                    <i data-lucide="camera" style="width:20px;height:20px"></i>
+                    <span>@Localizer["StartScan"]</span>
+                </button>
+                <button type="button" class="btn-scan-stop" id="btnStopScan" onclick="stopScanner()" style="display:none;">
+                    <i data-lucide="camera-off" style="width:20px;height:20px"></i>
+                    <span>@Localizer["StopScan"]</span>
+                </button>
+            </div>
+
+            <!-- Manual Input -->
+            <div class="manual-input-section">
+                <div class="divider-text">
+                    <span>@Localizer["OrEnterManually"]</span>
+                </div>
+                <div class="manual-input-group">
+                    <input type="text" id="manualQrCode" class="manual-input" placeholder="ARENA-XXXXXXXX-..." autocomplete="off" />
+                    <button type="button" class="btn-manual-submit" onclick="submitManualCode()" title="Submit">
+                        <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="scan-loading" id="scanLoading" style="display:none;">
+            <div class="spinner-ring">
+                <div></div><div></div><div></div><div></div>
+            </div>
+            <p>@Localizer["ValidatingQR"]</p>
+        </div>
+
+        <!-- Result Section -->
+        <div class="scan-result-card" id="resultCard" style="display:none;">
+            <!-- Success Result -->
+            <div class="result-success" id="resultSuccess" style="display:none;">
+                <!-- Premium Animated SVG Checkmark -->
+                <div class="success-checkmark-wrapper">
+                    <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                        <circle class="success-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                </div>
+                
+                <h2 class="success-title">@Localizer["CheckInSuccess"]</h2>
+                
+                <div class="result-details-grid">
+                    <!-- Member Card -->
+                    <div class="result-grid-card" style="--card-index: 1;">
+                        <div class="card-icon-wrapper icon-member">
+                            <i data-lucide="user"></i>
+                        </div>
+                        <div class="card-info">
+                            <span class="card-label">@Localizer["MemberName"]</span>
+                            <span class="card-value" id="resMemberName"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Date Card -->
+                    <div class="result-grid-card" style="--card-index: 2;">
+                        <div class="card-icon-wrapper icon-date">
+                            <i data-lucide="calendar"></i>
+                        </div>
+                        <div class="card-info">
+                            <span class="card-label">@Localizer["SessionDate"]</span>
+                            <span class="card-value" id="resSessionDate"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Time Card -->
+                    <div class="result-grid-card" style="--card-index: 3;">
+                        <div class="card-icon-wrapper icon-time">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="card-info">
+                            <span class="card-label">@Localizer["Time"]</span>
+                            <span class="card-value" id="resTime"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Booking Card -->
+                    <div class="result-grid-card" style="--card-index: 4;">
+                        <div class="card-icon-wrapper icon-booking">
+                            <i data-lucide="ticket"></i>
+                        </div>
+                        <div class="card-info">
+                            <span class="card-label">@Localizer["BookingId"]</span>
+                            <span class="card-value detail-mono" id="resBookingId"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Result -->
+            <div class="result-error" id="resultError" style="display:none;">
+                <div class="result-icon error-icon">
+                    <i data-lucide="alert-circle" style="width:48px;height:48px"></i>
+                </div>
+                <h2 id="errorTitle">@Localizer["CheckInFailed"]</h2>
+                <p class="error-message" id="errorMessage"></p>
+            </div>
+
+            <!-- Scan Another Button -->
+            <button type="button" class="btn-scan-another" onclick="resetScanner()">
+                <i data-lucide="refresh-cw" style="width:16px;height:16px"></i>
+                <span>@Localizer["ScanAnother"]</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+        let html5QrCode = null;
+        let isScanning = false;
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            || '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+
+        // Extract the raw QR token from a scanned value (handles both URL and raw token)
+        function extractQrToken(scannedValue) {
+            if (!scannedValue) return '';
+            const urlPattern = /\/qr\/scan\/(.+)$/i;
+            const match = scannedValue.match(urlPattern);
+            if (match) {
+                return decodeURIComponent(match[1]);
+            }
+            return scannedValue.trim();
+        }
+
+        function startScanner() {
+            const cameraWrapper = document.getElementById('cameraWrapper');
+            const btnStart = document.getElementById('btnStartScan');
+            const btnStop = document.getElementById('btnStopScan');
+
+            cameraWrapper.style.display = 'block';
+            btnStart.style.display = 'none';
+            btnStop.style.display = 'inline-flex';
+
+            html5QrCode = new Html5Qrcode("qrReader");
+
+            // Full-view camera configuration scanning the entire feed to prevent cropping bugs,
+            // styled with custom CSS neon overlay corners and a laser scanner line.
+            const config = {
+                fps: 10,
+                aspectRatio: 1.0
+            };
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.warn("Environment camera failed, trying user camera:", err);
+                // Fallback to front camera
+                html5QrCode.start(
+                    { facingMode: "user" },
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                ).catch(err2 => {
+                    console.error("Camera access error:", err2);
+                    alert("Could not access any camera. Please grant permissions and check connection.");
+                    stopScanner();
+                });
+            });
+
+            isScanning = true;
+        }
+
+        function stopScanner() {
+            const cameraWrapper = document.getElementById('cameraWrapper');
+            const btnStart = document.getElementById('btnStartScan');
+            const btnStop = document.getElementById('btnStopScan');
+
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    isScanning = false;
+                }).catch(err => console.error("Stop error:", err));
+            }
+
+            cameraWrapper.style.display = 'none';
+            btnStart.style.display = 'inline-flex';
+            btnStop.style.display = 'none';
+        }
+
+        function onScanSuccess(decodedText) {
+            stopScanner();
+            const token = extractQrToken(decodedText);
+            processQrCode(token);
+        }
+
+        function onScanFailure(error) {
+            // Quiet fail - scanning matches frame by frame
+        }
+
+        function submitManualCode() {
+            const input = document.getElementById('manualQrCode');
+            const code = input.value.trim();
+            if (!code) return;
+
+            const token = extractQrToken(code);
+            stopScanner();
+            processQrCode(token);
+        }
+
+        function processQrCode(code) {
+            if (!code) return;
+
+            // Transition: Hide scanner card, show loading
+            document.getElementById('scannerCard').style.display = 'none';
+            document.getElementById('scanLoading').style.display = 'flex';
+            document.getElementById('resultCard').style.display = 'none';
+
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenInput ? tokenInput.value : '';
+
+            fetch('@Url.Action("Scan", "QRCheckIn")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ code: code })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('scanLoading').style.display = 'none';
+                showResult(data);
+            })
+            .catch(err => {
+                console.error("Fetch CheckIn error:", err);
+                document.getElementById('scanLoading').style.display = 'none';
+                showResult({
+                    success: false,
+                    message: 'Connection failed. Please retry scanning.'
+                });
+            });
+        }
+
+        function showResult(data) {
+            const resultCard = document.getElementById('resultCard');
+            const successDiv = document.getElementById('resultSuccess');
+            const errorDiv = document.getElementById('resultError');
+
+            resultCard.style.display = 'block';
+
+            if (data.success) {
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+
+                document.getElementById('resMemberName').textContent = data.memberName || '—';
+                document.getElementById('resSessionDate').textContent = data.sessionDate
+                    ? new Date(data.sessionDate).toLocaleDateString(undefined, {
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                      })
+                    : '—';
+                document.getElementById('resTime').textContent =
+                    (data.startTime || '—') + (data.endTime ? ' – ' + data.endTime : '');
+                document.getElementById('resBookingId').textContent = data.bookingId || '—';
+            } else {
+                successDiv.style.display = 'none';
+                errorDiv.style.display = 'block';
+
+                const errorTitle = document.getElementById('errorTitle');
+                if (data.isExpired) {
+                    errorTitle.textContent = '@Localizer["QRExpired"]';
+                } else if (data.isAlreadyUsed) {
+                    errorTitle.textContent = '@Localizer["QRAlreadyScanned"]';
+                } else {
+                    errorTitle.textContent = '@Localizer["CheckInFailed"]';
+                }
+                document.getElementById('errorMessage').textContent = data.message || 'Unknown error occurred.';
+            }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        function resetScanner() {
+            document.getElementById('resultCard').style.display = 'none';
+            document.getElementById('scanLoading').style.display = 'none';
+            document.getElementById('scannerCard').style.display = 'block';
+            document.getElementById('manualQrCode').value = '';
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const manualInput = document.getElementById('manualQrCode');
+            if (manualInput) {
+                manualInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submitManualCode();
+                    }
+                });
+            }
+        });
+    </script>
+}
+
+@Html.AntiForgeryToken()
+

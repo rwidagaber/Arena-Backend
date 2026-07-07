@@ -50,6 +50,38 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
                .IsRequired(false)
                .HasMaxLength(500);
 
+        builder.Property(e => e.PrimaryMuscles)
+               .IsRequired(false)
+               .HasMaxLength(2000);
+
+        builder.Property(e => e.SecondaryMuscles)
+               .IsRequired(false)
+               .HasMaxLength(2000);
+
+        builder.Property(e => e.Instructions)
+               .IsRequired(false)
+               .HasMaxLength(4000);
+
+        builder.Property(e => e.CommonMistakes)
+               .IsRequired(false)
+               .HasMaxLength(2000);
+
+        builder.Property(e => e.SafetyTips)
+               .IsRequired(false)
+               .HasMaxLength(2000);
+
+        builder.Property(e => e.Breathing)
+               .IsRequired(false)
+               .HasMaxLength(1000);
+
+        builder.Property(e => e.Difficulty)
+               .IsRequired(false)
+               .HasMaxLength(50);
+
+        builder.Property(e => e.Category)
+               .IsRequired(false)
+               .HasMaxLength(100);
+
         // MemberProfile → Exercises (many)
         builder.HasOne(e => e.MemberProfile)
                .WithMany()

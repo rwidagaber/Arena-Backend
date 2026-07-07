@@ -3,6 +3,7 @@ using ArenaApplication.IServices;
 using ArenaApplication.IServices.User;
 using ArenaApplication.Services;
 using ArenaDomain.Entities.Bookings;
+using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Interfaces;
 using ArenaDomain.Shared;
@@ -49,6 +50,11 @@ builder
     });
 
 builder.Services.ConfigureDbContext(builder.Configuration);
+
+// Register EmailSettings configuration section for DI options pattern
+builder.Services.Configure<ArenaApi.Configurations.EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
 // register Mapster IMapper and config
 builder.Services.AddMapsterConfiguration();
 builder.Services.AddApplicationServices();
@@ -113,6 +119,11 @@ builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 // Booking service
 builder.Services.AddScoped<IBookingService, BookingService>();
 
+// QR Check-In dependencies
+builder.Services.AddScoped<IQRCodeService, QRCodeService>();
+builder.Services.AddScoped<IGenericRepository<QRCode, Guid>, GenericRepository<QRCode, Guid>>();
+builder.Services.AddScoped<IGenericRepository<Attendance, Guid>, GenericRepository<Attendance, Guid>>();
+builder.Services.AddScoped<IGenericRepository<UserSubscription, Guid>, GenericRepository<UserSubscription, Guid>>();
 
 builder.Services.AddScoped<IAttendanceSuggestionService, AttendanceSuggestionService>();
 

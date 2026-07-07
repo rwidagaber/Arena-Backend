@@ -256,6 +256,11 @@ namespace ArenaInfrastructure.AI
                 // ✅ Step 5 — Route and get reply
                 reply = await RouteIntent(profile, intent, userMessage, isArabic, memberName, history, upcomingBookings);
             }
+            catch (GoalRequiredException)
+            {
+                reply = GetGoalPrompt(isArabic);
+                intent ??= new IntentResult { Intent = "chat" };
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Chat AI failed for member profile {MemberProfileId}", profile.Id);
@@ -978,10 +983,13 @@ namespace ArenaInfrastructure.AI
 
                 case "both":
                     {
+                        var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
+                        var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
+
                         var workoutPlan = await _workoutAI
-                            .GenerateWorkoutPlanAsync(profile.Id, userMessage);
+                            .GenerateWorkoutPlanAsync(profile.Id, contextMessage);
                         var nutritionPlan = await _nutritionAI
-                            .GenerateNutritionPlanAsync(profile.Id, userMessage);
+                            .GenerateNutritionPlanAsync(profile.Id, contextMessage);
 
                         var combined = new StringBuilder();
                         combined.AppendLine(isArabic
@@ -1023,8 +1031,11 @@ namespace ArenaInfrastructure.AI
 
                 case "MODIFY_WORKOUT_PLAN":
                     {
+                        var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
+                        var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
+
                         var workoutPlan = await _workoutAI
-                            .ModifyWorkoutPlanAsync(profile.Id, userMessage);
+                            .ModifyWorkoutPlanAsync(profile.Id, contextMessage);
 
                         if (isArabic)
                         {
@@ -1055,8 +1066,11 @@ namespace ArenaInfrastructure.AI
 
                 case "workout":
                     {
+                        var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
+                        var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
+
                         var workoutPlan = await _workoutAI
-                            .GenerateWorkoutPlanAsync(profile.Id, userMessage);
+                            .GenerateWorkoutPlanAsync(profile.Id, contextMessage);
 
                         if (isArabic)
                         {
@@ -1130,8 +1144,11 @@ namespace ArenaInfrastructure.AI
 
                 case "MODIFY_NUTRITION_PLAN":
                     {
+                        var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
+                        var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
+
                         var nutritionPlan = await _nutritionAI
-                            .ModifyNutritionPlanAsync(profile.Id, userMessage);
+                            .ModifyNutritionPlanAsync(profile.Id, contextMessage);
 
                         var nb = new StringBuilder();
                         nb.AppendLine(isArabic
@@ -1155,8 +1172,11 @@ namespace ArenaInfrastructure.AI
 
                 case "nutrition":
                     {
+                        var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
+                        var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
+
                         var nutritionPlan = await _nutritionAI
-                            .GenerateNutritionPlanAsync(profile.Id, userMessage);
+                            .GenerateNutritionPlanAsync(profile.Id, contextMessage);
 
                         var nb = new StringBuilder();
                         nb.AppendLine(isArabic
@@ -2591,6 +2611,34 @@ Output the Arabic translation ONLY. No extra explanation text.
                 _context.ChatConversations.Remove(conversation);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        private static string GetGoalPrompt(bool isArabic)
+        {
+            if (isArabic)
+            {
+                return """
+                ما هو هدفك الأساسي؟
+
+                • خسارة الوزن (Weight Loss)
+                • بناء العضلات (Muscle Gain)
+                • القوة البدنية (Strength)
+                • اللياقة البدنية العامة (General Fitness)
+                • تحسين القدرة على التحمل (Improve Endurance)
+                • استهداف مجموعة عضلية معينة (Target a Specific Muscle Group)
+                """;
+            }
+
+            return """
+            What is your primary goal?
+
+            • Weight Loss
+            • Muscle Gain
+            • Strength
+            • General Fitness
+            • Improve Endurance
+            • Target a Specific Muscle Group
+            """;
         }
     }
 }

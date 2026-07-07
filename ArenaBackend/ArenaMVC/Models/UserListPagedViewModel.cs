@@ -15,5 +15,6 @@ namespace ArenaMVC.Models
         public bool? IsActive { get; set; }
         public ArenaDomain.Enums.MembershipStatus? MembershipStatusFilter { get; set; }
         public string? SubscriptionStatusFilter { get; set; }
+        public bool IsAscending { get; set; }
     }
 }
