@@ -100,6 +100,15 @@ namespace ArenaApplication.Services.Payment
             await _subscriptionRepo.AddAsync(newSubscription);
 
             decimal secureAmount = plan.Price;
+            if (plan.DiscountPercentage.HasValue && plan.DiscountPercentage.Value > 0)
+            {
+                bool discountActive = !plan.DiscountEndDate.HasValue || plan.DiscountEndDate.Value > DateTime.UtcNow;
+                if (discountActive)
+                {
+                    secureAmount = plan.Price * (1 - plan.DiscountPercentage.Value / 100);
+                    secureAmount = Math.Round(secureAmount, 2);
+                }
+            }
 
             var payment = new ArenaDomain.Entities.Payments.Payment
             {
