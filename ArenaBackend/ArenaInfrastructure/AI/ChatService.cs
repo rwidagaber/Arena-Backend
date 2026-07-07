@@ -1204,17 +1204,6 @@ namespace ArenaInfrastructure.AI
                             ? DateTime.Parse(intent.Date)
                             : DateTime.UtcNow.AddHours(3).Date;
 
-                        var targetTime = intent.Time != null
-                            ? TimeSpan.Parse(intent.Time)
-                            : TimeSpan.Zero;
-
-                        // Only confirmed bookings count toward crowd/traffic
-                        // (cancelled, pending, expired, etc. are excluded).
-                        var dayBookings = _bookingRepo.GetAll()
-                            .Where(b => b.BookingDate.Date == targetDate.Date
-                                && b.Status == BookingStatus.Confirmed)
-                            .ToList();
-
                         // Cancel/Reschedule → skip crowd
                         if (intent.Action == "cancel" || intent.Action == "reschedule")
                             return await _bookingAI.HandleBookingRequestAsync(
@@ -1248,19 +1237,9 @@ namespace ArenaInfrastructure.AI
                                     ? $"الجيم مقفول يوم {targetDate:dddd}. اختار يوم تاني."
                                     : $"The gym is closed on {targetDate:dddd}. Please pick another day.";
 
+                            // Show every open hour of the day with its crowd circle — a full-day
+                            // crowdiness overview, including hours that have already passed today.
                             IEnumerable<OccupancySlotDto> slotsToShow = occupancy.Slots;
-                            if (targetDate.Date == egyptToday)
-                            {
-                                var currentHour = egyptNow.Hour;
-                                slotsToShow = occupancy.Slots.Where(s => s.Hour > currentHour);
-                            }
-
-                            if (!slotsToShow.Any())
-                            {
-                                return isArabic
-                                    ? "للأسف الأوقات المتاحة للنهارده خلصت. تحب تحجز لبكرة؟"
-                                    : "Sorry, there are no more available times today. Would you like to book for tomorrow?";
-                            }
 
                             var slotCrowds = slotsToShow.Select(s =>
                             {
@@ -1280,22 +1259,12 @@ namespace ArenaInfrastructure.AI
                                 : $"📅 Available times for {dateLabel}:\n{string.Join("\n", slotCrowds)}\n\nTell me your preferred time! 💪";
                         }
 
-                        // Has time → crowd + book
-                        var same = dayBookings.Count(b =>
-                            Math.Abs((b.StartTime - targetTime).TotalHours) < 1);
-
-                        // 5+ confirmed bookings in the same slot = traffic/busy.
-                        var crowd = same switch
-                        {
-                            < 3 => isArabic ? "🟢 الجيم هيكون هادي." : "🟢 The gym will be quiet.",
-                            < 5 => isArabic ? "🟡 في ناس شوية." : "🟡 Moderate crowd expected.",
-                            _ => isArabic ? "🔴 الجيم هيكون زحمة." : "🔴 The gym will be busy."
-                        };
-
+                        // Has time → book directly. The per-booking crowd sentence was removed;
+                        // live crowd levels are surfaced by the schedule/occupancy view instead.
                         var bookingReply = await _bookingAI.HandleBookingRequestAsync(
                             profile.Id, intent, userMessage, memberName);
 
-                        return $"{crowd}\n\n{bookingReply}";
+                        return bookingReply;
                     }
 
                 case "food_analysis":

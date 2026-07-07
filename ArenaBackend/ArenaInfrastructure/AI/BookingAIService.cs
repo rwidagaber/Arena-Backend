@@ -254,8 +254,12 @@ namespace ArenaInfrastructure.AI
 
         private static string FormatQrReply(QrCodeReply qrReply, bool isArabic)
         {
+            // The raw QR code is no longer dumped into the chat; the member scans it from the
+            // app's bookings/QR screen. Here we only confirm whether it's available yet.
             if (!string.IsNullOrWhiteSpace(qrReply.Code))
-                return $"🔑 QR Code: {qrReply.Code}";
+                return isArabic
+                    ? "🔑 كود الـ QR بتاعك جاهز."
+                    : "🔑 Your QR code is ready.";
 
             return isArabic
                 ? "🔑 الـ QR سيظهر في نفس يوم الحجز فقط."
