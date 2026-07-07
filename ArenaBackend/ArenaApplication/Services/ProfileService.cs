@@ -134,7 +134,13 @@ namespace ArenaApplication.Services
                     user.MemberProfile.Goal = dto.Goal;
 
                 if (dto.TargetWeight is not null)
+                {
+                    var targetCheck = ValidateTargetWeight(dto.TargetWeight.Value, user.MemberProfile.Height);
+                    if (!targetCheck.Ok)
+                        return Result<GetProfileDto>.Failure(targetCheck.Error);
+
                     user.MemberProfile.TargetWeight = dto.TargetWeight;
+                }
 
                 if (dto.Weight is not null || dto.Height is not null)
                 {
@@ -172,6 +178,37 @@ namespace ArenaApplication.Services
             };
 
             return Result<GetProfileDto>.Success(updatedProfile);
+        }
+
+        // A body goal must be physically realistic for the member's height. A
+        // target that lands in the "underweight" BMI band (below 18.5) is rejected
+        // so the app never encourages an anorexic goal; an absurdly high target is
+        // rejected too. BMI = kg / m², and Height is stored in centimetres.
+        private const decimal MinTargetBmi = 18.5m;
+        private const decimal MaxTargetBmi = 40m;
+
+        private (bool Ok, string Error) ValidateTargetWeight(decimal targetWeight, decimal? heightCm)
+        {
+            if (targetWeight <= 0)
+                return (false, _localizer["TargetWeightInvalid"]);
+
+            // Height unknown — realism can't be judged, so don't block the update.
+            if (heightCm is null || heightCm <= 0)
+                return (true, string.Empty);
+
+            var heightM = heightCm.Value / 100m;
+            var bmi = targetWeight / (heightM * heightM);
+
+            var minWeight = Math.Round(MinTargetBmi * heightM * heightM, 1);
+            var maxWeight = Math.Round(MaxTargetBmi * heightM * heightM, 1);
+
+            if (bmi < MinTargetBmi)
+                return (false, _localizer["TargetWeightTooLow", minWeight, maxWeight]);
+
+            if (bmi > MaxTargetBmi)
+                return (false, _localizer["TargetWeightTooHigh", minWeight, maxWeight]);
+
+            return (true, string.Empty);
         }
 
     }
