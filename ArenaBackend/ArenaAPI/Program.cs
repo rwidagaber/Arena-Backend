@@ -166,6 +166,16 @@ namespace ArenaAPI
             builder.Services.AddScoped<IGenericRepository<MemberProfile, Guid>, GenericRepository<MemberProfile, Guid>>();
             builder.Services.AddScoped<IRAGService, SimpleRAGService>();
             builder.Services.AddScoped<IMemberHealthRAGService, MemberHealthRAGService>();
+            
+            // Planning Pipeline registrations
+            builder.Services.AddScoped<ArenaApplication.AI.Planning.IFitnessPlanningPipeline, ArenaInfrastructure.AI.Planning.FitnessPlanningPipeline>();
+            builder.Services.AddScoped<ArenaInfrastructure.AI.Planning.Steps.AnalyzeUserAndMessageStep>();
+            builder.Services.AddScoped<ArenaInfrastructure.AI.Planning.Steps.GoalAndTimeAssessmentStep>();
+            builder.Services.AddScoped<ArenaInfrastructure.AI.Planning.Steps.MedicalSafetyStep>();
+            builder.Services.AddScoped<ArenaInfrastructure.AI.Planning.Steps.MissingInfoCheckStep>();
+            builder.Services.AddScoped<ArenaInfrastructure.AI.Planning.Steps.PlanGeneratorStep>();
+            builder.Services.AddScoped<ArenaInfrastructure.AI.Planning.Steps.PlanValidatorStep>();
+
             builder.Services.Configure<GeminiSettings>(
                 builder.Configuration.GetSection("GeminiSettings"));
 

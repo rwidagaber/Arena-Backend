@@ -63,11 +63,8 @@ namespace ArenaInfrastructure.AI
             if (profile == null)
                 throw new Exception($"MemberProfile not found for Id: {memberProfileId}");
 
-            var effectiveGoal = DetermineGoal(userMessage, profile.Goal);
-            if (string.IsNullOrEmpty(effectiveGoal))
-            {
-                throw new GoalRequiredException("GOAL_REQUIRED");
-            }
+            var effectiveGoal = DetermineGoal(userMessage, profile.Goal) ?? "General Fitness";
+
 
             var goalFromMessage = ExtractGoalFromMessage(userMessage);
             if (goalFromMessage != null && !string.Equals(profile.Goal, goalFromMessage, StringComparison.OrdinalIgnoreCase))
@@ -312,11 +309,16 @@ namespace ArenaInfrastructure.AI
             
             === INSTRUCTIONS ===
             1. Apply the user's modification request to the plan.
-            2. Preserve as much of the existing meals, calories, ingredients, and structures as possible. Only make changes necessary to satisfy the request (e.g. swap foods, adjust macros slightly if needed, remove ingredients, etc.).
-            3. Respect the user's health profile and conditions.
-            4. Completely exclude any foods or ingredients they request to avoid/replace.
-            5. Return the updated plan in the EXACT same JSON format.
-            6. Return ONLY the valid JSON response. No extra text, no markdown.
+            2. Preserve as much of the existing meals, calories, ingredients, and structures as possible, but ensure they are realistic and distinct.
+            3. Respect the user's health profile, allergies, and conditions.
+            4. Completely exclude any foods or ingredients they request to avoid/replace or are allergic to.
+            5. MEAL VARIETY & REALISTIC COMPOSITION (CRITICAL):
+               - Meals must be realistic, appetising, and distinct. Do NOT repeat the same list of ingredients or food pools across multiple meals.
+               - Each meal should have a clear, specific focus: choose one or two protein sources (e.g. eggs for breakfast, chicken or beef for lunch, fish or cheese for dinner) and one carb source.
+               - NEVER combine eggs, yogurt, chicken, and fish all into a single meal.
+               - Write actual meal names and specific ingredients (e.g. "Grilled Chicken Breast, 1 cup cooked Brown Rice, and Broccoli" instead of listing a pool of all available foods).
+            6. Return the updated plan in the EXACT same JSON format.
+            7. Return ONLY the valid JSON response. No extra text, no markdown.
             """;
 
             NutritionPlanAIResponse planData = null;
@@ -604,20 +606,27 @@ namespace ArenaInfrastructure.AI
             return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static string? DetermineGoal(string? userMessage, string? dbGoal)
+        private static string DetermineGoal(string? userMessage, string? dbGoal)
         {
-            var extracted = ExtractGoalFromMessage(userMessage);
-            if (extracted != null)
-                return extracted;
+            var dbGoalNormalized = !string.IsNullOrWhiteSpace(dbGoal) ? NormalizeGoalName(dbGoal) : null;
+            var messageGoal = ExtractGoalFromMessage(userMessage);
 
-            if (!string.IsNullOrWhiteSpace(dbGoal))
+            if (messageGoal != null && !messageGoal.Equals("General Fitness", StringComparison.OrdinalIgnoreCase))
             {
-                var normalized = NormalizeGoalName(dbGoal);
-                if (normalized != null)
-                    return normalized;
+                return messageGoal;
             }
 
-            return null;
+            if (dbGoalNormalized != null)
+            {
+                return dbGoalNormalized;
+            }
+
+            if (messageGoal != null)
+            {
+                return messageGoal;
+            }
+
+            return "General Fitness";
         }
 
         private static string? ExtractGoalFromMessage(string? userMessage)
@@ -673,7 +682,7 @@ namespace ArenaInfrastructure.AI
                 return "Core Strength";
             }
 
-            if (ContainsAny(userMessage, "improve my fitness", "improve fitness", "general fitness", "fitness level", "أقوي اللياقة", "اقوي اللياقة", "تحسين اللياقة", "لياقة"))
+            if (ContainsAny(userMessage, "improve my fitness", "improve fitness", "general fitness", "fitness level", "balanced", "balanced plan", "balanced nutrition", "balanced diet", "fit", "fitness", "toning", "أقوي اللياقة", "اقوي اللياقة", "تحسين اللياقة", "لياقة", "متوازن", "متكامل"))
             {
                 return "General Fitness";
             }
@@ -717,7 +726,7 @@ namespace ArenaInfrastructure.AI
             if (ContainsAny(dbGoal, "core", "abs"))
                 return "Core Strength";
 
-            if (ContainsAny(dbGoal, "endurance", "fitness", "fit", "لياقة"))
+            if (ContainsAny(dbGoal, "endurance", "fitness", "fit", "balanced", "toning", "لياقة", "متوازن"))
                 return "General Fitness";
 
             if (ContainsAny(dbGoal, "strength", "قوة"))
@@ -778,18 +787,27 @@ namespace ArenaInfrastructure.AI
         private static string ReplaceDairy(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;
-            return text
-                .Replace("greek yogurt", "lactose-free yogurt", StringComparison.OrdinalIgnoreCase)
-                .Replace("yogurt", "lactose-free yogurt", StringComparison.OrdinalIgnoreCase)
-                .Replace("milk", "almond milk", StringComparison.OrdinalIgnoreCase)
-                .Replace("cheese", "tofu", StringComparison.OrdinalIgnoreCase)
-                .Replace("cottage cheese", "tofu", StringComparison.OrdinalIgnoreCase)
-                .Replace("زبادي يوناني", "زبادي خالي من اللاكتوز", StringComparison.OrdinalIgnoreCase)
-                .Replace("زبادي", "زبادي خالي من اللاكتوز", StringComparison.OrdinalIgnoreCase)
-                .Replace("حليب", "حليب اللوز", StringComparison.OrdinalIgnoreCase)
-                .Replace("لبن", "حليب اللوز", StringComparison.OrdinalIgnoreCase)
-                .Replace("جبن قريش", "توفو", StringComparison.OrdinalIgnoreCase)
-                .Replace("جبن", "توفو", StringComparison.OrdinalIgnoreCase);
+            
+            // English dairy replacement self-healing logic
+            text = text.Replace("lactose-free yogurt", "yogurt", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("greek yogurt", "yogurt", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("yogurt", "lactose-free yogurt", StringComparison.OrdinalIgnoreCase);
+            
+            text = text.Replace("milk", "almond milk", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("cottage cheese", "tofu", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("cheese", "tofu", StringComparison.OrdinalIgnoreCase);
+
+            // Arabic dairy replacement self-healing logic
+            text = text.Replace("زبادي خالي من اللاكتوز", "زبادي", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("زبادي يوناني", "زبادي", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("زبادي", "زبادي خالي من اللاكتوز", StringComparison.OrdinalIgnoreCase);
+
+            text = text.Replace("حليب", "حليب اللوز", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("لبن", "حليب اللوز", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("جبن قريش", "توفو", StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("جبن", "توفو", StringComparison.OrdinalIgnoreCase);
+
+            return text;
         }
 
         private static void LocalizePlanData(NutritionPlanAIResponse planData, bool isArabic)

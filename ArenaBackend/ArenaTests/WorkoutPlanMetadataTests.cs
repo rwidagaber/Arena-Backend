@@ -59,6 +59,7 @@ namespace ArenaTests
                 FirstName = "TestMember",
                 DateOfBirth = DateTime.UtcNow.AddYears(-25),
                 Gender = Gender.Male,
+                Goal = "Muscle Gain",
                 User = appUser
             };
             _context.MemberProfiles.Add(profile);
@@ -178,6 +179,7 @@ namespace ArenaTests
         public Task NotifySubscriptionExpiredAsync(Guid memberProfileId, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task NotifyBookingConfirmedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task NotifyBookingCancelledAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task NotifyBookingCancelledGymHoursChangedAsync(Guid memberProfileId, DateTime bookingDate, TimeSpan startTime, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task NotifyBookingRescheduledAsync(Guid memberProfileId, DateTime newBookingDate, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task NotifyQrCodeGeneratedAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task NotifySessionReminderAsync(Guid memberProfileId, DateTime bookingDate, CancellationToken cancellationToken = default) => Task.CompletedTask;

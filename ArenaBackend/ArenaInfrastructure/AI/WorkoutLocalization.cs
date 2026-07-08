@@ -239,9 +239,23 @@ namespace ArenaInfrastructure.AI
 
             if (isArabic)
             {
-                if (cleanGoal.Contains("loss") || cleanGoal.Contains("lose") || cleanGoal.Contains("fat") || cleanGoal.Contains("خسارة"))
+                if (cleanGoal.Contains("chest") || cleanGoal.Contains("صدر"))
+                    return "خطة تضخيم الصدر";
+                if (cleanGoal.Contains("leg") || cleanGoal.Contains("رجل") || cleanGoal.Contains("أرجل"))
+                    return "خطة تضخيم الأرجل";
+                if (cleanGoal.Contains("back") || cleanGoal.Contains("ظهر") || cleanGoal.Contains("ضهر"))
+                    return "خطة قوة الظهر";
+                if (cleanGoal.Contains("shoulder") || cleanGoal.Contains("كتف") || cleanGoal.Contains("أكتاف"))
+                    return "خطة تضخيم الأكتاف";
+                if (cleanGoal.Contains("arm") || cleanGoal.Contains("ذراع") || cleanGoal.Contains("دراع"))
+                    return "خطة تضخيم الذراعين";
+                if (cleanGoal.Contains("glute") || cleanGoal.Contains("مؤخرة") || cleanGoal.Contains("أرداف"))
+                    return "خطة تضخيم المؤخرة";
+                if (cleanGoal.Contains("core") || cleanGoal.Contains("abs") || cleanGoal.Contains("بطن"))
+                    return "خطة قوة العضلات الأساسية";
+                if (cleanGoal.Contains("loss") || cleanGoal.Contains("lose") || cleanGoal.Contains("fat") || cleanGoal.Contains("خسارة") || cleanGoal.Contains("تخسيس"))
                     return "خطة خسارة الوزن";
-                if (cleanGoal.Contains("gain") || cleanGoal.Contains("bulk") || cleanGoal.Contains("muscle") || cleanGoal.Contains("عضلات") || cleanGoal.Contains("بناء"))
+                if (cleanGoal.Contains("gain") || cleanGoal.Contains("bulk") || cleanGoal.Contains("muscle") || cleanGoal.Contains("عضلات") || cleanGoal.Contains("بناء") || cleanGoal.Contains("تضخيم"))
                     return "خطة بناء العضلات";
                 if (cleanGoal.Contains("strength") || cleanGoal.Contains("power") || cleanGoal.Contains("قوة"))
                     return "خطة القوة";
@@ -252,6 +266,20 @@ namespace ArenaInfrastructure.AI
             }
             else
             {
+                if (cleanGoal.Contains("chest"))
+                    return "Chest Hypertrophy Plan";
+                if (cleanGoal.Contains("leg"))
+                    return "Leg Hypertrophy Plan";
+                if (cleanGoal.Contains("back"))
+                    return "Back Strength Plan";
+                if (cleanGoal.Contains("shoulder"))
+                    return "Shoulder Hypertrophy Plan";
+                if (cleanGoal.Contains("arm"))
+                    return "Arm Hypertrophy Plan";
+                if (cleanGoal.Contains("glute"))
+                    return "Glutes Hypertrophy Plan";
+                if (cleanGoal.Contains("core") || cleanGoal.Contains("abs"))
+                    return "Core Strength Plan";
                 if (cleanGoal.Contains("loss") || cleanGoal.Contains("lose") || cleanGoal.Contains("fat") || cleanGoal.Contains("خسارة"))
                     return "Weight Loss Plan";
                 if (cleanGoal.Contains("gain") || cleanGoal.Contains("bulk") || cleanGoal.Contains("muscle") || cleanGoal.Contains("عضلات") || cleanGoal.Contains("بناء"))

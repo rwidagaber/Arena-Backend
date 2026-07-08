@@ -1,5 +1,6 @@
 using ArenaApplication.AI;
 using ArenaApplication.AI.ArenaApplication.AI;
+using ArenaApplication.AI.Planning;
 using ArenaApplication.Dtos.Attendance;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.HealthIntelligence;
@@ -36,6 +37,7 @@ namespace ArenaInfrastructure.AI
         private readonly IMemberHealthRAGService _healthRAG;
         private readonly IAttendanceSuggestionService _attendanceSuggestion;
         private readonly IHealthIntelligenceService _healthIntelligence;
+        private readonly IFitnessPlanningPipeline _planningPipeline;
         private const int MaxStoredMessageLength = 4000;
         private const int MaxTitleLength = 200;
 
@@ -51,7 +53,8 @@ namespace ArenaInfrastructure.AI
             IHostEnvironment environment,
             IMemberHealthRAGService healthRAG,
             IAttendanceSuggestionService attendanceSuggestion,
-            IHealthIntelligenceService healthIntelligence)
+            IHealthIntelligenceService healthIntelligence,
+            IFitnessPlanningPipeline planningPipeline)
         {
             _gemini = gemini;
             _workoutAI = workoutAI;
@@ -65,6 +68,7 @@ namespace ArenaInfrastructure.AI
             _healthRAG = healthRAG;
             _attendanceSuggestion = attendanceSuggestion;
             _healthIntelligence = healthIntelligence;
+            _planningPipeline = planningPipeline;
         }
 
         public async Task<ChatResponseWithHistoryDto> SendMessageAsync(
@@ -258,7 +262,19 @@ namespace ArenaInfrastructure.AI
             }
             catch (GoalRequiredException)
             {
-                reply = GetGoalPrompt(isArabic);
+                profile.Goal = "General Fitness";
+                _context.MemberProfiles.Update(profile);
+                await _context.SaveChangesAsync();
+
+                try
+                {
+                    reply = await RouteIntent(profile, intent, userMessage, isArabic, memberName, history, upcomingBookings);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Chat AI failed on retry after GoalRequiredException for member profile {MemberProfileId}", profile.Id);
+                    reply = BuildAssistantUnavailableReply(isArabic, ex);
+                }
                 intent ??= new IntentResult { Intent = "chat" };
             }
             catch (Exception ex)
@@ -986,10 +1002,14 @@ namespace ArenaInfrastructure.AI
                         var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
                         var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
 
-                        var workoutPlan = await _workoutAI
-                            .GenerateWorkoutPlanAsync(profile.Id, contextMessage);
-                        var nutritionPlan = await _nutritionAI
-                            .GenerateNutritionPlanAsync(profile.Id, contextMessage);
+                        var result = await _planningPipeline.ProcessPlanningRequestAsync(profile.Id, contextMessage, "both");
+                        if (result.IsMissingInfo)
+                        {
+                            return result.ClarificationMessage;
+                        }
+
+                        var workoutPlan = result.WorkoutPlan!;
+                        var nutritionPlan = result.NutritionPlan!;
 
                         var combined = new StringBuilder();
                         combined.AppendLine(isArabic
@@ -1069,8 +1089,13 @@ namespace ArenaInfrastructure.AI
                         var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
                         var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
 
-                        var workoutPlan = await _workoutAI
-                            .GenerateWorkoutPlanAsync(profile.Id, contextMessage);
+                        var result = await _planningPipeline.ProcessPlanningRequestAsync(profile.Id, contextMessage, "workout");
+                        if (result.IsMissingInfo)
+                        {
+                            return result.ClarificationMessage;
+                        }
+
+                        var workoutPlan = result.WorkoutPlan!;
 
                         if (isArabic)
                         {
@@ -1112,8 +1137,13 @@ namespace ArenaInfrastructure.AI
                             await _context.SaveChangesAsync();
                         }
                         
-                        // Generate a new workout plan aligned with the new goal
-                        var workoutPlan = await _workoutAI.GenerateWorkoutPlanAsync(profile.Id, userMessage);
+                        var result = await _planningPipeline.ProcessPlanningRequestAsync(profile.Id, userMessage, "workout");
+                        if (result.IsMissingInfo)
+                        {
+                            return result.ClarificationMessage;
+                        }
+
+                        var workoutPlan = result.WorkoutPlan!;
 
                         if (isArabic)
                         {
@@ -1175,8 +1205,13 @@ namespace ArenaInfrastructure.AI
                         var lastAssistant = history.LastOrDefault(m => m.Sender == "assistant");
                         var contextMessage = lastAssistant != null ? $"{lastAssistant.MessageText}\nUser response: {userMessage}" : userMessage;
 
-                        var nutritionPlan = await _nutritionAI
-                            .GenerateNutritionPlanAsync(profile.Id, contextMessage);
+                        var result = await _planningPipeline.ProcessPlanningRequestAsync(profile.Id, contextMessage, "nutrition");
+                        if (result.IsMissingInfo)
+                        {
+                            return result.ClarificationMessage;
+                        }
+
+                        var nutritionPlan = result.NutritionPlan!;
 
                         var nb = new StringBuilder();
                         nb.AppendLine(isArabic
@@ -1504,6 +1539,25 @@ namespace ArenaInfrastructure.AI
         private static string NormalizeIntent(string? detectedIntent, string userMessage, List<ChatMessageDto> history)
         {
             var text = userMessage.ToLowerInvariant();
+
+            // Handlers for short confirmations (e.g. "ok", "yes", "sure") after plan suggestions
+            if (IsShortConfirmation(text))
+            {
+                var lastAssistantMessage = history.LastOrDefault(m => m.Sender == "assistant")?.MessageText;
+                if (!string.IsNullOrEmpty(lastAssistantMessage))
+                {
+                    var lastLower = lastAssistantMessage.ToLowerInvariant();
+                    if (lastLower.Contains("nutrition plan") && (lastLower.Contains("let me know") || lastLower.Contains("need") || lastLower.Contains("complement") || lastLower.Contains("would you like")))
+                    {
+                        return "nutrition";
+                    }
+                    if (lastLower.Contains("workout plan") && (lastLower.Contains("let me know") || lastLower.Contains("need") || lastLower.Contains("complement") || lastLower.Contains("would you like")))
+                    {
+                        return "workout";
+                    }
+                }
+            }
+
             var normalized = detectedIntent?.Trim();
             normalized = normalized switch
             {
@@ -2639,6 +2693,16 @@ Output the Arabic translation ONLY. No extra explanation text.
             • Improve Endurance
             • Target a Specific Muscle Group
             """;
+        }
+
+        private static bool IsShortConfirmation(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return false;
+            var clean = text.Trim().ToLowerInvariant().Replace(".", "").Replace("!", "");
+            return clean == "ok" || clean == "okay" || clean == "yes" || clean == "sure" || clean == "please" || 
+                   clean == "yep" || clean == "yeah" || clean == "go ahead" || clean == "do it" || clean == "fine" ||
+                   clean == "تمام" || clean == "ماشي" || clean == "اوكي" || clean == "أيوة" || clean == "ابدا" ||
+                   clean == "يلا" || clean == "موافق" || clean == "نعم" || clean == "امين";
         }
     }
 }

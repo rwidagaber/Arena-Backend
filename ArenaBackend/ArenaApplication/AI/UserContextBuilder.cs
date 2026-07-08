@@ -5,7 +5,11 @@ using ArenaDomain.Entities.Nutrition;
 using ArenaDomain.Entities.Subscription;
 using ArenaDomain.Entities.User;
 using ArenaDomain.Entities.Workout;
+using ArenaApplication.Dtos.HealthIntelligence;
 using System.Globalization;
+using System.Text.Json;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ArenaApplication.AI
 {
@@ -18,7 +22,8 @@ namespace ArenaApplication.AI
             List<Booking>? upcomingBookings = null,
             IReadOnlyList<ProgressLog>? recentProgress = null,
             IReadOnlyList<NutritionPlan>? nutritionPlans = null,
-            IReadOnlyList<WorkoutPlan>? workoutPlans = null)
+            IReadOnlyList<WorkoutPlan>? workoutPlans = null,
+            IReadOnlyList<Attendance>? attendanceHistory = null)
         {
             var age = DateTime.UtcNow.Year - profile.DateOfBirth.Year;
             var bmi = profile.BMI ?? CalculateBMI(profile.Weight, profile.Height);
@@ -31,6 +36,34 @@ namespace ArenaApplication.AI
                 profile.User?.LastName
             }.Where(value => !string.IsNullOrWhiteSpace(value)));
 
+            HealthProfileDto? healthProfile = null;
+            if (!string.IsNullOrWhiteSpace(profile.HealthProfileJson))
+            {
+                try
+                {
+                    healthProfile = JsonSerializer.Deserialize<HealthProfileDto>(profile.HealthProfileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch { }
+            }
+
+            var sleepHours = healthProfile?.SleepHours?.ToString() ?? "Not set";
+            var dailySchedule = healthProfile?.DailySchedule ?? "Not set";
+            var preferredWorkoutTime = healthProfile?.PreferredWorkoutTime ?? "Not set";
+            var trainerNotes = healthProfile?.TrainerNotes ?? "None";
+            var lifestyle = healthProfile?.Lifestyle ?? "Not set";
+            var foodPreferences = healthProfile?.FoodPreferences ?? "None";
+            var physicalLimitations = healthProfile?.PhysicalLimitations ?? "None";
+            var chronicDiseases = healthProfile?.ChronicDiseases ?? "None";
+            var profileBodyFat = healthProfile?.BodyFat?.ToString("0.#") ?? "Not set";
+            var preferredDays = healthProfile?.PreferredWorkoutDays ?? "Not set";
+            var preferredDuration = healthProfile?.PreferredWorkoutDuration?.ToString() ?? "Not set";
+
+            var attendanceSummary = "No attendance logs found";
+            if (attendanceHistory != null && attendanceHistory.Any())
+            {
+                attendanceSummary = string.Join(", ", attendanceHistory.Take(10).Select(a => $"{a.CheckInTime:yyyy-MM-dd} (Attended)"));
+            }
+
             var context = $"""
                 === MEMBER PROFILE ===
                 Application First Name: {firstName ?? "Member"}
@@ -42,21 +75,39 @@ namespace ArenaApplication.AI
                 Height: {profile.Height ?? 0}cm
                 BMI: {bmi:F1} ({GetBMICategory(bmi)})
                 Target Weight: {FormatDecimal(profile.TargetWeight, "Not set")}
+                Muscle Mass: {FormatDecimal(profile.MuscleMass, "Not set")}
+                Body Fat: {profileBodyFat}%
+                Lifestyle: {lifestyle}
+                Sleep Hours: {sleepHours}
+                Daily Schedule: {dailySchedule}
+                Preferred Workout Time: {preferredWorkoutTime}
+                Trainer Notes: {trainerNotes}
                 
                 === FITNESS INFO ===
                 Goal: {profile.Goal ?? "General Fitness"}
                 Activity Level: {profile.ActivityLevel ?? "Moderate"}
                 Experience: {profile.FitnessExperience ?? "Beginner"}
                 Available Equipment: {profile.Equipment ?? "Full Gym"}
+                Preferred Workout Days: {preferredDays}
+                Preferred Workout Duration: {preferredDuration} minutes
                 
                 === HEALTH & RESTRICTIONS ===
                 Health Conditions: {profile.HealthConditions ?? "None"}
+                Chronic Diseases: {chronicDiseases}
                 Injuries: {profile.Injuries ?? "None"}
+                Physical Limitations: {physicalLimitations}
                 Dietary Restrictions: {profile.DietaryRestrictions ?? "None"}
+                Allergies: {(healthProfile != null && healthProfile.Allergies.Any() ? string.Join(", ", healthProfile.Allergies) : "None")}
+                Medications: {(healthProfile != null && healthProfile.Medications.Any() ? string.Join(", ", healthProfile.Medications) : "None")}
+                Food Preferences: {foodPreferences}
+
+                === ATTENDANCE HISTORY ===
+                {attendanceSummary}
                 """;
 
             context += BuildProgressContext(profile, recentProgress);
             context += BuildPlanHistoryContext(nutritionPlans, workoutPlans);
+
 
             if (subscription != null)
             {

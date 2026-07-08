@@ -1,4 +1,5 @@
 using ArenaApplication.AI.ArenaApplication.AI;
+using ArenaApplication.AI.Planning;
 using ArenaApplication.Dtos.ChatDtos;
 using ArenaApplication.Dtos.HealthIntelligence;
 using ArenaApplication.Dtos.Nutrition;
@@ -157,6 +158,7 @@ namespace ArenaTests
             var healthRAG = new MemberHealthRAGService(embeddingMock, geminiMock, _context);
             var attendanceMock = new MockAttendanceSuggestionService();
             var healthIntelligence = new HealthIntelligenceService(geminiMock);
+            var planningPipeline = new MockFitnessPlanningPipeline(_workoutAI, _nutritionAI);
 
             _chatService = new ChatService(
                 geminiMock,
@@ -170,8 +172,35 @@ namespace ArenaTests
                 environmentMock,
                 healthRAG,
                 attendanceMock,
-                healthIntelligence
+                healthIntelligence,
+                planningPipeline
             );
+        }
+
+        public class MockFitnessPlanningPipeline : IFitnessPlanningPipeline
+        {
+            private readonly IWorkoutAIService _workoutAI;
+            private readonly INutritionAIService _nutritionAI;
+
+            public MockFitnessPlanningPipeline(IWorkoutAIService workoutAI, INutritionAIService nutritionAI)
+            {
+                _workoutAI = workoutAI;
+                _nutritionAI = nutritionAI;
+            }
+
+            public async Task<PlanningResultDto> ProcessPlanningRequestAsync(Guid memberProfileId, string userMessage, string planType)
+            {
+                var result = new PlanningResultDto { PlanType = planType };
+                if (planType == "workout" || planType == "both")
+                {
+                    result.WorkoutPlan = await _workoutAI.GenerateWorkoutPlanAsync(memberProfileId, userMessage);
+                }
+                if (planType == "nutrition" || planType == "both")
+                {
+                    result.NutritionPlan = await _nutritionAI.GenerateNutritionPlanAsync(memberProfileId, userMessage);
+                }
+                return result;
+            }
         }
 
         public void Dispose()

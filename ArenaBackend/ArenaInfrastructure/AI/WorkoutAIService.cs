@@ -106,11 +106,8 @@ namespace ArenaInfrastructure.AI
             Console.WriteLine($"Experience: {profile.FitnessExperience}");
             Console.WriteLine($"===============");
 
-            var effectiveGoal = DetermineGoal(userMessage, profile.Goal);
-            if (string.IsNullOrEmpty(effectiveGoal))
-            {
-                throw new GoalRequiredException("GOAL_REQUIRED");
-            }
+            var effectiveGoal = DetermineGoal(userMessage, profile.Goal) ?? "General Fitness";
+
 
             var goalFromMessage = ExtractGoalFromMessage(userMessage);
             if (goalFromMessage != null && !string.Equals(profile.Goal, goalFromMessage, StringComparison.OrdinalIgnoreCase))
@@ -397,11 +394,8 @@ namespace ArenaInfrastructure.AI
 
             var currentPlanJson = JsonSerializer.Serialize(currentPlanData, new JsonSerializerOptions { WriteIndented = true });
 
-            var effectiveGoal = DetermineGoal(userMessage, profile.Goal);
-            if (string.IsNullOrEmpty(effectiveGoal))
-            {
-                throw new GoalRequiredException("GOAL_REQUIRED");
-            }
+            var effectiveGoal = DetermineGoal(userMessage, profile.Goal) ?? "General Fitness";
+
 
             var goalFromMessage = ExtractGoalFromMessage(userMessage);
             if (goalFromMessage != null && !string.Equals(profile.Goal, goalFromMessage, StringComparison.OrdinalIgnoreCase))
@@ -969,20 +963,27 @@ namespace ArenaInfrastructure.AI
             return (sets, reps, weeklyDays, durationWeeks);
         }
 
-        private static string? DetermineGoal(string? userMessage, string? dbGoal)
+        private static string DetermineGoal(string? userMessage, string? dbGoal)
         {
-            var extracted = ExtractGoalFromMessage(userMessage);
-            if (extracted != null)
-                return extracted;
+            var dbGoalNormalized = !string.IsNullOrWhiteSpace(dbGoal) ? NormalizeGoalName(dbGoal) : null;
+            var messageGoal = ExtractGoalFromMessage(userMessage);
 
-            if (!string.IsNullOrWhiteSpace(dbGoal))
+            if (messageGoal != null && !messageGoal.Equals("General Fitness", StringComparison.OrdinalIgnoreCase))
             {
-                var normalized = NormalizeGoalName(dbGoal);
-                if (normalized != null)
-                    return normalized;
+                return messageGoal;
             }
 
-            return null;
+            if (dbGoalNormalized != null)
+            {
+                return dbGoalNormalized;
+            }
+
+            if (messageGoal != null)
+            {
+                return messageGoal;
+            }
+
+            return "General Fitness";
         }
 
         private static string? ExtractGoalFromMessage(string? userMessage)
@@ -1038,7 +1039,7 @@ namespace ArenaInfrastructure.AI
                 return "Core Strength";
             }
 
-            if (ContainsAny(userMessage, "improve my fitness", "improve fitness", "general fitness", "fitness level", "أقوي اللياقة", "اقوي اللياقة", "تحسين اللياقة", "لياقة"))
+            if (ContainsAny(userMessage, "improve my fitness", "improve fitness", "general fitness", "fitness level", "balanced", "balanced plan", "balanced workout", "fit", "fitness", "toning", "أقوي اللياقة", "اقوي اللياقة", "تحسين اللياقة", "لياقة", "متوازن", "متكامل"))
             {
                 return "General Fitness";
             }
@@ -1082,7 +1083,7 @@ namespace ArenaInfrastructure.AI
             if (ContainsAny(dbGoal, "core", "abs"))
                 return "Core Strength";
 
-            if (ContainsAny(dbGoal, "endurance", "fitness", "fit", "لياقة"))
+            if (ContainsAny(dbGoal, "endurance", "fitness", "fit", "balanced", "toning", "لياقة", "متوازن"))
                 return "General Fitness";
 
             if (ContainsAny(dbGoal, "strength", "قوة"))

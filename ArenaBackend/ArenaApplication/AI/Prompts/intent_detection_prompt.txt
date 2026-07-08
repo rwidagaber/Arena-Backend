@@ -30,6 +30,11 @@ HIGH PRIORITY CONTEXT INTENT RULES:
 - If the user asks a general nutrition question, return "ASK_ABOUT_NUTRITION".
 - If the user only greets, return "GREETING".
 
+FIRST RESPONSE POLICY:
+- If the user states preferences in their message (e.g., "4 months", "3 days a week", "I'll train 4 days a week", "I want a workout plan in 4 months"), treat these as CONFIRMED preferences. Extract them into the appropriate fields (e.g. "preferredDuration", "preferredWorkoutDays", or equipment).
+- Do NOT set intent to "chat" when the user is requesting a plan or stating preferences for a plan. Set it to the correct plan generation intent (workout, nutrition, or both).
+- These preferences must NOT be re-asked by downstream systems.
+
 PROFILE EXTRACTION RULES (Apply to ALL intents!):
 - IF the user mentions their fitness goal (e.g. lose weight, gain muscle, عايز اخس, عاوز تضخيم, 3ayz akhas), extract it into "goal".
 - IF the user mentions injuries or physical limitations (e.g. knee pain, back injury, عندي غضروف, ركبتي بتوجعني, b2ali fatra mabl3bsh), extract into "injuries".
@@ -50,6 +55,9 @@ CONTINUATION RULES (CRITICAL):
 - Read the chat history! If the bot recently asked the user to provide missing information (e.g. weight, height, injuries, experience, duration, equipment) in order to generate a plan, and the user is answering those questions in their current message:
   - You MUST set the intent to the original requested plan type ("workout", "nutrition", or "both").
   - DO NOT set the intent to "chat".
+- If the bot's last message offered or suggested a plan (e.g. "if you need a nutrition plan... let me know" or "would you like a nutrition plan?"), and the user responds with "ok", "yes", "sure", "please", "go ahead", "yep", "أيوة", "ماشي", "تمام", or other confirmations:
+  - You MUST set the intent to that plan type (e.g. "GENERATE_NUTRITION_PLAN" if a nutrition plan was offered, or "GENERATE_WORKOUT_PLAN" if a workout plan was offered).
+
 
 Intent rules:
 - "goal_change" → user states they want to change their fitness goal

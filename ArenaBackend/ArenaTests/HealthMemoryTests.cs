@@ -278,6 +278,7 @@ namespace ArenaTests
             var healthRAG = new MemberHealthRAGService(embeddingMock, geminiMock, _context);
             var attendanceMock = new MockAttendanceSuggestionService();
             var healthIntelligence = new HealthIntelligenceService(geminiMock);
+            var planningPipeline = new ConversationalUnderstandingTests.MockFitnessPlanningPipeline(workoutAIMock, nutritionAIMock);
 
             _chatService = new ChatService(
                 geminiMock,
@@ -291,7 +292,8 @@ namespace ArenaTests
                 environmentMock,
                 healthRAG,
                 attendanceMock,
-                healthIntelligence
+                healthIntelligence,
+                planningPipeline
             );
         }
 
