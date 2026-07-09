@@ -110,7 +110,7 @@ namespace ArenaTests
 
             Assert.Equal("Dumbbell Bench Press", exerciseDetails.Name);
             Assert.Contains("compound upper-body exercise", exerciseDetails.Description);
-            Assert.Equal("https://www.youtube.com/watch?v=vm1G1kK34c0", exerciseDetails.VideoUrl);
+            Assert.Equal("https://www.youtube.com/embed/vm1G1kK34c0", exerciseDetails.VideoUrl);
             Assert.Equal("Beginner", exerciseDetails.Difficulty);
             Assert.Equal("Strength", exerciseDetails.Category);
             Assert.Contains("Inhale while lowering", exerciseDetails.Breathing);
@@ -125,7 +125,7 @@ namespace ArenaTests
             // 3. Verify database storage
             var dbExercise = await _context.Exercises.FirstOrDefaultAsync(e => e.MemberProfileId == _memberId && e.Name == "Dumbbell Bench Press");
             Assert.NotNull(dbExercise);
-            Assert.Equal("https://www.youtube.com/watch?v=vm1G1kK34c0", dbExercise.VideoUrl);
+            Assert.Equal("https://www.youtube.com/embed/vm1G1kK34c0", dbExercise.VideoUrl);
             Assert.Equal("Beginner", dbExercise.Difficulty);
             Assert.Equal("Strength", dbExercise.Category);
             

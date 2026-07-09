@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,6 +9,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\ArenaDomain\ArenaDomain.csproj" />
+    <ProjectReference Include="..\..\ArenaApplication\ArenaApplication.csproj" />
+    <ProjectReference Include="..\..\ArenaInfrastructure\ArenaInfrastructure.csproj" />
+  </ItemGroup>
 </Project>

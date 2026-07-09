@@ -36,6 +36,7 @@ Use the member context as the source of truth. Do not generate a generic workout
 {exerciseCatalog}
 7. Plan NAME must reflect detected goal and member name: {name}
 8. CRITICAL: If the user explicitly requests a specific duration (e.g., "2 months", "8 weeks") or a specific weekly frequency (e.g., "2 days a week", "train 4 times"), YOU MUST EXACTLY MATCH THEIR REQUEST. Do not ignore the user's preferences! If they want 2 days, only generate 2 days in the "days" array. If they want 8 weeks, set "durationWeeks" to 8.
+9. CRITICAL: Each workout day MUST contain exactly 4 to 6 exercises in the "exercises" array (unless the user explicitly requests a different count, such as "i want 3 exercises per day" or "increase the count of exercises"). Do NOT generate only 1 exercise per day!
 
 === DIABETES RULE ===
 If member has diabetes:
@@ -85,7 +86,7 @@ For every exercise, you MUST generate comprehensive and detailed educational met
 - difficultyAr: Difficulty level in Arabic (مبتدئ, متوسط, متقدم).
 - category: Category in English.
 - categoryAr: Category in Arabic.
-- videoUrl: A high-quality instructional YouTube video URL demonstrating the correct technique from official fitness channels like Jeff Nippard, ATHLEAN-X, Jeremy Ethier, Renaissance Periodization, Squat University, or similar reputable sources. Must be a valid, stable YouTube link.
+- videoUrl: A high-quality instructional YouTube video URL demonstrating the correct technique from official fitness channels. The video MUST allow embedding (do NOT use videos that forbid embedding/have it disabled by the owner). Standard watch links (e.g. youtube.com/watch?v=...) or shortlinks are both acceptable.
 
 {
   "name": "...",

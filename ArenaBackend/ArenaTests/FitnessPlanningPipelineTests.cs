@@ -105,7 +105,7 @@ namespace ArenaTests
             var pipeline = new FitnessPlanningPipeline(analyzeStep, goalStep, safetyStep, missingStep, generatorStep, validatorStep);
 
             // Act
-            var result = await pipeline.ProcessPlanningRequestAsync(_memberId, "I want to start a new workout", "workout");
+            var result = await pipeline.ProcessPlanningRequestAsync(_memberId, "I want to start a new workout but I have chest pain", "workout");
 
             // Assert
             Assert.True(result.IsMissingInfo);

@@ -448,8 +448,9 @@ namespace ArenaInfrastructure.AI
             2. Preserve as much of the existing exercises, sets, reps, and structure as possible. Only make changes necessary to satisfy the request (e.g. replace exercises, adjust workout days/volume, etc.).
             3. Respect the user's injuries and health conditions.
             4. Completely exclude any exercises or movements they request to avoid/replace.
-            5. Return the updated plan in the EXACT same JSON format.
-            6. Return ONLY the valid JSON response. No extra text, no markdown.
+            5. Each workout day MUST contain 4 to 6 exercises in the "exercises" array (unless the user explicitly requests a different count). If the current plan has only 1 exercise per day, you must increase it to 4 to 6 exercises per day to ensure an effective workout session, while satisfying the user's specific request.
+            6. Return the updated plan in the EXACT same JSON format.
+            7. Return ONLY the valid JSON response. No extra text, no markdown.
             """;
 
             WorkoutPlanAIResponse planData = null;
@@ -1217,7 +1218,24 @@ namespace ArenaInfrastructure.AI
             if (!string.IsNullOrEmpty(response.CategoryAr))
                 entity.CategoryAr = response.CategoryAr;
             if (!string.IsNullOrEmpty(response.VideoUrl))
-                entity.VideoUrl = response.VideoUrl;
+            {
+                var embedUrl = NormalizeVideoUrl(response.VideoUrl);
+                entity.VideoUrl = embedUrl;
+
+                if (!string.IsNullOrEmpty(embedUrl))
+                {
+                    var iframeTag = $"<iframe width=\"100%\" height=\"315\" src=\"{embedUrl}\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe>";
+                    
+                    if (!string.IsNullOrEmpty(entity.Description) && !entity.Description.Contains("iframe") && !entity.Description.Contains(embedUrl))
+                    {
+                        entity.Description = entity.Description.Trim() + "\n\n" + iframeTag;
+                    }
+                    if (!string.IsNullOrEmpty(entity.DescriptionAr) && !entity.DescriptionAr.Contains("iframe") && !entity.DescriptionAr.Contains(embedUrl))
+                    {
+                        entity.DescriptionAr = entity.DescriptionAr.Trim() + "\n\n" + iframeTag;
+                    }
+                }
+            }
             if (!string.IsNullOrEmpty(response.Equipment))
                 entity.Equipment = response.Equipment;
             if (!string.IsNullOrEmpty(response.EquipmentAr))
@@ -1257,6 +1275,43 @@ namespace ArenaInfrastructure.AI
                 CategoryAr = entity.CategoryAr,
                 MemberProfileId = entity.MemberProfileId
             };
+        }
+
+        private static string? NormalizeVideoUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return url;
+
+            if (url.Contains("youtube.com/embed/"))
+                return url;
+
+            if (url.Contains("youtube.com/watch"))
+            {
+                var vIndex = url.IndexOf("v=");
+                if (vIndex != -1)
+                {
+                    var videoId = url.Substring(vIndex + 2);
+                    var ampIndex = videoId.IndexOf('&');
+                    if (ampIndex != -1)
+                    {
+                        videoId = videoId.Substring(0, ampIndex);
+                    }
+                    return $"https://www.youtube.com/embed/{videoId}";
+                }
+            }
+
+            if (url.Contains("youtu.be/"))
+            {
+                var parts = url.Split('/');
+                var lastPart = parts[parts.Length - 1];
+                var qIndex = lastPart.IndexOf('?');
+                if (qIndex != -1)
+                {
+                    lastPart = lastPart.Substring(0, qIndex);
+                }
+                return $"https://www.youtube.com/embed/{lastPart}";
+            }
+
+            return url;
         }
     }
 }

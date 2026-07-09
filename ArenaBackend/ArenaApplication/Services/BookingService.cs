@@ -37,6 +37,7 @@ namespace ArenaApplication.Services
             IBackgroundJobService backgroundJobService,
             IStringLocalizer<ArenaLocalization> localizer)
         {
+            Console.WriteLine($"CONSTRUCTOR CALLED: HashCode={this.GetHashCode()}, backgroundJobService is null? {backgroundJobService == null}");
             _bookingRepo = bookingRepo;
             _subscriptionRepo = subscriptionRepo;
             _workingHoursRepo = workingHoursRepo;
@@ -48,6 +49,7 @@ namespace ArenaApplication.Services
 
         public async Task<Result<BookingDto>> CreateBooking(CreateBookingDto dto)
         {
+            Console.WriteLine($"CREATEBOOKING CALLED: HashCode={this.GetHashCode()}, _backgroundJobService is null? {_backgroundJobService == null}");
             var localTime = DateTime.UtcNow.AddHours(3);
 
             if (dto.BookingDate.Date < localTime.Date)
@@ -120,6 +122,10 @@ namespace ArenaApplication.Services
             await _bookingRepo.AddAsync(booking);
             await _unitOfWork.SaveChangesAsync();
 
+            if (_backgroundJobService == null)
+            {
+                throw new Exception("DIAGNOSTIC: _backgroundJobService is indeed null inside BookingService!");
+            }
             await _backgroundJobService.EnqueueBookingConfirmationAsync(
                 booking.MemberProfileId,
                 booking.BookingDate,
